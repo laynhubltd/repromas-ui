@@ -1,0 +1,119 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.5;
+  color: #212529;
+  background-color: #f8f9fa;
+}
+
+* {
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.25s ease;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--color-primary, #006747);
+  outline-offset: 2px;
+}
+
+/* Auth pages: sleek link hover */
+.auth-link:hover {
+  text-decoration: underline;
+}
+.auth-page-card {
+  transition: box-shadow 0.25s ease;
+}
+.auth-page-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Auth layout: fully responsive */
+.auth-page {
+  flex-wrap: wrap;
+}
+.auth-page-form-area {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Tablet: tighten spacing */
+@media (max-width: 1024px) {
+  .auth-page-brand-panel {
+    padding: 2rem 1.5rem !important;
+  }
+  .auth-page-form-area {
+    padding: 1.5rem 1.25rem !important;
+  }
+  .auth-page-card {
+    max-width: 100%;
+    padding: 1.5rem !important;
+  }
+}
+
+/* Mobile/small: hide glass panel, show only card (full width, centered) */
+@media (max-width: 768px) {
+  .auth-page-brand-panel {
+    display: none !important;
+  }
+  .auth-page-form-area {
+    flex: 1 1 100% !important;
+    width: 100% !important;
+    padding: 1.25rem 1rem !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+  .auth-page-card {
+    max-width: 100%;
+    padding: 1.25rem 1rem !important;
+    border-radius: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .auth-page-form-area {
+    padding: 1rem 0.75rem !important;
+  }
+  .auth-page-card {
+    padding: 1rem 0.75rem !important;
+    border-radius: 6px;
+  }
+}
+
+/* Large screens: cap max width of form for readability */
+@media (min-width: 1280px) {
+  .auth-page-form-area {
+    padding: 2rem !important;
+  }
+  .auth-page-card {
+    max-width: 420px;
+  }
+}
