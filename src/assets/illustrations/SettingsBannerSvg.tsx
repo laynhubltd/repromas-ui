@@ -1,4 +1,4 @@
-import { colors, hexToRgba } from "@/config/theme";
+import { DEFAULT_PRIMARY, hexToRgba } from "@/app/theme/themeConfig";
 
 type Props = {
   className?: string;
@@ -11,8 +11,7 @@ type Props = {
  * gear, calendar, and soft gradients for a polished hero look.
  */
 export function SettingsBannerSvg({ className, width = 320 }: Props) {
-  const primary = colors.primary;
-  const primaryLight = hexToRgba(primary, 0.12);
+  const primary = DEFAULT_PRIMARY;
   const primarySoft = hexToRgba(primary, 0.06);
   const primaryDot = hexToRgba(primary, 0.2);
 

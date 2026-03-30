@@ -1,0 +1,109 @@
+import { createSlice, type AnyAction, type PayloadAction } from "@reduxjs/toolkit";
+import { REHYDRATE } from "redux-persist";
+import {
+  authCleared,
+  profileFetched,
+  tokenRefreshed,
+  userLoggedIn,
+  userLoggedOut,
+} from "../events";
+import type { SimpleUserProfile, UserProfile, UserRole } from "../types";
+
+export interface AuthState {
+  userProfile: UserProfile | null;
+  token: string | null;
+  refreshToken: string | null;
+  isAuthenticated: boolean;
+  profiles: SimpleUserProfile[];
+  currentRole: UserRole | null;
+  currentProfileId: string | null;
+  bootstrapComplete: boolean;
+}
+
+const initialState: AuthState = {
+  userProfile: null,
+  token: null,
+  refreshToken: null,
+  isAuthenticated: false,
+  profiles: [],
+  currentRole: null,
+  currentProfileId: null,
+  bootstrapComplete: false,
+};
+
+const authSlice = createSlice({
+  name: "auth",
+  initialState,
+  reducers: {
+    setAuthState: (state, action: PayloadAction<AuthState>) => {
+      state.userProfile = action.payload.userProfile;
+      state.token = action.payload.token;
+      state.refreshToken = action.payload.refreshToken;
+      state.isAuthenticated = action.payload.isAuthenticated;
+      state.profiles = action.payload.profiles;
+      state.currentRole = action.payload.currentRole;
+      state.currentProfileId = action.payload.currentProfileId;
+      state.bootstrapComplete = action.payload.bootstrapComplete;
+    },
+    setUser: (state, action: PayloadAction<UserProfile>) => {
+      state.userProfile = action.payload;
+    },
+    setToken: (
+      state,
+      action: PayloadAction<{ accessToken?: string; refreshToken?: string }>,
+    ) => {
+      state.token = action.payload.accessToken ?? null;
+      state.refreshToken = action.payload.refreshToken ?? null;
+      state.isAuthenticated = !!action.payload.accessToken;
+    },
+    setCurrentRole: (state, action: PayloadAction<UserRole | null>) => {
+      state.currentRole = action.payload;
+    },
+    setCurrentProfileId: (state, action: PayloadAction<string | null>) => {
+      state.currentProfileId = action.payload;
+    },
+    setProfiles: (state, action: PayloadAction<SimpleUserProfile[]>) => {
+      state.profiles = action.payload;
+    },
+    clearAuth: () => initialState,
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(userLoggedIn, (state, action) => {
+        state.token = action.payload.token;
+        state.refreshToken = action.payload.refresh_token ?? null;
+        state.userProfile = action.payload.user ?? null;
+        state.profiles = action.payload.profiles ?? [];
+        state.isAuthenticated = true;
+        state.bootstrapComplete = false;
+      })
+      .addCase(profileFetched, (state, action) => {
+        state.userProfile = action.payload;
+        state.bootstrapComplete = true;
+      })
+      .addCase(tokenRefreshed, (state, action) => {
+        state.token = action.payload.accessToken ?? state.token;
+        state.refreshToken = action.payload.refreshToken ?? state.refreshToken;
+      })
+      .addCase(authCleared, () => initialState)
+      .addCase(userLoggedOut, () => initialState)
+      .addCase(REHYDRATE, (_state, action: AnyAction) => {
+        if (action.payload?.auth) {
+          return { ...action.payload.auth, bootstrapComplete: false };
+        }
+        return initialState;
+      });
+  },
+});
+
+export const {
+  setAuthState,
+  setUser,
+  setToken,
+  setCurrentRole,
+  setCurrentProfileId,
+  setProfiles,
+  clearAuth,
+} = authSlice.actions;
+
+export const authReducer = authSlice.reducer;

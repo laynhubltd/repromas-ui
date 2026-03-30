@@ -9,7 +9,7 @@ import type {
   SimpleUserProfile,
   UserProfile,
   UserRole,
-} from "./auth-api";
+} from "./types";
 import { Privilege } from "@/features/access-control/privileges-enum";
 
 const MOCK_JWT_EXP = 9999999999; // Far future so token is never “expired”

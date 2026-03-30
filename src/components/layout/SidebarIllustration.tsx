@@ -3,8 +3,8 @@
  * Light tint so the pattern is visible on the dark sidebar.
  */
 export function SidebarIllustration() {
-  const fill = "rgba(255,255,255,0.06)";
-  const stroke = "rgba(255,255,255,0.1)";
+  const fill = "rgba(255,255,255,0.03)";
+  const stroke = "rgba(255,255,255,0.03)";
 
   return (
     <svg

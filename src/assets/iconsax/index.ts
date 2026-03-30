@@ -44,7 +44,11 @@ import TOggleOffCircle from "./toggle-off-circle.svg?react";
 import Trash from "./trash.svg?react";
 import Warning2 from "./warning-2.svg?react";
 
-import { Filter, LayoutGrid, Table } from "lucide-react";
+import {
+  AppstoreOutlined,
+  FilterOutlined,
+  TableOutlined,
+} from "@ant-design/icons";
 import Audio from "./audio-square.svg?react";
 import Award from "./award.svg?react";
 import Book from "./book.svg?react";
@@ -94,10 +98,10 @@ export const icons = {
     "paragraph-spacing": ParagraphSpacing,
     "document-with-text-folded": DocumentWithTextFolded,
     "building-variant": Building,
-    "layout-grid": LayoutGrid,
-    table: Table,
+    "layout-grid": AppstoreOutlined,
+    table: TableOutlined,
     audio: Audio,
-    funnel: Filter,
+    funnel: FilterOutlined,
     trash: Trash,
     maximize: Maximize,
     award: Award,

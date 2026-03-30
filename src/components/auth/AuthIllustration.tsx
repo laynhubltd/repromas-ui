@@ -1,4 +1,4 @@
-import { useToken } from "@/hooks/useToken";
+import { useToken } from "@/shared/hooks/useToken";
 import React from "react";
 
 export type AuthIllustrationVariant = "login" | "signup" | "reset";

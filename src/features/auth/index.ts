@@ -1,6 +1,12 @@
-export { authApi } from "./auth-api";
-export { default as authSlice } from "./auth-slice";
-export { default as useAuth } from "./use-auth";
-export { default as useAuthSlice } from "./use-auth-slice";
-export { default as withAuthGuard } from "./with-auth-guard";
+// Slice
+export { authReducer, clearAuth, setAuthState, setCurrentProfileId, setCurrentRole, setProfiles, setToken, setUser } from "./state/auth-slice";
+export type { AuthState } from "./state/auth-slice";
 
+// Events
+export * from "./events";
+
+// Types
+export * from "./types";
+
+// Guard
+export { default as withAuthGuard } from "./with-auth-guard";

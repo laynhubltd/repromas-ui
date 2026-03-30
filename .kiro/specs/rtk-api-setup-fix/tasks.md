@@ -1,0 +1,143 @@
+# Implementation Plan
+
+- [x] 1. Write bug condition exploration tests (BEFORE implementing any fix)
+  - **Property 1: Bug Condition** - RTK API Setup Structural Bugs
+  - **CRITICAL**: These tests MUST FAIL on unfixed code — failure confirms each bug exists
+  - **DO NOT attempt to fix the tests or the code when they fail**
+  - **NOTE**: These tests encode the expected behavior — they will validate the fixes when they pass after implementation
+  - **GOAL**: Surface counterexamples that demonstrate each bug exists
+  - **Scoped PBT Approach**: Scope each property to the concrete failing case(s) for reproducibility
+  - Bug 5 — Assert `ApiTagTypes.Session`, `ApiTagTypes.Semester`, `ApiTagTypes.SemesterType`, `ApiTagTypes.Level`, `ApiTagTypes.AcademicStructure` are all defined strings; on unfixed code each is `undefined` (from Bug Condition 5 in design: `tagName NOT IN ApiTagTypes`)
+  - Bug 4 — Run `tsc --noEmit` and assert zero errors in `mock-session-config.ts`, `Settings.tsx`, `SessionConfigTab.tsx`; on unfixed code each throws `Cannot find module './types'` (from Bug Condition 4 in design: `file IMPORTS FROM "./types" OR "../types" AND resolved path DOES NOT EXIST`)
+  - Bug 1 — Initialise the store and assert `store.getState().authApi` is defined; on unfixed code the key is absent (from Bug Condition 1 in design: `NOT (store.reducers CONTAINS "authApi")`)
+  - Bug 2 — Spy on the imported `axiosInstance` and assert it is called when `axiosBaseQuery` executes a request; on unfixed code the spy is never called because a new instance is created inline (from Bug Condition 2 in design: `axiosBaseQuery CREATES new axios instance per request`)
+  - Bug 3 — Render `<Settings />` and assert `useGetSessionsQuery` is invoked; on unfixed code only `useState` with hardcoded arrays is used (from Bug Condition 3 in design)
+  - Bug 3b — Render `<AcademicStructure />` and assert `getMockStats` is NOT called; on unfixed code it is always called
+  - Run all tests on UNFIXED code
+  - **EXPECTED OUTCOME**: All tests FAIL (this is correct — it proves each bug exists)
+  - Document counterexamples found to understand root cause
+  - Mark task complete when tests are written, run, and failures are documented
+  - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6_
+
+- [x] 2. Write preservation property tests (BEFORE implementing any fix)
+  - **Property 2: Preservation** - Auth Flow and Existing Behaviors
+  - **IMPORTANT**: Follow observation-first methodology — observe behavior on UNFIXED code for non-buggy inputs first
+  - Observe: login flow stores `accessToken` + `refreshToken` in `auth` Redux slice and navigates to dashboard
+  - Observe: 401 + expired token triggers refresh → retry → success via `axiosBaseQuery` retry branch
+  - Observe: `clearAuth` dispatch wipes auth state and redirects to login
+  - Observe: `withAuthGuard` redirects unauthenticated users to login
+  - Observe: `baseApi` (reducerPath `"api"`) remains the single shared cache; feature endpoints injected via `injectEndpoints` continue to work
+  - Observe: `X-TENANT` header is derived from hostname and attached to every outgoing request via `prepareHeaders`
+  - Write property-based tests: for all requests where `isBugCondition` is false (non-auth-api, non-axiosBaseQuery-instance, non-settings-mock paths), behavior is identical before and after fix
+  - Verify all preservation tests PASS on UNFIXED code
+  - **EXPECTED OUTCOME**: Tests PASS (this confirms baseline behavior to preserve)
+  - Mark task complete when tests are written, run, and passing on unfixed code
+  - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6_
+
+- [x] 3. Fix Bug 5 — Extend ApiTagTypes with missing domain tags
+  - [x] 3.1 Add missing domain tags to `src/shared/types/apiTagTypes.ts`
+    - Add `Session: "Session"`, `Semester: "Semester"`, `SemesterType: "SemesterType"`, `Level: "Level"`, `AcademicStructure: "AcademicStructure"` to the `ApiTagTypes` const object
+    - `baseApi` already uses `Object.values(ApiTagTypes)` for `tagTypes`, so it will automatically pick up the new tags — no change needed in `baseApi.ts`
+    - _Bug_Condition: `isBugCondition_5(tagName)` where `tagName IN ["Session","Semester","SemesterType","Level","AcademicStructure"] AND tagName NOT IN ApiTagTypes`_
+    - _Expected_Behavior: `ApiTagTypes.Session`, `.Semester`, `.SemesterType`, `.Level`, `.AcademicStructure` are all defined strings; `baseApi.tagTypes` registers them_
+    - _Preservation: All existing `Auth` and `User` tag usages remain unchanged_
+    - _Requirements: 2.6_
+
+- [x] 4. Fix Bug 4 — Repair broken type imports in three settings files
+  - [x] 4.1 Update import in `src/features/settings/utils/mock-session-config.ts`
+    - Replace `from "./types"` with `from "@/shared/types/settings-types"`
+    - _Bug_Condition: `isBugCondition_4(file)` where file imports from `"./types"` and path does not exist_
+    - _Expected_Behavior: `tsc --noEmit` reports zero errors for this file_
+    - _Preservation: Mock data arrays and `buildSessionsWithSemesters` function are unchanged_
+    - _Requirements: 2.5_
+  - [x] 4.2 Update import in `src/features/settings/components/Settings.tsx`
+    - Replace `from "./types"` with `from "@/shared/types/settings-types"` for the `Level` and `SemesterType`/`SemesterStatus` type imports
+    - _Bug_Condition: `isBugCondition_4(file)` where file imports from `"./types"` and path does not exist_
+    - _Expected_Behavior: `tsc --noEmit` reports zero errors for this file_
+    - _Preservation: All existing component logic and props are unchanged_
+    - _Requirements: 2.5_
+  - [x] 4.3 Update import in `src/features/settings/components/session-config/SessionConfigTab.tsx`
+    - Replace `from "../types"` with `from "@/shared/types/settings-types"` for `SemesterType`, `SessionWithSemesters`, and `Semester` type imports
+    - _Bug_Condition: `isBugCondition_4(file)` where file imports from `"../types"` and path does not exist_
+    - _Expected_Behavior: `tsc --noEmit` reports zero errors for this file_
+    - _Preservation: All existing component props and tab structure are unchanged_
+    - _Requirements: 2.5_
+
+- [x] 5. Fix Bug 1 — Register authApi in the Redux store
+  - [x] 5.1 Wire `authApi` reducer and middleware into `src/app/store.ts`
+    - Import `authApi` from `@/features/auth/auth-api`
+    - Add `[authApi.reducerPath]: authApi.reducer` to `combineReducers` alongside `[baseApi.reducerPath]: baseApi.reducer`
+    - Append `authApi.middleware` to the middleware chain: `.concat(baseApi.middleware, authApi.middleware)`
+    - _Bug_Condition: `isBugCondition_1(store)` where `NOT (store.reducers CONTAINS "authApi") OR NOT (store.middleware CONTAINS authApi.middleware)`_
+    - _Expected_Behavior: `store.getState().authApi` is defined; `useLoginMutation` loading/data/error states are tracked in the store_
+    - _Preservation: `baseApi` reducer and middleware remain registered; `auth` slice persisted via `redux-persist` is unchanged; `setupListeners` call is unchanged_
+    - _Requirements: 2.1_
+
+- [x] 6. Fix Bug 2 — Reuse axiosInstance in axiosBaseQuery
+  - [x] 6.1 Replace inline `axios.create()` with the shared `axiosInstance` in `src/app/api/axiosBaseQuery.ts`
+    - Add `import { axiosInstance } from "./axiosInstance"` at the top of the file
+    - Remove the line `const axiosInstance = axios.create({ baseURL: baseUrl })` from inside the returned `BaseQueryFn`
+    - Keep the `options: { baseUrl }` parameter signature for backward compatibility but stop using `baseUrl` to create a new instance
+    - The token-refresh call uses raw `axios.post` (not `axiosInstance`) intentionally — preserve that behavior unchanged
+    - _Bug_Condition: `isBugCondition_2(request)` where `axiosBaseQuery CREATES new axios instance per request AND shared axiosInstance interceptors NOT applied`_
+    - _Expected_Behavior: Every `axiosBaseQuery` request routes through the shared `axiosInstance` so auth token and `Content-Type` interceptors are applied_
+    - _Preservation: `prepareHeaders` logic (Authorization injection, X-TENANT header), 401 retry branch, `clearAuth` dispatch, and `parseError` are all unchanged_
+    - _Requirements: 2.2, 3.2, 3.6_
+
+- [x] 7. Fix Bug 3 — Wire Settings to RTK Query
+  - [x] 7.1 Create `src/features/settings/api/settingsApi.ts` using `injectEndpoints` into `baseApi`
+    - Use `baseApi.injectEndpoints` (do NOT call `createApi` — architecture rule: single shared cache)
+    - Define query endpoints: `getSessions` → `GET /api/academic/sessions`, `getSemesterTypes` → `GET /api/academic/semester-types`, `getLevels` → `GET /api/academic/levels`
+    - Define mutation endpoints: `createSession` → `POST /api/academic/sessions`, `createSemester` → `POST /api/academic/semesters`
+    - Use `providesTags`/`invalidatesTags` with `ApiTagTypes.Session`, `ApiTagTypes.Semester`, `ApiTagTypes.SemesterType`, `ApiTagTypes.Level`
+    - Export generated hooks: `useGetSessionsQuery`, `useGetSemesterTypesQuery`, `useGetLevelsQuery`, `useCreateSessionMutation`, `useCreateSemesterMutation`
+    - Import types from `@/shared/types/settings-types`
+    - _Requirements: 2.3_
+  - [x] 7.2 Replace mock state with RTK Query hooks in `src/features/settings/components/Settings.tsx`
+    - Remove `useState(mockSessions)`, `useState(mockSemesters)`, `useState(mockSemesterTypes)`, and the hardcoded `levels` `useState`
+    - Remove imports of `mockSessions`, `mockSemesters`, `mockSemesterTypes` from `mock-session-config`
+    - Call `useGetSessionsQuery()`, `useGetSemesterTypesQuery()`, `useGetLevelsQuery()` and destructure `data`, `isLoading`
+    - Pass `sessionsLoading` and `semesterTypesLoading` flags from RTK Query to `SessionConfigTab` props
+    - Replace `handleSubmitSession` and `handleSubmitSemester` local state mutations with `useCreateSessionMutation` and `useCreateSemesterMutation` RTK Query mutations
+    - Keep all modal open/close state (`addSessionOpen`, `addSemesterOpen`, etc.) as local `useState` — these are UI state, not server state
+    - Import types from `@/shared/types/settings-types` (already fixed by Bug 4 task)
+    - _Bug_Condition: `isBugCondition_3(Settings)` where component uses `useState` with hardcoded mock arrays and calls no RTK Query hook_
+    - _Expected_Behavior: Sessions, semesters, semester types, and levels are fetched via RTK Query hooks; loading/error states managed by RTK Query cache_
+    - _Preservation: Tab structure, modal flows, `AdmissionConfigTab`, `LevelConfigTab` rendering are unchanged_
+    - _Requirements: 2.3_
+
+- [x] 8. Fix Bug 3b — Wire AcademicStructure to RTK Query
+  - [x] 8.1 Create `src/features/academic-structure/api/academicStructureApi.ts` using `injectEndpoints` into `baseApi`
+    - Use `baseApi.injectEndpoints` (do NOT call `createApi`)
+    - Define query endpoint: `getFaculties` → `GET /api/academic/faculties` (returns array with nested departments and programs)
+    - Define mutation endpoint: `createFaculty` → `POST /api/academic/faculties`
+    - Use `providesTags`/`invalidatesTags` with `ApiTagTypes.AcademicStructure`
+    - Export generated hooks: `useGetFacultiesQuery`, `useCreateFacultyMutation`
+    - Import types from `src/features/academic-structure/types.ts`
+    - _Requirements: 2.4_
+  - [x] 8.2 Replace mock data with RTK Query hooks in `src/features/academic-structure/components/AcademicStructure.tsx`
+    - Remove `import { getMockStats, mockHierarchy } from "./mock-data"` and all usages
+    - Call `useGetFacultiesQuery()` and destructure `data: faculties, isLoading`
+    - Derive stats inline: `totalFaculties`, `totalDepartments`, `activePrograms` from the fetched `faculties` array
+    - Pass `isLoading` to `HierarchyCard` `loading` prop
+    - Replace `handleAddFaculty` console.log stub with `useCreateFacultyMutation` call
+    - _Bug_Condition: `isBugCondition_3(AcademicStructure)` where component calls `getMockStats()` / `mockHierarchy` and calls no RTK Query hook_
+    - _Expected_Behavior: Faculty/department/program hierarchy fetched via RTK Query; stats derived from live data; loading state managed by RTK Query cache_
+    - _Preservation: `PageHero`, `StatsCards`, `HierarchyCard`, `PageFooter` component interfaces are unchanged; `useIsMobile` usage is unchanged_
+    - _Requirements: 2.4_
+
+- [x] 9. Checkpoint — Verify all fixes and run full test suite
+  - [x] 9.1 Verify bug condition exploration test now passes
+    - **Property 1: Expected Behavior** - RTK API Setup Structural Bugs
+    - **IMPORTANT**: Re-run the SAME tests from task 1 — do NOT write new tests
+    - Run all six bug condition tests from task 1 on the FIXED code
+    - **EXPECTED OUTCOME**: All tests PASS (confirms all bugs are fixed)
+    - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6_
+  - [x] 9.2 Verify preservation tests still pass
+    - **Property 2: Preservation** - Auth Flow and Existing Behaviors
+    - **IMPORTANT**: Re-run the SAME tests from task 2 — do NOT write new tests
+    - Run all preservation property tests from task 2 on the FIXED code
+    - **EXPECTED OUTCOME**: Tests PASS (confirms no regressions)
+    - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6_
+  - [x] 9.3 Run `tsc --noEmit` and confirm zero TypeScript errors across the entire project
+  - Ensure all tests pass; ask the user if questions arise
