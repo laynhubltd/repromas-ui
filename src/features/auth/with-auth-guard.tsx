@@ -1,6 +1,6 @@
-import useAuth from "@/features/auth/use-auth";
-import { appPaths } from "@/routing/app-path";
-import { isTokenExpired } from "@/utils/token-util";
+import { useAppSelector } from "@/app/hooks";
+import { appPaths } from "@/app/routing/app-path";
+import { isTokenExpired } from "@/shared/utils/token-util";
 import type { ComponentType } from "react";
 import { Suspense, useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
@@ -11,7 +11,7 @@ type WithAuthGuardProps<T extends object> = {
 };
 
 /**
- * Wraps a lazy-loaded component and ensures user is authenticated (and optional token refresh).
+ * Wraps a lazy-loaded component and ensures user is authenticated.
  */
 export default function withAuthGuard<T extends object>(
   props: WithAuthGuardProps<T>,
@@ -19,38 +19,21 @@ export default function withAuthGuard<T extends object>(
   const { Component, fallback } = props;
 
   function GuardedComponent(innerProps: T) {
-    const { token, tryRefreshToken } = useAuth();
+    const token = useAppSelector((state) => state.auth.token);
+    const rehydrated = useAppSelector(
+      (state) => (state as RootWithPersist)._persist?.rehydrated ?? false,
+    );
     const [checking, setChecking] = useState(true);
     const [authenticated, setAuthenticated] = useState(false);
 
     useEffect(() => {
-      let cancelled = false;
-      const run = async () => {
-        if (!token) {
-          if (!cancelled) setChecking(false);
-          return;
-        }
-        if (isTokenExpired(token) && tryRefreshToken) {
-          try {
-            await tryRefreshToken();
-          } catch {
-            if (!cancelled) setAuthenticated(false);
-            if (!cancelled) setChecking(false);
-            return;
-          }
-        }
-        if (!cancelled) {
-          setAuthenticated(true);
-          setChecking(false);
-        }
-      };
-      run();
-      return () => {
-        cancelled = true;
-      };
-    }, [token, tryRefreshToken]);
+      if (!rehydrated) return;
+      const hasValidToken = !!token && !isTokenExpired(token);
+      setAuthenticated(hasValidToken);
+      setChecking(false);
+    }, [rehydrated, token]);
 
-    if (checking) return <>{fallback ?? null}</>;
+    if (!rehydrated || checking) return <>{fallback ?? null}</>;
     if (!token || !authenticated)
       return <Navigate to={appPaths.login} replace />;
     return (
@@ -62,3 +45,8 @@ export default function withAuthGuard<T extends object>(
 
   return GuardedComponent;
 }
+
+type RootWithPersist = {
+  _persist?: { rehydrated?: boolean };
+  auth: { token: string | null };
+};

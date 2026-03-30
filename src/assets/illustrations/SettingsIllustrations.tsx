@@ -5,8 +5,8 @@ type IllustrationProps = {
   className?: string;
 };
 
-import { colors } from "@/config/theme";
-const defaultColor = colors.primary;
+import { DEFAULT_PRIMARY } from "@/app/theme/themeConfig";
+const defaultColor = DEFAULT_PRIMARY;
 const defaultOpacity = 0.9;
 
 /**

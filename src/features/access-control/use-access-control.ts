@@ -1,11 +1,11 @@
-import useAuth from "@/features/auth/use-auth";
-import { hasItems } from "@/utils/object-utils";
+import useAuthState from "@/features/auth/use-auth-state";
+import { hasItems } from "@/shared/utils/array-utils";
 import { Privilege } from "./privileges-enum";
 
 type PrivilegeConfig = { hasAll?: boolean };
 
 export function useAccessControl() {
-  const { currentRole, userProfile } = useAuth();
+  const { currentRole, userProfile } = useAuthState();
   const privileges = currentRole?.privileges ?? [];
   const company = userProfile?.company;
 

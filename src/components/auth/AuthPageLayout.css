@@ -1,0 +1,142 @@
+/* ─────────────────────────────────────────────
+   AuthPageLayout — two-column split layout
+   ───────────────────────────────────────────── */
+
+.auth-page {
+  display: flex;
+  flex-direction: row;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── Form Panel (left, ~45%) ── */
+.auth-form-panel {
+  flex: 0 0 45%;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem;
+  overflow-y: auto;
+}
+
+/* Inner content column — constrained width so the form doesn't stretch */
+.auth-form-panel__inner {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+/* Header: logo / system name */
+.auth-form-panel__header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-top: 1.5rem;
+  padding-bottom: 2rem;
+}
+
+.auth-form-panel__logo-img {
+  height: 2rem;
+  width: auto;
+  object-fit: contain;
+}
+
+.auth-form-panel__logo-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.75rem;
+  color: #111111;
+}
+
+.auth-form-panel__system-name {
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #111111;
+  white-space: nowrap;
+}
+
+/* Body: form children */
+.auth-form-panel__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-bottom: 2rem;
+}
+
+/* ── Illustration Panel (right, ~55%) ── */
+.auth-illustration-panel {
+  flex: 1 1 55%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+
+/* System name badge — top-left, flush to the left edge, right side rounded */
+.auth-illustration-panel__brand {
+  position: absolute;
+  top: 1.75rem;
+  left: 0;
+  z-index: 2;
+  background: #ffffff;
+  border-radius: 0 40px 40px 0;
+  padding: 0.6rem 1.75rem 0.6rem 1.5rem;
+  box-shadow: 4px 4px 16px rgba(0, 0, 0, 0.18);
+}
+
+.auth-illustration-panel__brand-name {
+  font-size: 1.125rem;
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  color: #1a1a1a;
+  white-space: nowrap;
+  text-transform: uppercase;
+}
+
+/* Sits above the decorative pattern */
+.auth-illustration-panel__content {
+  position: relative;
+  z-index: 1;
+}
+
+/* ─────────────────────────────────────────────
+   Tablet: 768px – 1024px
+   ───────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .auth-form-panel {
+    flex: 0 0 50%;
+  }
+  .auth-illustration-panel {
+    flex: 1 1 50%;
+  }
+}
+
+/* ─────────────────────────────────────────────
+   Mobile: < 768px
+   ───────────────────────────────────────────── */
+@media (max-width: 767px) {
+  .auth-form-panel {
+    flex: 1 1 100%;
+    padding: 1.5rem;
+    padding-top: 1.25rem;
+    min-height: 100vh;
+    justify-content: flex-start;
+  }
+  .auth-form-panel__inner {
+    max-width: 100%;
+  }
+  .auth-form-panel__header {
+    padding-top: 1.25rem;
+    padding-bottom: 1.5rem;
+  }
+  .auth-illustration-panel {
+    display: none;
+  }
+}

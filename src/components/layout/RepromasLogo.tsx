@@ -1,4 +1,4 @@
-import { useToken } from "@/hooks/useToken";
+import { useToken } from "@/shared/hooks/useToken";
 
 interface RepromasLogoProps {
   collapsed?: boolean;
