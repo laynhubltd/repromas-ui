@@ -1,17 +1,17 @@
-import { Privilege } from "@/features/access-control/privileges-enum";
+import { Permission } from "@/features/access-control/permissions";
 import { useAccessControl } from "@/features/access-control/use-access-control";
 import {
-  ApartmentOutlined,
-  DashboardOutlined,
-  SettingOutlined,
-  UserOutlined,
+    ApartmentOutlined,
+    DashboardOutlined,
+    SettingOutlined,
+    UserOutlined,
 } from "@ant-design/icons";
 import type { ItemType } from "antd/es/menu/interface";
 import { useMemo } from "react";
 import { appPaths } from "./app-path";
 
 export type RouteMenuItem = ItemType & {
-  privilege?: Privilege | Privilege[];
+  permission?: Permission | Permission[];
 };
 
 /** Main navigation items (top of sidebar). */
@@ -20,19 +20,18 @@ export const routesMenuList: RouteMenuItem[] = [
     key: appPaths.dashboard,
     icon: <DashboardOutlined />,
     label: "Dashboard",
-    privilege: Privilege.DashboardRead,
   },
   {
     key: appPaths.staffs,
     icon: <UserOutlined />,
     label: "Staffs",
-    privilege: Privilege.DashboardRead,
+    permission: Permission.RolesList,
   },
   {
     key: appPaths.academicStructure,
     icon: <ApartmentOutlined />,
     label: "Faculty & Programs",
-    privilege: Privilege.DashboardRead,
+    permission: Permission.FacultiesList,
   },
 ];
 
@@ -42,26 +41,28 @@ export const bottomMenuList: RouteMenuItem[] = [
     key: appPaths.settings,
     icon: <SettingOutlined />,
     label: "Settings",
-    privilege: Privilege.DashboardRead,
+    permission: Permission.SystemConfigsList,
   },
 ];
 
 export function useRestrictedRouteMenuItem(): RouteMenuItem[] {
-  const { hasPrivilege } = useAccessControl();
+  const { hasAnyPermission } = useAccessControl();
   return useMemo(() => {
     return routesMenuList.filter((item) => {
-      if (!item.privilege) return true;
-      return hasPrivilege(item.privilege) ?? true; // TODO: allow access for now before we have the privilege matrix
+      if (!item.permission) return true;
+      const perms = Array.isArray(item.permission) ? item.permission : [item.permission];
+      return hasAnyPermission(perms);
     });
-  }, [hasPrivilege]);
+  }, [hasAnyPermission]);
 }
 
 export function useRestrictedBottomMenuItem(): RouteMenuItem[] {
-  const { hasPrivilege } = useAccessControl();
+  const { hasAnyPermission } = useAccessControl();
   return useMemo(() => {
     return bottomMenuList.filter((item) => {
-      if (!item.privilege) return true;
-      return hasPrivilege(item.privilege) ?? true;
+      if (!item.permission) return true;
+      const perms = Array.isArray(item.permission) ? item.permission : [item.permission];
+      return hasAnyPermission(perms);
     });
-  }, [hasPrivilege]);
+  }, [hasAnyPermission]);
 }

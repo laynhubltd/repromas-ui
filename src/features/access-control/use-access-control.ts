@@ -1,36 +1,23 @@
 import useAuthState from "@/features/auth/use-auth-state";
-import { hasItems } from "@/shared/utils/array-utils";
-import { Privilege } from "./privileges-enum";
-
-type PrivilegeConfig = { hasAll?: boolean };
+import { Permission } from "./permissions";
 
 export function useAccessControl() {
-  const { currentRole, userProfile } = useAuthState();
-  const privileges = currentRole?.privileges ?? [];
-  const company = userProfile?.company;
+  const { roles, permissions } = useAuthState();
 
-  const hasPrivilege = (
-    privilege: Privilege | Privilege[],
-    config?: PrivilegeConfig,
-  ): boolean => {
-    if (!hasItems(privileges)) return true;
-    if (typeof privilege === "string") return privileges.includes(privilege);
-    if (Array.isArray(privilege)) {
-      if (config?.hasAll) return privilege.every((p) => privileges.includes(p));
-      return privilege.some((p) => privileges.includes(p));
-    }
-    return false;
-  };
+  const hasPermission = (permission: Permission | string): boolean =>
+    permissions.includes(permission as string);
 
-  const hasRole = (roleName: string): boolean => {
-    return currentRole?.name === roleName;
-  };
+  const hasAnyPermission = (required: (Permission | string)[]): boolean =>
+    required.some((p) => permissions.includes(p as string));
 
-  return {
-    company,
-    currentRole,
-    privileges,
-    hasPrivilege,
-    hasRole,
-  };
+  const hasAllPermissions = (required: (Permission | string)[]): boolean =>
+    required.every((p) => permissions.includes(p as string));
+
+  const hasRole = (roleName: string): boolean =>
+    roles.some((r) => r.name === roleName);
+
+  const isSuperAdmin = (): boolean =>
+    roles.some((r) => r.name === "System Administrator" && r.scope === "GLOBAL");
+
+  return { roles, permissions, hasPermission, hasAnyPermission, hasAllPermissions, hasRole, isSuperAdmin };
 }

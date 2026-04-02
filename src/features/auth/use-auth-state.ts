@@ -10,6 +10,8 @@ export default function useAuthState() {
     currentRole,
     currentProfileId,
     bootstrapComplete,
+    roles,
+    permissions,
   } = useAppSelector((state) => state.auth);
 
   return {
@@ -21,5 +23,7 @@ export default function useAuthState() {
     currentRole,
     currentProfileId,
     bootstrapComplete,
+    roles,
+    permissions,
   };
 }

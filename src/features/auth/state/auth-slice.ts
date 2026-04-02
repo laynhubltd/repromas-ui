@@ -7,7 +7,7 @@ import {
   userLoggedIn,
   userLoggedOut,
 } from "../events";
-import type { SimpleUserProfile, UserProfile, UserRole } from "../types";
+import type { ApiRole, SimpleUserProfile, UserProfile, UserRole } from "../types";
 
 export interface AuthState {
   userProfile: UserProfile | null;
@@ -18,6 +18,8 @@ export interface AuthState {
   currentRole: UserRole | null;
   currentProfileId: string | null;
   bootstrapComplete: boolean;
+  roles: ApiRole[];
+  permissions: string[];
 }
 
 const initialState: AuthState = {
@@ -29,6 +31,8 @@ const initialState: AuthState = {
   currentRole: null,
   currentProfileId: null,
   bootstrapComplete: false,
+  roles: [],
+  permissions: [],
 };
 
 const authSlice = createSlice({
@@ -44,6 +48,8 @@ const authSlice = createSlice({
       state.currentRole = action.payload.currentRole;
       state.currentProfileId = action.payload.currentProfileId;
       state.bootstrapComplete = action.payload.bootstrapComplete;
+      state.roles = action.payload.roles ?? [];
+      state.permissions = action.payload.permissions ?? [];
     },
     setUser: (state, action: PayloadAction<UserProfile>) => {
       state.userProfile = action.payload;
@@ -72,10 +78,15 @@ const authSlice = createSlice({
       .addCase(userLoggedIn, (state, action) => {
         state.token = action.payload.token;
         state.refreshToken = action.payload.refresh_token ?? null;
+        state.roles = action.payload.roles ?? [];
+        state.permissions = action.payload.permissions ?? [];
         state.userProfile = action.payload.user ?? null;
         state.profiles = action.payload.profiles ?? [];
         state.isAuthenticated = true;
         state.bootstrapComplete = false;
+        // derive currentRole from first role for backward compat
+        const first = action.payload.roles?.[0];
+        state.currentRole = first ? { name: first.name } : null;
       })
       .addCase(profileFetched, (state, action) => {
         state.userProfile = action.payload;

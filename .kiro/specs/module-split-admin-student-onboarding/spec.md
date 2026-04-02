@@ -1,111 +1,97 @@
-# Spec — Modular Split (Admin, Student, Onboarding)
+# Spec — Shared Auth + Domain/Role Module Mounting
 
-## Current State (from codebase)
+## Current State
 
 - Router is centralized in `src/app/routing/AppRouter.tsx`.
-- Most current product routes are admin-oriented (`/dashboard`, `/academic-structure`, `/settings`).
-- Auth routes are already separated by URL namespace (`/auth/*`) but still wired in one router tree.
-- Shared services already exist (`src/app/api/*`, Redux store, `src/shared/*`).
-- Vite build has no module-level `manualChunks` strategy yet.
+- Auth pages and admin pages live in one route tree.
+- No explicit apex-vs-tenant domain entry strategy is documented.
+- Vite chunking strategy is not yet module/domain aware.
 
 ## Target State
 
-Convert to a modular monolith with three independently mountable modules:
+### 1) Shared Auth (global)
 
-1. **Onboarding Module**
-   - Scope: login, sign-up, forgot-password, role-selection, unauthorized/public pages.
-   - Base routes: `/auth/*`, `/role-selection`, `/unauthorized`.
+Auth remains the existing platform infrastructure and is reused by all modules:
 
-2. **Admin Module**
-   - Scope: dashboard, settings, academic structure, staff/admin operations.
-   - Base routes: `/dashboard`, `/settings`, `/academic-structure`, `/staffs`.
+- session/token handling
+- current user profile
+- tenant context
+- role claims and authorization helpers
 
-3. **Student Module**
-   - Scope: student portal journeys (new or migrated student features).
-   - Base routes (proposed): `/student/*`.
+Auth is not owned by `Onboarding`, `Admin`, or `Student`, and is not refactored in this phase.
 
-## Mounting Contract
+### 2) Domain-driven mounting
 
-Each module exports:
+Runtime host classification:
 
-- `get<ModuleName>Routes(context): RouteObject[]`
-- optional module metadata (`moduleId`, default route, feature flag key)
+- `repromas.com` -> mount **Onboarding** module directly (public marketing + tenant signup)
+- `<tenant-slug>.repromas.com` -> run tenant bootstrap + auth, then mount by role
 
-The host app composes modules at runtime:
+### 3) Tenant-domain role mounting
 
-- Enable/disable modules via config (`VITE_ENABLE_ADMIN`, `VITE_ENABLE_STUDENT`, `VITE_ENABLE_ONBOARDING`)
-- Build final route array from enabled modules
-- Provide shared context (auth status, access-control helpers, common layouts)
+On valid tenant domains:
 
-## Proposed Folder Structure
+1. Resolve tenant by slug.
+2. If unauthenticated: route to tenant-context auth flow.
+3. If authenticated: resolve role from server-validated profile/claims.
+4. Mount module:
+   - admin role -> Admin module
+   - student role -> Student module
 
-```text
-src/
-  app/
-    routing/
-      host-router.tsx
-      module-registry.ts
-    store/
-      create-store.ts
-  modules/
-    onboarding/
-      routes/
-        onboarding-routes.tsx
-      features/
-    admin/
-      routes/
-        admin-routes.tsx
-      features/
-    student/
-      routes/
-        student-routes.tsx
-      features/
-  shared/
-    components/
-    hooks/
-    utils/
-    services/
-```
+## Module Scopes
 
-## Router Composition Example
+- **Onboarding**: landing page, product explanation, tenant signup/provisioning, public pages.
+- **Admin**: dashboard, settings, academic structure, staff/admin capabilities.
+- **Student**: student-facing journeys and portal pages.
+- **Shared Auth**: all authentication/authorization and session orchestration.
+
+## Routing Contract
+
+Host router composes module routes with context:
 
 ```ts
-const enabledModules = getEnabledModulesFromEnv();
-
-const routeTree = [
-  ...getOnboardingRoutes(ctx, enabledModules.onboarding),
-  ...getAdminRoutes(ctx, enabledModules.admin),
-  ...getStudentRoutes(ctx, enabledModules.student),
-  ...getFallbackRoutes(enabledModules),
-];
+type HostContext = {
+  hostType: 'apex' | 'tenant';
+  tenantSlug?: string;
+  tenantId?: string;
+  authenticated: boolean;
+  role?: 'admin' | 'student';
+};
 ```
 
-## Performance Strategy (Vite)
+Route composition rules:
 
-Apply module-aware manual chunking:
+- apex host => onboarding routes only
+- tenant host + not authenticated => auth routes only
+- tenant host + authenticated admin => admin routes
+- tenant host + authenticated student => student routes
+- fallback => not-found or unauthorized
 
-- `module-onboarding`
-- `module-admin`
-- `module-student`
-- `vendor-react`
-- `vendor-antd`
-- `vendor-redux`
+## Best-Practice Alignment (online references)
 
-Rules:
+- Use route object composition/lazy route loading with React Router data routers.
+- Use explicit manual chunk partitioning via Vite/Rollup (`build.rolldownOptions.output.manualChunks` on latest Vite).
+- Enforce deny-by-default and per-request authorization checks.
+- Treat tenant context as security boundary and validate role/tenant server-side.
 
-- Keep top-level module screens lazy-loaded.
-- Keep heavy admin dependencies out of onboarding chunk.
-- Preload only the next-likely module after login/role resolution.
+## Scope Constraints
 
-## Non-Goals
+- Do not modify existing RTK Query/auth architecture or behavior.
+- Do not move auth files during this phase.
+- Only introduce module mounter/router composition logic and module mount decisions.
 
-- No immediate micro-frontend runtime split.
-- No backend API contract changes.
-- No redesign of shared auth/session semantics.
+## References
+
+- React Router `createBrowserRouter`: https://reactrouter.com/api/data-routers/createBrowserRouter/
+- React Router Route Objects: https://reactrouter.com/start/data/route-object
+- Vite build options (`build.rolldownOptions`, `build.rollupOptions` alias/deprecation): https://vite.dev/config/build-options.html
+- Rollup/Rolldown `output.manualChunks`: https://rollupjs.org/configuration-options/#output-manualchunks
+- OWASP Authorization Cheat Sheet (deny-by-default, validate on every request): https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html
+- Vercel multi-tenant domain management (wildcard subdomains/custom domains): https://vercel.com/docs/multi-tenant/domain-management
 
 ## Success Criteria
 
-- Module routes can be enabled/disabled independently.
-- Onboarding-first load excludes admin/student code from initial bundle.
-- Shared API/store/common components continue working across modules.
-- Existing URLs remain operational during migration.
+- Apex always serves onboarding experience.
+- Tenant subdomain requires auth and mounts role-appropriate module only.
+- Existing auth is reused by all modules without duplication or refactor.
+- Initial payload is reduced through module-aware chunking.

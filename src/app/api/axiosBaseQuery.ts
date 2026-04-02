@@ -19,6 +19,7 @@ import { isTokenExpired } from "@/shared/utils/token-util";
 import type { BaseQueryApi, BaseQueryFn } from "@reduxjs/toolkit/query";
 import axios, { type AxiosError, type AxiosRequestConfig } from "axios";
 import { axiosInstance } from "./axiosInstance";
+import { isEndpointAllowedOnCurrentHost } from "./apex-endpoint-whitelist";
 
 type StateWithAuth = { auth: AuthState };
 type GetStateWithAuth = () => StateWithAuth;
@@ -45,6 +46,15 @@ export const axiosBaseQuery =
     void options;
 
     const getState = api.getState as GetStateWithAuth;
+    if (!isEndpointAllowedOnCurrentHost(requestConfig.url)) {
+      return {
+        error: {
+          status: 403,
+          message: `Endpoint "${requestConfig.url}" is not allowed on apex host.`,
+          errorFields: {},
+        },
+      };
+    }
 
     try {
       const method = requestConfig.method ?? "GET";
