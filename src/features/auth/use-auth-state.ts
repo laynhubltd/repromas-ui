@@ -12,6 +12,8 @@ export default function useAuthState() {
     bootstrapComplete,
     roles,
     permissions,
+    activeRole,
+    roleSwitcherOpen,
   } = useAppSelector((state) => state.auth);
 
   return {
@@ -25,5 +27,7 @@ export default function useAuthState() {
     bootstrapComplete,
     roles,
     permissions,
+    activeRole,
+    roleSwitcherOpen,
   };
 }

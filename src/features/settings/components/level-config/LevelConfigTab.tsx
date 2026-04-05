@@ -1,9 +1,10 @@
-import { useThemeColors } from "@/app/theme/useThemeColors";
 import { hexToRgba } from "@/app/theme/themeConfig";
+import { useThemeColors } from "@/app/theme/useThemeColors";
+import { Table } from "@/components/ui-kit";
 import { useToken } from "@/shared/hooks/useToken";
 import type { Level } from "@/shared/types/settings-types";
 import { DeleteOutlined, EditOutlined, PlusOutlined } from "@ant-design/icons";
-import { Button, Empty, Table, Tooltip, Typography } from "antd";
+import { Button, Flex, Tooltip, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useState } from "react";
 import { AddLevelModal } from "./AddLevelModal";
@@ -30,9 +31,9 @@ export function LevelConfigTab({
   onDelete,
 }: LevelConfigTabProps) {
   const token = useToken();
+  const colors = useThemeColors();
   const [modalOpen, setModalOpen] = useState(false);
   const [submitLoading, setSubmitLoading] = useState(false);
-  const colors = useThemeColors();
 
   const handleAdd = async (values: {
     name: string;
@@ -85,9 +86,7 @@ export function LevelConfigTab({
       key: "description",
       ellipsis: true,
       render: (description: string | null) => (
-        <Typography.Text type="secondary">
-          {description ?? "—"}
-        </Typography.Text>
+        <Typography.Text type="secondary">{description ?? "—"}</Typography.Text>
       ),
     },
     ...(onEdit || onDelete
@@ -98,14 +97,7 @@ export function LevelConfigTab({
             align: "right" as const,
             width: 100,
             render: (_: unknown, record: Level) => (
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "flex-end",
-                  gap: 4,
-                }}
-              >
+              <Flex align="center" justify="flex-end" gap={4}>
                 {onEdit ? (
                   <Tooltip title="Edit">
                     <Button
@@ -127,7 +119,7 @@ export function LevelConfigTab({
                     />
                   </Tooltip>
                 ) : null}
-              </div>
+              </Flex>
             ),
           },
         ]
@@ -135,45 +127,14 @@ export function LevelConfigTab({
   ];
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: token.sizeLG,
-        width: "100%",
-      }}
-    >
+    <Flex vertical gap={24} style={{ width: "100%" }}>
       <LevelsHeroBanner />
       <LevelsContextCards />
-
-      <div
-        style={{
-          background: token.colorBgContainer,
-          borderRadius: token.borderRadius,
-          border: `1px solid ${token.colorBorder}`,
-          overflow: "hidden",
-        }}
-      >
-        <div
-          style={{
-            padding: "16px 24px",
-            borderBottom: `1px solid ${token.colorBorderSecondary}`,
-            display: "flex",
-            alignItems: "flex-start",
-            justifyContent: "space-between",
-            flexWrap: "wrap",
-            gap: token.sizeMD,
-          }}
-        >
-          <div>
-            <Typography.Title level={5} style={{ margin: 0, fontWeight: 600 }}>
-              Level Management
-            </Typography.Title>
-            <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-              Configure student progression tiers
-            </Typography.Text>
-          </div>
-          {onAdd ? (
+      <Table
+        header={{
+          title: "Level Management",
+          subtitle: "Configure student progression tiers",
+          extra: onAdd ? (
             <Button
               type="primary"
               icon={<PlusOutlined />}
@@ -181,30 +142,40 @@ export function LevelConfigTab({
             >
               Add Level
             </Button>
-          ) : null}
-        </div>
-
-        <div style={{ padding: 24 }}>
-          {levels.length === 0 && !loading ? (
-            <Empty description="No levels configured" />
-          ) : (
-            <Table
-              rowKey="id"
-              dataSource={levels}
-              loading={loading}
-              columns={columns}
-              pagination={false}
-            />
-          )}
-        </div>
-      </div>
-
+          ) : undefined,
+        }}
+        rowKey="id"
+        dataSource={levels}
+        columns={columns}
+        pagination={false}
+        size="md"
+        density="comfortable"
+        state={loading ? "loading" : "default"}
+        emptyState={
+          levels.length === 0 && !loading
+            ? {
+                title: "No levels configured",
+                description: "Add a level to get started.",
+                action: onAdd ? (
+                  <Button
+                    type="primary"
+                    size="small"
+                    icon={<PlusOutlined />}
+                    onClick={() => setModalOpen(true)}
+                  >
+                    Add Level
+                  </Button>
+                ) : undefined,
+              }
+            : undefined
+        }
+      />
       <AddLevelModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         onSubmit={handleAdd}
         loading={submitLoading}
       />
-    </div>
+    </Flex>
   );
 }

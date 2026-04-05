@@ -1,19 +1,21 @@
-import useAuthState from "@/features/auth/use-auth-state";
-import FullscreenLoader from "@/components/system/FullscreenLoader";
+import { getAdminRouteEntries } from "@/app/routing/module-routes/admin";
 import {
+  getOnboardingRouteEntries,
   isMatchingTenantSlug,
   isTenantActive,
-  type TenantValidationResponse,
   useValidateTenantQuery,
-} from "@/modules/onboarding/features/tenant-discovery";
-import { getAdminRouteEntries } from "@/modules/admin";
-import { getOnboardingRouteEntries } from "@/modules/onboarding/routes/onboarding-routes";
-import { getStudentRouteEntries } from "@/modules/student";
-import { lazy, useMemo, type ReactElement } from "react";
+  type TenantValidationResponse,
+} from "@/app/routing/module-routes/onboarding";
+import { getStudentRouteEntries } from "@/app/routing/module-routes/student";
+import FullscreenLoader from "@/components/system/FullscreenLoader";
+import { RolePicker } from "@/features/auth/components/RolePicker";
+import type { ApiRole } from "@/features/auth/types";
+import useAuthState from "@/features/auth/use-auth-state";
+import { lazy, useMemo } from "react";
 import {
-  BrowserRouter as Router,
   Navigate,
   Route,
+  BrowserRouter as Router,
   Routes,
 } from "react-router-dom";
 import { appPaths } from "./app-path";
@@ -43,108 +45,101 @@ export function HostRouter() {
     { skip: !shouldBootstrapTenant },
   );
 
+  // Single Router at the top — never remounted regardless of auth state changes.
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<RouterShell />}>
+          <Route path="*" element={
+            <HostRouteContent
+              auth={auth}
+              host={host}
+              tenantSlug={tenantSlug}
+              tenantBootstrap={tenantBootstrap}
+            />
+          } />
+        </Route>
+      </Routes>
+    </Router>
+  );
+}
+
+export type HostRouteContentProps = {
+  auth: ReturnType<typeof useAuthState>;
+  host: ReturnType<typeof resolveHost>;
+  tenantSlug: string;
+  tenantBootstrap: ReturnType<typeof useValidateTenantQuery>;
+};
+
+export function HostRouteContent({ auth, host, tenantSlug, tenantBootstrap }: HostRouteContentProps) {
   if (host.kind === "apex") {
-    return <ApexHostRoutes />;
+    return (
+      <Routes>
+        {getOnboardingRouteEntries()}
+        <Route path="/auth/*" element={<Navigate to="/tenant-signup" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    );
   }
 
   if (host.kind === "unknown") {
-    return <SinglePageRouter element={<UnknownDomain hostname={host.hostname} />} />;
+    return <UnknownDomain hostname={host.hostname} />;
   }
 
   if (tenantBootstrap.isLoading || tenantBootstrap.isFetching) {
-    return <SinglePageRouter element={<FullscreenLoader label="Resolving tenant..." />} />;
+    return <FullscreenLoader label="Resolving tenant..." />;
   }
 
   if (tenantBootstrap.isError || !tenantBootstrap.data) {
-    return <SinglePageRouter element={<InstitutionNotFound tenantSlug={tenantSlug} />} />;
+    return <InstitutionNotFound tenantSlug={tenantSlug} />;
   }
 
   if (!isMatchingTenantSlug(tenantSlug, tenantBootstrap.data.slug)) {
-    return <SinglePageRouter element={<InstitutionNotFound tenantSlug={tenantSlug} />} />;
+    return <InstitutionNotFound tenantSlug={tenantSlug} />;
   }
 
   if (!isTenantActive(tenantBootstrap.data.status)) {
-    return <SinglePageRouter element={<InstitutionNotActive tenantSlug={tenantSlug} />} />;
+    return <InstitutionNotActive tenantSlug={tenantSlug} />;
   }
 
   if (!auth.token) {
-    return <TenantAuthRoutes />;
+    return (
+      <Routes>
+        <Route index element={<Navigate to={appPaths.login} replace />} />
+        <Route path={appPaths.login} element={<Login />} />
+        <Route path={appPaths.signUp} element={<SignUp />} />
+        <Route path={appPaths.forgotPassword} element={<ForgotPassword />} />
+        <Route path={appPaths.unauthorized} element={<Unauthorized />} />
+        <Route path="*" element={<Navigate to={appPaths.login} replace />} />
+      </Routes>
+    );
   }
 
   if (hasTenantClaimMismatch(auth, tenantBootstrap.data)) {
-    return <SinglePageRouter element={<TenantClaimMismatch />} />;
+    return <TenantClaimMismatch />;
   }
 
-  const moduleRole = resolveModuleRole(auth.currentRole?.name ?? auth.userProfile?.role?.name);
+  if (auth.roleSwitcherOpen) {
+    return <RolePicker />;
+  }
+
+  const moduleRole = resolveModuleRole(auth.activeRole);
   if (!moduleRole) {
-    return <SinglePageRouter element={<Unauthorized />} />;
+    return <Unauthorized />;
   }
 
-  return <TenantHostRoutes moduleRole={moduleRole} />;
-}
-
-function ApexHostRoutes() {
-  return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<RouterShell />}>
-          {getOnboardingRouteEntries()}
-          <Route
-            path="/auth/*"
-            element={<Navigate to="/tenant-signup" replace />}
-          />
-        </Route>
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </Router>
-  );
-}
-
-function TenantAuthRoutes() {
-  return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<RouterShell />}>
-          <Route index element={<Navigate to={appPaths.login} replace />} />
-          <Route path={appPaths.login} element={<Login />} />
-          <Route path={appPaths.signUp} element={<SignUp />} />
-          <Route path={appPaths.forgotPassword} element={<ForgotPassword />} />
-          <Route path={appPaths.unauthorized} element={<Unauthorized />} />
-        </Route>
-        <Route path="*" element={<Navigate to={appPaths.login} replace />} />
-      </Routes>
-    </Router>
-  );
-}
-
-function TenantHostRoutes({ moduleRole }: { moduleRole: ModuleRole }) {
   const defaultPath = moduleRole === "student" ? "/student" : appPaths.dashboard;
 
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<RouterShell />}>
-          <Route index element={<Navigate to={defaultPath} replace />} />
-          <Route path={appPaths.login} element={<Navigate to={defaultPath} replace />} />
-          <Route path={appPaths.signUp} element={<Navigate to={defaultPath} replace />} />
-          <Route path={appPaths.forgotPassword} element={<Navigate to={defaultPath} replace />} />
-          <Route path={appPaths.unauthorized} element={<Unauthorized />} />
-          {moduleRole === "admin" ? getAdminRouteEntries() : getStudentRouteEntries()}
-        </Route>
-
-        <Route path="*" element={<Navigate to={defaultPath} replace />} />
-      </Routes>
-    </Router>
-  );
-}
-
-function SinglePageRouter({ element }: { element: ReactElement }) {
-  return (
-    <Router>
-      <Routes>
-        <Route path="*" element={element} />
-      </Routes>
-    </Router>
+    <Routes>
+      <Route index element={<Navigate to={defaultPath} replace />} />
+      <Route path={appPaths.login} element={<Navigate to={defaultPath} replace />} />
+      <Route path={appPaths.signUp} element={<Navigate to={defaultPath} replace />} />
+      <Route path={appPaths.forgotPassword} element={<Navigate to={defaultPath} replace />} />
+      <Route path={appPaths.unauthorized} element={<Unauthorized />} />
+      {moduleRole === "admin" ? getAdminRouteEntries() : getStudentRouteEntries()}
+      <Route path="*" element={<Navigate to={defaultPath} replace />} />
+    </Routes>
   );
 }
 
@@ -199,25 +194,9 @@ function TenantClaimMismatch() {
   );
 }
 
-function resolveModuleRole(roleName: string | undefined): ModuleRole | null {
-  if (!roleName) return null;
-
-  const normalized = roleName.trim().toLowerCase();
-
-  if (normalized.includes("student")) {
-    return "student";
-  }
-
-  if (
-    normalized.includes("admin") ||
-    normalized.includes("staff") ||
-    normalized.includes("manager") ||
-    normalized.includes("registrar")
-  ) {
-    return "admin";
-  }
-
-  return null;
+export function resolveModuleRole(activeRole: ApiRole | null): ModuleRole | null {
+  if (!activeRole) return null;
+  return activeRole.scope.trim().toUpperCase() === "STUDENT" ? "student" : "admin";
 }
 
 function hasTenantClaimMismatch(

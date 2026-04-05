@@ -3,9 +3,10 @@ import { REHYDRATE } from "redux-persist";
 import {
   authCleared,
   profileFetched,
+  roleSelected,
   tokenRefreshed,
   userLoggedIn,
-  userLoggedOut,
+  userLoggedOut
 } from "../events";
 import type { ApiRole, SimpleUserProfile, UserProfile, UserRole } from "../types";
 
@@ -20,6 +21,8 @@ export interface AuthState {
   bootstrapComplete: boolean;
   roles: ApiRole[];
   permissions: string[];
+  activeRole: ApiRole | null;
+  roleSwitcherOpen: boolean;
 }
 
 const initialState: AuthState = {
@@ -33,6 +36,8 @@ const initialState: AuthState = {
   bootstrapComplete: false,
   roles: [],
   permissions: [],
+  activeRole: null,
+  roleSwitcherOpen: false,
 };
 
 const authSlice = createSlice({
@@ -72,20 +77,36 @@ const authSlice = createSlice({
       state.profiles = action.payload;
     },
     clearAuth: () => initialState,
+    roleSwitcherOpened: (state) => {
+      state.roleSwitcherOpen = true;
+    },
   },
   extraReducers: (builder) => {
     builder
       .addCase(userLoggedIn, (state, action) => {
         state.token = action.payload.token;
         state.refreshToken = action.payload.refresh_token ?? null;
-        state.roles = action.payload.roles ?? [];
+        const roles = action.payload.roles ?? [];
+        state.roles = roles;
         state.permissions = action.payload.permissions ?? [];
         state.userProfile = action.payload.user ?? null;
         state.profiles = action.payload.profiles ?? [];
         state.isAuthenticated = true;
         state.bootstrapComplete = false;
-        // derive currentRole from first role for backward compat
-        const first = action.payload.roles?.[0];
+
+        if (roles.length === 1) {
+          state.activeRole = roles[0];
+          state.roleSwitcherOpen = false;
+        } else if (roles.length > 1) {
+          state.activeRole = null;
+          state.roleSwitcherOpen = true;
+        } else {
+          state.activeRole = null;
+          state.roleSwitcherOpen = false;
+        }
+
+        // backward compat: keep currentRole in sync
+        const first = roles[0];
         state.currentRole = first ? { name: first.name } : null;
       })
       .addCase(profileFetched, (state, action) => {
@@ -98,9 +119,18 @@ const authSlice = createSlice({
       })
       .addCase(authCleared, () => initialState)
       .addCase(userLoggedOut, () => initialState)
+      .addCase(roleSelected, (state, action) => {
+        state.activeRole = action.payload;
+        state.roleSwitcherOpen = false;
+        state.currentRole = { name: action.payload.name };
+      })
       .addCase(REHYDRATE, (_state, action: AnyAction) => {
         if (action.payload?.auth) {
-          return { ...action.payload.auth, bootstrapComplete: false };
+          return {
+            ...action.payload.auth,
+            bootstrapComplete: false,
+            roleSwitcherOpen: false,
+          };
         }
         return initialState;
       });
@@ -115,6 +145,7 @@ export const {
   setCurrentProfileId,
   setProfiles,
   clearAuth,
+  roleSwitcherOpened,
 } = authSlice.actions;
 
 export const authReducer = authSlice.reducer;

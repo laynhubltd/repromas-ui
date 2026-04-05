@@ -194,6 +194,67 @@ Shared logic belongs in shared/
 
 ---
 
+# Tab Sub-Features (Feature-within-Feature)
+
+Some features (e.g. `settings`) are composed of multiple tabs. Each tab is a **sub-feature** and must follow the same feature structure pattern.
+
+## Sub-Feature Location
+
+```
+src/features/<feature>/tabs/<sub-feature>/
+```
+
+Example:
+
+```
+src/features/settings/tabs/
+  curriculum-version/
+    api/
+      curriculumVersionApi.ts   — injectEndpoints into baseApi
+    components/
+      CurriculumVersionTab.tsx  — view only
+      CurriculumVersionBanner.tsx
+      CreateVersionModal.tsx    — view only
+      EditVersionModal.tsx      — view only
+      DeleteVersionModal.tsx    — view only
+    hooks/
+      useCurriculumVersionTab.ts
+      useCreateVersionModal.ts
+      useEditVersionModal.ts
+      useDeleteVersionModal.ts
+    types/
+      curriculum-version.ts
+    utils/
+      extractNameError.ts
+    index.ts                    — barrel: export { CurriculumVersionTab }
+```
+
+## Sub-Feature Rules
+
+```
+Each tab sub-feature is self-contained
+API endpoints live in tabs/<sub-feature>/api/ via injectEndpoints
+Components live in tabs/<sub-feature>/components/ — views only
+Hooks live in tabs/<sub-feature>/hooks/ — all business logic
+Types live in tabs/<sub-feature>/types/
+Utils live in tabs/<sub-feature>/utils/
+The parent feature's settingsApi.ts only contains shared/cross-tab endpoints
+The tab component is exported via tabs/<sub-feature>/index.ts
+Settings.tsx imports tabs from ../tabs/<sub-feature>
+```
+
+## Sub-Feature API Pattern
+
+```ts
+// tabs/curriculum-version/api/curriculumVersionApi.ts
+const curriculumVersionApi = baseApi.injectEndpoints({
+  endpoints: (builder) => ({ ... }),
+});
+export const { useGetCurriculumVersionsQuery, ... } = curriculumVersionApi;
+```
+
+---
+
 # Server vs Client State
 
 ## Server State
@@ -681,6 +742,71 @@ Avoid:
 
 ---
 
+# Hook-Driven Architecture (Container / Presentational Pattern)
+
+Every feature component MUST be split into two distinct files.
+
+## The View (`[ComponentName].tsx`)
+
+The `.tsx` file is the Presentational Component.
+
+Rules:
+```
+MUST NOT contain business logic
+MUST NOT contain data fetching (RTK Query hooks, axios, fetch)
+MUST NOT contain complex useState or useEffect
+MUST NOT contain form submission or data manipulation
+MUST invoke a single custom hook at the top
+MAY contain pure UI state (e.g. isDropdownOpen) — prefer moving to hook
+```
+
+## The Hook (`use[ComponentName].ts`)
+
+The `use[ComponentName].ts` file is the Container / ViewModel.
+
+Rules:
+```
+MUST handle 100% of business logic
+MUST contain all API calls, side effects, and form validation
+MUST return a structured object with data and functions for the View
+SHOULD group return into logical sections: state, actions, flags
+```
+
+## Example Structure
+
+```
+tabs/curriculum-version/
+  api/
+    curriculumVersionApi.ts
+  components/
+    CurriculumVersionTab.tsx       — view only
+    CreateVersionModal.tsx         — view only
+    EditVersionModal.tsx           — view only
+    DeleteVersionModal.tsx         — view only
+  hooks/
+    useCurriculumVersionTab.ts     — all tab logic
+    useCreateVersionModal.ts       — all create logic
+    useEditVersionModal.ts         — all edit logic
+    useDeleteVersionModal.ts       — all delete logic
+  types/
+    curriculum-version.ts
+  utils/
+    extractNameError.ts
+  index.ts
+```
+
+## Example Hook Return Shape
+
+```ts
+return {
+  state: { versions, isLoading, isError, search, page },
+  actions: { handleSearchChange, handleActivate, setPage },
+  flags: { hasData: versions.length > 0 },
+};
+```
+
+---
+
 # Testing Strategy
 
 Testing expectations:
@@ -756,6 +882,68 @@ Automatic Refetch
 
 ---
 
+# Error Handling Rule
+
+All RTK Query mutation errors in hooks MUST be handled using `parseApiError` from `@/shared/utils/error/parseApiError`.
+
+## Imports
+
+```ts
+import { applyFormErrors } from "@/shared/utils/error/applyFormErrors";
+import { parseApiError } from "@/shared/utils/error/parseApiError";
+```
+
+## Standard catch block pattern
+
+For hooks with a form, use `applyFormErrors` — it handles field errors and falls back to the form-level error in one call:
+
+```ts
+import { applyFormErrors } from "@/shared/utils/error/applyFormErrors";
+import { parseApiError } from "@/shared/utils/error/parseApiError";
+
+} catch (err: unknown) {
+  applyFormErrors(parseApiError(err), form, setFormError);
+}
+```
+
+For hooks without a form (e.g. delete modals):
+
+```ts
+import { parseApiError } from "@/shared/utils/error/parseApiError";
+
+} catch (err: unknown) {
+  const parsed = parseApiError(err);
+  setError(parsed.message);
+}
+```
+
+## Rules
+
+```
+MUST use parseApiError for all RTK Query catch blocks in hooks
+MUST use applyFormErrors(parseApiError(err), form, setFormError) for form hooks
+MUST NOT use hardcoded fallback error strings
+MUST NOT use extractNameError (removed — replaced by parseApiError)
+MUST NOT write custom error parsing logic in hooks or components
+MUST NOT manually iterate fieldErrors — use applyFormErrors instead
+parseApiError always returns a non-null ParsedApiError — no null checks needed
+message is always a non-empty string — safe to display directly
+```
+
+## ParsedApiError shape
+
+```ts
+{
+  type: ApiErrorType;          // error category enum
+  status: number;              // HTTP status code
+  message: string;             // user-facing message, never empty
+  fieldErrors: Record<string, string>;  // field → message map, {} when none
+  raw: ApiErrorBody;           // original parsed body
+}
+```
+
+---
+
 # Forbidden Patterns
 
 Agents must NEVER generate:
@@ -795,6 +983,228 @@ scalable
 maintainable
 predictable state management
 clean domain boundaries
+```
+
+---
+
+# Feature UI/UX Rules
+
+## Purpose
+This section defines **standard UI/UX rules and principles** for building consistent, scalable, and user-friendly frontend features.
+
+---
+
+## Core Principles
+
+### 1. Clarity Over Complexity
+- Keep UI simple and intuitive
+- Avoid unnecessary elements
+- Use clear, user-friendly labels
+
+### 2. Consistency
+- Reuse patterns across features
+- Maintain uniform spacing, typography, and actions
+
+### 3. Feedback & Responsiveness
+- Always show:
+  - Loading states
+  - Success states
+  - Error states
+
+### 4. Progressive Disclosure
+- Show only what is necessary
+- Hide advanced options until needed
+
+---
+
+## Feature Structure Standard
+
+### 1. Overview (Dashboard Section)
+Each feature MUST include:
+- Metrics cards
+- Status indicators
+- Quick actions (e.g., "Create")
+
+### 2. Explorer (Feature Introduction)
+Each feature MUST include:
+- What the feature does
+- Why it matters
+- How to use it
+
+---
+
+## Data Display Rules
+
+### 1. Small Data Sets → List Component
+Use List when:
+- ≤ 4–5 fields
+- Simple structure
+
+### 2. Large Data Sets → Table Component
+Use Table when:
+- > 5 fields
+- Structured data
+
+**Table Requirements:**
+- Sortable columns
+- Pagination
+- Filtering/search
+
+### 3. Fixed Columns
+Use sticky/fixed columns when:
+- Key identifiers (e.g., Name, ID) must remain visible
+- Horizontal scrolling exists
+
+### 4. Mobile Responsiveness (MANDATORY)
+
+On mobile screens, tables MUST:
+- Support **horizontal scrolling**, OR
+- Automatically transform into a **stacked list/card layout**
+
+**Preferred priority:**
+1. Stacked list (best UX)
+2. Horizontal scroll (fallback)
+
+**Rules:**
+- Never break layout
+- Never truncate critical data without access
+- Maintain action accessibility
+
+---
+
+## Actions & Interaction Rules
+
+### 1. Action Placement
+- Primary actions → top right
+- Row actions → right side
+
+### 2. Action Density Rule (IMPORTANT)
+
+- If actions ≤ 2 → show inline (icons or buttons)
+- If actions > 2 → use **three vertical dots (⋮) dropdown menu**
+
+**Dropdown Requirements:**
+- Clearly labeled actions
+- Group destructive actions (e.g., Delete) separately
+- Maintain consistent ordering across app
+
+### 3. Inline Actions
+- Allow quick edit/delete where possible
+- Avoid unnecessary navigation
+
+### 4. Confirmation Patterns
+Use confirmation for:
+- Delete
+- Critical updates
+
+---
+
+## Create / Edit Patterns
+
+### Modal-First Approach (MANDATORY)
+
+All Create operations MUST use modals.
+
+### Modal Sizing Rules
+
+| Form Size | UI Pattern |
+|---|---|
+| ≤ 6 fields | Small Modal |
+| 6–12 fields | Large Modal |
+| Complex/Multi-step | Full Page |
+
+### Modal UX Requirements
+- Clear title
+- Primary CTA (Save/Create)
+- Secondary CTA (Cancel)
+- Inline validation
+- Loading state on submit
+
+---
+
+## Form Design Rules
+
+### Validation
+- Validate early
+- Show clear error messages
+
+### Field Types
+- Select → predefined values
+- Toggle → boolean
+- Text → free input
+
+### Grouping
+- Group related fields
+- Use sections when needed
+
+---
+
+## State Handling
+
+### 1. Empty State
+- Helpful message
+- CTA (e.g., "Create first item")
+
+### 2. Loading State
+- Skeletons or spinners
+
+### 3. Error State
+- Clear message
+- Retry option
+
+---
+
+## Performance Rules
+- Use pagination for large data
+- Avoid over-fetching
+- Cache where possible
+
+---
+
+## Accessibility Rules
+- Keyboard navigation support
+- Proper labels
+- Good contrast ratios
+
+---
+
+## UX Enhancements
+
+### Search & Filters
+- Required for large datasets
+
+### Sorting
+- Default meaningful sort
+- Allow override
+
+### Tooltips
+- Use for icons or complex info
+
+---
+
+## UI/UX Anti-Patterns (Avoid)
+
+```
+❌ Full-page forms for simple create
+❌ Tables for small datasets
+❌ Too many fields in one view
+❌ No user feedback
+❌ Hidden critical actions
+```
+
+---
+
+## UI/UX Summary Checklist
+
+```
+✔ Dashboard + Explorer present
+✔ Create uses Modal
+✔ Small data → List
+✔ Large data → Table
+✔ Tables responsive (stack/scroll)
+✔ Actions follow dropdown rule
+✔ States handled properly
+✔ UI consistent
 ```
 
 ---

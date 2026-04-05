@@ -7,6 +7,7 @@ export const ApiTagTypes = {
   Level: "Level",
   AcademicStructure: "AcademicStructure",
   Theme: "Theme",
+  CurriculumVersion: "CurriculumVersion",
 } as const;
 
 export type ApiTagLiteral = (typeof ApiTagTypes)[keyof typeof ApiTagTypes];

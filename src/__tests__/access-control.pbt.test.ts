@@ -37,6 +37,8 @@ function makeAuthStore(permissions: string[], roles: { name: string; scope: stri
         bootstrapComplete: true,
         roles,
         permissions,
+        activeRole: null,
+        roleSwitcherOpen: false,
       },
     },
   });
@@ -44,7 +46,7 @@ function makeAuthStore(permissions: string[], roles: { name: string; scope: stri
 
 function wrapWithStore(store: ReturnType<typeof makeAuthStore>) {
   return ({ children }: { children: React.ReactNode }) =>
-    React.createElement(Provider, { store }, children);
+    React.createElement(Provider, { store, children });
 }
 
 // ── P-1: hasPermission iff permissions.includes(p) ───────────────────────────
@@ -241,19 +243,17 @@ describe("P-7: PermissionGuard render behavior", () => {
     withFallback: boolean,
   ) {
     const store = makeAuthStore(permissions);
+    const child = React.createElement("span", null, CHILD_TEXT);
+    const guardProps = {
+      permission,
+      requireAll,
+      fallback: withFallback ? React.createElement("span", null, FALLBACK_TEXT) : undefined,
+      children: child,
+    };
     return render(
       React.createElement(
         Provider,
-        { store },
-        React.createElement(
-          PermissionGuard,
-          {
-            permission,
-            requireAll,
-            fallback: withFallback ? React.createElement("span", null, FALLBACK_TEXT) : undefined,
-          },
-          React.createElement("span", null, CHILD_TEXT),
-        ),
+        { store, children: React.createElement(PermissionGuard, guardProps) },
       ),
     );
   }
@@ -316,7 +316,7 @@ describe("P-7: PermissionGuard render behavior", () => {
         (otherPerm) => {
           const { queryByText, unmount } = renderGuard(
             [otherPerm],
-            ["required:perm"] as Permission[],
+            ["required:perm"] as unknown as Permission[],
             false,
             true,
           );
@@ -336,7 +336,7 @@ describe("P-7: PermissionGuard render behavior", () => {
         (otherPerm) => {
           const { queryByText, unmount } = renderGuard(
             [otherPerm],
-            ["required:perm"] as Permission[],
+            ["required:perm"] as unknown as Permission[],
             false,
             false,
           );

@@ -1,0 +1,22 @@
+/* Ghost / pill-segment variant overrides for ui-kit Tabs */
+
+.ui-kit-tabs--ghost .ant-tabs-nav-list {
+  background: var(--tabs-ghost-bg);
+  border-radius: 8px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.ui-kit-tabs--ghost .ant-tabs-tab {
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.ui-kit-tabs--ghost .ant-tabs-tab-active {
+  background: var(--tabs-ghost-active-bg);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.ui-kit-tabs--ghost .ant-tabs-ink-bar {
+  display: none;
+}
