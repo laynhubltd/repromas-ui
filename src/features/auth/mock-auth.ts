@@ -3,14 +3,14 @@
  * Enable with VITE_USE_MOCK_AUTH=true in .env.
  */
 
+import { Permission } from "@/features/access-control/permissions";
 import type {
-  LoginRequest,
-  LoginResponse,
-  SimpleUserProfile,
-  UserProfile,
-  UserRole,
+    ApiRole,
+    LoginRequest,
+    LoginResponse,
+    SimpleUserProfile,
+    UserProfile,
 } from "./types";
-import { Privilege } from "@/features/access-control/privileges-enum";
 
 const MOCK_JWT_EXP = 9999999999; // Far future so token is never “expired”
 
@@ -31,10 +31,17 @@ function createMockJwt(sub = "mock-user"): string {
   return `${header}.${payload}.${signature}`;
 }
 
-const MOCK_ROLE: UserRole = {
+const MOCK_ROLE: ApiRole = {
   name: "Admin",
-  privileges: [Privilege.DashboardRead, Privilege.AdmissionRead, Privilege.AdmissionCreate, Privilege.AdmissionUpdate],
+  scope: "GLOBAL",
+  scopeReferenceId: null,
 };
+
+const MOCK_PERMISSIONS: string[] = [
+  Permission.FacultiesList,
+  Permission.RolesList,
+  Permission.SystemConfigsList,
+];
 
 const MOCK_PROFILE: SimpleUserProfile = {
   profileId: "mock-profile-1",
@@ -56,6 +63,8 @@ export function getMockLoginResponse(credentials: LoginRequest): LoginResponse {
   return {
     token,
     refresh_token: `mock-refresh-${credentials.email}-${Date.now()}`,
+    roles: [MOCK_ROLE],
+    permissions: MOCK_PERMISSIONS,
     user,
     profiles: [MOCK_PROFILE],
   };

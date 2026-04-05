@@ -1,10 +1,10 @@
 import { baseApi } from "@/app/api/baseApi";
 import { ApiTagTypes } from "@/shared/types/apiTagTypes";
 import type {
-  AcademicSession,
-  Level,
-  Semester,
-  SemesterType,
+    AcademicSession,
+    Level,
+    Semester,
+    SemesterType,
 } from "@/shared/types/settings-types";
 
 interface CreateSessionRequest {

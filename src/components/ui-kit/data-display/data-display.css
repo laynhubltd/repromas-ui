@@ -1,0 +1,43 @@
+.ui-kit-table--density-compact .ant-table-thead > tr > th,
+.ui-kit-table--density-compact .ant-table-tbody > tr > td {
+  padding: 8px 12px;
+}
+
+.ui-kit-table--density-comfortable .ant-table-thead > tr > th,
+.ui-kit-table--density-comfortable .ant-table-tbody > tr > td {
+  padding: 12px 16px;
+}
+
+.ui-kit-table--density-spacious .ant-table-thead > tr > th,
+.ui-kit-table--density-spacious .ant-table-tbody > tr > td {
+  padding: 16px 20px;
+}
+
+.ui-kit-item-list__interactive {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.ui-kit-item-list__interactive:hover {
+  background: var(--ant-colorFillTertiary);
+}
+
+.ui-kit-item-list__interactive:focus-visible {
+  outline: 2px solid var(--ant-colorPrimary);
+  outline-offset: 2px;
+}
+
+.ui-kit-item-list__interactive[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.ui-kit-item-list__chevron {
+  color: var(--ant-colorTextQuaternary);
+  font-size: 12px;
+}

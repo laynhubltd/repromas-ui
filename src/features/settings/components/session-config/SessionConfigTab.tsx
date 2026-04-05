@@ -1,8 +1,7 @@
+import { Tabs } from "@/components/ui-kit";
 import { useIsMobile } from "@/hooks/useBreakpoint";
-import { useToken } from "@/shared/hooks/useToken";
 import type { SemesterType, SessionWithSemesters } from "@/shared/types/settings-types";
 import { CalendarOutlined, UnorderedListOutlined } from "@ant-design/icons";
-import { Tabs } from "antd";
 import { SemesterTypesTab, SessionsAndSemesters } from "./components";
 
 export interface SessionConfigTabProps {
@@ -36,58 +35,50 @@ export function SessionConfigTab({
   onDeleteSemesterType,
 }: SessionConfigTabProps) {
   const isMobile = useIsMobile();
-  const token = useToken();
-
-  const tabItems = [
-    {
-      key: SUB_TAB_SESSIONS,
-      label: (
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-          <CalendarOutlined />
-          Sessions & Semesters
-        </span>
-      ),
-      children: (
-        <div style={{ padding: isMobile ? 16 : 32 }}>
-          <SessionsAndSemesters
-            data={sessionsWithSemesters}
-            loading={sessionsLoading}
-            onAddSession={onAddSession}
-            onAddSemester={onAddSemester}
-            onEditSemester={onEditSemester}
-            onSessionMenu={onSessionMenu}
-          />
-        </div>
-      ),
-    },
-    {
-      key: SUB_TAB_TYPES,
-      label: (
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-          <UnorderedListOutlined />
-          Semester Types
-        </span>
-      ),
-      children: (
-        <div style={{ padding: isMobile ? 16 : 32 }}>
-          <SemesterTypesTab
-            data={semesterTypes}
-            loading={semesterTypesLoading}
-            onAdd={onAddSemesterType}
-            onEdit={onEditSemesterType}
-            onDelete={onDeleteSemesterType}
-          />
-        </div>
-      ),
-    },
-  ];
 
   return (
     <Tabs
       tabPosition={isMobile ? "top" : "left"}
-      items={tabItems}
-      tabBarGutter={0}
-      style={{ minHeight: 560, paddingTop: `${token.sizeXS}px` }}
+      size="sm"
+      density="compact"
+      variant="default"
+      style={{ minHeight: 560 }}
+      aria-label="Session configuration sections"
+      items={[
+        {
+          key: SUB_TAB_SESSIONS,
+          label: "Sessions & Semesters",
+          icon: <CalendarOutlined />,
+          children: (
+            <div style={{ padding: isMobile ? 16 : 32 }}>
+              <SessionsAndSemesters
+                data={sessionsWithSemesters}
+                loading={sessionsLoading}
+                onAddSession={onAddSession}
+                onAddSemester={onAddSemester}
+                onEditSemester={onEditSemester}
+                onSessionMenu={onSessionMenu}
+              />
+            </div>
+          ),
+        },
+        {
+          key: SUB_TAB_TYPES,
+          label: "Semester Types",
+          icon: <UnorderedListOutlined />,
+          children: (
+            <div style={{ padding: isMobile ? 16 : 32 }}>
+              <SemesterTypesTab
+                data={semesterTypes}
+                loading={semesterTypesLoading}
+                onAdd={onAddSemesterType}
+                onEdit={onEditSemesterType}
+                onDelete={onDeleteSemesterType}
+              />
+            </div>
+          ),
+        },
+      ]}
     />
   );
 }

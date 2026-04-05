@@ -1,18 +1,18 @@
-import { Spin } from "antd";
-import { Suspense } from "react";
-import { Outlet, ScrollRestoration } from "react-router-dom";
+import FullscreenLoader from "@/components/system/FullscreenLoader";
+import { Suspense, useEffect } from "react";
+import { Outlet, useLocation } from "react-router-dom";
 
 export default function RouterShell() {
+  const location = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [location.pathname]);
+
   return (
     <>
-      <ScrollRestoration />
       <Suspense
-        fallback={
-          <Spin
-            tip="Loading…"
-            style={{ margin: "2rem auto", display: "block" }}
-          />
-        }
+        fallback={<FullscreenLoader label="Loading..." />}
       >
         <Outlet />
       </Suspense>

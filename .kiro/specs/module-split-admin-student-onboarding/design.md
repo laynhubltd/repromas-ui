@@ -1,166 +1,115 @@
-# Design Document — module-split-admin-student-onboarding
+# Design Document — shared-auth-domain-role-mounting
 
 ## Overview
 
-This design introduces module-level boundaries without breaking existing architecture rules in `agent.md`.
+This design implements module mounting based on hostname + authenticated role, while reusing the existing auth and RTK Query implementation exactly as-is.
 
-Key decisions:
+## Architecture
 
-- Keep one host React app and one shared Redux store.
-- Move from one central route file to module route factories.
-- Preserve shared API infrastructure (`baseApi`, `axiosBaseQuery`, `axiosInstance`).
-- Use Vite `manualChunks` + route lazy-loading for faster initial load.
+### Shared Core
 
-## Module Boundaries
+- `src/app/api/*`: axios + RTK Query base infra
+- `src/app/store.ts`: central store
+- `src/shared/*`: shared components/hooks/utils
+- `src/features/auth/*`: existing auth flow and guards (reused without refactor)
 
-### 1) Onboarding Module
+### Modules
 
-Owns:
+- `src/modules/onboarding/*`
+- `src/modules/admin/*`
+- `src/modules/student/*`
 
-- auth screens (`Login`, `SignUp`, `ForgotPassword`)
-- role-selection flow
-- unauthorized/public route screens
+## Host Resolution Flow
 
-Does not own:
+1. Parse `window.location.hostname`.
+2. Determine host type:
+   - apex: `repromas.com`
+   - tenant: `<slug>.repromas.com`
+3. For tenant host, resolve tenant metadata by slug (status, id, branding).
+4. If tenant invalid: show tenant-not-found page.
 
-- admin dashboard/content routes
-- student portal content
+## Auth + Role Resolution Flow (tenant host)
 
-### 2) Admin Module
+1. Check existing session using current auth state (`state.auth`).
+2. If not authenticated: show/login route in tenant context.
+3. If authenticated: reuse current profile/role resolution flow.
+4. Verify tenant claim/profile tenant matches hostname slug mapping.
+5. Mount module based on role:
+   - admin role(s): mount Admin router
+   - student role(s): mount Student router
+6. If role missing or mismatched: mount Unauthorized page.
 
-Owns:
+Security note:
 
-- dashboard shell and nav
-- dashboard, settings, academic-structure, staff
-- admin-only access-control mapping
+- Follow deny-by-default.
+- Validate permissions on every request and route guard decision.
 
-### 3) Student Module
+## Router Design
 
-Owns:
+Use React Router route objects and lazy route modules.
 
-- student shell, student nav
-- student workflows (progressive rollout)
+- `src/app/routing/host-router.tsx`: orchestrates domain and role resolution.
+- `src/modules/onboarding/routes.tsx`
+- `src/modules/admin/routes.tsx`
+- `src/modules/student/routes.tsx`
 
-## Routing Design
+The host router does not hardcode feature pages; it mounts module route arrays.
 
-### Host Router
+Implementation boundary:
 
-Replace `AppRouter` internals with module composition:
+- Host router/module mounter can read existing auth state and use existing guards.
+- Host router/module mounter must not alter auth API endpoints, auth reducers, auth listener behavior, or RTK Query wiring.
 
-- `src/app/routing/module-registry.ts`: enables modules from env + runtime conditions.
-- `src/app/routing/host-router.tsx`: builds final route list from registered modules.
+## Tenant Signup and Custom Domain Path
 
-### Module Route Factories
+In Onboarding (apex):
 
-Each module exports a factory that returns `RouteObject[]` and receives shared context.
+1. School submits tenant signup form.
+2. Backend provisions tenant and slug/domain mapping.
+3. Frontend shows success state with tenant URL (example: `fpb.repromas.com`).
+4. User proceeds to tenant domain for authentication and role-based app entry.
 
-Suggested interfaces:
+## Vite Performance Strategy
+
+Apply module-aware chunking:
+
+- `module-onboarding`
+- `module-admin`
+- `module-student`
+- `vendor-react`
+- `vendor-redux`
+- `vendor-ui` (antd/icons)
+
+Implementation notes:
+
+- Keep module route entry points lazy-loaded.
+- Keep apex onboarding path free of admin/student imports.
+- Use chunk warnings/budgets to control regressions.
+
+## Recommended runtime contracts
 
 ```ts
-export type ModuleRouteFactory = (ctx: ModuleContext) => RouteObject[];
+type TenantContext = {
+  hostType: 'apex' | 'tenant';
+  slug?: string;
+  tenantId?: string;
+  tenantStatus?: 'active' | 'suspended' | 'unknown';
+};
 
-export type ModuleContext = {
-  isAuthenticated: boolean;
-  hasRouteAccess: (path: string) => boolean;
-  guards: {
-    withAuthGuard: <T extends object>(Component: ComponentType<T>) => ComponentType<T>;
-  };
+type AuthContext = {
+  authenticated: boolean;
+  userId?: string;
+  role?: 'admin' | 'student';
+  tenantId?: string;
 };
 ```
 
-### Route Resolution Rules
+## External Best-Practice References
 
-- Onboarding routes are always mounted unless explicitly disabled.
-- Admin routes mounted when `ENABLE_ADMIN_MODULE` is true.
-- Student routes mounted when `ENABLE_STUDENT_MODULE` is true.
-- Default redirect chooses first enabled module home:
-  - onboarding if unauthenticated
-  - admin if authenticated and admin enabled
-  - student if authenticated and only student enabled
-
-## Shared Infrastructure
-
-### Store
-
-Keep centralized store, but split registration concerns:
-
-- static reducers: `auth`, `theme`, shared infra reducers
-- module reducers: exported reducer maps from each module
-
-Suggested helper:
-
-```ts
-createAppStore({ enabledModules }): Store
-```
-
-### APIs
-
-- Keep `baseApi` in `src/app/api/baseApi.ts`.
-- Keep module endpoints in module folders using `baseApi.injectEndpoints`.
-- Keep `authApi` standalone if security isolation is needed (current behavior).
-
-### Shared Components/Hooks
-
-Promote only domain-agnostic artifacts to `src/shared`:
-
-- UI primitives
-- form helpers
-- generic hooks (`useDebounce`, `usePagination`)
-
-If a component mentions a domain entity (`Faculty`, `Session`, `StudentRecord`), keep it module-local.
-
-## Vite Chunking Design
-
-Update `vite.config.ts` with manual chunk partitioning.
-
-```ts
-build: {
-  rollupOptions: {
-    output: {
-      manualChunks(id) {
-        if (id.includes('node_modules')) {
-          if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) return 'vendor-react';
-          if (id.includes('antd') || id.includes('@ant-design')) return 'vendor-antd';
-          if (id.includes('@reduxjs/toolkit') || id.includes('react-redux')) return 'vendor-redux';
-          return 'vendor-misc';
-        }
-
-        if (id.includes('/src/modules/onboarding/')) return 'module-onboarding';
-        if (id.includes('/src/modules/admin/')) return 'module-admin';
-        if (id.includes('/src/modules/student/')) return 'module-student';
-      },
-    },
-  },
-}
-```
-
-Notes:
-
-- Keep chunks coarse at module boundary first; optimize further only with analyzer data.
-- Keep route-level `lazy(() => import(...))` for major pages.
-
-## Migration Mapping
-
-### Phase-1 file moves (logical ownership)
-
-- `src/features/auth/*` -> `src/modules/onboarding/features/auth/*`
-- `src/features/dashboard/*` -> `src/modules/admin/features/dashboard/*`
-- `src/features/academic-structure/*` -> `src/modules/admin/features/academic-structure/*`
-- `src/features/settings/*` -> `src/modules/admin/features/settings/*`
-- `src/features/staff/*` -> `src/modules/admin/features/staff/*`
-
-Keep compatibility barrel exports during migration to avoid broken imports.
-
-## Risks and Mitigations
-
-1. Risk: Circular imports during move.
-Mitigation: create temporary compatibility exports and migrate imports in batches.
-
-2. Risk: Route regressions.
-Mitigation: add route snapshot tests and smoke tests per module.
-
-3. Risk: bundle split not effective.
-Mitigation: use `vite build --analyze` equivalent tooling and enforce budgets.
-
-4. Risk: shared layer becoming a dump.
-Mitigation: require promotion checklist before moving module code into `shared`.
+- React Router route objects: https://reactrouter.com/start/data/route-object
+- React Router `createBrowserRouter`: https://reactrouter.com/api/data-routers/createBrowserRouter/
+- Vite build options (`rolldownOptions`): https://vite.dev/config/build-options.html
+- Rollup/Rolldown `manualChunks`: https://rollupjs.org/configuration-options/#output-manualchunks
+- OWASP authorization guidance: https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html
+- Domain management for multi-tenant platforms: https://vercel.com/docs/multi-tenant/domain-management
+- Wildcard/custom hostname behavior: https://developers.cloudflare.com/cloudflare-for-platforms/cloudflare-for-saas/start/getting-started/

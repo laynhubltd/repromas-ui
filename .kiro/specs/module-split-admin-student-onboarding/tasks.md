@@ -1,76 +1,68 @@
-# Implementation Plan: module-split-admin-student-onboarding
+# Implementation Plan: shared-auth-domain-role-mounting
 
 ## Overview
 
-Implement the module split incrementally so the app stays runnable at every checkpoint. Start with routing composition and compatibility layers, then move features, then optimize chunking.
+Implement in phases focused only on module mounting/orchestration. Existing auth and RTK Query remain unchanged.
 
 ## Tasks
 
-- [ ] 1. Create module scaffolding
-  - Create directories:
-    - `src/modules/onboarding/{routes,features}`
-    - `src/modules/admin/{routes,features}`
-    - `src/modules/student/{routes,features}`
-  - Add module entry barrels (`index.ts`) for each module.
+- [ ] 1. Build hostname/tenant resolver
+  - Add hostname parser utility (apex vs tenant subdomain).
+  - Add tenant bootstrap query by slug.
+  - Add tenant-not-found/suspended handling.
 
-- [ ] 2. Introduce host module registry
-  - Add `src/app/routing/module-registry.ts` with module enable flags from env.
-  - Define module metadata and route factory contracts.
+- [ ] 2. Implement host router orchestration
+  - Create `src/app/routing/host-router.tsx`.
+  - Route by host type:
+    - apex -> onboarding module routes
+    - tenant -> auth+role flow
 
-- [ ] 3. Refactor AppRouter into host composition
-  - Add `src/app/routing/host-router.tsx` that composes enabled module routes.
-  - Keep `RouterShell` and fallback behavior consistent.
-  - Wire `App.tsx` to the new host router.
+- [x] 3. Extract Onboarding module
+  - Move landing + tenant signup pages into `src/modules/onboarding`.
+  - Ensure onboarding is mountable standalone on apex domain.
 
-- [ ] 4. Build onboarding route module
-  - Create `onboarding-routes.tsx` and move auth route declarations from `AppRouter`.
-  - Include `/auth/login`, `/auth/signup`, `/auth/forgot-password`, `/unauthorized`, `/role-selection`.
-  - Keep lazy loading and existing auth components.
+- [x] 4. Extract Admin module routes
+  - Move admin route declarations to `src/modules/admin/routes.tsx`.
+  - Keep existing admin pages and guards operational.
 
-- [ ] 5. Build admin route module
-  - Create `admin-routes.tsx` and move admin route declarations.
-  - Reuse `DashboardShell` and auth guard.
-  - Include dashboard, settings, academic-structure, staffs routes.
+- [x] 5. Extract Student module routes
+  - Create `src/modules/student/routes.tsx`.
+  - Add minimal student shell and role-guarded pages.
 
-- [ ] 6. Build student route module
-  - Create `student-routes.tsx` with student shell + placeholder pages (initially minimal).
-  - Protect with role/privilege checks where needed.
+- [x] 6. Implement tenant-domain auth flow (reuse existing auth)
+  - On tenant domain, force auth before mounting Admin/Student modules.
+  - Reuse current profile/role/auth flow as-is.
+  - Validate tenant claim against resolved hostname tenant in mounter logic.
 
-- [ ] 7. Move feature ownership to module folders
-  - Move existing features into target module folders in batches.
-  - Keep temporary compatibility exports under `src/features/*` until import migration is complete.
+- [x] 7. Implement role-based module mount
+  - Map role -> module (`admin` => Admin, `student` => Student).
+  - Add explicit unauthorized route for unknown/mismatched roles.
 
-- [ ] 8. Normalize shared layer contracts
-  - Audit components/hooks/utils used by 2+ modules.
-  - Move only domain-agnostic items to `src/shared`.
-  - Remove direct admin->onboarding or student->admin imports.
+- [ ] 8. Apply Vite chunking strategy
+  - Add manual chunk strategy for module and vendor chunks.
+  - Verify apex loads onboarding chunk without admin/student chunks.
 
-- [ ] 9. Modular reducer and API registration
-  - Add module reducer maps and merge in store factory.
-  - Keep `baseApi` shared and module endpoints local.
-  - Preserve `authApi` standalone setup if retained.
+- [ ] 9. Add test coverage
+  - Unit tests for hostname parsing and module selection.
+  - Route tests for apex/tenant and auth/role permutations.
+  - Security tests for deny-by-default behavior.
 
-- [ ] 10. Apply Vite module chunk strategy
-  - Add `build.rollupOptions.output.manualChunks` in `vite.config.ts`.
-  - Define chunks for `module-onboarding`, `module-admin`, `module-student`, and vendors.
+- [ ] 10. Add rollout flags and rollback path
+  - Feature flags for new host router and module mounting.
+  - Safe fallback to legacy router while validating in staging.
 
-- [ ] 11. Add performance guardrails
-  - Capture baseline bundle output.
-  - Add size budget checks for initial and async chunks.
-  - Verify onboarding-first route loads only onboarding + required vendors.
-
-- [ ] 12. Regression and route tests
-  - Add routing tests per module (enabled/disabled scenarios).
-  - Add smoke tests for auth redirect behavior and fallback routing.
+- [ ] 11. Performance and regression validation
+  - Run build analysis and establish chunk-size budgets.
   - Run `npx tsc --noEmit` and `npx vitest --run`.
 
-- [ ] 13. Cleanup and remove compatibility layer
-  - Remove temporary legacy route code and proxy exports.
-  - Update docs (`README`, architecture docs) to module model.
+- [ ] 12. Scope guardrail validation
+  - Confirm no auth files were modified for behavior changes.
+  - Confirm no RTK Query base wiring changes were introduced.
 
-## Rollout Strategy
+## Rollout Order
 
-1. Ship host router + onboarding/admin modules first (student disabled by default).
-2. Enable student module in staging with placeholder routes.
-3. Migrate student feature set and enable in production.
-4. Turn on strict module boundary lint rules after migration completes.
+1. Host resolver + host router.
+2. Apex onboarding switch.
+3. Tenant auth-gated role-based module mount (using existing auth flow).
+4. Full module extraction and compatibility cleanup.
+5. Enforce import boundaries via lint rules.

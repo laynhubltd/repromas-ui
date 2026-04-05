@@ -1,26 +1,25 @@
+import { Tabs } from "@/components/ui-kit";
 import {
-    useCreateSemesterMutation,
-    useCreateSessionMutation,
-    useGetLevelsQuery,
-    useGetSemesterTypesQuery,
-    useGetSessionsQuery,
+  useCreateSemesterMutation,
+  useCreateSessionMutation,
+  useGetLevelsQuery,
+  useGetSemesterTypesQuery,
+  useGetSessionsQuery,
 } from "@/features/settings/api/settingsApi";
-import { useToken } from "@/shared/hooks/useToken";
 import type { Level, SemesterType } from "@/shared/types/settings-types";
-import { message, Tabs, Typography } from "antd";
+import { BookOutlined, ControlOutlined, PartitionOutlined, SettingOutlined } from "@ant-design/icons";
+import { message, Typography } from "antd";
 import { useMemo, useState } from "react";
+import { CurriculumVersionTab } from "../tabs/curriculum-version";
 import { buildSessionsWithSemesters } from "../utils/mock-session-config";
-import { AdmissionConfigTab } from "./admission-config";
 import { LevelConfigTab } from "./level-config";
 import {
-    AddSemesterModal,
-    AddSessionModal,
-    SessionConfigTab,
+  AddSemesterModal,
+  AddSessionModal,
+  SessionConfigTab,
 } from "./session-config";
 
 export default function Settings() {
-  const token = useToken();
-
   // Server state — fetched via RTK Query
   const { data: sessions = [], isLoading: sessionsLoading } = useGetSessionsQuery();
   const { data: semesterTypes = [], isLoading: semesterTypesLoading } = useGetSemesterTypesQuery();
@@ -127,8 +126,23 @@ export default function Settings() {
 
   const tabItems = [
     {
+      key: "curriculum-versions",
+      label: <span><BookOutlined /> Versions</span>,
+      children: <CurriculumVersionTab />,
+    },
+    {
+      key: "level-config",
+      label: <span><PartitionOutlined /> Levels</span>,
+      children: <LevelConfigTab
+            levels={levels}
+            onAdd={handleAddLevel}
+            onEdit={handleEditLevel}
+            onDelete={handleDeleteLevel}
+          />,
+    },
+    {
       key: "session-config",
-      label: "Session Config",
+      label: <span><ControlOutlined /> Session Config</span>,
       children: (
         <SessionConfigTab
           sessionsWithSemesters={sessionsWithSemesters}
@@ -145,27 +159,8 @@ export default function Settings() {
       ),
     },
     {
-      key: "admission-config",
-      label: "Admission Config",
-      children: <AdmissionConfigTab />,
-    },
-    {
-      key: "level-config",
-      label: "Levels",
-      children: (
-        <div style={{ padding: 24 }}>
-          <LevelConfigTab
-            levels={levels}
-            onAdd={handleAddLevel}
-            onEdit={handleEditLevel}
-            onDelete={handleDeleteLevel}
-          />
-        </div>
-      ),
-    },
-    {
       key: "general",
-      label: "General",
+      label: <span><SettingOutlined /> General</span>,
       children: (
         <div style={{ padding: 24 }}>
           <Typography.Text type="secondary">
@@ -195,30 +190,14 @@ export default function Settings() {
         onSubmit={handleSubmitSemester}
         loading={addSemesterLoading}
       />
-      <div
-        style={{
-          background: token.colorBgContainer,
-          borderRadius: token.borderRadius,
-          border: `1px solid ${token.colorBorder}`,
-          overflow: "hidden",
-        }}
-      >
-        <Tabs
-          defaultActiveKey="session-config"
-          items={tabItems}
-          size="middle"
-          tabBarStyle={{
-            marginBottom: 0,
-            paddingLeft: 32,
-            paddingRight: 32,
-            paddingTop: `${token.sizeXS}px`,
-            paddingBottom: `${token.sizeXS}px`,
-            borderBottom: `1px solid ${token.colorBorderSecondary}`,
-            fontSize: 16,
-            fontWeight: 500,
-          }}
-        />
-      </div>
+      <Tabs
+        items={tabItems}
+        defaultActiveKey="curriculum-versions"
+        size="md"
+        density="spacious"
+        variant="default"
+        aria-label="Settings navigation"
+      />
     </div>
   );
 }

@@ -1,4 +1,5 @@
-export { hasRouteReadAccess } from "./access-control-util";
-export { Privilege } from "./privileges-enum";
-export { useAccessControl } from "./use-access-control";
+export { hasRouteReadAccess } from './access-control-util'
+export { PermissionGuard } from './PermissionGuard'
+export type { Permission } from './permissions'
+export { useAccessControl } from './use-access-control'
 

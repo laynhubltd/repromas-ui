@@ -1,0 +1,15 @@
+.ui-kit-notifier-focusable:focus-visible {
+  outline: 2px solid var(--color-primary, #1677ff);
+  outline-offset: 2px;
+  border-radius: 12px;
+}
+
+.ui-kit-notification-tray-list .ant-list-item {
+  padding-inline: 0;
+  border-block-end: none;
+}
+
+.ui-kit-notification-tray-group-title {
+  display: block;
+  margin-bottom: 8px;
+}

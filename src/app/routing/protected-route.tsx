@@ -5,7 +5,7 @@ import { appPaths } from "./app-path";
 
 export default function ProtectedRoute() {
   const location = useLocation();
-  const { token, currentRole } = useAuthState();
+  const { token, currentRole, permissions } = useAuthState();
   const routePath = location.pathname;
 
   if (!token) {
@@ -21,11 +21,10 @@ export default function ProtectedRoute() {
     }
   }
 
-  const isAuthorized =
-    hasRouteReadAccess({
-      userPrivileges: currentRole?.privileges,
-      routePath,
-    }) ?? true;
+  const isAuthorized = hasRouteReadAccess({
+    userPermissions: permissions,
+    routePath,
+  });
 
   if (!isAuthorized) {
     return <Navigate to={appPaths.unauthorized} replace />;
