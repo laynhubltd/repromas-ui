@@ -6,16 +6,17 @@ import type { ParsedApiError } from "./parseApiError";
  * - If fieldErrors are present, sets them on the matching form fields.
  * - Otherwise, calls setFormError with the top-level message.
  */
-export function applyFormErrors<T extends Record<string, unknown>>(
+export function applyFormErrors(
   parsed: ParsedApiError,
-  form: FormInstance<T>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  form: FormInstance<any>,
   setFormError: (message: string) => void
 ): void {
   const entries = Object.entries(parsed.fieldErrors);
   if (entries.length > 0) {
     form.setFields(
       entries.map(([name, error]) => ({
-        name: name as keyof T,
+        name,
         errors: [error],
       }))
     );

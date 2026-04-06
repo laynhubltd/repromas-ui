@@ -1,10 +1,12 @@
 import { Permission } from "@/features/access-control/permissions";
 import { useAccessControl } from "@/features/access-control/use-access-control";
 import {
-    ApartmentOutlined,
-    DashboardOutlined,
-    SettingOutlined,
-    UserOutlined,
+  ApartmentOutlined,
+  DashboardOutlined,
+  RadiusSettingOutlined,
+  SettingOutlined,
+  UsergroupAddOutlined,
+  UserOutlined,
 } from "@ant-design/icons";
 import type { ItemType } from "antd/es/menu/interface";
 import { useMemo } from "react";
@@ -28,9 +30,21 @@ export const routesMenuList: RouteMenuItem[] = [
     permission: Permission.RolesList,
   },
   {
+    key: appPaths.students,
+    icon: <UsergroupAddOutlined />,
+    label: "Students",
+    permission: Permission.RolesList,
+  },
+  {
     key: appPaths.academicStructure,
     icon: <ApartmentOutlined />,
-    label: "Faculty & Programs",
+    label: "Faculty & Departments",
+    permission: Permission.FacultiesList,
+  },
+  {
+    key: appPaths.program,
+    icon: <RadiusSettingOutlined />,
+    label: "Program",
     permission: Permission.FacultiesList,
   },
 ];

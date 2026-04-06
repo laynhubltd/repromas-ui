@@ -1,7 +1,7 @@
+import { useIsMobile } from "@/hooks/useBreakpoint";
 import { useToken } from "@/shared/hooks/useToken";
 import { LockOutlined } from "@ant-design/icons";
 import { Button, Form, Input, Modal } from "antd";
-import { useIsMobile } from "@/hooks/useBreakpoint";
 
 export interface AddDepartmentFormValues {
   code: string;
@@ -54,7 +54,7 @@ export function AddDepartmentModal({
       footer={null}
       width={isMobile ? "100%" : 520}
       style={isMobile ? { maxWidth: "100%", top: 16, paddingBottom: 0 } : undefined}
-      destroyOnClose
+      destroyOnHidden
       styles={{
         body: { paddingTop: 8, padding: isMobile ? 16 : 24 },
         header: { borderBottom: `1px solid ${token.colorBorderSecondary}` },

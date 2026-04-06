@@ -1,25 +1,25 @@
 import { appPaths } from "@/app/routing/app-path";
 import { config } from "@/config/api";
 import {
-  type AuthState,
-  clearAuth,
-  setToken,
+    type AuthState,
+    clearAuth,
+    setToken,
 } from "@/features/auth/state/auth-slice";
 import type {
-  ApiErrorData,
-  ApiErrorResponse,
+    ApiErrorData,
+    ApiErrorResponse,
 } from "@/shared/types/common-types";
 import {
-  FAILED_CONNECTION_MESSAGE,
-  FAILED_CONNECTION_STATUS,
+    FAILED_CONNECTION_MESSAGE,
+    FAILED_CONNECTION_STATUS,
 } from "@/shared/utils/constants";
 import { errorsToObject, errorsToString } from "@/shared/utils/object-utils";
 import { getTenantFromHostname } from "@/shared/utils/tenant-util";
 import { isTokenExpired } from "@/shared/utils/token-util";
 import type { BaseQueryApi, BaseQueryFn } from "@reduxjs/toolkit/query";
 import axios, { type AxiosError, type AxiosRequestConfig } from "axios";
-import { axiosInstance } from "./axiosInstance";
 import { isEndpointAllowedOnCurrentHost } from "./apex-endpoint-whitelist";
+import { axiosInstance } from "./axiosInstance";
 
 type StateWithAuth = { auth: AuthState };
 type GetStateWithAuth = () => StateWithAuth;
@@ -145,6 +145,26 @@ function parseError(error: AxiosError): ApiErrorResponse {
   }
 
   const data = error.response.data as ApiErrorData | undefined;
+
+  // API Platform error shape: { type, title, status, detail }
+  // These have no .error or .message field — serialize the whole body so
+  // parseApiError can extract type/detail/fieldErrors correctly.
+  const rawBody = error.response.data as Record<string, unknown> | undefined;
+  const isApiPlatformError =
+    rawBody &&
+    typeof rawBody === "object" &&
+    "type" in rawBody &&
+    "detail" in rawBody;
+
+  if (isApiPlatformError) {
+    return {
+      status: error.response.status,
+      error: JSON.stringify(rawBody),
+      message: (rawBody.detail as string) || (rawBody.title as string) || error.message,
+      errorFields: {},
+    };
+  }
+
   return {
     status: error.response.status,
     error: data?.error as string | undefined,

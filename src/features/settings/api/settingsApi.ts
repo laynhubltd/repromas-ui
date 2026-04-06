@@ -2,7 +2,6 @@ import { baseApi } from "@/app/api/baseApi";
 import { ApiTagTypes } from "@/shared/types/apiTagTypes";
 import type {
     AcademicSession,
-    Level,
     Semester,
     SemesterType,
 } from "@/shared/types/settings-types";
@@ -30,10 +29,6 @@ const settingsApi = baseApi.injectEndpoints({
       query: () => ({ url: "/api/academic/semester-types", method: "GET" }),
       providesTags: [ApiTagTypes.SemesterType],
     }),
-    getLevels: builder.query<Level[], void>({
-      query: () => ({ url: "/api/academic/levels", method: "GET" }),
-      providesTags: [ApiTagTypes.Level],
-    }),
     createSession: builder.mutation<AcademicSession, CreateSessionRequest>({
       query: (body) => ({
         url: "/api/academic/sessions",
@@ -56,7 +51,6 @@ const settingsApi = baseApi.injectEndpoints({
 export const {
   useGetSessionsQuery,
   useGetSemesterTypesQuery,
-  useGetLevelsQuery,
   useCreateSessionMutation,
   useCreateSemesterMutation,
 } = settingsApi;

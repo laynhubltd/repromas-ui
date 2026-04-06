@@ -40,7 +40,7 @@ function FullscreenLoader({ label }: { label: string }) {
         placeItems: "center",
       }}
     >
-      <Spin size="large" tip={label} />
+      <Spin size="large" description={label} />
     </div>
   );
 }

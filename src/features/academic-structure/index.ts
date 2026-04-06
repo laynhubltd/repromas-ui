@@ -1,1 +1,1 @@
-export { default as AcademicStructure } from "./components/AcademicStructure";
+export { AcademicStructurePage as AcademicStructure } from "./components/AcademicStructurePage";

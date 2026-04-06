@@ -8,7 +8,10 @@ const Dashboard = lazy(
   () => import("@/features/dashboard/components/Dashboard")
 );
 const AcademicStructure = lazy(
-  () => import("@/features/academic-structure/components/AcademicStructure")
+  () =>
+    import("@/features/academic-structure").then((m) => ({
+      default: m.AcademicStructure,
+    }))
 );
 const Settings = lazy(() => import("@/features/settings/components/Settings"));
 
