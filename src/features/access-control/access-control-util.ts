@@ -15,8 +15,7 @@ export function hasRouteReadAccess({
   if (!matchedKey) return true; // no matrix entry => allow
 
   const required = routePrivilegeMatrix[matchedKey] ?? [];
-
-  console.log({ required });
+  
   if (required.length === 0) return true; // empty entry => open to authenticated users
   
   return required.some((p) => userPermissions.includes(p));

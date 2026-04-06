@@ -54,7 +54,7 @@ export function AddProgramModal({
       footer={null}
       width={isMobile ? "100%" : 576}
       style={isMobile ? { maxWidth: "100%", top: 16, paddingBottom: 0 } : undefined}
-      destroyOnClose
+      destroyOnHidden
       styles={{
         body: { paddingTop: 8, padding: isMobile ? 16 : 32 },
         header: { borderBottom: `1px solid ${token.colorBorderSecondary}` },

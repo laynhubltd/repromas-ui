@@ -648,6 +648,42 @@ HttpMethod
 
 ---
 
+# TypeScript Type vs Interface Rule
+
+**Default: always use `type`.**
+
+```ts
+// ✅ correct
+type FacultyRowProps = {
+  faculty: Faculty;
+  isExpanded: boolean;
+};
+
+// ❌ avoid
+interface FacultyRowProps {
+  faculty: Faculty;
+  isExpanded: boolean;
+}
+```
+
+Use `interface` only when one of these conditions is explicitly required:
+
+| Condition | Reason |
+|---|---|
+| Declaration merging | Third-party library augmentation (e.g. extending `Window`, `ProcessEnv`) |
+| Class `implements` contract | When a class must implement a named contract |
+
+Rules:
+```
+MUST use type for all prop types, hook return shapes, API request/response shapes, and utility types
+MUST use type for all types in features/<feature>/types.ts and shared/types/
+MUST NOT use interface for component props
+MUST NOT use interface for plain data shapes (DTOs, API params, paginated responses)
+MAY use interface only for declaration merging or class implements contracts
+```
+
+---
+
 # Asset Management
 
 ```
@@ -683,6 +719,70 @@ Reusable UI components belong in:
 
 ```
 shared/ui
+```
+
+---
+
+# useToken Styling Rule (MANDATORY)
+
+All inline style values that map to a design token MUST use `useToken()` from `@/shared/hooks/useToken`. Raw hardcoded values are only permitted when the value has no token equivalent.
+
+```ts
+import { useToken } from "@/shared/hooks/useToken";
+
+const token = useToken();
+```
+
+## Token values to always use
+
+| Style property | Token |
+|---|---|
+| Colors | `token.colorPrimary`, `token.colorError`, `token.colorBorder`, `token.colorBorderSecondary`, `token.colorBgContainer`, `token.colorBgLayout`, `token.colorTextSecondary`, `token.colorTextTertiary` |
+| Border radius | `token.borderRadius` |
+| Font sizes | `token.fontSize`, `token.fontSizeSM`, `token.fontSizeLG` |
+| Spacing/padding | `token.paddingSM`, `token.paddingMD`, `token.paddingLG` |
+
+## Examples
+
+```tsx
+// ✅ correct — token values
+<div style={{
+  border: `1px solid ${token.colorBorder}`,
+  borderRadius: token.borderRadius,
+  background: token.colorBgContainer,
+  color: token.colorTextSecondary,
+  fontSize: token.fontSizeSM,
+}} />
+
+// ❌ avoid — hardcoded values that have token equivalents
+<div style={{
+  border: "1px solid #d9d9d9",
+  borderRadius: 6,
+  background: "#ffffff",
+  color: "#888",
+  fontSize: 12,
+}} />
+
+// ✅ allowed — values with no token equivalent
+<div style={{
+  display: "flex",
+  gap: 8,
+  padding: "24px 16px",
+  fontWeight: 600,
+  whiteSpace: "nowrap",
+}} />
+```
+
+## Rules
+
+```
+MUST call useToken() in any component that uses inline styles with design values
+MUST use token.colorBorder (not hardcoded hex) for borders
+MUST use token.colorBgContainer / token.colorBgLayout for backgrounds
+MUST use token.borderRadius for border-radius
+MUST use token.fontSize / token.fontSizeSM for font sizes
+MAY use raw values for layout properties (display, flex, gap, padding with fixed px, fontWeight, zIndex, etc.) that have no token equivalent
+MUST NOT import theme tokens from antd directly — always use the useToken hook
 ```
 
 ---
@@ -807,6 +907,83 @@ return {
 
 ---
 
+## Entity Hook Grouping Rule (MANDATORY)
+
+All CRUD modal logic for the same entity MUST be grouped into a single hook file named `use{Entity}Modal.ts`. Do NOT create separate files per operation (`useCreateX`, `useEditX`, `useDeleteX`).
+
+### File naming
+
+```
+hooks/
+  useFacultyModal.ts      — useFacultyFormModal, useDeleteFacultyModal
+  useDepartmentModal.ts   — useDepartmentFormModal, useDeleteDepartmentModal
+```
+
+### Upsert Pattern (MANDATORY for Create + Edit)
+
+Create and Edit operations for the same entity MUST share a single modal component and a single hook using the **upsert pattern**:
+
+- `target === null` → create mode
+- `target !== null` → edit mode
+
+The hook detects the mode and calls the correct mutation. The component renders the correct title and submit label based on `isEditMode`.
+
+```ts
+// hook — useFacultyModal.ts
+export function useFacultyFormModal(target: Faculty | null, open: boolean, onClose: () => void) {
+  const isEditMode = target !== null;
+  // calls createFaculty when isEditMode=false, updateFaculty when isEditMode=true
+  return { state: { isEditMode, ... }, actions: { handleSubmit, handleCancel }, form };
+}
+```
+
+```tsx
+// component — FacultyFormModal.tsx
+<FacultyFormModal open={open} target={null} onClose={onClose} />       // create
+<FacultyFormModal open={open} target={faculty} onClose={onClose} />    // edit
+```
+
+### Modal file naming
+
+```
+components/modals/
+  FacultyFormModal.tsx     — create + edit faculty (upsert)
+  DeleteFacultyModal.tsx   — delete faculty confirmation
+  DepartmentFormModal.tsx  — create + edit department (upsert)
+  DeleteDepartmentModal.tsx — delete department confirmation
+```
+
+### Structure within the hook file
+
+```ts
+// ─── Upsert (Create / Edit) ───────────────────────────────────────────────────
+export function useFacultyFormModal(...) { ... }
+
+// ─── Delete ───────────────────────────────────────────────────────────────────
+export function useDeleteFacultyModal(...) { ... }
+```
+
+### When to break into a separate file
+
+Only split into a separate hook file when:
+- The hook has significant independent complexity (e.g. `useFacultyRow`, `useHierarchyView`)
+- The hook is reused across multiple features
+- The hook manages page-level or list-level state (not modal state)
+
+### Rules
+
+```
+MUST use upsert pattern — one form modal component handles both create and edit
+MUST group upsert hook and delete hook for the same entity in one file
+MUST name the file use{Entity}Modal.ts
+MUST name the modal component {Entity}FormModal.tsx
+MUST NOT create separate CreateX.tsx and EditX.tsx modal components
+MUST NOT create useCreateX.ts, useEditX.ts as separate files for modal logic
+MAY keep page/list/row hooks (useHierarchyView, useFacultyRow) as separate files
+```
+
+---
+
 # Testing Strategy
 
 Testing expectations:
@@ -895,24 +1072,31 @@ import { parseApiError } from "@/shared/utils/error/parseApiError";
 
 ## Standard catch block pattern
 
-For hooks with a form, use `applyFormErrors` — it handles field errors and falls back to the form-level error in one call:
+Every catch block MUST call `notification.error` first, then apply form/field errors.
+
+For hooks with a form:
 
 ```ts
+import { notification } from "antd";
 import { applyFormErrors } from "@/shared/utils/error/applyFormErrors";
 import { parseApiError } from "@/shared/utils/error/parseApiError";
 
 } catch (err: unknown) {
-  applyFormErrors(parseApiError(err), form, setFormError);
+  const parsed = parseApiError(err);
+  notification.error({ message: parsed.message });
+  applyFormErrors(parsed, form, setFormError);
 }
 ```
 
 For hooks without a form (e.g. delete modals):
 
 ```ts
+import { notification } from "antd";
 import { parseApiError } from "@/shared/utils/error/parseApiError";
 
 } catch (err: unknown) {
   const parsed = parseApiError(err);
+  notification.error({ message: parsed.message });
   setError(parsed.message);
 }
 ```
@@ -920,8 +1104,10 @@ import { parseApiError } from "@/shared/utils/error/parseApiError";
 ## Rules
 
 ```
-MUST use parseApiError for all RTK Query catch blocks in hooks
-MUST use applyFormErrors(parseApiError(err), form, setFormError) for form hooks
+MUST call notification.error({ message: parsed.message }) in every catch block
+MUST parse the error once: const parsed = parseApiError(err) — do NOT call parseApiError twice
+MUST use applyFormErrors(parsed, form, setFormError) for form hooks
+MUST use setError(parsed.message) for non-form hooks (delete modals)
 MUST NOT use hardcoded fallback error strings
 MUST NOT use extractNameError (removed — replaced by parseApiError)
 MUST NOT write custom error parsing logic in hooks or components
@@ -940,6 +1126,77 @@ message is always a non-empty string — safe to display directly
   fieldErrors: Record<string, string>;  // field → message map, {} when none
   raw: ApiErrorBody;           // original parsed body
 }
+```
+
+---
+
+# Access Control Rule (MANDATORY)
+
+All permission checks and UI guards MUST use the `access-control` feature. Never implement custom permission logic, role checks, or visibility guards outside of this feature.
+
+## Public API — always import from `@/features/access-control`
+
+| Export | Purpose |
+|---|---|
+| `PermissionGuard` | Declarative component that hides children when user lacks permission |
+| `useAccessControl()` | Hook for imperative permission checks in hooks/logic |
+| `Permission` | Const object of all permission strings — never use raw strings |
+| `useAccessControl().activeRole` | Read `scope` and `scopeReferenceId` for scope-aware logic |
+
+## Declarative guard in components (MANDATORY)
+
+```tsx
+import { PermissionGuard } from "@/features/access-control";
+import { Permission } from "@/features/access-control/permissions";
+
+// Single permission
+<PermissionGuard permission={Permission.FacultiesCreate}>
+  <Button>Create Faculty</Button>
+</PermissionGuard>
+
+// Multiple — any one required (default)
+<PermissionGuard permission={[Permission.FacultiesUpdate, Permission.FacultiesManage]}>
+  <EditButton />
+</PermissionGuard>
+
+// Multiple — all required
+<PermissionGuard permission={[Permission.FacultiesCreate, Permission.FacultiesManage]} requireAll>
+  <AdminButton />
+</PermissionGuard>
+
+// With fallback
+<PermissionGuard permission={Permission.FacultiesDelete} fallback={<DisabledButton />}>
+  <DeleteButton />
+</PermissionGuard>
+```
+
+## Imperative checks in hooks (MANDATORY)
+
+```ts
+import { useAccessControl } from "@/features/access-control";
+import { Permission } from "@/features/access-control/permissions";
+
+const { hasPermission, hasAnyPermission, activeRole } = useAccessControl();
+
+// Single check
+const canEdit = hasPermission(Permission.FacultiesUpdate);
+
+// Scope-aware check (e.g. Dean restricted to own faculty)
+const canEditDept = activeRole?.scope === "FACULTY"
+  ? hasPermission(Permission.DepartmentsUpdate) && dept.facultyId === activeRole.scopeReferenceId
+  : hasPermission(Permission.DepartmentsUpdate);
+```
+
+## Rules
+
+```
+MUST import PermissionGuard from @/features/access-control — never create a new one
+MUST import Permission from @/features/access-control/permissions — never use raw permission strings
+MUST use useAccessControl() for all imperative permission checks in hooks
+MUST NOT hardcode role names (e.g. "System Administrator", "Dean") in components or hooks
+MUST NOT write custom permission logic outside of the access-control feature
+MUST derive scope restrictions from activeRole.scope and activeRole.scopeReferenceId
+MUST NOT add new permissions to permissions.ts without updating the access-control feature
 ```
 
 ---
@@ -1128,6 +1385,56 @@ All Create operations MUST use modals.
 - Validate early
 - Show clear error messages
 
+### Form Validation Utils (MANDATORY)
+
+Every feature that contains forms MUST have a dedicated validation utility file:
+
+```
+features/<feature>/utils/validators.ts
+```
+
+Rules:
+```
+MUST export AntD Rule arrays (Rule[]) — not inline validation logic
+MUST use custom regex where format constraints apply (e.g. codes, slugs)
+MUST NOT duplicate validation logic across hooks or components
+MUST NOT define rules inline inside JSX or hook files
+Components and hooks MUST import rules from the feature's validators.ts
+```
+
+Example structure:
+
+```ts
+// features/academic-structure/utils/validators.ts
+import type { Rule } from "antd/es/form";
+
+export const nameRules: Rule[] = [
+  { required: true, message: "Name is required" },
+  { max: 150, message: "Name must be 150 characters or fewer" },
+];
+
+export const codeRules: Rule[] = [
+  { required: true, message: "Code is required" },
+  {
+    pattern: /^[A-Za-z0-9_]{1,20}$/,
+    message: "Code must be 1–20 characters. Only letters, numbers, and underscores are allowed.",
+  },
+];
+```
+
+Usage in components:
+
+```tsx
+import { nameRules, codeRules } from "../utils/validators";
+
+<Form.Item name="name" rules={nameRules}>
+  <Input />
+</Form.Item>
+<Form.Item name="code" rules={codeRules}>
+  <Input />
+</Form.Item>
+```
+
 ### Field Types
 - Select → predefined values
 - Toggle → boolean
@@ -1145,12 +1452,182 @@ All Create operations MUST use modals.
 - Helpful message
 - CTA (e.g., "Create first item")
 
-### 2. Loading State
-- Skeletons or spinners
+### 1a. Conditional Rendering — Use `ConditionalRenderer` (MANDATORY)
+
+Never write `{condition && (<div>...</div>)}` inline blocks in JSX. Use the shared `ConditionalRenderer` wrapper instead.
+
+```
+src/shared/ui/ConditionalRenderer.tsx
+```
+
+Props:
+
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `when` | `boolean` | yes | Renders children only when `true` |
+| `children` | `ReactNode` | yes | Content to render |
+| `wrapper` | `(children: ReactNode) => ReactNode` | no | Optional container wrapper |
+
+Basic usage:
+
+```tsx
+import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
+
+<ConditionalRenderer when={!hasData && !isSearchActive}>
+  <EmptyState />
+</ConditionalRenderer>
+```
+
+With a styled container using the `centeredBox` helper:
+
+```tsx
+import { ConditionalRenderer, centeredBox } from "@/shared/ui/ConditionalRenderer";
+
+<ConditionalRenderer
+  when={!hasData && !isSearchActive}
+  wrapper={centeredBox({
+    border: `1px dashed ${token.colorBorder}`,
+    borderRadius: token.borderRadius,
+    background: token.colorBgContainer,
+  })}
+>
+  <Typography.Text type="secondary">No items yet.</Typography.Text>
+  <Button type="primary" onClick={handleCreate}>Create</Button>
+</ConditionalRenderer>
+```
+
+Rules:
+```
+MUST use ConditionalRenderer instead of inline {condition && (...)} blocks in view components
+MUST NOT use ternary {condition ? <A /> : <B />} for multi-line JSX blocks — use two ConditionalRenderers
+Use the centeredBox helper for empty/no-results states that need a centred container
+wrapper prop accepts any function returning ReactNode — use for custom containers
+```
+
+### 2. Loading State — Use `DataLoader` (MANDATORY)
+
+Never write `if (isLoading) return <Spinner />` or ternary loading checks inside view components. Use the shared `DataLoader` wrapper instead.
+
+```
+src/shared/ui/DataLoader.tsx
+```
+
+Props:
+
+| Prop | Type | Required | Default |
+|---|---|---|---|
+| `loading` | `boolean` | yes | — |
+| `loader` | `ReactNode` | no | AntD `<Spin />` centered |
+| `children` | `ReactNode` | yes | — |
+| `className` | `string` | no | — |
+| `minHeight` | `string \| number` | no | `"120px"` |
+
+Default usage (AntD spinner):
+
+```tsx
+import { DataLoader } from "@/shared/ui/DataLoader";
+
+<DataLoader loading={isLoading}>
+  <MyContent />
+</DataLoader>
+```
+
+Custom skeleton loader:
+
+```tsx
+<DataLoader loading={isLoading} loader={<MySkeletonRows />}>
+  <MyContent />
+</DataLoader>
+```
+
+For list/table loading states, use the shared `SkeletonRows` component instead of writing inline skeleton JSX:
+
+```
+src/shared/ui/SkeletonRows.tsx
+```
+
+Props:
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `count` | `number` | `3` | Number of skeleton rows |
+| `variant` | `"card" \| "inline"` | `"card"` | `card` = bordered card rows (top-level lists); `inline` = borderless bottom-border rows (nested/inline lists) |
+
+```tsx
+import { SkeletonRows } from "@/shared/ui/SkeletonRows";
+
+// Top-level list (bordered cards)
+<DataLoader loading={isLoading} loader={<SkeletonRows />}>
+  <MyList />
+</DataLoader>
+
+// Nested/inline list (e.g. rows inside an expanded section)
+<DataLoader loading={isLoading} loader={<SkeletonRows count={3} variant="inline" />} minHeight="80px">
+  <MyNestedList />
+</DataLoader>
+```
+
+Rules:
+```
+MUST use SkeletonRows for list/table loading skeletons — no inline skeleton JSX
+MUST pass SkeletonRows via the loader prop of DataLoader
+Use variant="card" for top-level bordered list rows (default)
+Use variant="inline" for nested rows inside expanded sections
+```
+
+Rules:
+```
+MUST use DataLoader for any section or page with a loading state
+MUST NOT use inline if (isLoading) return ... in view components
+MUST NOT use ternary {isLoading ? <Spinner /> : <Content />} in JSX
+Custom loaders (skeletons, shimmer rows) are passed via the loader prop
+DataLoader renders children directly when loading is false — no extra wrapper
+```
 
 ### 3. Error State
 - Clear message
 - Retry option
+
+### 3a. Error Alerts — Use `ErrorAlert` (MANDATORY)
+
+Never write inline `{error && <Alert type="error" ... />}` in view components or modals. Use the shared `ErrorAlert` component instead.
+
+```
+src/shared/ui/ErrorAlert.tsx
+```
+
+Props:
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `error` | `string \| null \| undefined` | — | Renders nothing when falsy |
+| `variant` | `"form" \| "section"` | `"form"` | `form` = compact with marginBottom (modals/forms); `section` = full-width with retry (page/section fetch errors) |
+| `onRetry` | `() => void` | — | Renders a Retry button in `section` variant |
+| `action` | `ReactNode` | — | Custom action node, overrides default Retry button |
+
+Form error (inside modal/form body):
+
+```tsx
+import { ErrorAlert } from "@/shared/ui/ErrorAlert";
+
+<ErrorAlert error={formError} />
+```
+
+Section fetch error (with retry):
+
+```tsx
+<ErrorAlert variant="section" error="Failed to load items" onRetry={refetch} />
+```
+
+Rules:
+```
+MUST use ErrorAlert for all error display in view components and modals
+MUST NOT use inline {error && <Alert type="error" ... />} patterns
+MUST NOT import Alert from antd for error display — use ErrorAlert
+Use variant="form" (default) inside modal/form bodies
+Use variant="section" for section or page-level fetch errors with a retry action
+ErrorAlert renders nothing when error is null/undefined/empty — no extra conditional needed
+```
 
 ---
 
@@ -1203,7 +1680,7 @@ All Create operations MUST use modals.
 ✔ Large data → Table
 ✔ Tables responsive (stack/scroll)
 ✔ Actions follow dropdown rule
-✔ States handled properly
+✔ States handled properly (DataLoader for loading, empty state, error state)
 ✔ UI consistent
 ```
 

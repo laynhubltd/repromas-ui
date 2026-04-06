@@ -48,7 +48,7 @@ export function AddFacultyModal({
       footer={null}
       width={isMobile ? "100%" : 520}
       style={isMobile ? { maxWidth: "100%", top: 16, paddingBottom: 0 } : undefined}
-      destroyOnClose
+      destroyOnHidden
       styles={{
         body: { paddingTop: 8, padding: isMobile ? 16 : 24 },
         header: { borderBottom: `1px solid ${token.colorBorderSecondary}` },

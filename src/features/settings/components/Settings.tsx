@@ -1,29 +1,27 @@
 import { Tabs } from "@/components/ui-kit";
 import {
-  useCreateSemesterMutation,
-  useCreateSessionMutation,
-  useGetLevelsQuery,
-  useGetSemesterTypesQuery,
-  useGetSessionsQuery,
+    useCreateSemesterMutation,
+    useCreateSessionMutation,
+    useGetSemesterTypesQuery,
+    useGetSessionsQuery,
 } from "@/features/settings/api/settingsApi";
-import type { Level, SemesterType } from "@/shared/types/settings-types";
+import type { SemesterType } from "@/shared/types/settings-types";
 import { BookOutlined, ControlOutlined, PartitionOutlined, SettingOutlined } from "@ant-design/icons";
 import { message, Typography } from "antd";
 import { useMemo, useState } from "react";
 import { CurriculumVersionTab } from "../tabs/curriculum-version";
+import { LevelConfigTab } from "../tabs/level-config";
 import { buildSessionsWithSemesters } from "../utils/mock-session-config";
-import { LevelConfigTab } from "./level-config";
 import {
-  AddSemesterModal,
-  AddSessionModal,
-  SessionConfigTab,
+    AddSemesterModal,
+    AddSessionModal,
+    SessionConfigTab,
 } from "./session-config";
 
 export default function Settings() {
   // Server state — fetched via RTK Query
   const { data: sessions = [], isLoading: sessionsLoading } = useGetSessionsQuery();
   const { data: semesterTypes = [], isLoading: semesterTypesLoading } = useGetSemesterTypesQuery();
-  const { data: levels = [] } = useGetLevelsQuery();
 
   // Mutations
   const [createSession] = useCreateSessionMutation();
@@ -108,22 +106,6 @@ export default function Settings() {
     message.info(`Delete semester type: wire to API (id ${item.id})`);
   };
 
-  const handleAddLevel = async (_values: {
-    name: string;
-    rankOrder: number;
-    description?: string | null;
-  }) => {
-    message.info("Add level: wire to API");
-  };
-
-  const handleEditLevel = (item: Level) => {
-    message.info(`Edit level: wire to API (id ${item.id})`);
-  };
-
-  const handleDeleteLevel = (item: Level) => {
-    message.info(`Delete level: wire to API (id ${item.id})`);
-  };
-
   const tabItems = [
     {
       key: "curriculum-versions",
@@ -133,12 +115,7 @@ export default function Settings() {
     {
       key: "level-config",
       label: <span><PartitionOutlined /> Levels</span>,
-      children: <LevelConfigTab
-            levels={levels}
-            onAdd={handleAddLevel}
-            onEdit={handleEditLevel}
-            onDelete={handleDeleteLevel}
-          />,
+      children: <LevelConfigTab />,
     },
     {
       key: "session-config",
