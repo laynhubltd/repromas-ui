@@ -10,6 +10,11 @@ export const ApiTagTypes = {
   CurriculumVersion: "CurriculumVersion",
   Faculty: "Faculty",
   Department: "Department",
+  Program: "Program",
+  ProgramGraduationRequirement: "ProgramGraduationRequirement",
+  Student: "Student",
+  Staff: "Staff",
+  Role: "Role",
 } as const;
 
 export type ApiTagLiteral = (typeof ApiTagTypes)[keyof typeof ApiTagTypes];

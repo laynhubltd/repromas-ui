@@ -13,7 +13,7 @@ import "./data-display.css";
 import { buildClassName, getDataDisplaySpacing, getDataDisplayStateStyle } from "./shared";
 
 const DEFAULT_PAGINATION: TablePaginationConfig = {
-  position: ["bottomRight"],
+  placement: "bottomRight",
   showSizeChanger: false,
 };
 

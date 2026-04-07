@@ -2,6 +2,7 @@ import { Permission } from "@/features/access-control/permissions";
 import { useAccessControl } from "@/features/access-control/use-access-control";
 import {
   ApartmentOutlined,
+  BookOutlined,
   DashboardOutlined,
   RadiusSettingOutlined,
   SettingOutlined,
@@ -24,16 +25,16 @@ export const routesMenuList: RouteMenuItem[] = [
     label: "Dashboard",
   },
   {
-    key: appPaths.staffs,
+    key: appPaths.staff,
     icon: <UserOutlined />,
-    label: "Staffs",
-    permission: Permission.RolesList,
+    label: "Staff",
+    permission: Permission.StaffList,
   },
   {
     key: appPaths.students,
     icon: <UsergroupAddOutlined />,
     label: "Students",
-    permission: Permission.RolesList,
+    permission: Permission.StudentsList,
   },
   {
     key: appPaths.academicStructure,
@@ -46,6 +47,12 @@ export const routesMenuList: RouteMenuItem[] = [
     icon: <RadiusSettingOutlined />,
     label: "Program",
     permission: Permission.FacultiesList,
+  },
+  {
+    key: appPaths.courses,
+    icon: <BookOutlined />,
+    label: "Courses",
+    permission: Permission.CoursesList,
   },
 ];
 

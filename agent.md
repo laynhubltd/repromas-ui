@@ -1650,6 +1650,94 @@ ErrorAlert renders nothing when error is null/undefined/empty — no extra condi
 ### Search & Filters
 - Required for large datasets
 
+### Filter Panel — Use Popover for Multiple Filters (MANDATORY)
+
+When a feature has **2 or more filter inputs**, they MUST be grouped inside an AntD `Popover` triggered by a single "Filters" button. Do NOT render multiple filter `Select` components inline in the toolbar.
+
+**Trigger button requirements:**
+- Label: "Filters" with a `FilterOutlined` icon
+- Use AntD `Badge` to show the count of active filters on the button
+- Button type switches to `"primary"` when any filter is active, `"default"` otherwise
+
+**Popover content requirements:**
+- Fixed width (e.g. `280px`)
+- Use `Form layout="vertical"` with labeled `Form.Item` wrappers for each filter
+- Each filter is a `Select` with `allowClear`
+- Include a "Clear all filters" `Button type="link"` at the bottom, visible only when `activeFilterCount > 0`
+- `arrow={false}` on the Popover
+
+**Example:**
+
+```tsx
+import { useState } from "react";
+import { Badge, Button, Flex, Form, Popover, Select } from "antd";
+import { FilterOutlined } from "@ant-design/icons";
+
+const [filterOpen, setFilterOpen] = useState(false);
+
+const activeFilterCount = [statusFilter, typeFilter].filter((v) => v !== undefined).length;
+
+const filterContent = (
+  <Flex vertical gap={16} style={{ width: 280 }}>
+    <Form layout="vertical" size="middle">
+      <Form.Item label="Status" style={{ marginBottom: 12 }}>
+        <Select
+          placeholder="Any status"
+          allowClear
+          value={statusFilter}
+          onChange={handleStatusFilterChange}
+          style={{ width: "100%" }}
+          options={STATUS_OPTIONS}
+        />
+      </Form.Item>
+      <Form.Item label="Type" style={{ marginBottom: 0 }}>
+        <Select
+          placeholder="Any type"
+          allowClear
+          value={typeFilter}
+          onChange={handleTypeFilterChange}
+          style={{ width: "100%" }}
+          options={TYPE_OPTIONS}
+        />
+      </Form.Item>
+    </Form>
+    {activeFilterCount > 0 && (
+      <Button type="link" size="small" onClick={clearAllFilters} style={{ padding: 0 }}>
+        Clear all filters
+      </Button>
+    )}
+  </Flex>
+);
+
+<Popover
+  content={filterContent}
+  title={<span><FilterOutlined /> Filters</span>}
+  trigger="click"
+  open={filterOpen}
+  onOpenChange={setFilterOpen}
+  placement="bottomLeft"
+  arrow={false}
+>
+  <Badge count={activeFilterCount} size="small">
+    <Button icon={<FilterOutlined />} type={activeFilterCount > 0 ? "primary" : "default"}>
+      Filters
+    </Button>
+  </Badge>
+</Popover>
+```
+
+**Rules:**
+```
+MUST use a Popover-based filter panel when there are 2 or more filter inputs
+MUST NOT render multiple filter Select components inline in the toolbar
+MUST show active filter count as a Badge on the trigger button
+MUST switch button type to "primary" when any filter is active
+MUST include a "Clear all filters" link inside the popover when activeFilterCount > 0
+MUST use Form layout="vertical" with Form.Item labels inside the popover
+MUST use arrow={false} on the Popover
+MAY keep a single filter Select inline in the toolbar if there is only one filter
+```
+
 ### Sorting
 - Default meaningful sort
 - Allow override
