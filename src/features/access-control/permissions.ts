@@ -20,6 +20,13 @@ export const Permission = {
   ProgramsUpdate: 'programs:update',
   ProgramsDelete: 'programs:delete',
   ProgramsManage: 'programs:manage',
+  // Graduation Requirements
+  GraduationRequirementsList:   'graduation-requirements:list',
+  GraduationRequirementsRead:   'graduation-requirements:read',
+  GraduationRequirementsCreate: 'graduation-requirements:create',
+  GraduationRequirementsUpdate: 'graduation-requirements:update',
+  GraduationRequirementsDelete: 'graduation-requirements:delete',
+  GraduationRequirementsManage: 'graduation-requirements:manage',
   // Courses
   CoursesList:   'courses:list',
   CoursesRead:   'courses:read',
@@ -104,6 +111,13 @@ export const Permission = {
   StudentTransitionStatusesUpdate: 'student-transition-statuses:update',
   StudentTransitionStatusesDelete: 'student-transition-statuses:delete',
   StudentTransitionStatusesManage: 'student-transition-statuses:manage',
+  // Staff
+  StaffList:   'staff:list',
+  StaffRead:   'staff:read',
+  StaffCreate: 'staff:create',
+  StaffUpdate: 'staff:update',
+  StaffDelete: 'staff:delete',
+  StaffManage: 'staff:manage',
   // Roles
   RolesList:   'roles:list',
   RolesRead:   'roles:read',

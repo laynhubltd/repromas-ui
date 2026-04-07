@@ -18,7 +18,7 @@ export default function FullscreenLoader({
         placeItems: "center",
       }}
     >
-      <Spin size="large" tip={label} />
+      <Spin size="large" description={label} />
     </div>
   );
 }

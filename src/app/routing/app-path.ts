@@ -6,8 +6,9 @@ export const appPaths = {
   dashboard: "/dashboard",
   academicStructure: "/academic-structure",
   program: "/program",
+  courses: "/courses",
   settings: "/settings",
-  staffs: "/staffs",
+  staff: "/staff",
   students: "/students",
   roleSelection: "/role-selection",
   // Add other app paths here

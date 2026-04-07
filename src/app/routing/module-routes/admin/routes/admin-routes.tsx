@@ -14,6 +14,19 @@ const AcademicStructure = lazy(
     }))
 );
 const Settings = lazy(() => import("@/features/settings/components/Settings"));
+const ProgramPage = lazy(() =>
+  import("@/features/program/components/ProgramPage").then((m) => ({
+    default: m.ProgramPage,
+  }))
+);
+
+const StudentPage = lazy(() =>
+  import("@/features/student").then((m) => ({ default: m.StudentPage }))
+);
+
+const StaffPage = lazy(() =>
+  import("@/features/staff").then((m) => ({ default: m.StaffPage }))
+);
 
 const GuardedDashboardShell = withAuthGuard({
   Component: DashboardShell,
@@ -28,6 +41,9 @@ export function getAdminRouteEntries() {
         <Route element={<ProtectedRoute />}>
           <Route path="academic-structure" element={<AcademicStructure />} />
           <Route path="settings" element={<Settings />} />
+          <Route path="program" element={<ProgramPage />} />
+          <Route path="students" element={<StudentPage />} />
+          <Route path="staff" element={<StaffPage />} />
         </Route>
       </Route>
     </>
