@@ -28,6 +28,12 @@ const StaffPage = lazy(() =>
   import("@/features/staff").then((m) => ({ default: m.StaffPage }))
 );
 
+const CoursePage = lazy(() =>
+  import("@/features/courses/components/CoursePage").then((m) => ({
+    default: m.CoursePage,
+  }))
+);
+
 const GuardedDashboardShell = withAuthGuard({
   Component: DashboardShell,
   fallback: null,
@@ -44,6 +50,7 @@ export function getAdminRouteEntries() {
           <Route path="program" element={<ProgramPage />} />
           <Route path="students" element={<StudentPage />} />
           <Route path="staff" element={<StaffPage />} />
+          <Route path="courses" element={<CoursePage />} />
         </Route>
       </Route>
     </>

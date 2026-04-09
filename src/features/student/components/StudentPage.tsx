@@ -10,12 +10,15 @@ import { DataLoader } from "@/shared/ui/DataLoader";
 import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { SkeletonRows } from "@/shared/ui/SkeletonRows";
 import {
-  DeleteOutlined,
-  EditOutlined,
-  EyeOutlined,
-  FilterOutlined,
-  MoreOutlined,
-  PlusOutlined,
+    CloudUploadOutlined,
+    DeleteOutlined,
+    DownloadOutlined,
+    EditOutlined,
+    EyeOutlined,
+    FilterOutlined,
+    MoreOutlined,
+    PlusOutlined,
+    UploadOutlined,
 } from "@ant-design/icons";
 import { Badge, Button, Col, Dropdown, Flex, Form, Input, Popover, Row, Select, Space, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
@@ -23,6 +26,8 @@ import type { SorterResult } from "antd/es/table/interface";
 import { useState } from "react";
 import { useStudentsTab } from "../hooks/useStudentsTab";
 import type { Student, StudentStatus } from "../types/student";
+import { BulkUploadModal } from "./modals/BulkUploadModal";
+import { BulkUploadSummaryModal } from "./modals/BulkUploadSummaryModal";
 import { DeleteStudentModal } from "./modals/DeleteStudentModal";
 import { StudentFormModal } from "./modals/StudentFormModal";
 import { StatusBadge } from "./StatusBadge";
@@ -52,7 +57,7 @@ function formatDate(iso: string): string {
 
 export function StudentPage() {
   const token = useToken();
-  const { state, actions, flags } = useStudentsTab();
+  const { state, actions, flags, bulkUpload } = useStudentsTab();
   const {
     students,
     totalItems,
@@ -70,6 +75,7 @@ export function StudentPage() {
     deleteTarget,
     formModalOpen,
     drawerStudentId,
+    bulkUploadModalOpen,
   } = state;
   const {
     handleFirstNameSearchChange,
@@ -88,10 +94,29 @@ export function StudentPage() {
     handleOpenDrawer,
     handleCloseDrawer,
     refetch,
+    handleOpenBulkUpload,
+    handleCloseBulkUpload,
   } = actions;
   const { hasData, isSearchActive, isFilterActive } = flags;
 
+  const { state: bulkState, actions: bulkActions, flags: bulkFlags } = bulkUpload;
+
   const [filterOpen, setFilterOpen] = useState(false);
+
+  const uploadMenuItems = [
+    {
+      key: "download-template",
+      label: "Download Template",
+      icon: <DownloadOutlined />,
+      onClick: bulkActions.handleDownloadTemplate,
+    },
+    {
+      key: "upload-bulk",
+      label: "Upload Bulk",
+      icon: <UploadOutlined />,
+      onClick: handleOpenBulkUpload,
+    },
+  ];
 
   const isAnyFilterActive = isSearchActive || isFilterActive;
   const cardState = isLoading ? "loading" : "default";
@@ -352,6 +377,11 @@ export function StudentPage() {
           </Popover>
         </Flex>
         <PermissionGuard permission={Permission.StudentsCreate}>
+          <Dropdown menu={{ items: uploadMenuItems }} trigger={["click"]}>
+            <Button icon={<CloudUploadOutlined />}>Upload Multiple</Button>
+          </Dropdown>
+        </PermissionGuard>
+        <PermissionGuard permission={Permission.StudentsCreate}>
           <Button
             type="primary"
             icon={<PlusOutlined />}
@@ -466,6 +496,24 @@ export function StudentPage() {
             handleOpenDelete(student);
           }
         }}
+      />
+      <BulkUploadModal
+        open={bulkUploadModalOpen}
+        onClose={handleCloseBulkUpload}
+        selectedFile={bulkState.selectedFile}
+        isUploading={bulkState.isUploading}
+        uploadError={bulkState.uploadError}
+        hasFile={bulkFlags.hasFile}
+        onFileChange={bulkActions.handleFileChange}
+        onUpload={bulkActions.handleUpload}
+        onDownloadTemplate={bulkActions.handleDownloadTemplate}
+      />
+      <BulkUploadSummaryModal
+        open={bulkState.summaryModalOpen}
+        onClose={bulkActions.handleCloseSummary}
+        summary={bulkState.summary}
+        summaryState={bulkFlags.summaryState}
+        onDownloadErrorReport={bulkActions.handleDownloadErrorReport}
       />
     </Flex>
   );

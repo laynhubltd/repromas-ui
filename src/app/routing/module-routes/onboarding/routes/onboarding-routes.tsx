@@ -9,7 +9,7 @@ import OnboardingShell from "../components/OnboardingShell";
 export function getOnboardingRouteEntries() {
   return (
     <>
-      <Route path="" element={<OnboardingShell />}>
+      <Route path="*" element={<OnboardingShell />}>
         <Route index element={<HomePage />} />
         <Route path="about" element={<AboutPage />} />
         <Route path="services" element={<ServicesPage />} />

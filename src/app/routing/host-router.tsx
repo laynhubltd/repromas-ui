@@ -76,8 +76,8 @@ export function HostRouteContent({ auth, host, tenantSlug, tenantBootstrap }: Ho
     return (
       <Routes>
         {getOnboardingRouteEntries()}
-        <Route path="/auth/*" element={<Navigate to="/tenant-signup" replace />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        {/* <Route path="/auth/*" element={<Navigate to="/tenant-signup" replace />} /> */}
+        {/* <Route path="*" element={<Navigate to="/" replace />} /> */}
       </Routes>
     );
   }
@@ -102,18 +102,18 @@ export function HostRouteContent({ auth, host, tenantSlug, tenantBootstrap }: Ho
     return <InstitutionNotActive tenantSlug={tenantSlug} />;
   }
 
-  if (!auth.token) {
-    return (
-      <Routes>
-        <Route index element={<Navigate to={appPaths.login} replace />} />
-        <Route path={appPaths.login} element={<Login />} />
-        <Route path={appPaths.signUp} element={<SignUp />} />
-        <Route path={appPaths.forgotPassword} element={<ForgotPassword />} />
-        <Route path={appPaths.unauthorized} element={<Unauthorized />} />
-        <Route path="*" element={<Navigate to={appPaths.login} replace />} />
-      </Routes>
-    );
-  }
+  // if (!auth.token) {
+  //   return (
+  //     <Routes>
+  //       <Route index element={<Navigate to={appPaths.login} replace />} />
+  //       <Route path={appPaths.login} element={<Login />} />
+  //       <Route path={appPaths.signUp} element={<SignUp />} />
+  //       <Route path={appPaths.forgotPassword} element={<ForgotPassword />} />
+  //       <Route path={appPaths.unauthorized} element={<Unauthorized />} />
+  //       <Route path="*" element={<Navigate to={appPaths.login} replace />} />
+  //     </Routes>
+  //   );
+  // }
 
   if (hasTenantClaimMismatch(auth, tenantBootstrap.data)) {
     return <TenantClaimMismatch />;

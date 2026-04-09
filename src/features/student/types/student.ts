@@ -84,3 +84,19 @@ export type UpdateStudentRequest = {
   status: StudentStatus;
   metaData?: Record<string, unknown> | null;
 };
+
+// Bulk upload types
+
+export type UploadError = {
+  row?: number;
+  matricNumber: string;
+  message: string;
+};
+
+export type UploadSummary = {
+  processedCount: number;
+  skippedCount: number;
+  errors: UploadError[];
+};
+
+export type UploadSummaryState = "success" | "partial" | "failed" | "parse-error";

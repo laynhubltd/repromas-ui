@@ -1,9 +1,12 @@
 import { Tabs } from "@/components/ui-kit";
-import { BookOutlined, CalendarOutlined, PartitionOutlined, SettingOutlined } from "@ant-design/icons";
+import { PermissionGuard } from "@/features/access-control";
+import { Permission } from "@/features/access-control/permissions";
+import { BookOutlined, CalendarOutlined, PartitionOutlined, SafetyOutlined, SettingOutlined } from "@ant-design/icons";
 import { Typography } from "antd";
 import { AcademicCalendarTab } from "../tabs/academic-calendar";
 import { CurriculumVersionTab } from "../tabs/curriculum-version";
 import { LevelConfigTab } from "../tabs/level-config";
+import { RbacSettingsTab } from "../tabs/rbac-settings";
 
 export default function Settings() {
   const tabItems = [
@@ -21,6 +24,15 @@ export default function Settings() {
       key: "academic-calendar",
       label: <span><CalendarOutlined /> Academic Calendar</span>,
       children: <AcademicCalendarTab />,
+    },
+    {
+      key: "roles-permissions",
+      label: (
+        <PermissionGuard permission={[Permission.RolesList, Permission.PermissionsList]}>
+          <span><SafetyOutlined /> Roles & Permissions</span>
+        </PermissionGuard>
+      ),
+      children: <RbacSettingsTab />,
     },
     {
       key: "general",

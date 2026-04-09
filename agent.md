@@ -1774,4 +1774,55 @@ MAY keep a single filter Select inline in the toolbar if there is only one filte
 
 ---
 
+# File Download Rule (MANDATORY)
+
+All file downloads MUST use the shared Download_Service. Ad-hoc blob/anchor patterns are forbidden in feature code.
+
+## Service location
+
+```
+src/shared/utils/download/downloadFile.ts
+```
+
+## Two download modes
+
+### HTTP download (fetches from backend)
+
+```ts
+import { downloadFileFromUrl } from "@/shared/utils/download/downloadFile";
+
+await downloadFileFromUrl(
+  {
+    url: "students/bulk-upload/template",
+    filename: "student-bulk-upload-template.xlsx",
+    accept: "application/ld+json", // use application/ld+json for API Platform endpoints
+  },
+  store,
+);
+```
+
+> **API Platform endpoints**: Always use `accept: "application/ld+json"` — not the actual file MIME type. API Platform performs content negotiation on the `Accept` header and will return a 406 if the MIME type is not registered as a supported format. The backend streams the binary file regardless of this header value.
+
+### Client-side blob download (no HTTP call)
+
+```ts
+import { downloadBlob } from "@/shared/utils/download/downloadFile";
+
+const blob = new Blob([csvContent], { type: "text/csv" });
+downloadBlob({ blob, filename: "upload-errors.csv" });
+```
+
+## Rules
+
+```
+MUST use downloadFileFromUrl for all downloads that fetch a file from the backend
+MUST use downloadBlob for all downloads from an in-memory Blob
+MUST NOT create anchor elements or call URL.createObjectURL outside of the Download_Service
+MUST NOT manually set Authorization or X-TENANT headers for downloads — the service injects them automatically
+MUST NOT use axios directly in feature code for file downloads
+MUST NOT duplicate the blob/anchor pattern in hooks, components, or API files
+```
+
+---
+
 # End of AGENT.md
