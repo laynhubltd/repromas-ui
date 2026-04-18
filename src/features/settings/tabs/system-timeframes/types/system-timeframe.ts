@@ -1,4 +1,8 @@
-import type { Department, Faculty, Program } from "@/features/academic-structure/types/faculty";
+import type {
+    Department,
+    Faculty,
+    Program,
+} from "@/features/academic-structure/types/faculty";
 import type { Level } from "@/features/settings/tabs/level-config/types/level";
 import type { Student } from "@/features/student/types/student";
 import type { AcademicSession } from "../../academic-calendar/types/academic-calendar";
@@ -66,7 +70,9 @@ export type CreateSystemTimeFrameRequest = {
   isActive: boolean;
 };
 
-export type UpdateSystemTimeFrameRequest = CreateSystemTimeFrameRequest & { id: number };
+export type UpdateSystemTimeFrameRequest = CreateSystemTimeFrameRequest & {
+  id: number;
+};
 
 export type SystemTimeFrameListParams = {
   page?: number;
@@ -92,6 +98,7 @@ export type TimeFrameFilters = {
 
 export type SemesterListParams = {
   "exact[session]"?: number;
+  "exact[sessionId]"?: number;
   sort?: string;
   itemsPerPage?: number;
 };

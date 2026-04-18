@@ -1,8 +1,8 @@
 import { getAdminRouteEntries } from "@/app/routing/module-routes/admin";
 import { getAuthenticationRoutes } from "@/app/routing/module-routes/authentication";
 import {
-  getOnboardingRouteEntries,
-  useValidateTenantQuery,
+    getOnboardingRouteEntries,
+    useValidateTenantQuery,
 } from "@/app/routing/module-routes/onboarding";
 import { getStudentRouteEntries } from "@/app/routing/module-routes/student";
 import useAuthState from "@/features/auth/use-auth-state";
@@ -31,7 +31,10 @@ export function HostRouter() {
   const auth = useAuthState();
 
   const host = useMemo(
-    () => resolveHost(window.location.hostname, { apexDomain: import.meta.env.VITE_APEX_DOMAIN }),
+    () =>
+      resolveHost(window.location.hostname, {
+        apexDomain: import.meta.env.VITE_APEX_DOMAIN,
+      }),
     [],
   );
 
@@ -55,3 +58,17 @@ export function HostRouter() {
 export { resolveModuleRole } from "./module-mounter";
 export type { ModuleMounterProps } from "./module-mounter";
 
+// HostRouteContent — a component wrapper around moduleMounter for testing
+import type { ModuleMounterProps } from "./module-mounter";
+
+export type HostRouteContentProps = Omit<ModuleMounterProps, "registry"> & {
+  registry?: ModuleRegistry;
+};
+
+export function HostRouteContent({
+  registry,
+  ...props
+}: HostRouteContentProps) {
+  const resolvedRegistry = registry ?? buildRegistry();
+  return <>{moduleMounter({ ...props, registry: resolvedRegistry })}</>;
+}

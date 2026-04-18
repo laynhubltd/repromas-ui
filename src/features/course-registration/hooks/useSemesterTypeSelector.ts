@@ -14,7 +14,7 @@ import type { SemesterType } from "../types/course-registration";
  * Requirements: 8.1, 8.2
  */
 export function useSemesterTypeSelector(semesterTypeId: number | null) {
-  const { data, isLoading, isError, error } = useGetSemesterTypesQuery();
+  const { data, isLoading, isError } = useGetSemesterTypesQuery();
 
   /** Semester types sorted by sortOrder (the API already sorts them, but we
    *  keep the sort here as a safety net in case the API order changes). */

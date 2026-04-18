@@ -12,10 +12,18 @@ import RouterShell from "./router-shell";
 
 const Login = lazy(() => import("@/features/auth/components/Login"));
 const SignUp = lazy(() => import("@/features/auth/components/SignUp"));
-const ForgotPassword = lazy(() => import("@/features/auth/components/ForgotPassword"));
-const Dashboard = lazy(() => import("@/features/dashboard/components/Dashboard"));
-const AcademicStructure = lazy(
-  () => import("@/features/academic-structure/components/AcademicStructure"),
+const ForgotPassword = lazy(
+  () => import("@/features/auth/components/ForgotPassword"),
+);
+const Dashboard = lazy(
+  () => import("@/features/dashboard/components/Dashboard"),
+);
+const AcademicStructure = lazy(() =>
+  import("@/features/academic-structure/components/AcademicStructurePage").then(
+    (m) => ({
+      default: m.AcademicStructurePage,
+    }),
+  ),
 );
 const Settings = lazy(() => import("@/features/settings/components/Settings"));
 

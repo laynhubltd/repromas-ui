@@ -8,12 +8,19 @@
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
 
+type MenuItem = {
+  key: string;
+  label: string;
+  disabled?: boolean;
+  danger?: boolean;
+};
+
 import {
-  calcTotalPages,
-  getMenuItems,
-  getStatusTag,
-  resetPageOnFilterChange,
-  statusFilterToQueryParam,
+    calcTotalPages,
+    getMenuItems,
+    getStatusTag,
+    resetPageOnFilterChange,
+    statusFilterToQueryParam,
 } from "@/features/settings/tabs/curriculum-version/components/CurriculumVersionTab";
 import { extractNameError } from "@/features/settings/tabs/curriculum-version/utils/extractNameError";
 
@@ -105,7 +112,8 @@ describe("Property 2: Pagination total pages calculation", () => {
         (totalItems, itemsPerPage, rawPage) => {
           const totalPages = calcTotalPages(totalItems, itemsPerPage);
           // The valid page is clamped to [1, totalPages] (or 1 when list is empty)
-          const clampedPage = totalPages === 0 ? 1 : Math.min(rawPage, totalPages);
+          const clampedPage =
+            totalPages === 0 ? 1 : Math.min(rawPage, totalPages);
           expect(clampedPage).toBeGreaterThanOrEqual(1);
           if (totalPages > 0) {
             expect(clampedPage).toBeLessThanOrEqual(totalPages);
@@ -191,7 +199,11 @@ describe("Property 3: Filter maps to correct query parameter", () => {
 
 // Feature: curriculum-version-settings, Property 4: Search and filter changes reset page to 1
 describe("Property 4: Search and filter changes reset page to 1", () => {
-  const statusFilterArb = fc.constantFrom("all" as const, "active" as const, "inactive" as const);
+  const statusFilterArb = fc.constantFrom(
+    "all" as const,
+    "active" as const,
+    "inactive" as const,
+  );
 
   it("page resets to 1 when search term changes", () => {
     fc.assert(
@@ -202,7 +214,13 @@ describe("Property 4: Search and filter changes reset page to 1", () => {
         fc.integer({ min: 2, max: 100 }),
         (prevSearch, nextSearch, filter, currentPage) => {
           fc.pre(prevSearch !== nextSearch);
-          const result = resetPageOnFilterChange(prevSearch, nextSearch, filter, filter, currentPage);
+          const result = resetPageOnFilterChange(
+            prevSearch,
+            nextSearch,
+            filter,
+            filter,
+            currentPage,
+          );
           expect(result).toBe(1);
         },
       ),
@@ -219,7 +237,13 @@ describe("Property 4: Search and filter changes reset page to 1", () => {
         fc.integer({ min: 2, max: 100 }),
         (prevFilter, nextFilter, search, currentPage) => {
           fc.pre(prevFilter !== nextFilter);
-          const result = resetPageOnFilterChange(search, search, prevFilter, nextFilter, currentPage);
+          const result = resetPageOnFilterChange(
+            search,
+            search,
+            prevFilter,
+            nextFilter,
+            currentPage,
+          );
           expect(result).toBe(1);
         },
       ),
@@ -234,7 +258,13 @@ describe("Property 4: Search and filter changes reset page to 1", () => {
         statusFilterArb,
         fc.integer({ min: 1, max: 100 }),
         (search, filter, currentPage) => {
-          const result = resetPageOnFilterChange(search, search, filter, filter, currentPage);
+          const result = resetPageOnFilterChange(
+            search,
+            search,
+            filter,
+            filter,
+            currentPage,
+          );
           expect(result).toBe(currentPage);
         },
       ),
@@ -252,7 +282,13 @@ describe("Property 4: Search and filter changes reset page to 1", () => {
         fc.integer({ min: 2, max: 100 }),
         (prevSearch, nextSearch, prevFilter, nextFilter, currentPage) => {
           fc.pre(prevSearch !== nextSearch || prevFilter !== nextFilter);
-          const result = resetPageOnFilterChange(prevSearch, nextSearch, prevFilter, nextFilter, currentPage);
+          const result = resetPageOnFilterChange(
+            prevSearch,
+            nextSearch,
+            prevFilter,
+            nextFilter,
+            currentPage,
+          );
           expect(result).toBe(1);
         },
       ),
@@ -310,62 +346,80 @@ describe("Property 10: At most one active version after activation", () => {
 
   it("exactly the activated version is active after activation", () => {
     fc.assert(
-      fc.property(versionListArb, fc.integer({ min: 0, max: 19 }), (versions, indexSeed) => {
-        const unique = versions.filter(
-          (v, i, arr) => arr.findIndex((x) => x.id === v.id) === i,
-        );
-        fc.pre(unique.length >= 1);
+      fc.property(
+        versionListArb,
+        fc.integer({ min: 0, max: 19 }),
+        (versions, indexSeed) => {
+          const unique = versions.filter(
+            (v, i, arr) => arr.findIndex((x) => x.id === v.id) === i,
+          );
+          fc.pre(unique.length >= 1);
 
-        const targetIndex = indexSeed % unique.length;
-        const targetId = unique[targetIndex].id;
-        const result = simulateActivation(unique, targetId);
+          const targetIndex = indexSeed % unique.length;
+          const targetId = unique[targetIndex].id;
+          const result = simulateActivation(unique, targetId);
 
-        const activeVersions = result.filter((v) => v.isActiveForAdmission);
-        expect(activeVersions).toHaveLength(1);
-        expect(activeVersions[0].id).toBe(targetId);
-      }),
+          const activeVersions = result.filter((v) => v.isActiveForAdmission);
+          expect(activeVersions).toHaveLength(1);
+          expect(activeVersions[0].id).toBe(targetId);
+        },
+      ),
       { numRuns: 100 },
     );
   });
 
   it("all other versions are inactive after activation", () => {
     fc.assert(
-      fc.property(versionListArb, fc.integer({ min: 0, max: 19 }), (versions, indexSeed) => {
-        const unique = versions.filter(
-          (v, i, arr) => arr.findIndex((x) => x.id === v.id) === i,
-        );
-        fc.pre(unique.length >= 2);
+      fc.property(
+        versionListArb,
+        fc.integer({ min: 0, max: 19 }),
+        (versions, indexSeed) => {
+          const unique = versions.filter(
+            (v, i, arr) => arr.findIndex((x) => x.id === v.id) === i,
+          );
+          fc.pre(unique.length >= 2);
 
-        const targetIndex = indexSeed % unique.length;
-        const targetId = unique[targetIndex].id;
-        const result = simulateActivation(unique, targetId);
+          const targetIndex = indexSeed % unique.length;
+          const targetId = unique[targetIndex].id;
+          const result = simulateActivation(unique, targetId);
 
-        const inactiveVersions = result.filter((v) => v.id !== targetId);
-        expect(inactiveVersions.every((v) => !v.isActiveForAdmission)).toBe(true);
-      }),
+          const inactiveVersions = result.filter((v) => v.id !== targetId);
+          expect(inactiveVersions.every((v) => !v.isActiveForAdmission)).toBe(
+            true,
+          );
+        },
+      ),
       { numRuns: 100 },
     );
   });
 
   it("activation is idempotent — activating an already-active version keeps exactly one active", () => {
     fc.assert(
-      fc.property(versionListArb, fc.integer({ min: 0, max: 19 }), (versions, indexSeed) => {
-        const unique = versions.filter(
-          (v, i, arr) => arr.findIndex((x) => x.id === v.id) === i,
-        );
-        fc.pre(unique.length >= 1);
+      fc.property(
+        versionListArb,
+        fc.integer({ min: 0, max: 19 }),
+        (versions, indexSeed) => {
+          const unique = versions.filter(
+            (v, i, arr) => arr.findIndex((x) => x.id === v.id) === i,
+          );
+          fc.pre(unique.length >= 1);
 
-        const targetIndex = indexSeed % unique.length;
-        const targetId = unique[targetIndex].id;
+          const targetIndex = indexSeed % unique.length;
+          const targetId = unique[targetIndex].id;
 
-        // Activate once, then activate the same version again
-        const afterFirst = simulateActivation(unique, targetId);
-        const afterSecond = simulateActivation(afterFirst, targetId);
+          // Activate once, then activate the same version again
+          const afterFirst = simulateActivation(unique, targetId);
+          const afterSecond = simulateActivation(afterFirst, targetId);
 
-        const activeCount = afterSecond.filter((v) => v.isActiveForAdmission).length;
-        expect(activeCount).toBe(1);
-        expect(afterSecond.find((v) => v.id === targetId)?.isActiveForAdmission).toBe(true);
-      }),
+          const activeCount = afterSecond.filter(
+            (v) => v.isActiveForAdmission,
+          ).length;
+          expect(activeCount).toBe(1);
+          expect(
+            afterSecond.find((v) => v.id === targetId)?.isActiveForAdmission,
+          ).toBe(true);
+        },
+      ),
       { numRuns: 100 },
     );
   });
@@ -375,7 +429,10 @@ describe("Property 10: At most one active version after activation", () => {
 
 // Feature: curriculum-version-settings, Property 12: Every row has a three-item actions menu
 describe("Property 12: Every row has a three-item actions menu", () => {
-  const versionListArb = fc.array(curriculumVersionArb, { minLength: 1, maxLength: 50 });
+  const versionListArb = fc.array(curriculumVersionArb, {
+    minLength: 1,
+    maxLength: 50,
+  });
 
   it("every row's menu has exactly 3 items", () => {
     // **Validates: Requirements 8.1, 8.2**
@@ -395,7 +452,7 @@ describe("Property 12: Every row has a three-item actions menu", () => {
       fc.property(versionListArb, (versions) => {
         for (const version of versions) {
           const items = getMenuItems(version.isActiveForAdmission);
-          const labels = items.map((item) => item.label);
+          const labels = items.map((item: MenuItem) => item.label);
           expect(labels).toContain("Edit");
           expect(labels).toContain("Activate");
           expect(labels).toContain("Delete");
@@ -462,7 +519,9 @@ describe("Property 5: Error normalisation surfaces name errors inline", () => {
     // **Validates: Requirements 4.7, 5.7**
     fc.assert(
       fc.property(fc.string({ minLength: 1 }), (message) => {
-        const error = { data: { violations: [{ propertyPath: "name", message }] } };
+        const error = {
+          data: { violations: [{ propertyPath: "name", message }] },
+        };
         const result = extractNameError(error);
         expect(result).toEqual({ type: "field", message });
       }),
@@ -510,7 +569,9 @@ describe("Property 5: Error normalisation surfaces name errors inline", () => {
       fc.string(),
       fc.integer(),
       fc.record({ message: fc.string(), code: fc.integer() }),
-      fc.record({ data: fc.record({ message: fc.string(), code: fc.integer() }) }),
+      fc.record({
+        data: fc.record({ message: fc.string(), code: fc.integer() }),
+      }),
     );
     fc.assert(
       fc.property(unrecognisedArb, (input) => {
@@ -522,15 +583,19 @@ describe("Property 5: Error normalisation surfaces name errors inline", () => {
   });
 
   it("never silently swallows — result message always equals the input message for recognised shapes", () => {
-    const constraintViolationArb = fc.string({ minLength: 1 }).map((message) => ({
-      input: { data: { errors: [{ field: "name", message }] } },
-      expected: message,
-    }));
+    const constraintViolationArb = fc
+      .string({ minLength: 1 })
+      .map((message) => ({
+        input: { data: { errors: [{ field: "name", message }] } },
+        expected: message,
+      }));
 
-    const validationViolationArb = fc.string({ minLength: 1 }).map((message) => ({
-      input: { data: { violations: [{ propertyPath: "name", message }] } },
-      expected: message,
-    }));
+    const validationViolationArb = fc
+      .string({ minLength: 1 })
+      .map((message) => ({
+        input: { data: { violations: [{ propertyPath: "name", message }] } },
+        expected: message,
+      }));
 
     const genericErrorArb = fc
       .tuple(
@@ -546,7 +611,11 @@ describe("Property 5: Error normalisation surfaces name errors inline", () => {
 
     fc.assert(
       fc.property(
-        fc.oneof(constraintViolationArb, validationViolationArb, genericErrorArb),
+        fc.oneof(
+          constraintViolationArb,
+          validationViolationArb,
+          genericErrorArb,
+        ),
         ({ input, expected }) => {
           const result = extractNameError(input);
           expect(result).not.toBeNull();
@@ -569,7 +638,9 @@ describe("Property 9: Active version's Activate menu item is disabled", () => {
         curriculumVersionArb.filter((v) => v.isActiveForAdmission === true),
         (version) => {
           const items = getMenuItems(version.isActiveForAdmission);
-          const activateItem = items.find((item) => item.key === "activate");
+          const activateItem = items.find(
+            (item: MenuItem) => item.key === "activate",
+          );
           expect(activateItem).toBeDefined();
           expect(activateItem?.disabled).toBe(true);
         },
@@ -584,7 +655,9 @@ describe("Property 9: Active version's Activate menu item is disabled", () => {
         curriculumVersionArb.filter((v) => v.isActiveForAdmission === false),
         (version) => {
           const items = getMenuItems(version.isActiveForAdmission);
-          const activateItem = items.find((item) => item.key === "activate");
+          const activateItem = items.find(
+            (item: MenuItem) => item.key === "activate",
+          );
           expect(activateItem).toBeDefined();
           expect(activateItem?.disabled).toBe(false);
         },
@@ -597,7 +670,9 @@ describe("Property 9: Active version's Activate menu item is disabled", () => {
     fc.assert(
       fc.property(fc.boolean(), (isActive) => {
         const items = getMenuItems(isActive);
-        const activateItem = items.find((item) => item.key === "activate");
+        const activateItem = items.find(
+          (item: MenuItem) => item.key === "activate",
+        );
         expect(activateItem).toBeDefined();
         expect(activateItem?.disabled).toBe(isActive);
       }),

@@ -271,7 +271,8 @@ export function parseCourseRegistrationError(
   switch (status) {
     case 403: {
       const detail =
-        (raw as Record<string, unknown>)?.detail?.toString() ?? fallbackMessage;
+        (raw as unknown as Record<string, unknown>)?.detail?.toString() ??
+        fallbackMessage;
       const { message, guidance } = parseForbiddenError(detail);
       return {
         message,
@@ -286,7 +287,8 @@ export function parseCourseRegistrationError(
 
     case 422: {
       const detail =
-        (raw as Record<string, unknown>)?.detail?.toString() ?? fallbackMessage;
+        (raw as unknown as Record<string, unknown>)?.detail?.toString() ??
+        fallbackMessage;
       const { message, guidance } = parseUnprocessableError(detail, raw);
 
       const serverMissingConfigIds = isMissingCoursesBody(raw)
