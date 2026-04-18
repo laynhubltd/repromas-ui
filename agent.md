@@ -616,6 +616,64 @@ Group by utility domain
 
 ---
 
+# Shared Constants Rule (MANDATORY)
+
+Reusable select option arrays and domain-agnostic constant values MUST be defined once in `src/shared/constants/` and imported everywhere they are used. Never define the same options array in multiple feature files.
+
+## Location
+
+```
+src/shared/constants/
+  studentOptions.ts    — STUDENT_STATUS_OPTIONS, ENTRY_MODE_OPTIONS
+```
+
+## Example
+
+```ts
+// src/shared/constants/studentOptions.ts
+import type {
+  EntryMode,
+  StudentStatus,
+} from "@/features/student/types/student";
+
+export const STUDENT_STATUS_OPTIONS: { value: StudentStatus; label: string }[] =
+  [
+    { value: "ACTIVE", label: "Active" },
+    { value: "SUSPENDED", label: "Suspended" },
+    { value: "GRADUATED", label: "Graduated" },
+    { value: "WITHDRAWN", label: "Withdrawn" },
+    { value: "RUSTICATED", label: "Rusticated" },
+  ];
+
+export const ENTRY_MODE_OPTIONS: { value: EntryMode; label: string }[] = [
+  { value: "UTME", label: "UTME" },
+  { value: "DIRECT_ENTRY", label: "Direct Entry" },
+  { value: "TRANSFER", label: "Transfer" },
+];
+```
+
+Usage:
+
+```ts
+import {
+  STUDENT_STATUS_OPTIONS,
+  ENTRY_MODE_OPTIONS,
+} from "@/shared/constants/studentOptions";
+```
+
+## Rules
+
+```
+MUST define reusable option arrays in src/shared/constants/ — not inline in components or hooks
+MUST import from the shared constant file in every feature that uses the same options
+MUST NOT duplicate the same options array across multiple feature files
+MUST name exported constants in SCREAMING_SNAKE_CASE
+MUST type option arrays with the corresponding domain type (e.g. StudentStatus, EntryMode)
+When adding a new reusable constant, add it to the appropriate file in src/shared/constants/
+```
+
+---
+
 # Types Strategy
 
 Feature types:
@@ -668,12 +726,13 @@ interface FacultyRowProps {
 
 Use `interface` only when one of these conditions is explicitly required:
 
-| Condition | Reason |
-|---|---|
-| Declaration merging | Third-party library augmentation (e.g. extending `Window`, `ProcessEnv`) |
-| Class `implements` contract | When a class must implement a named contract |
+| Condition                   | Reason                                                                   |
+| --------------------------- | ------------------------------------------------------------------------ |
+| Declaration merging         | Third-party library augmentation (e.g. extending `Window`, `ProcessEnv`) |
+| Class `implements` contract | When a class must implement a named contract                             |
 
 Rules:
+
 ```
 MUST use type for all prop types, hook return shapes, API request/response shapes, and utility types
 MUST use type for all types in features/<feature>/types.ts and shared/types/
@@ -735,12 +794,12 @@ const token = useToken();
 
 ## Token values to always use
 
-| Style property | Token |
-|---|---|
-| Colors | `token.colorPrimary`, `token.colorError`, `token.colorBorder`, `token.colorBorderSecondary`, `token.colorBgContainer`, `token.colorBgLayout`, `token.colorTextSecondary`, `token.colorTextTertiary` |
-| Border radius | `token.borderRadius` |
-| Font sizes | `token.fontSize`, `token.fontSizeSM`, `token.fontSizeLG` |
-| Spacing/padding | `token.paddingSM`, `token.paddingMD`, `token.paddingLG` |
+| Style property  | Token                                                                                                                                                                                               |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Colors          | `token.colorPrimary`, `token.colorError`, `token.colorBorder`, `token.colorBorderSecondary`, `token.colorBgContainer`, `token.colorBgLayout`, `token.colorTextSecondary`, `token.colorTextTertiary` |
+| Border radius   | `token.borderRadius`                                                                                                                                                                                |
+| Font sizes      | `token.fontSize`, `token.fontSizeSM`, `token.fontSizeLG`                                                                                                                                            |
+| Spacing/padding | `token.paddingSM`, `token.paddingMD`, `token.paddingLG`                                                                                                                                             |
 
 ## Examples
 
@@ -851,6 +910,7 @@ Every feature component MUST be split into two distinct files.
 The `.tsx` file is the Presentational Component.
 
 Rules:
+
 ```
 MUST NOT contain business logic
 MUST NOT contain data fetching (RTK Query hooks, axios, fetch)
@@ -865,6 +925,7 @@ MAY contain pure UI state (e.g. isDropdownOpen) — prefer moving to hook
 The `use[ComponentName].ts` file is the Container / ViewModel.
 
 Rules:
+
 ```
 MUST handle 100% of business logic
 MUST contain all API calls, side effects, and form validation
@@ -966,6 +1027,7 @@ export function useDeleteFacultyModal(...) { ... }
 ### When to break into a separate file
 
 Only split into a separate hook file when:
+
 - The hook has significant independent complexity (e.g. `useFacultyRow`, `useHierarchyView`)
 - The hook is reused across multiple features
 - The hook manages page-level or list-level state (not modal state)
@@ -1120,11 +1182,11 @@ message is always a non-empty string — safe to display directly
 
 ```ts
 {
-  type: ApiErrorType;          // error category enum
-  status: number;              // HTTP status code
-  message: string;             // user-facing message, never empty
-  fieldErrors: Record<string, string>;  // field → message map, {} when none
-  raw: ApiErrorBody;           // original parsed body
+  type: ApiErrorType; // error category enum
+  status: number; // HTTP status code
+  message: string; // user-facing message, never empty
+  fieldErrors: Record<string, string>; // field → message map, {} when none
+  raw: ApiErrorBody; // original parsed body
 }
 ```
 
@@ -1136,12 +1198,12 @@ All permission checks and UI guards MUST use the `access-control` feature. Never
 
 ## Public API — always import from `@/features/access-control`
 
-| Export | Purpose |
-|---|---|
-| `PermissionGuard` | Declarative component that hides children when user lacks permission |
-| `useAccessControl()` | Hook for imperative permission checks in hooks/logic |
-| `Permission` | Const object of all permission strings — never use raw strings |
-| `useAccessControl().activeRole` | Read `scope` and `scopeReferenceId` for scope-aware logic |
+| Export                          | Purpose                                                              |
+| ------------------------------- | -------------------------------------------------------------------- |
+| `PermissionGuard`               | Declarative component that hides children when user lacks permission |
+| `useAccessControl()`            | Hook for imperative permission checks in hooks/logic                 |
+| `Permission`                    | Const object of all permission strings — never use raw strings       |
+| `useAccessControl().activeRole` | Read `scope` and `scopeReferenceId` for scope-aware logic            |
 
 ## Declarative guard in components (MANDATORY)
 
@@ -1182,9 +1244,11 @@ const { hasPermission, hasAnyPermission, activeRole } = useAccessControl();
 const canEdit = hasPermission(Permission.FacultiesUpdate);
 
 // Scope-aware check (e.g. Dean restricted to own faculty)
-const canEditDept = activeRole?.scope === "FACULTY"
-  ? hasPermission(Permission.DepartmentsUpdate) && dept.facultyId === activeRole.scopeReferenceId
-  : hasPermission(Permission.DepartmentsUpdate);
+const canEditDept =
+  activeRole?.scope === "FACULTY"
+    ? hasPermission(Permission.DepartmentsUpdate) &&
+      dept.facultyId === activeRole.scopeReferenceId
+    : hasPermission(Permission.DepartmentsUpdate);
 ```
 
 ## Rules
@@ -1247,6 +1311,7 @@ clean domain boundaries
 # Feature UI/UX Rules
 
 ## Purpose
+
 This section defines **standard UI/UX rules and principles** for building consistent, scalable, and user-friendly frontend features.
 
 ---
@@ -1254,21 +1319,25 @@ This section defines **standard UI/UX rules and principles** for building consis
 ## Core Principles
 
 ### 1. Clarity Over Complexity
+
 - Keep UI simple and intuitive
 - Avoid unnecessary elements
 - Use clear, user-friendly labels
 
 ### 2. Consistency
+
 - Reuse patterns across features
 - Maintain uniform spacing, typography, and actions
 
 ### 3. Feedback & Responsiveness
+
 - Always show:
   - Loading states
   - Success states
   - Error states
 
 ### 4. Progressive Disclosure
+
 - Show only what is necessary
 - Hide advanced options until needed
 
@@ -1277,13 +1346,17 @@ This section defines **standard UI/UX rules and principles** for building consis
 ## Feature Structure Standard
 
 ### 1. Overview (Dashboard Section)
+
 Each feature MUST include:
+
 - Metrics cards
 - Status indicators
 - Quick actions (e.g., "Create")
 
 ### 2. Explorer (Feature Introduction)
+
 Each feature MUST include:
+
 - What the feature does
 - Why it matters
 - How to use it
@@ -1293,36 +1366,46 @@ Each feature MUST include:
 ## Data Display Rules
 
 ### 1. Small Data Sets → List Component
+
 Use List when:
+
 - ≤ 4–5 fields
 - Simple structure
 
 ### 2. Large Data Sets → Table Component
+
 Use Table when:
+
 - > 5 fields
 - Structured data
 
 **Table Requirements:**
+
 - Sortable columns
 - Pagination
 - Filtering/search
 
 ### 3. Fixed Columns
+
 Use sticky/fixed columns when:
+
 - Key identifiers (e.g., Name, ID) must remain visible
 - Horizontal scrolling exists
 
 ### 4. Mobile Responsiveness (MANDATORY)
 
 On mobile screens, tables MUST:
+
 - Support **horizontal scrolling**, OR
 - Automatically transform into a **stacked list/card layout**
 
 **Preferred priority:**
+
 1. Stacked list (best UX)
 2. Horizontal scroll (fallback)
 
 **Rules:**
+
 - Never break layout
 - Never truncate critical data without access
 - Maintain action accessibility
@@ -1332,6 +1415,7 @@ On mobile screens, tables MUST:
 ## Actions & Interaction Rules
 
 ### 1. Action Placement
+
 - Primary actions → top right
 - Row actions → right side
 
@@ -1341,16 +1425,20 @@ On mobile screens, tables MUST:
 - If actions > 2 → use **three vertical dots (⋮) dropdown menu**
 
 **Dropdown Requirements:**
+
 - Clearly labeled actions
 - Group destructive actions (e.g., Delete) separately
 - Maintain consistent ordering across app
 
 ### 3. Inline Actions
+
 - Allow quick edit/delete where possible
 - Avoid unnecessary navigation
 
 ### 4. Confirmation Patterns
+
 Use confirmation for:
+
 - Delete
 - Critical updates
 
@@ -1364,13 +1452,14 @@ All Create operations MUST use modals.
 
 ### Modal Sizing Rules
 
-| Form Size | UI Pattern |
-|---|---|
-| ≤ 6 fields | Small Modal |
-| 6–12 fields | Large Modal |
-| Complex/Multi-step | Full Page |
+| Form Size          | UI Pattern  |
+| ------------------ | ----------- |
+| ≤ 6 fields         | Small Modal |
+| 6–12 fields        | Large Modal |
+| Complex/Multi-step | Full Page   |
 
 ### Modal UX Requirements
+
 - Clear title
 - Primary CTA (Save/Create)
 - Secondary CTA (Cancel)
@@ -1382,6 +1471,7 @@ All Create operations MUST use modals.
 ## Form Design Rules
 
 ### Validation
+
 - Validate early
 - Show clear error messages
 
@@ -1394,6 +1484,7 @@ features/<feature>/utils/validators.ts
 ```
 
 Rules:
+
 ```
 MUST export AntD Rule arrays (Rule[]) — not inline validation logic
 MUST use custom regex where format constraints apply (e.g. codes, slugs)
@@ -1417,7 +1508,8 @@ export const codeRules: Rule[] = [
   { required: true, message: "Code is required" },
   {
     pattern: /^[A-Za-z0-9_]{1,20}$/,
-    message: "Code must be 1–20 characters. Only letters, numbers, and underscores are allowed.",
+    message:
+      "Code must be 1–20 characters. Only letters, numbers, and underscores are allowed.",
   },
 ];
 ```
@@ -1436,11 +1528,13 @@ import { nameRules, codeRules } from "../utils/validators";
 ```
 
 ### Field Types
+
 - Select → predefined values
 - Toggle → boolean
 - Text → free input
 
 ### Grouping
+
 - Group related fields
 - Use sections when needed
 
@@ -1449,6 +1543,7 @@ import { nameRules, codeRules } from "../utils/validators";
 ## State Handling
 
 ### 1. Empty State
+
 - Helpful message
 - CTA (e.g., "Create first item")
 
@@ -1462,11 +1557,11 @@ src/shared/ui/ConditionalRenderer.tsx
 
 Props:
 
-| Prop | Type | Required | Description |
-|---|---|---|---|
-| `when` | `boolean` | yes | Renders children only when `true` |
-| `children` | `ReactNode` | yes | Content to render |
-| `wrapper` | `(children: ReactNode) => ReactNode` | no | Optional container wrapper |
+| Prop       | Type                                 | Required | Description                       |
+| ---------- | ------------------------------------ | -------- | --------------------------------- |
+| `when`     | `boolean`                            | yes      | Renders children only when `true` |
+| `children` | `ReactNode`                          | yes      | Content to render                 |
+| `wrapper`  | `(children: ReactNode) => ReactNode` | no       | Optional container wrapper        |
 
 Basic usage:
 
@@ -1475,13 +1570,16 @@ import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
 
 <ConditionalRenderer when={!hasData && !isSearchActive}>
   <EmptyState />
-</ConditionalRenderer>
+</ConditionalRenderer>;
 ```
 
 With a styled container using the `centeredBox` helper:
 
 ```tsx
-import { ConditionalRenderer, centeredBox } from "@/shared/ui/ConditionalRenderer";
+import {
+  ConditionalRenderer,
+  centeredBox,
+} from "@/shared/ui/ConditionalRenderer";
 
 <ConditionalRenderer
   when={!hasData && !isSearchActive}
@@ -1492,11 +1590,14 @@ import { ConditionalRenderer, centeredBox } from "@/shared/ui/ConditionalRendere
   })}
 >
   <Typography.Text type="secondary">No items yet.</Typography.Text>
-  <Button type="primary" onClick={handleCreate}>Create</Button>
-</ConditionalRenderer>
+  <Button type="primary" onClick={handleCreate}>
+    Create
+  </Button>
+</ConditionalRenderer>;
 ```
 
 Rules:
+
 ```
 MUST use ConditionalRenderer instead of inline {condition && (...)} blocks in view components
 MUST NOT use ternary {condition ? <A /> : <B />} for multi-line JSX blocks — use two ConditionalRenderers
@@ -1514,13 +1615,13 @@ src/shared/ui/DataLoader.tsx
 
 Props:
 
-| Prop | Type | Required | Default |
-|---|---|---|---|
-| `loading` | `boolean` | yes | — |
-| `loader` | `ReactNode` | no | AntD `<Spin />` centered |
-| `children` | `ReactNode` | yes | — |
-| `className` | `string` | no | — |
-| `minHeight` | `string \| number` | no | `"120px"` |
+| Prop        | Type               | Required | Default                  |
+| ----------- | ------------------ | -------- | ------------------------ |
+| `loading`   | `boolean`          | yes      | —                        |
+| `loader`    | `ReactNode`        | no       | AntD `<Spin />` centered |
+| `children`  | `ReactNode`        | yes      | —                        |
+| `className` | `string`           | no       | —                        |
+| `minHeight` | `string \| number` | no       | `"120px"`                |
 
 Default usage (AntD spinner):
 
@@ -1529,7 +1630,7 @@ import { DataLoader } from "@/shared/ui/DataLoader";
 
 <DataLoader loading={isLoading}>
   <MyContent />
-</DataLoader>
+</DataLoader>;
 ```
 
 Custom skeleton loader:
@@ -1548,9 +1649,9 @@ src/shared/ui/SkeletonRows.tsx
 
 Props:
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `count` | `number` | `3` | Number of skeleton rows |
+| Prop      | Type                 | Default  | Description                                                                                                   |
+| --------- | -------------------- | -------- | ------------------------------------------------------------------------------------------------------------- |
+| `count`   | `number`             | `3`      | Number of skeleton rows                                                                                       |
 | `variant` | `"card" \| "inline"` | `"card"` | `card` = bordered card rows (top-level lists); `inline` = borderless bottom-border rows (nested/inline lists) |
 
 ```tsx
@@ -1568,6 +1669,7 @@ import { SkeletonRows } from "@/shared/ui/SkeletonRows";
 ```
 
 Rules:
+
 ```
 MUST use SkeletonRows for list/table loading skeletons — no inline skeleton JSX
 MUST pass SkeletonRows via the loader prop of DataLoader
@@ -1576,6 +1678,7 @@ Use variant="inline" for nested rows inside expanded sections
 ```
 
 Rules:
+
 ```
 MUST use DataLoader for any section or page with a loading state
 MUST NOT use inline if (isLoading) return ... in view components
@@ -1585,6 +1688,7 @@ DataLoader renders children directly when loading is false — no extra wrapper
 ```
 
 ### 3. Error State
+
 - Clear message
 - Retry option
 
@@ -1598,19 +1702,19 @@ src/shared/ui/ErrorAlert.tsx
 
 Props:
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `error` | `string \| null \| undefined` | — | Renders nothing when falsy |
-| `variant` | `"form" \| "section"` | `"form"` | `form` = compact with marginBottom (modals/forms); `section` = full-width with retry (page/section fetch errors) |
-| `onRetry` | `() => void` | — | Renders a Retry button in `section` variant |
-| `action` | `ReactNode` | — | Custom action node, overrides default Retry button |
+| Prop      | Type                          | Default  | Description                                                                                                      |
+| --------- | ----------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------- |
+| `error`   | `string \| null \| undefined` | —        | Renders nothing when falsy                                                                                       |
+| `variant` | `"form" \| "section"`         | `"form"` | `form` = compact with marginBottom (modals/forms); `section` = full-width with retry (page/section fetch errors) |
+| `onRetry` | `() => void`                  | —        | Renders a Retry button in `section` variant                                                                      |
+| `action`  | `ReactNode`                   | —        | Custom action node, overrides default Retry button                                                               |
 
 Form error (inside modal/form body):
 
 ```tsx
 import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 
-<ErrorAlert error={formError} />
+<ErrorAlert error={formError} />;
 ```
 
 Section fetch error (with retry):
@@ -1620,6 +1724,7 @@ Section fetch error (with retry):
 ```
 
 Rules:
+
 ```
 MUST use ErrorAlert for all error display in view components and modals
 MUST NOT use inline {error && <Alert type="error" ... />} patterns
@@ -1632,6 +1737,7 @@ ErrorAlert renders nothing when error is null/undefined/empty — no extra condi
 ---
 
 ## Performance Rules
+
 - Use pagination for large data
 - Avoid over-fetching
 - Cache where possible
@@ -1639,6 +1745,7 @@ ErrorAlert renders nothing when error is null/undefined/empty — no extra condi
 ---
 
 ## Accessibility Rules
+
 - Keyboard navigation support
 - Proper labels
 - Good contrast ratios
@@ -1648,6 +1755,7 @@ ErrorAlert renders nothing when error is null/undefined/empty — no extra condi
 ## UX Enhancements
 
 ### Search & Filters
+
 - Required for large datasets
 
 ### Filter Panel — Use Popover for Multiple Filters (MANDATORY)
@@ -1655,11 +1763,13 @@ ErrorAlert renders nothing when error is null/undefined/empty — no extra condi
 When a feature has **2 or more filter inputs**, they MUST be grouped inside an AntD `Popover` triggered by a single "Filters" button. Do NOT render multiple filter `Select` components inline in the toolbar.
 
 **Trigger button requirements:**
+
 - Label: "Filters" with a `FilterOutlined` icon
 - Use AntD `Badge` to show the count of active filters on the button
 - Button type switches to `"primary"` when any filter is active, `"default"` otherwise
 
 **Popover content requirements:**
+
 - Fixed width (e.g. `280px`)
 - Use `Form layout="vertical"` with labeled `Form.Item` wrappers for each filter
 - Each filter is a `Select` with `allowClear`
@@ -1675,7 +1785,9 @@ import { FilterOutlined } from "@ant-design/icons";
 
 const [filterOpen, setFilterOpen] = useState(false);
 
-const activeFilterCount = [statusFilter, typeFilter].filter((v) => v !== undefined).length;
+const activeFilterCount = [statusFilter, typeFilter].filter(
+  (v) => v !== undefined,
+).length;
 
 const filterContent = (
   <Flex vertical gap={16} style={{ width: 280 }}>
@@ -1702,7 +1814,12 @@ const filterContent = (
       </Form.Item>
     </Form>
     {activeFilterCount > 0 && (
-      <Button type="link" size="small" onClick={clearAllFilters} style={{ padding: 0 }}>
+      <Button
+        type="link"
+        size="small"
+        onClick={clearAllFilters}
+        style={{ padding: 0 }}
+      >
         Clear all filters
       </Button>
     )}
@@ -1711,7 +1828,11 @@ const filterContent = (
 
 <Popover
   content={filterContent}
-  title={<span><FilterOutlined /> Filters</span>}
+  title={
+    <span>
+      <FilterOutlined /> Filters
+    </span>
+  }
   trigger="click"
   open={filterOpen}
   onOpenChange={setFilterOpen}
@@ -1719,14 +1840,18 @@ const filterContent = (
   arrow={false}
 >
   <Badge count={activeFilterCount} size="small">
-    <Button icon={<FilterOutlined />} type={activeFilterCount > 0 ? "primary" : "default"}>
+    <Button
+      icon={<FilterOutlined />}
+      type={activeFilterCount > 0 ? "primary" : "default"}
+    >
       Filters
     </Button>
   </Badge>
-</Popover>
+</Popover>;
 ```
 
 **Rules:**
+
 ```
 MUST use a Popover-based filter panel when there are 2 or more filter inputs
 MUST NOT render multiple filter Select components inline in the toolbar
@@ -1739,10 +1864,12 @@ MAY keep a single filter Select inline in the toolbar if there is only one filte
 ```
 
 ### Sorting
+
 - Default meaningful sort
 - Allow override
 
 ### Tooltips
+
 - Use for icons or complex info
 
 ---
@@ -1770,6 +1897,57 @@ MAY keep a single filter Select inline in the toolbar if there is only one filte
 ✔ Actions follow dropdown rule
 ✔ States handled properly (DataLoader for loading, empty state, error state)
 ✔ UI consistent
+```
+
+---
+
+# File Download Rule (MANDATORY)
+
+All file downloads MUST use the shared Download_Service. Ad-hoc blob/anchor patterns are forbidden in feature code.
+
+## Service location
+
+```
+src/shared/utils/download/downloadFile.ts
+```
+
+## Two download modes
+
+### HTTP download (fetches from backend)
+
+```ts
+import { downloadFileFromUrl } from "@/shared/utils/download/downloadFile";
+
+await downloadFileFromUrl(
+  {
+    url: "students/bulk-upload/template",
+    filename: "student-bulk-upload-template.xlsx",
+    accept: "application/ld+json", // use application/ld+json for API Platform endpoints
+  },
+  store,
+);
+```
+
+> **API Platform endpoints**: Always use `accept: "application/ld+json"` — not the actual file MIME type. API Platform performs content negotiation on the `Accept` header and will return a 406 if the MIME type is not registered as a supported format. The backend streams the binary file regardless of this header value.
+
+### Client-side blob download (no HTTP call)
+
+```ts
+import { downloadBlob } from "@/shared/utils/download/downloadFile";
+
+const blob = new Blob([csvContent], { type: "text/csv" });
+downloadBlob({ blob, filename: "upload-errors.csv" });
+```
+
+## Rules
+
+```
+MUST use downloadFileFromUrl for all downloads that fetch a file from the backend
+MUST use downloadBlob for all downloads from an in-memory Blob
+MUST NOT create anchor elements or call URL.createObjectURL outside of the Download_Service
+MUST NOT manually set Authorization or X-TENANT headers for downloads — the service injects them automatically
+MUST NOT use axios directly in feature code for file downloads
+MUST NOT duplicate the blob/anchor pattern in hooks, components, or API files
 ```
 
 ---

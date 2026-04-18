@@ -6,6 +6,7 @@ import { theme } from "antd";
 export function useToken() {
   const { token } = theme.useToken();
   return {
+    ...token,
     colorPrimary: token.colorPrimary,
     colorSuccess: token.colorSuccess,
     colorWarning: token.colorWarning,
@@ -38,9 +39,16 @@ export function useToken() {
     boxShadow: token.boxShadow,
     boxShadowSecondary: token.boxShadowSecondary,
     marginXL: token.marginXL,
+    marginLG: token.marginLG,
+    marginMD: token.marginMD,
     marginSM: token.marginSM,
+    marginXS: token.marginXS,
+    paddingLG: token.paddingLG,
+    paddingMD: token.paddingMD,
     paddingSM: token.paddingSM,
-    token,
+    paddingXS: token.paddingXS,
+    fontSizeLG: token.fontSizeLG,
+    colorTextHeading: token.colorTextHeading,
   };
 }
 

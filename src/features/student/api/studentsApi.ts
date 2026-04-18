@@ -1,11 +1,14 @@
 import { baseApi } from "@/app/api/baseApi";
+import type { AppStore } from "@/app/store";
 import { ApiTagTypes } from "@/shared/types/apiTagTypes";
+import { downloadFileFromUrl } from "@/shared/utils/download/downloadFile";
 import type {
     CreateStudentRequest,
     PaginatedResponse,
     Student,
     StudentListParams,
     UpdateStudentRequest,
+    UploadSummary,
 } from "../types/student";
 
 const studentsApi = baseApi.injectEndpoints({
@@ -38,6 +41,15 @@ const studentsApi = baseApi.injectEndpoints({
       query: ({ id }) => ({ url: `students/${id}`, method: "DELETE" }),
       invalidatesTags: [{ type: ApiTagTypes.Student, id: "LIST" }],
     }),
+
+    bulkUpload: builder.mutation<UploadSummary, FormData>({
+      query: (formData) => ({
+        url: "students/bulk-upload",
+        method: "POST",
+        data: formData,
+      }),
+      invalidatesTags: [{ type: ApiTagTypes.Student, id: "LIST" }],
+    }),
   }),
 });
 
@@ -47,6 +59,18 @@ export const {
   useCreateStudentMutation,
   useUpdateStudentMutation,
   useDeleteStudentMutation,
+  useBulkUploadMutation,
 } = studentsApi;
+
+export async function downloadStudentTemplate(store: AppStore): Promise<void> {
+  await downloadFileFromUrl(
+    {
+      url: "students/bulk-upload/template",
+      filename: "student-bulk-upload-template.xlsx",
+      accept: "application/ld+json",
+    },
+    store,
+  );
+}
 
 export default studentsApi;

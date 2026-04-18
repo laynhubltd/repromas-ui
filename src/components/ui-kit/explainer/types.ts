@@ -1,16 +1,22 @@
 import type { ReactNode } from "react";
 
-/** Visual intent of the explainer — maps to a colour and icon set. */
+export type ExplainerVariant = "inline" | "panel" | "empty-state";
+export type ExplainerMode = "persistent" | "dismissible";
 export type ExplainerIntent = "info" | "tip" | "warning" | "new" | "beta";
-
-/** Compact badge label variants. */
 export type ExplainerBadgeVariant = "new" | "beta" | "tip" | "updated" | "soon";
 
-/** A single step in a walkthrough sequence. */
-export interface ExplainerStep {
+export type ExplainerStep = {
   key: string;
   title: ReactNode;
-  body: ReactNode;
-  /** Optional illustration / icon shown above the title. */
+  body?: ReactNode;
   media?: ReactNode;
+};
+
+export interface ExplainerActionLink {
+  label: ReactNode;
+  href?: string;
+  onClick?: () => void;
+  target?: string;
+  rel?: string;
+  ariaLabel?: string;
 }

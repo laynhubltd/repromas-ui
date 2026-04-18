@@ -1,11 +1,14 @@
+import { useGetProgramsQuery } from "@/features/program/tabs/programs/api/programsApi";
+import { useGetCurriculumVersionsQuery } from "@/features/settings/tabs/curriculum-version/api/curriculumVersionApi";
+import { useGetLevelsQuery } from "@/features/settings/tabs/level-config/api/levelApi";
 import { applyFormErrors } from "@/shared/utils/error/applyFormErrors";
 import { parseApiError } from "@/shared/utils/error/parseApiError";
 import { Form, notification } from "antd";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
-    useCreateStudentMutation,
-    useDeleteStudentMutation,
-    useUpdateStudentMutation,
+  useCreateStudentMutation,
+  useDeleteStudentMutation,
+  useUpdateStudentMutation,
 } from "../api/studentsApi";
 import type { Student } from "../types/student";
 
@@ -33,7 +36,7 @@ type StudentFormValues = {
 export function useStudentFormModal(
   target: Student | null,
   open: boolean,
-  onClose: () => void
+  onClose: () => void,
 ) {
   const isEditMode = target !== null;
   const [form] = Form.useForm<StudentFormValues>();
@@ -42,6 +45,34 @@ export function useStudentFormModal(
   const [formError, setFormError] = useState<string | null>(null);
 
   const isLoading = isCreating || isUpdating;
+
+  // ─── Reference data ───────────────────────────────────────────────────────
+  const { data: programsData, isLoading: isProgramsLoading } =
+    useGetProgramsQuery({ itemsPerPage: 200 });
+
+  const { data: levelsData, isLoading: isLevelsLoading } = useGetLevelsQuery({
+    itemsPerPage: 200,
+  });
+
+  const {
+    data: curriculumVersionsData,
+    isLoading: isCurriculumVersionsLoading,
+  } = useGetCurriculumVersionsQuery({ itemsPerPage: 200 });
+
+  const programs = useMemo(() => programsData?.member ?? [], [programsData]);
+  const levels = useMemo(() => levelsData?.member ?? [], [levelsData]);
+  const curriculumVersions = useMemo(
+    () => curriculumVersionsData?.member ?? [],
+    [curriculumVersionsData],
+  );
+
+  /** Display name of the student's program (edit mode read-only display). */
+  const programName = useMemo(
+    () =>
+      programs.find((p) => p.id === target?.programId)?.name ??
+      `Program #${target?.programId}`,
+    [programs, target?.programId],
+  );
 
   // Pre-fill form in edit mode
   useEffect(() => {
@@ -52,7 +83,9 @@ export function useStudentFormModal(
         email: target.email ?? undefined,
         currentLevelId: target.currentLevelId,
         status: target.status,
-        metaData: target.metaData ? JSON.stringify(target.metaData, null, 2) : undefined,
+        metaData: target.metaData
+          ? JSON.stringify(target.metaData, null, 2)
+          : undefined,
       });
     }
   }, [open, target, form]);
@@ -71,7 +104,9 @@ export function useStudentFormModal(
           currentLevelId: values.currentLevelId,
           // status is always included in the PUT body, even if unchanged
           status: (values.status as Student["status"]) ?? target.status,
-          metaData: values.metaData ? JSON.parse(values.metaData as string) : null,
+          metaData: values.metaData
+            ? JSON.parse(values.metaData as string)
+            : null,
         }).unwrap();
       } else {
         await createStudent({
@@ -85,7 +120,9 @@ export function useStudentFormModal(
           currentLevelId: values.currentLevelId,
           curriculumVersionId: values.curriculumVersionId,
           status: (values.status as Student["status"]) || "ACTIVE",
-          metaData: values.metaData ? JSON.parse(values.metaData as string) : null,
+          metaData: values.metaData
+            ? JSON.parse(values.metaData as string)
+            : null,
         }).unwrap();
       }
 
@@ -116,12 +153,24 @@ export function useStudentFormModal(
     state: { formError, isLoading, isEditMode },
     actions: { handleSubmit, handleCancel },
     form,
+    data: {
+      programs,
+      levels,
+      curriculumVersions,
+      programName,
+      isProgramsLoading,
+      isLevelsLoading,
+      isCurriculumVersionsLoading,
+    },
   };
 }
 
 // ─── Delete ───────────────────────────────────────────────────────────────────
 
-export function useDeleteStudentModal(target: Student | null, onClose: () => void) {
+export function useDeleteStudentModal(
+  target: Student | null,
+  onClose: () => void,
+) {
   const [deleteStudent, { isLoading }] = useDeleteStudentMutation();
   const [error, setError] = useState<string | null>(null);
 

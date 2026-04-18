@@ -13,6 +13,15 @@ import { CurriculumVersionBanner } from "./CurriculumVersionBanner";
 import { DeleteVersionModal } from "./DeleteVersionModal";
 import { EditVersionModal } from "./EditVersionModal";
 
+// Re-export pure helpers so tests can import them from this module
+export {
+    calcTotalPages,
+    getMenuItems,
+    getStatusTag,
+    resetPageOnFilterChange,
+    statusFilterToQueryParam
+} from "../hooks/useCurriculumVersionTab";
+
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, {
     year: "numeric",
@@ -24,12 +33,27 @@ function formatDate(iso: string): string {
 export function CurriculumVersionTab() {
   const { state, actions } = useCurriculumVersionTab();
   const {
-    search, statusFilter, page, versions, totalItems,
-    isLoading, isError, createModalOpen, editTarget, deleteTarget, debounceTimer,
+    search,
+    statusFilter,
+    page,
+    versions,
+    totalItems,
+    isLoading,
+    isError,
+    createModalOpen,
+    editTarget,
+    deleteTarget,
+    debounceTimer,
   } = state;
   const {
-    handleSearchChange, handleFilterChange, handleActivate, handleSortChange,
-    setCreateModalOpen, setEditTarget, setDeleteTarget, refetch,
+    handleSearchChange,
+    handleFilterChange,
+    handleActivate,
+    handleSortChange,
+    setCreateModalOpen,
+    setEditTarget,
+    setDeleteTarget,
+    refetch,
   } = actions;
 
   const columns: ColumnsType<CurriculumVersion> = [
@@ -67,14 +91,23 @@ export function CurriculumVersionTab() {
           trigger={["click"]}
           menu={{
             items: [
-              { key: "edit", label: "Edit", onClick: () => setEditTarget(record) },
+              {
+                key: "edit",
+                label: "Edit",
+                onClick: () => setEditTarget(record),
+              },
               {
                 key: "activate",
                 label: "Activate",
                 disabled: record.isActiveForAdmission,
                 onClick: () => handleActivate(record),
               },
-              { key: "delete", label: "Delete", danger: true, onClick: () => setDeleteTarget(record) },
+              {
+                key: "delete",
+                label: "Delete",
+                danger: true,
+                onClick: () => setDeleteTarget(record),
+              },
             ],
           }}
         >
@@ -122,7 +155,11 @@ export function CurriculumVersionTab() {
         header={{
           title: "Curriculum Versions",
           extra: (
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateModalOpen(true)}>
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => setCreateModalOpen(true)}
+            >
               Add Version
             </Button>
           ),
@@ -137,7 +174,12 @@ export function CurriculumVersionTab() {
         onChange={handleSortChange}
         pagination={
           totalItems > ITEMS_PER_PAGE
-            ? { current: page, pageSize: ITEMS_PER_PAGE, total: totalItems, onChange: (p: number) => actions.setPage(p) }
+            ? {
+                current: page,
+                pageSize: ITEMS_PER_PAGE,
+                total: totalItems,
+                onChange: (p: number) => actions.setPage(p),
+              }
             : false
         }
         emptyState={
@@ -145,24 +187,44 @@ export function CurriculumVersionTab() {
             ? {
                 title: "No curriculum versions yet",
                 action: (
-                  <Button type="primary" size="small" icon={<PlusOutlined />} onClick={() => setCreateModalOpen(true)}>
+                  <Button
+                    type="primary"
+                    size="small"
+                    icon={<PlusOutlined />}
+                    onClick={() => setCreateModalOpen(true)}
+                  >
                     Add Version
                   </Button>
                 ),
               }
             : isError
-            ? {
-                title: "Could not load curriculum versions",
-                description: "An error occurred while fetching data.",
-                action: <Button size="small" onClick={() => refetch()}>Retry</Button>,
-              }
-            : undefined
+              ? {
+                  title: "Could not load curriculum versions",
+                  description: "An error occurred while fetching data.",
+                  action: (
+                    <Button size="small" onClick={() => refetch()}>
+                      Retry
+                    </Button>
+                  ),
+                }
+              : undefined
         }
       />
 
-      <CreateVersionModal open={createModalOpen} onClose={() => setCreateModalOpen(false)} />
-      <EditVersionModal open={editTarget !== null} target={editTarget} onClose={() => setEditTarget(null)} />
-      <DeleteVersionModal open={deleteTarget !== null} target={deleteTarget} onClose={() => setDeleteTarget(null)} />
+      <CreateVersionModal
+        open={createModalOpen}
+        onClose={() => setCreateModalOpen(false)}
+      />
+      <EditVersionModal
+        open={editTarget !== null}
+        target={editTarget}
+        onClose={() => setEditTarget(null)}
+      />
+      <DeleteVersionModal
+        open={deleteTarget !== null}
+        target={deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+      />
     </Flex>
   );
 }

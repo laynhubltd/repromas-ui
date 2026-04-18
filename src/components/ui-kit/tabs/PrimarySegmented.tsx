@@ -28,6 +28,18 @@ export function PrimarySegmented<T extends string | number = string>({
         .${CLASS} .ant-segmented-item-selected .ant-segmented-item-label {
           color: #fff;
         }
+        .${CLASS} .ant-segmented-item:not(.ant-segmented-item-selected) {
+          cursor: pointer;
+          border: 1px solid color-mix(in srgb, var(--ui-kit-primary-segmented-color) 30%, transparent);
+          border-radius: 4px;
+        }
+        .${CLASS} .ant-segmented-item:not(.ant-segmented-item-selected) .ant-segmented-item-label {
+          color: var(--ui-kit-primary-segmented-color);
+          font-weight: 500;
+        }
+        .${CLASS} .ant-segmented-item:not(.ant-segmented-item-selected):hover {
+          background-color: color-mix(in srgb, var(--ui-kit-primary-segmented-color) 10%, transparent);
+        }
       `}</style>
       <Segmented<T>
         {...props}

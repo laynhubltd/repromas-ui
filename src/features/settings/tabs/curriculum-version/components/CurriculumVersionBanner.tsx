@@ -1,6 +1,7 @@
 import { ExplainerCallout } from "@/components/ui-kit";
+import type { ReactElement } from "react";
 
-export function CurriculumVersionBanner(): JSX.Element {
+export function CurriculumVersionBanner(): ReactElement {
   return (
     <ExplainerCallout
       intent="info"

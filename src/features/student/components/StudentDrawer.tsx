@@ -9,6 +9,7 @@ import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
 import { Breadcrumb, Button, Descriptions, Drawer, Flex, Typography } from "antd";
 import { useStudentDrawer } from "../hooks/useStudentDrawer";
 import { StatusBadge } from "./StatusBadge";
+import { TransitionsSection } from "./TransitionsSection";
 
 type StudentDrawerProps = {
   studentId: number | null;
@@ -38,7 +39,7 @@ export function StudentDrawer({
     <Drawer
       open={open}
       onClose={onClose}
-      width={480}
+      width={720}
       placement="right"
       title={
         student ? (
@@ -77,6 +78,7 @@ export function StudentDrawer({
         {isError ? (
           <ErrorAlert variant="section" error="Failed to load student profile" onRetry={refetch} />
         ) : student ? (
+          <>
           <Flex vertical gap={24}>
             {/* Academic hierarchy */}
             {(faculty || department || program) && (
@@ -139,27 +141,10 @@ export function StudentDrawer({
               </Descriptions.Item>
             </Descriptions>
 
-            {/* Enrollment */}
-            <div>
-              <Typography.Text
-                strong
-                style={{ display: "block", marginBottom: 8, fontSize: token.fontSize }}
-              >
-                Enrollment
-              </Typography.Text>
-              {student.currentEnrollmentTransition ? (
-                <Descriptions column={1} size="small" bordered styles={{ label: { width: 140 } }}>
-                  {Object.entries(student.currentEnrollmentTransition).map(([key, value]) => (
-                    <Descriptions.Item key={key} label={key}>
-                      {String(value)}
-                    </Descriptions.Item>
-                  ))}
-                </Descriptions>
-              ) : (
-                <Typography.Text type="secondary">No enrollment data</Typography.Text>
-              )}
-            </div>
+            <TransitionsSection studentId={student.id} />
           </Flex>
+          
+          </>
         ) : null}
       </DataLoader>
     </Drawer>

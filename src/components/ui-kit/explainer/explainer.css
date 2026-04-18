@@ -1,0 +1,14 @@
+.ui-kit-explainer__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  margin-top: 2px;
+}
+
+.ui-kit-explainer__action-link:focus-visible,
+.ui-kit-explainer__dismiss:focus-visible {
+  outline: 2px solid var(--color-primary, #1677ff);
+  outline-offset: 2px;
+  border-radius: 6px;
+}

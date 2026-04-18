@@ -1,8 +1,13 @@
 // Student status and entry mode enums
 
-export type StudentStatus = 'ACTIVE' | 'SUSPENDED' | 'GRADUATED' | 'WITHDRAWN' | 'RUSTICATED';
+export type StudentStatus =
+  | "ACTIVE"
+  | "SUSPENDED"
+  | "GRADUATED"
+  | "WITHDRAWN"
+  | "RUSTICATED";
 
-export type EntryMode = 'UTME' | 'DIRECT_ENTRY' | 'TRANSFER';
+export type EntryMode = "UTME" | "DIRECT_ENTRY" | "TRANSFER";
 
 // Core entity — relationship fields are null unless included via ?include=
 
@@ -52,12 +57,13 @@ export type StudentListParams = {
   itemsPerPage?: number;
   sort?: string;
   include?: string;
-  'search[firstName]'?: string;
-  'search[lastName]'?: string;
-  'search[matricNumber]'?: string;
-  'exact[status]'?: StudentStatus;
-  'exact[entryMode]'?: EntryMode;
-  'exact[programId]'?: number;
+  "search[firstName]"?: string;
+  "search[lastName]"?: string;
+  "search[matricNumber]"?: string;
+  "exact[status]"?: StudentStatus;
+  "exact[entryMode]"?: EntryMode;
+  "exact[programId]"?: number;
+  "exact[currentLevelId]"?: number;
 };
 
 // Request bodies
@@ -84,3 +90,23 @@ export type UpdateStudentRequest = {
   status: StudentStatus;
   metaData?: Record<string, unknown> | null;
 };
+
+// Bulk upload types
+
+export type UploadError = {
+  row?: number;
+  matricNumber: string;
+  message: string;
+};
+
+export type UploadSummary = {
+  processedCount: number;
+  skippedCount: number;
+  errors: UploadError[];
+};
+
+export type UploadSummaryState =
+  | "success"
+  | "partial"
+  | "failed"
+  | "parse-error";

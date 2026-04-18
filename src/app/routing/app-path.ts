@@ -11,5 +11,6 @@ export const appPaths = {
   staff: "/staff",
   students: "/students",
   roleSelection: "/role-selection",
+  courseRegistration: "/course-registration",
   // Add other app paths here
 };

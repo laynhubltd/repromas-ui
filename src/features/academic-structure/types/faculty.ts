@@ -70,18 +70,19 @@ export type UpdateDepartmentRequest = {
 export type FacultyListParams = {
   page?: number;
   itemsPerPage?: number;
-  'search[name]'?: string;
-  'search[code]'?: string;
+  "search[name]"?: string;
+  "search[code]"?: string;
   sort?: string;
-  'exact[id]'?: number;
+  "exact[id]"?: number;
   include?: string;
 };
 
 export type DepartmentListParams = {
   page?: number;
   itemsPerPage?: number;
-  'search[name]'?: string;
-  'search[code]'?: string;
-  'exact[facultyId]'?: number;
+  sort?: string;
+  "search[name]"?: string;
+  "search[code]"?: string;
+  "exact[facultyId]"?: number;
   include?: string;
 };

@@ -10,10 +10,9 @@ React + TypeScript + Vite app aligned with LAYNHUB design and architecture stand
 - **Access control** – `privileges-enum`, `route-privilege-matrix`, `useAccessControl`, `useRestrictedRouteMenuItem` for menu/route visibility.
 - **Layout** – `MainLayout` (sider, header, content, mobile drawer) in `components/layout/`.
 - **Reusable pieces** – Utils in `utils/` (storage, token, object-utils, types); feature-level APIs and hooks in `features/`; shared layout in `components/`.
+- **UI kit adoption** – `src/components/ui-kit/README.md` (component APIs, variant matrixes, migration guide, and rollout checklists).
 
 Add new features under `src/features/<feature>/` and new routes in `app-path.ts`, `route-menu-config.tsx`, and `app-router.tsx`.
-
----
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 

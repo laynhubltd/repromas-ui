@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useGetStudentsQuery } from "../api/studentsApi";
 import type { EntryMode, Student, StudentStatus } from "../types/student";
+import { useStudentBulkUpload } from "./useStudentBulkUpload";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -30,6 +31,7 @@ export function useStudentsTab() {
   const [programFilter, setProgramFilter] = useState<number | undefined>(undefined);
 
   // ─── Modal / Drawer State ─────────────────────────────────────────────────
+  const [bulkUploadModalOpen, setBulkUploadModalOpen] = useState(false);
   const [formTarget, setFormTarget] = useState<Student | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Student | null>(null);
   const [formModalOpen, setFormModalOpen] = useState(false);
@@ -119,6 +121,17 @@ export function useStudentsTab() {
     setPage(newPage);
   }, []);
 
+  const handleOpenBulkUpload = useCallback(() => {
+    setBulkUploadModalOpen(true);
+  }, []);
+
+  const handleCloseBulkUpload = useCallback(() => {
+    setBulkUploadModalOpen(false);
+    refetch();
+  }, [refetch]);
+
+  const bulkUpload = useStudentBulkUpload({ onClose: handleCloseBulkUpload });
+
   const handleOpenCreate = useCallback(() => {
     setFormTarget(null);
     setFormModalOpen(true);
@@ -169,6 +182,7 @@ export function useStudentsTab() {
       deleteTarget,
       formModalOpen,
       drawerStudentId,
+      bulkUploadModalOpen,
     },
     actions: {
       handleFirstNameSearchChange,
@@ -187,11 +201,14 @@ export function useStudentsTab() {
       handleOpenDrawer,
       handleCloseDrawer,
       refetch,
+      handleOpenBulkUpload,
+      handleCloseBulkUpload,
     },
     flags: {
       hasData,
       isSearchActive,
       isFilterActive,
     },
+    bulkUpload,
   };
 }

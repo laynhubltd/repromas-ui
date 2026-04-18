@@ -1,19 +1,34 @@
 // Feature: student
-import { useGetProgramsQuery } from "@/features/program/tabs/programs/api/programsApi";
-import { useGetCurriculumVersionsQuery } from "@/features/settings/tabs/curriculum-version/api/curriculumVersionApi";
-import { useGetLevelsQuery } from "@/features/settings/tabs/level-config/api/levelApi";
+import type { Program } from "@/features/program/tabs/programs/types/program";
+import type { CurriculumVersion } from "@/features/settings/tabs/curriculum-version/types/curriculum-version";
+import type { Level } from "@/features/settings/tabs/level-config/types/level";
+import {
+  ENTRY_MODE_OPTIONS,
+  STUDENT_STATUS_OPTIONS,
+} from "@/shared/constants/studentOptions";
 import { useToken } from "@/shared/hooks/useToken";
+import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
 import { ErrorAlert } from "@/shared/ui/ErrorAlert";
-import { Alert, Button, Form, Input, Modal, Select, Typography } from "antd";
+import {
+  Alert,
+  Button,
+  Col,
+  Form,
+  Input,
+  Modal,
+  Row,
+  Select,
+  Typography,
+} from "antd";
 import { useStudentFormModal } from "../../hooks/useStudentModal";
 import type { Student } from "../../types/student";
 import {
-    emailRules,
-    entryModeRules,
-    firstNameRules,
-    lastNameRules,
-    matricNumberRules,
-    statusRules,
+  emailRules,
+  entryModeRules,
+  firstNameRules,
+  lastNameRules,
+  matricNumberRules,
+  statusRules,
 } from "../../utils/validators";
 
 export type StudentFormModalProps = {
@@ -23,42 +38,34 @@ export type StudentFormModalProps = {
   onClose: () => void;
 };
 
-const ENTRY_MODE_OPTIONS = [
-  { value: "UTME", label: "UTME" },
-  { value: "DIRECT_ENTRY", label: "Direct Entry" },
-  { value: "TRANSFER", label: "Transfer" },
-];
-
-const STATUS_OPTIONS = [
-  { value: "ACTIVE", label: "Active" },
-  { value: "SUSPENDED", label: "Suspended" },
-  { value: "GRADUATED", label: "Graduated" },
-  { value: "WITHDRAWN", label: "Withdrawn" },
-  { value: "RUSTICATED", label: "Rusticated" },
-];
-
-export function StudentFormModal({ open, target, onClose }: StudentFormModalProps) {
+/** Reusable required asterisk span. */
+function Req() {
   const token = useToken();
-  const { state, actions, form } = useStudentFormModal(target, open, onClose);
+  return <span style={{ color: token.colorError, fontWeight: 700 }}>*</span>;
+}
+
+export function StudentFormModal({
+  open,
+  target,
+  onClose,
+}: StudentFormModalProps) {
+  const token = useToken();
+  const { state, actions, form, data } = useStudentFormModal(
+    target,
+    open,
+    onClose,
+  );
   const { formError, isLoading, isEditMode } = state;
   const { handleSubmit, handleCancel } = actions;
-
-  const { data: programsData, isLoading: isProgramsLoading } = useGetProgramsQuery({
-    itemsPerPage: 200,
-  });
-  const programs = programsData?.member ?? [];
-
-  const { data: levelsData, isLoading: isLevelsLoading } = useGetLevelsQuery({
-    itemsPerPage: 200,
-  });
-  const levels = levelsData?.member ?? [];
-
-  const { data: curriculumVersionsData, isLoading: isCurriculumVersionsLoading } =
-    useGetCurriculumVersionsQuery({ itemsPerPage: 200 });
-  const curriculumVersions = curriculumVersionsData?.member ?? [];
-
-  const programName =
-    programs.find((p) => p.id === target?.programId)?.name ?? `Program #${target?.programId}`;
+  const {
+    programs,
+    levels,
+    curriculumVersions,
+    programName,
+    isProgramsLoading,
+    isLevelsLoading,
+    isCurriculumVersionsLoading,
+  } = data;
 
   return (
     <Modal
@@ -66,7 +73,7 @@ export function StudentFormModal({ open, target, onClose }: StudentFormModalProp
       open={open}
       onCancel={handleCancel}
       footer={null}
-      width={isEditMode ? 520 : 600}
+      width={680}
       destroyOnHidden
       closable
       styles={{
@@ -82,7 +89,7 @@ export function StudentFormModal({ open, target, onClose }: StudentFormModalProp
         <ErrorAlert variant="form" error={formError} />
 
         {/* Create mode: warning callout */}
-        {!isEditMode && (
+        <ConditionalRenderer when={!isEditMode}>
           <div style={{ marginBottom: 16 }}>
             <Alert
               type="warning"
@@ -90,203 +97,273 @@ export function StudentFormModal({ open, target, onClose }: StudentFormModalProp
               message="Matric number cannot be changed after creation"
             />
           </div>
-        )}
+        </ConditionalRenderer>
 
-        {/* Edit mode: read-only context display */}
-        {isEditMode && (
-          <div style={{ marginBottom: 16 }}>
-            <Form layout="vertical" requiredMark={false}>
-              <Form.Item label="Matric Number" style={{ marginBottom: 8 }}>
-                <Typography.Text>{target?.matricNumber}</Typography.Text>
-              </Form.Item>
-              <Form.Item label="Entry Mode" style={{ marginBottom: 8 }}>
-                <Typography.Text>{target?.entryMode}</Typography.Text>
-              </Form.Item>
-              <Form.Item label="Program" style={{ marginBottom: 8 }}>
-                <Typography.Text>{programName}</Typography.Text>
-              </Form.Item>
-            </Form>
+        {/* Edit mode: read-only context (matric, entry mode, program) */}
+        <ConditionalRenderer when={isEditMode}>
+          <div
+            style={{
+              marginBottom: 16,
+              padding: "12px 16px",
+              background: token.colorBgLayout,
+              borderRadius: token.borderRadius,
+              border: `1px solid ${token.colorBorderSecondary}`,
+            }}
+          >
+            <Row gutter={[16, 8]}>
+              <Col xs={24} sm={8}>
+                <Typography.Text
+                  type="secondary"
+                  style={{ fontSize: token.fontSizeSM, display: "block" }}
+                >
+                  Matric Number
+                </Typography.Text>
+                <Typography.Text strong>{target?.matricNumber}</Typography.Text>
+              </Col>
+              <Col xs={24} sm={8}>
+                <Typography.Text
+                  type="secondary"
+                  style={{ fontSize: token.fontSizeSM, display: "block" }}
+                >
+                  Entry Mode
+                </Typography.Text>
+                <Typography.Text strong>{target?.entryMode}</Typography.Text>
+              </Col>
+              <Col xs={24} sm={8}>
+                <Typography.Text
+                  type="secondary"
+                  style={{ fontSize: token.fontSizeSM, display: "block" }}
+                >
+                  Program
+                </Typography.Text>
+                <Typography.Text strong>{programName}</Typography.Text>
+              </Col>
+            </Row>
           </div>
-        )}
+        </ConditionalRenderer>
 
-        <Form form={form} layout="vertical" requiredMark={false} onFinish={handleSubmit}>
-          {/* Create-only fields */}
-          {!isEditMode && (
+        <Form
+          form={form}
+          layout="vertical"
+          requiredMark={false}
+          onFinish={handleSubmit}
+        >
+          {/* ── Create-only: Matric Number (full width) ── */}
+          <ConditionalRenderer when={!isEditMode}>
             <Form.Item
               name="matricNumber"
               label={
                 <span>
-                  Matric Number{" "}
-                  <span style={{ color: token.colorError, fontWeight: 700 }}>*</span>
+                  Matric Number <Req />
                 </span>
               }
               rules={matricNumberRules}
             >
               <Input placeholder="e.g. CSC/2020/001" style={{ height: 40 }} />
             </Form.Item>
-          )}
+          </ConditionalRenderer>
 
-          <Form.Item
-            name="firstName"
-            label={
-              <span>
-                First Name{" "}
-                <span style={{ color: token.colorError, fontWeight: 700 }}>*</span>
-              </span>
-            }
-            rules={firstNameRules}
-          >
-            <Input placeholder="e.g. John" style={{ height: 40 }} />
-          </Form.Item>
+          {/* ── Row 1: First Name + Last Name ── */}
+          <Row gutter={16}>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                name="firstName"
+                label={
+                  <span>
+                    First Name <Req />
+                  </span>
+                }
+                rules={firstNameRules}
+              >
+                <Input placeholder="e.g. John" style={{ height: 40 }} />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                name="lastName"
+                label={
+                  <span>
+                    Last Name <Req />
+                  </span>
+                }
+                rules={lastNameRules}
+              >
+                <Input placeholder="e.g. Doe" style={{ height: 40 }} />
+              </Form.Item>
+            </Col>
+          </Row>
 
-          <Form.Item
-            name="lastName"
-            label={
-              <span>
-                Last Name{" "}
-                <span style={{ color: token.colorError, fontWeight: 700 }}>*</span>
-              </span>
-            }
-            rules={lastNameRules}
-          >
-            <Input placeholder="e.g. Doe" style={{ height: 40 }} />
-          </Form.Item>
+          {/* ── Row 2: Email + Status ── */}
+          <Row gutter={16}>
+            <Col xs={24} sm={12}>
+              <Form.Item name="email" label="Email" rules={emailRules}>
+                <Input
+                  placeholder="e.g. john.doe@example.com"
+                  style={{ height: 40 }}
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                name="status"
+                label={
+                  <span>
+                    Status <Req />
+                  </span>
+                }
+                rules={statusRules}
+                initialValue={!isEditMode ? "ACTIVE" : undefined}
+              >
+                <Select
+                  placeholder="Select status"
+                  style={{ height: 40 }}
+                  options={STUDENT_STATUS_OPTIONS}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
 
-          <Form.Item
-            name="email"
-            label="Email"
-            rules={emailRules}
-          >
-            <Input placeholder="e.g. john.doe@example.com" style={{ height: 40 }} />
-          </Form.Item>
-
-          {/* Create-only fields */}
-          {!isEditMode && (
+          {/* ── Create-only fields ── */}
+          <ConditionalRenderer when={!isEditMode}>
             <>
-              <Form.Item
-                name="entryMode"
-                label={
-                  <span>
-                    Entry Mode{" "}
-                    <span style={{ color: token.colorError, fontWeight: 700 }}>*</span>
-                  </span>
-                }
-                rules={entryModeRules}
-              >
-                <Select
-                  placeholder="Select entry mode"
-                  style={{ height: 40 }}
-                  options={ENTRY_MODE_OPTIONS}
-                />
-              </Form.Item>
+              {/* Row 3: Entry Mode + Program */}
+              <Row gutter={16}>
+                <Col xs={24} sm={12}>
+                  <Form.Item
+                    name="entryMode"
+                    label={
+                      <span>
+                        Entry Mode <Req />
+                      </span>
+                    }
+                    rules={entryModeRules}
+                  >
+                    <Select
+                      placeholder="Select entry mode"
+                      style={{ height: 40 }}
+                      options={ENTRY_MODE_OPTIONS}
+                    />
+                  </Form.Item>
+                </Col>
+                <Col xs={24} sm={12}>
+                  <Form.Item
+                    name="programId"
+                    label={
+                      <span>
+                        Program <Req />
+                      </span>
+                    }
+                    rules={[{ required: true, message: "Program is required" }]}
+                  >
+                    <Select
+                      placeholder="Select program"
+                      loading={isProgramsLoading}
+                      showSearch
+                      optionFilterProp="label"
+                      style={{ height: 40 }}
+                      options={programs.map((p: Program) => ({
+                        value: p.id,
+                        label: p.name,
+                      }))}
+                    />
+                  </Form.Item>
+                </Col>
+              </Row>
 
-              <Form.Item
-                name="programId"
-                label={
-                  <span>
-                    Program{" "}
-                    <span style={{ color: token.colorError, fontWeight: 700 }}>*</span>
-                  </span>
-                }
-                rules={[{ required: true, message: "Program is required" }]}
-              >
-                <Select
-                  placeholder="Select program"
-                  loading={isProgramsLoading}
-                  showSearch
-                  optionFilterProp="label"
-                  style={{ height: 40 }}
-                  options={programs.map((p) => ({ value: p.id, label: p.name }))}
-                />
-              </Form.Item>
+              {/* Row 4: Entry Level + Curriculum Version */}
+              <Row gutter={16}>
+                <Col xs={24} sm={12}>
+                  <Form.Item
+                    name="entryLevelId"
+                    label={
+                      <span>
+                        Entry Level <Req />
+                      </span>
+                    }
+                    rules={[
+                      { required: true, message: "Entry level is required" },
+                    ]}
+                  >
+                    <Select
+                      placeholder="Select entry level"
+                      loading={isLevelsLoading}
+                      showSearch
+                      optionFilterProp="label"
+                      style={{ height: 40 }}
+                      options={levels.map((l: Level) => ({
+                        value: l.id,
+                        label: l.name,
+                      }))}
+                      onChange={(value) => {
+                        form.setFieldValue("currentLevelId", value);
+                      }}
+                    />
+                  </Form.Item>
+                </Col>
+                <Col xs={24} sm={12}>
+                  <Form.Item
+                    name="curriculumVersionId"
+                    label={
+                      <span>
+                        Curriculum Version <Req />
+                      </span>
+                    }
+                    rules={[
+                      {
+                        required: true,
+                        message: "Curriculum version is required",
+                      },
+                    ]}
+                  >
+                    <Select
+                      placeholder="Select curriculum version"
+                      loading={isCurriculumVersionsLoading}
+                      showSearch
+                      optionFilterProp="label"
+                      style={{ height: 40 }}
+                      options={curriculumVersions.map(
+                        (v: CurriculumVersion) => ({
+                          value: v.id,
+                          label: v.name,
+                        }),
+                      )}
+                    />
+                  </Form.Item>
+                </Col>
+              </Row>
+            </>
+          </ConditionalRenderer>
 
+          {/* ── Current Level — full width in edit, half in create (stacks on mobile) ── */}
+          <Row gutter={16}>
+            <Col xs={24} sm={isEditMode ? 24 : 12}>
               <Form.Item
-                name="entryLevelId"
+                name="currentLevelId"
                 label={
                   <span>
-                    Entry Level{" "}
-                    <span style={{ color: token.colorError, fontWeight: 700 }}>*</span>
+                    Current Level <Req />
                   </span>
                 }
-                rules={[{ required: true, message: "Entry level is required" }]}
+                rules={[
+                  { required: true, message: "Current level is required" },
+                ]}
               >
                 <Select
-                  placeholder="Select entry level"
+                  placeholder="Select current level"
                   loading={isLevelsLoading}
                   showSearch
                   optionFilterProp="label"
                   style={{ height: 40 }}
-                  options={levels.map((l) => ({ value: l.id, label: l.name }))}
-                  onChange={(value) => {
-                    // Pre-fill currentLevelId from entryLevelId
-                    form.setFieldValue("currentLevelId", value);
-                  }}
+                  options={levels.map((l: Level) => ({
+                    value: l.id,
+                    label: l.name,
+                  }))}
                 />
               </Form.Item>
-            </>
-          )}
+            </Col>
+          </Row>
 
-          <Form.Item
-            name="currentLevelId"
-            label={
-              <span>
-                Current Level{" "}
-                <span style={{ color: token.colorError, fontWeight: 700 }}>*</span>
-              </span>
-            }
-            rules={[{ required: true, message: "Current level is required" }]}
-          >
-            <Select
-              placeholder="Select current level"
-              loading={isLevelsLoading}
-              showSearch
-              optionFilterProp="label"
-              style={{ height: 40 }}
-              options={levels.map((l) => ({ value: l.id, label: l.name }))}
-            />
-          </Form.Item>
-
-          {/* Create-only fields */}
-          {!isEditMode && (
-            <Form.Item
-              name="curriculumVersionId"
-              label={
-                <span>
-                  Curriculum Version{" "}
-                  <span style={{ color: token.colorError, fontWeight: 700 }}>*</span>
-                </span>
-              }
-              rules={[{ required: true, message: "Curriculum version is required" }]}
-            >
-              <Select
-                placeholder="Select curriculum version"
-                loading={isCurriculumVersionsLoading}
-                showSearch
-                optionFilterProp="label"
-                style={{ height: 40 }}
-                options={curriculumVersions.map((v) => ({ value: v.id, label: v.name }))}
-              />
-            </Form.Item>
-          )}
-
-          <Form.Item
-            name="status"
-            label={
-              <span>
-                Status{" "}
-                <span style={{ color: token.colorError, fontWeight: 700 }}>*</span>
-              </span>
-            }
-            rules={statusRules}
-            initialValue={!isEditMode ? "ACTIVE" : undefined}
-          >
-            <Select
-              placeholder="Select status"
-              style={{ height: 40 }}
-              options={STATUS_OPTIONS}
-            />
-          </Form.Item>
-
+          {/* ── Metadata (full width) ── */}
           <Form.Item
             name="metaData"
             label="Metadata"

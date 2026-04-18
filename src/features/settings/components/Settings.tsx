@@ -1,9 +1,15 @@
 import { Tabs } from "@/components/ui-kit";
-import { BookOutlined, CalendarOutlined, PartitionOutlined, SettingOutlined } from "@ant-design/icons";
+import { PermissionGuard } from "@/features/access-control";
+import { Permission } from "@/features/access-control/permissions";
+import { BookOutlined, CalendarOutlined, PartitionOutlined, SafetyOutlined, SettingOutlined, SwapOutlined } from "@ant-design/icons";
 import { Typography } from "antd";
 import { AcademicCalendarTab } from "../tabs/academic-calendar";
 import { CurriculumVersionTab } from "../tabs/curriculum-version";
 import { LevelConfigTab } from "../tabs/level-config";
+import { RbacSettingsTab } from "../tabs/rbac-settings";
+import { TransitionStatusTab } from "../tabs/student-transition-status";
+import { SystemConfigTab } from "../tabs/system-config";
+import { SystemTimeFramesTab } from "../tabs/system-timeframes";
 
 export default function Settings() {
   const tabItems = [
@@ -21,6 +27,38 @@ export default function Settings() {
       key: "academic-calendar",
       label: <span><CalendarOutlined /> Academic Calendar</span>,
       children: <AcademicCalendarTab />,
+    },
+    {
+      key: "roles-permissions",
+      label: (
+        <PermissionGuard permission={[Permission.RolesList, Permission.PermissionsList]}>
+          <span><SafetyOutlined /> Roles & Permissions</span>
+        </PermissionGuard>
+      ),
+      children: <RbacSettingsTab />,
+    },
+    {
+      key: "system-timeframe",
+      label: (
+        <PermissionGuard permission={[Permission.SystemTimeFramesList]}>
+          <span><CalendarOutlined /> System Time Frame</span>
+        </PermissionGuard>
+      ),
+      children: <SystemTimeFramesTab />,
+    },
+    {
+      key: "system-config",
+      label: (
+        <PermissionGuard permission={[Permission.SystemConfigsList]}>
+          <span><SettingOutlined /> System Config</span>
+        </PermissionGuard>
+      ),
+      children: <SystemConfigTab />,
+    },
+    {
+      key: "student-transition-status",
+      label: <span><SwapOutlined /> Transition Statuses</span>,
+      children: <TransitionStatusTab />,
     },
     {
       key: "general",
