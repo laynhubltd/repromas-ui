@@ -1,6 +1,6 @@
 import type { ThemeConfig } from "antd";
 
-export const DEFAULT_PRIMARY = "#003049" // "#006747";
+export const DEFAULT_PRIMARY = "#003049";
 
 /** Hex to rgba string for a given alpha (0–1) */
 export function hexToRgba(hex: string, alpha: number): string {

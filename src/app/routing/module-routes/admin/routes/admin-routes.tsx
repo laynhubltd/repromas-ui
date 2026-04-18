@@ -5,33 +5,38 @@ import { lazy } from "react";
 import { Route } from "react-router-dom";
 
 const Dashboard = lazy(
-  () => import("@/features/dashboard/components/Dashboard")
+  () => import("@/features/dashboard/components/Dashboard"),
 );
-const AcademicStructure = lazy(
-  () =>
-    import("@/features/academic-structure").then((m) => ({
-      default: m.AcademicStructure,
-    }))
+const AcademicStructure = lazy(() =>
+  import("@/features/academic-structure").then((m) => ({
+    default: m.AcademicStructure,
+  })),
 );
 const Settings = lazy(() => import("@/features/settings/components/Settings"));
 const ProgramPage = lazy(() =>
   import("@/features/program/components/ProgramPage").then((m) => ({
     default: m.ProgramPage,
-  }))
+  })),
 );
 
 const StudentPage = lazy(() =>
-  import("@/features/student").then((m) => ({ default: m.StudentPage }))
+  import("@/features/student").then((m) => ({ default: m.StudentPage })),
 );
 
 const StaffPage = lazy(() =>
-  import("@/features/staff").then((m) => ({ default: m.StaffPage }))
+  import("@/features/staff").then((m) => ({ default: m.StaffPage })),
 );
 
 const CoursePage = lazy(() =>
   import("@/features/courses/components/CoursePage").then((m) => ({
     default: m.CoursePage,
-  }))
+  })),
+);
+
+const CourseRegistrationPage = lazy(() =>
+  import("@/features/course-registration").then((m) => ({
+    default: m.CourseRegistrationPage,
+  })),
 );
 
 const GuardedDashboardShell = withAuthGuard({
@@ -51,6 +56,10 @@ export function getAdminRouteEntries() {
           <Route path="students" element={<StudentPage />} />
           <Route path="staff" element={<StaffPage />} />
           <Route path="courses" element={<CoursePage />} />
+          <Route
+            path="course-registration"
+            element={<CourseRegistrationPage />}
+          />
         </Route>
       </Route>
     </>

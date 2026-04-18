@@ -1,6 +1,7 @@
 // Feature: program-graduation-config
 import { useGetProgramsQuery } from "@/features/program/tabs/programs/api/programsApi";
 import { useGetCurriculumVersionsQuery } from "@/features/settings/tabs/curriculum-version/api/curriculumVersionApi";
+import { ENTRY_MODE_OPTIONS } from "@/shared/constants/studentOptions";
 import { useToken } from "@/shared/hooks/useToken";
 import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Button, Form, InputNumber, Modal, Select, Typography } from "antd";
@@ -19,29 +20,30 @@ export type GraduationRequirementFormModalProps = {
   onClose: () => void;
 };
 
-const ENTRY_MODE_OPTIONS = [
-  { value: "UTME", label: "UTME" },
-  { value: "DIRECT_ENTRY", label: "Direct Entry" },
-  { value: "TRANSFER", label: "Transfer" },
-];
-
 export function GraduationRequirementFormModal({
   open,
   target,
   onClose,
 }: GraduationRequirementFormModalProps) {
   const token = useToken();
-  const { state, actions, form } = useGraduationRequirementFormModal(target, open, onClose);
+  const { state, actions, form } = useGraduationRequirementFormModal(
+    target,
+    open,
+    onClose,
+  );
   const { formError, isLoading, isEditMode } = state;
   const { handleSubmit, handleCancel } = actions;
 
-  const { data: programsData, isLoading: isProgramsLoading } = useGetProgramsQuery({
-    itemsPerPage: 200,
-  });
+  const { data: programsData, isLoading: isProgramsLoading } =
+    useGetProgramsQuery({
+      itemsPerPage: 200,
+    });
   const programs = programsData?.member ?? [];
 
-  const { data: curriculumVersionsData, isLoading: isCurriculumVersionsLoading } =
-    useGetCurriculumVersionsQuery({ itemsPerPage: 200 });
+  const {
+    data: curriculumVersionsData,
+    isLoading: isCurriculumVersionsLoading,
+  } = useGetCurriculumVersionsQuery({ itemsPerPage: 200 });
   const curriculumVersions = curriculumVersionsData?.member ?? [];
 
   // Credit invariant validator factory
@@ -49,7 +51,9 @@ export function GraduationRequirementFormModal({
     validator: async (_: unknown, _value: unknown) => {
       const total = form.getFieldValue("minTotalCredits") as number | undefined;
       const core = form.getFieldValue("minCoreCredits") as number | undefined;
-      const elective = form.getFieldValue("minElectiveCredits") as number | undefined;
+      const elective = form.getFieldValue("minElectiveCredits") as
+        | number
+        | undefined;
       if (total == null || core == null || elective == null) return;
       const sum = (core ?? 0) + (elective ?? 0);
       if (sum > total) {
@@ -64,7 +68,11 @@ export function GraduationRequirementFormModal({
 
   return (
     <Modal
-      title={isEditMode ? "Edit Graduation Requirement" : "Create Graduation Requirement"}
+      title={
+        isEditMode
+          ? "Edit Graduation Requirement"
+          : "Create Graduation Requirement"
+      }
       open={open}
       onCancel={handleCancel}
       footer={null}
@@ -82,7 +90,12 @@ export function GraduationRequirementFormModal({
     >
       <div style={{ padding: 24 }}>
         <ErrorAlert error={formError} />
-        <Form form={form} layout="vertical" requiredMark={false} onFinish={handleSubmit}>
+        <Form
+          form={form}
+          layout="vertical"
+          requiredMark={false}
+          onFinish={handleSubmit}
+        >
           {/* Program — editable in create, read-only in edit */}
           {isEditMode ? (
             <Form.Item label="Program">
@@ -96,7 +109,10 @@ export function GraduationRequirementFormModal({
               name="programId"
               label={
                 <span>
-                  Program <span style={{ color: token.colorError, fontWeight: 700 }}>*</span>
+                  Program{" "}
+                  <span style={{ color: token.colorError, fontWeight: 700 }}>
+                    *
+                  </span>
                 </span>
               }
               rules={[{ required: true, message: "Program is required" }]}
@@ -118,10 +134,14 @@ export function GraduationRequirementFormModal({
             label={
               <span>
                 Curriculum Version{" "}
-                <span style={{ color: token.colorError, fontWeight: 700 }}>*</span>
+                <span style={{ color: token.colorError, fontWeight: 700 }}>
+                  *
+                </span>
               </span>
             }
-            rules={[{ required: true, message: "Curriculum version is required" }]}
+            rules={[
+              { required: true, message: "Curriculum version is required" },
+            ]}
           >
             <Select
               placeholder="Select curriculum version"
@@ -129,7 +149,10 @@ export function GraduationRequirementFormModal({
               showSearch
               optionFilterProp="label"
               style={{ height: 40 }}
-              options={curriculumVersions.map((v) => ({ value: v.id, label: v.name }))}
+              options={curriculumVersions.map((v) => ({
+                value: v.id,
+                label: v.name,
+              }))}
             />
           </Form.Item>
 
@@ -137,7 +160,10 @@ export function GraduationRequirementFormModal({
             name="entryMode"
             label={
               <span>
-                Entry Mode <span style={{ color: token.colorError, fontWeight: 700 }}>*</span>
+                Entry Mode{" "}
+                <span style={{ color: token.colorError, fontWeight: 700 }}>
+                  *
+                </span>
               </span>
             }
             rules={entryModeRules}
@@ -154,7 +180,9 @@ export function GraduationRequirementFormModal({
             label={
               <span>
                 Min Total Credits{" "}
-                <span style={{ color: token.colorError, fontWeight: 700 }}>*</span>
+                <span style={{ color: token.colorError, fontWeight: 700 }}>
+                  *
+                </span>
               </span>
             }
             rules={creditRules}
@@ -165,7 +193,9 @@ export function GraduationRequirementFormModal({
               style={{ width: "100%", height: 40 }}
               placeholder="e.g. 120"
               onChange={() => {
-                form.validateFields(["minCoreCredits", "minElectiveCredits"]).catch(() => {});
+                form
+                  .validateFields(["minCoreCredits", "minElectiveCredits"])
+                  .catch(() => {});
               }}
             />
           </Form.Item>
@@ -175,7 +205,9 @@ export function GraduationRequirementFormModal({
             label={
               <span>
                 Min Core Credits{" "}
-                <span style={{ color: token.colorError, fontWeight: 700 }}>*</span>
+                <span style={{ color: token.colorError, fontWeight: 700 }}>
+                  *
+                </span>
               </span>
             }
             rules={[...nonNegativeCreditRules, makeCreditInvariantValidator()]}
@@ -196,7 +228,9 @@ export function GraduationRequirementFormModal({
             label={
               <span>
                 Min Elective Credits{" "}
-                <span style={{ color: token.colorError, fontWeight: 700 }}>*</span>
+                <span style={{ color: token.colorError, fontWeight: 700 }}>
+                  *
+                </span>
               </span>
             }
             rules={[...nonNegativeCreditRules, makeCreditInvariantValidator()]}

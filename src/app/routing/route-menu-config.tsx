@@ -1,13 +1,14 @@
 import { Permission } from "@/features/access-control/permissions";
 import { useAccessControl } from "@/features/access-control/use-access-control";
 import {
-  ApartmentOutlined,
-  BookOutlined,
-  DashboardOutlined,
-  RadiusSettingOutlined,
-  SettingOutlined,
-  UsergroupAddOutlined,
-  UserOutlined,
+    ApartmentOutlined,
+    BookOutlined,
+    DashboardOutlined,
+    FormOutlined,
+    RadiusSettingOutlined,
+    SettingOutlined,
+    UsergroupAddOutlined,
+    UserOutlined,
 } from "@ant-design/icons";
 import type { ItemType } from "antd/es/menu/interface";
 import { useMemo } from "react";
@@ -46,13 +47,19 @@ export const routesMenuList: RouteMenuItem[] = [
     key: appPaths.program,
     icon: <RadiusSettingOutlined />,
     label: "Program",
-    permission: Permission.FacultiesList,
+    permission: Permission.ProgramsList,
   },
   {
     key: appPaths.courses,
     icon: <BookOutlined />,
     label: "Courses",
     permission: Permission.CoursesList,
+  },
+  {
+    key: appPaths.courseRegistration,
+    icon: <FormOutlined />,
+    label: "Course Registration",
+    permission: Permission.StudentCourseRegistrationsManage,
   },
 ];
 
@@ -71,7 +78,9 @@ export function useRestrictedRouteMenuItem(): RouteMenuItem[] {
   return useMemo(() => {
     return routesMenuList.filter((item) => {
       if (!item.permission) return true;
-      const perms = Array.isArray(item.permission) ? item.permission : [item.permission];
+      const perms = Array.isArray(item.permission)
+        ? item.permission
+        : [item.permission];
       return hasAnyPermission(perms);
     });
   }, [hasAnyPermission]);
@@ -82,7 +91,9 @@ export function useRestrictedBottomMenuItem(): RouteMenuItem[] {
   return useMemo(() => {
     return bottomMenuList.filter((item) => {
       if (!item.permission) return true;
-      const perms = Array.isArray(item.permission) ? item.permission : [item.permission];
+      const perms = Array.isArray(item.permission)
+        ? item.permission
+        : [item.permission];
       return hasAnyPermission(perms);
     });
   }, [hasAnyPermission]);

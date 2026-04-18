@@ -19,6 +19,12 @@ export const ApiTagTypes = {
   UserRole: "UserRole",
   Course: "Course",
   CourseConfiguration: "CourseConfiguration",
+  SystemTimeFrame: "SystemTimeFrame",
+  StudentTransitionStatus: "StudentTransitionStatus",
+  StudentEnrollmentTransition: "StudentEnrollmentTransition",
+  SystemConfiguration: "SystemConfiguration",
+  RegistrationCreditLimit: "RegistrationCreditLimit",
+  CourseRegistrationPool: "CourseRegistrationPool",
 } as const;
 
 export type ApiTagLiteral = (typeof ApiTagTypes)[keyof typeof ApiTagTypes];

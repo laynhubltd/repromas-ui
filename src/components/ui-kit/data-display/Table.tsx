@@ -1,19 +1,19 @@
-import type { TableProps as AntTableProps, TablePaginationConfig } from "antd";
-import { Table as AntTable, Empty, Flex, Typography, theme } from "antd";
+import { Empty, Flex, Table as AntTable, Typography, theme } from "antd";
+import type { TablePaginationConfig, TableProps as AntTableProps } from "antd";
 import type { CSSProperties, ReactNode } from "react";
 import {
-    mergeUIKitStyles,
-    toAntdSize,
-    type UIComponentDensity,
-    type UIComponentSize,
-    type UIComponentState,
-    type UIKitCommonProps,
+  mergeUIKitStyles,
+  toAntdSize,
+  type UIComponentDensity,
+  type UIComponentSize,
+  type UIComponentState,
+  type UIKitCommonProps,
 } from "../foundation";
-import "./data-display.css";
 import { buildClassName, getDataDisplaySpacing, getDataDisplayStateStyle } from "./shared";
+import "./data-display.css";
 
 const DEFAULT_PAGINATION: TablePaginationConfig = {
-  placement: "bottomRight",
+  position: ["bottomRight"],
   showSizeChanger: false,
 };
 
@@ -62,7 +62,7 @@ function resolvePagination(
   }
 
   const paginationSize: TablePaginationConfig["size"] =
-    paginationMode === "compact" || size === "sm" ? "small" : undefined;
+    paginationMode === "compact" || size === "sm" ? "small" : "default";
 
   return {
     ...DEFAULT_PAGINATION,

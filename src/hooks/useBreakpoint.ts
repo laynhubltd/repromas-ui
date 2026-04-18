@@ -13,3 +13,9 @@ export function useIsXs(): boolean | null | undefined {
   const screens = useBreakpoint();
   return screens.xs && !screens.sm;
 }
+
+/** True when viewport is sm–md (576px–767px). Use for tablet layout. */
+export function useIsTablet(): boolean {
+  const screens = useBreakpoint();
+  return !!screens.sm && !screens.md;
+}

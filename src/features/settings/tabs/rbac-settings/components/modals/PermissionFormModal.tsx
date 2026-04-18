@@ -7,8 +7,8 @@ import { Button, Form, Input, Modal, Select } from "antd";
 import { usePermissionFormModal } from "../../hooks/usePermissionModal";
 import type { Permission as PermissionType } from "../../types/rbac";
 import {
-    permissionDescriptionRules,
-    permissionNameRules,
+  permissionDescriptionRules,
+  permissionNameRules,
 } from "../../utils/validators";
 
 export type PermissionFormModalProps = {
@@ -24,7 +24,7 @@ export function PermissionFormModal({ open, target, onClose }: PermissionFormMod
   const { handleSubmit, handleCancel, handleCatalogueSelect } = actions;
 
   const catalogueOptions = catalogueEntries
-    .filter((entry) => !entry.isActivated)
+    .filter((entry) => entry.isActivated)
     .map((entry) => ({
       value: entry.id,
       label: `${entry.name} (${entry.slug})`,

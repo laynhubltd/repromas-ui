@@ -19,6 +19,20 @@ type FeatureRowProps = {
 const FeatureRow: React.FC<FeatureRowProps> = ({ feature, index, token }) => {
   const isOdd = index % 2 !== 0;
 
+  // Cycle through 4 distinct image shapes
+  const imageShapes = [
+    // 0 — rounded rectangle (standard)
+    { borderRadius: 20, aspectRatio: '4/3' },
+    // 1 — ellipse (wide oval)
+    { borderRadius: '50%', aspectRatio: '4/3' },
+    // 2 — balloon (tall, rounded top, flat-ish bottom)
+    { borderRadius: '50% 50% 20px 20px / 60% 60% 20px 20px', aspectRatio: '3/4' },
+    // 3 — squircle (very high radius)
+    { borderRadius: '38% 62% 46% 54% / 42% 38% 62% 58%', aspectRatio: '4/3' },
+  ];
+
+  const shape = imageShapes[index % imageShapes.length];
+
   return (
     <div data-testid="feature-row">
       <Row gutter={[48, 32]} align="middle">
@@ -72,28 +86,37 @@ const FeatureRow: React.FC<FeatureRowProps> = ({ feature, index, token }) => {
 
         {/* Image column — hidden on xs/md, visible on lg */}
         <Col xs={0} md={0} lg={12} order={isOdd ? 1 : 2}>
-          <div
-            style={{
+          {/* Outer positioning context for decorative elements */}
+          <div style={{ position: 'relative', padding: '24px', width: '75%', margin: '0 auto' }}>
+
+            {/* Main image frame */}
+            <div style={{
               position: 'relative',
-              width: '100%',
-              paddingTop: '75%', // 4:3 aspect ratio
-              borderRadius: token.borderRadius,
-              border: `1px solid ${token.colorBorder}`,
+              zIndex: 1,
+              borderRadius: shape.borderRadius,
               overflow: 'hidden',
-            }}
-          >
-            <img
-              src={feature.imageUrl}
-              alt={feature.imageAlt}
-              style={{
+              border: '3px solid #e9d5ff',
+              aspectRatio: shape.aspectRatio,
+            }}>
+              <img
+                src={feature.imageUrl}
+                alt={feature.imageAlt}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  objectPosition: 'center',
+                  display: 'block',
+                }}
+              />
+              {/* Subtle gradient overlay on image */}
+              <div style={{
                 position: 'absolute',
                 inset: 0,
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                objectPosition: 'center',
-              }}
-            />
+                background: 'linear-gradient(to bottom right, transparent 60%, rgba(107,33,168,0.12) 100%)',
+                pointerEvents: 'none',
+              }} />
+            </div>
           </div>
         </Col>
       </Row>

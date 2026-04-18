@@ -9,6 +9,7 @@ export const APEX_ENDPOINT_WHITELIST = [
   "/auth/register",
   "/auth/forgot-password",
   "/tenants/validate",
+  "/tenant-signup",
 ] as const;
 
 export function isEndpointAllowedOnCurrentHost(

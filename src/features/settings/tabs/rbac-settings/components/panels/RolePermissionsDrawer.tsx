@@ -5,10 +5,11 @@ import { useToken } from "@/shared/hooks/useToken";
 import { DataLoader } from "@/shared/ui/DataLoader";
 import { SkeletonRows } from "@/shared/ui/SkeletonRows";
 import { DeleteOutlined, PlusOutlined } from "@ant-design/icons";
-import { Button, Drawer, Flex, Modal, Select, Tag, Typography } from "antd";
+import { Button, Drawer, Flex, Modal, Tag, Typography } from "antd";
 import { useRolePermissionsDrawer } from "../../hooks/useRolePermissionsDrawer";
 import type { Permission as PermissionType } from "../../types/rbac";
 import { ScopeBadge } from "../ScopeBadge";
+import { AddPermissionsModal } from "../modals/AddPermissionsModal";
 
 type RolePermissionsDrawerProps = {
   selectedRoleId: number | null;
@@ -22,33 +23,22 @@ export function RolePermissionsDrawer({ selectedRoleId, open, onClose }: RolePer
   const {
     role,
     isLoading,
-    addingPermissions,
-    selectedPermissionIds,
-    isAssigning,
+    addPermissionsModalOpen,
+    assignedPermissionIds,
     removeConfirmId,
     assignedGroups,
-    availableOptions,
-    availablePermissions,
   } = state;
   const {
-    setAddingPermissions,
-    setSelectedPermissionIds,
+    setAddPermissionsModalOpen,
     setRemoveConfirmId,
-    handleConfirmAdd,
     handleRemoveConfirm,
-    handleCancelAdd,
   } = actions;
-
-  const handleClose = () => {
-    handleCancelAdd();
-    onClose();
-  };
 
   return (
     <>
       <Drawer
         open={open}
-        onClose={handleClose}
+        onClose={onClose}
         placement="right"
         width={480}
         destroyOnHidden={false}
@@ -66,49 +56,17 @@ export function RolePermissionsDrawer({ selectedRoleId, open, onClose }: RolePer
         }
       >
         <DataLoader loading={isLoading} loader={<SkeletonRows count={4} variant="card" />}>
-          {/* Add Permissions section */}
+          {/* Add Permissions button */}
           <PermissionGuard permission={Permission.RolesUpdate}>
             <div style={{ marginBottom: 20 }}>
-              {addingPermissions ? (
-                <Flex vertical gap={8}>
-                  <Select
-                    mode="multiple"
-                    placeholder="Select permissions to add…"
-                    value={selectedPermissionIds}
-                    onChange={setSelectedPermissionIds}
-                    options={availableOptions}
-                    style={{ width: "100%" }}
-                    notFoundContent="No available permissions"
-                    filterOption={(input, option) =>
-                      (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
-                    }
-                  />
-                  <Flex gap={8}>
-                    <Button
-                      type="primary"
-                      size="small"
-                      loading={isAssigning}
-                      disabled={selectedPermissionIds.length === 0 || isAssigning}
-                      onClick={handleConfirmAdd}
-                    >
-                      Confirm
-                    </Button>
-                    <Button size="small" onClick={handleCancelAdd}>
-                      Cancel
-                    </Button>
-                  </Flex>
-                </Flex>
-              ) : (
-                <Button
-                  type="dashed"
-                  icon={<PlusOutlined />}
-                  onClick={() => setAddingPermissions(true)}
-                  block
-                  disabled={availablePermissions.length === 0}
-                >
-                  Add Permissions
-                </Button>
-              )}
+              <Button
+                type="dashed"
+                icon={<PlusOutlined />}
+                onClick={() => setAddPermissionsModalOpen(true)}
+                block
+              >
+                Add Permissions
+              </Button>
             </div>
           </PermissionGuard>
 
@@ -184,6 +142,14 @@ export function RolePermissionsDrawer({ selectedRoleId, open, onClose }: RolePer
           )}
         </DataLoader>
       </Drawer>
+
+      {/* Add Permissions Modal */}
+      <AddPermissionsModal
+        open={addPermissionsModalOpen}
+        roleId={selectedRoleId}
+        assignedPermissionIds={assignedPermissionIds}
+        onClose={() => setAddPermissionsModalOpen(false)}
+      />
 
       {/* Remove confirmation modal */}
       <Modal

@@ -103,56 +103,56 @@ export function useLandingPage(): UseLandingPageReturn {
         icon: React.createElement(SafetyOutlined),
         title: 'Authentication',
         description:
-          'Secure, flexible identity management with multi-factor authentication and single sign-on support.',
+          'Your institution\'s secure front door. Effortless logins, rapid registrations, and self-service password resets — powered by intelligent tokens that instantly know who is knocking and what they are allowed to do.',
       },
       {
         key: 'authorization',
         icon: React.createElement(TeamOutlined),
         title: 'Authorization',
         description:
-          'Fine-grained role-based access control that enforces permissions across every module and resource.',
+          'Put the right power in the right hands. Define precise permissions, group them into custom roles, and assign with confidence. The system enforces your rules deep within the database — perfect data privacy, zero manual effort.',
       },
       {
         key: 'academic',
         icon: React.createElement(BookOutlined),
         title: 'Academic',
         description:
-          'Comprehensive curriculum management, course scheduling, and academic calendar orchestration.',
+          'Bring your organizational chart to life. Manage faculties, departments, programs, and courses. Architect sessions, semesters, and evolving curriculums in a fully isolated, pristine environment.',
       },
       {
         key: 'student',
         icon: React.createElement(SolutionOutlined),
         title: 'Student',
         description:
-          'End-to-end student lifecycle management from enrollment and registration to graduation tracking.',
+          'From first day on campus to graduation day. Track enrollments, course registrations, academic standing, and transitions — the complete student lifecycle unified in one cohesive module.',
       },
       {
         key: 'grading',
         icon: React.createElement(BarChartOutlined),
         title: 'Grading',
         description:
-          'Flexible grading schemas, automated GPA calculation, and transparent transcript generation.',
+          'Scores that command trust. Input raw marks and our engine instantly applies your institution\'s unique grading schema — producing structured, auditable, and mathematically perfect grade results every time.',
       },
       {
         key: 'system',
         icon: React.createElement(SettingOutlined),
         title: 'System',
         description:
-          'Platform-wide configuration, audit logging, and operational health monitoring for administrators.',
+          'Total command at your fingertips. Manage platform-wide configurations, define bespoke grading schemas, and inject your institution\'s brand identity into every corner of the system.',
       },
       {
         key: 'tenant',
         icon: React.createElement(BankOutlined),
         title: 'Tenant',
         description:
-          'Multi-tenant architecture enabling isolated institutional environments with shared infrastructure.',
+          'One powerful platform, infinite institutions. Launch a new campus in seconds — fully provisioned with active permissions, a System Administrator role, and a ready-to-use dashboard from Day One.',
       },
       {
         key: 'shared',
         icon: React.createElement(ApartmentOutlined),
         title: 'Shared',
         description:
-          'Common utilities, reusable components, and cross-module services that power the entire platform.',
+          'The brilliant architecture behind the magic. A centralized hub of contracts, tools, and utilities that keeps every module communicating with blazing speed and zero friction.',
       },
     ],
     [],

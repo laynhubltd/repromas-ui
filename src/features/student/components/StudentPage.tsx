@@ -4,48 +4,56 @@ import { DashCard, ExplainerCallout, Table } from "@/components/ui-kit";
 import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import { useGetProgramsQuery } from "@/features/program/tabs/programs/api/programsApi";
+import {
+  ENTRY_MODE_OPTIONS,
+  STUDENT_STATUS_OPTIONS,
+} from "@/shared/constants/studentOptions";
 import { useToken } from "@/shared/hooks/useToken";
-import { ConditionalRenderer, centeredBox } from "@/shared/ui/ConditionalRenderer";
+import {
+  ConditionalRenderer,
+  centeredBox,
+} from "@/shared/ui/ConditionalRenderer";
 import { DataLoader } from "@/shared/ui/DataLoader";
 import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { SkeletonRows } from "@/shared/ui/SkeletonRows";
 import {
-    CloudUploadOutlined,
-    DeleteOutlined,
-    DownloadOutlined,
-    EditOutlined,
-    EyeOutlined,
-    FilterOutlined,
-    MoreOutlined,
-    PlusOutlined,
-    UploadOutlined,
+  CloudUploadOutlined,
+  DeleteOutlined,
+  DownloadOutlined,
+  EditOutlined,
+  EyeOutlined,
+  FilterOutlined,
+  MoreOutlined,
+  PlusOutlined,
+  RollbackOutlined,
+  UploadOutlined,
 } from "@ant-design/icons";
-import { Badge, Button, Col, Dropdown, Flex, Form, Input, Popover, Row, Select, Space, Typography } from "antd";
+import {
+  Badge,
+  Button,
+  Col,
+  Dropdown,
+  Flex,
+  Form,
+  Input,
+  Popover,
+  Row,
+  Select,
+  Space,
+  Typography,
+} from "antd";
 import type { ColumnsType } from "antd/es/table";
 import type { SorterResult } from "antd/es/table/interface";
 import { useState } from "react";
 import { useStudentsTab } from "../hooks/useStudentsTab";
 import type { Student, StudentStatus } from "../types/student";
+import { BulkEnrollModal } from "./modals/BulkEnrollModal";
 import { BulkUploadModal } from "./modals/BulkUploadModal";
 import { BulkUploadSummaryModal } from "./modals/BulkUploadSummaryModal";
 import { DeleteStudentModal } from "./modals/DeleteStudentModal";
 import { StudentFormModal } from "./modals/StudentFormModal";
 import { StatusBadge } from "./StatusBadge";
 import { StudentDrawer } from "./StudentDrawer";
-
-const STATUS_OPTIONS: { value: StudentStatus; label: string }[] = [
-  { value: "ACTIVE", label: "Active" },
-  { value: "SUSPENDED", label: "Suspended" },
-  { value: "GRADUATED", label: "Graduated" },
-  { value: "WITHDRAWN", label: "Withdrawn" },
-  { value: "RUSTICATED", label: "Rusticated" },
-];
-
-const ENTRY_MODE_OPTIONS = [
-  { value: "UTME", label: "UTME" },
-  { value: "DIRECT_ENTRY", label: "Direct Entry" },
-  { value: "TRANSFER", label: "Transfer" },
-];
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, {
@@ -99,31 +107,44 @@ export function StudentPage() {
   } = actions;
   const { hasData, isSearchActive, isFilterActive } = flags;
 
-  const { state: bulkState, actions: bulkActions, flags: bulkFlags } = bulkUpload;
+  const {
+    state: bulkState,
+    actions: bulkActions,
+    flags: bulkFlags,
+  } = bulkUpload;
 
   const [filterOpen, setFilterOpen] = useState(false);
+  const [bulkEnrollOpen, setBulkEnrollOpen] = useState(false);
 
   const uploadMenuItems = [
     {
       key: "download-template",
-      label: "Download Template",
+      label: "Download Upload Template",
       icon: <DownloadOutlined />,
       onClick: bulkActions.handleDownloadTemplate,
     },
     {
       key: "upload-bulk",
-      label: "Upload Bulk",
+      label: "Bulk Upload",
       icon: <UploadOutlined />,
       onClick: handleOpenBulkUpload,
+    },
+    {
+      key: "bulk-transition",
+      label: "Bulk Transition",
+      icon: <RollbackOutlined />,
+      onClick: () => setBulkEnrollOpen(true),
     },
   ];
 
   const isAnyFilterActive = isSearchActive || isFilterActive;
   const cardState = isLoading ? "loading" : "default";
 
-  const activeFilterCount = [statusFilter, entryModeFilter, programFilter].filter(
-    (v) => v !== undefined,
-  ).length;
+  const activeFilterCount = [
+    statusFilter,
+    entryModeFilter,
+    programFilter,
+  ].filter((v) => v !== undefined).length;
 
   const clearAllFilters = () => {
     handleStatusFilterChange(undefined);
@@ -142,9 +163,11 @@ export function StudentPage() {
             placeholder="Any status"
             allowClear
             value={statusFilter}
-            onChange={(val) => handleStatusFilterChange(val as StudentStatus | undefined)}
+            onChange={(val) =>
+              handleStatusFilterChange(val as StudentStatus | undefined)
+            }
             style={{ width: "100%" }}
-            options={STATUS_OPTIONS}
+            options={STUDENT_STATUS_OPTIONS}
           />
         </Form.Item>
         <Form.Item label="Entry Mode" style={{ marginBottom: 12 }}>
@@ -152,7 +175,9 @@ export function StudentPage() {
             placeholder="Any entry mode"
             allowClear
             value={entryModeFilter}
-            onChange={(val) => handleEntryModeFilterChange(val as typeof entryModeFilter)}
+            onChange={(val) =>
+              handleEntryModeFilterChange(val as typeof entryModeFilter)
+            }
             style={{ width: "100%" }}
             options={ENTRY_MODE_OPTIONS}
           />
@@ -164,21 +189,30 @@ export function StudentPage() {
             showSearch
             optionFilterProp="label"
             value={programFilter}
-            onChange={(val) => handleProgramFilterChange(val as number | undefined)}
+            onChange={(val) =>
+              handleProgramFilterChange(val as number | undefined)
+            }
             style={{ width: "100%" }}
             options={programs.map((p) => ({ value: p.id, label: p.name }))}
           />
         </Form.Item>
       </Form>
       {activeFilterCount > 0 && (
-        <Button type="link" size="small" onClick={clearAllFilters} style={{ padding: 0 }}>
+        <Button
+          type="link"
+          size="small"
+          onClick={clearAllFilters}
+          style={{ padding: 0 }}
+        >
           Clear all filters
         </Button>
       )}
     </Flex>
   );
 
-  const activeStudentsCount = students.filter((s) => s.status === "ACTIVE").length;
+  const activeStudentsCount = students.filter(
+    (s) => s.status === "ACTIVE",
+  ).length;
 
   const handleTableChange = (
     _: unknown,
@@ -190,7 +224,9 @@ export function StudentPage() {
       handleSortChange("lastName:asc");
       return;
     }
-    handleSortChange(`${String(s.columnKey)}:${s.order === "ascend" ? "asc" : "desc"}`);
+    handleSortChange(
+      `${String(s.columnKey)}:${s.order === "ascend" ? "asc" : "desc"}`,
+    );
   };
 
   const columns: ColumnsType<Student> = [
@@ -283,7 +319,11 @@ export function StudentPage() {
         ];
 
         return (
-          <Dropdown menu={{ items: menuItems }} trigger={["click"]} placement="bottomRight">
+          <Dropdown
+            menu={{ items: menuItems }}
+            trigger={["click"]}
+            placement="bottomRight"
+          >
             <Button
               type="text"
               size="small"
@@ -376,9 +416,14 @@ export function StudentPage() {
             </Badge>
           </Popover>
         </Flex>
-        <PermissionGuard permission={Permission.StudentsCreate}>
+        <PermissionGuard
+          permission={[
+            Permission.StudentsCreate,
+            Permission.StudentEnrollmentTransitionsCreate,
+          ]}
+        >
           <Dropdown menu={{ items: uploadMenuItems }} trigger={["click"]}>
-            <Button icon={<CloudUploadOutlined />}>Upload Multiple</Button>
+            <Button icon={<CloudUploadOutlined />}>Multiple Upload</Button>
           </Dropdown>
         </PermissionGuard>
         <PermissionGuard permission={Permission.StudentsCreate}>
@@ -393,9 +438,16 @@ export function StudentPage() {
         </PermissionGuard>
       </Flex>
 
-      <DataLoader loading={isLoading} loader={<SkeletonRows count={5} variant="card" />}>
+      <DataLoader
+        loading={isLoading}
+        loader={<SkeletonRows count={5} variant="card" />}
+      >
         <ConditionalRenderer when={isError}>
-          <ErrorAlert variant="section" error="Failed to load students" onRetry={refetch} />
+          <ErrorAlert
+            variant="section"
+            error="Failed to load students"
+            onRetry={refetch}
+          />
         </ConditionalRenderer>
 
         <ConditionalRenderer
@@ -406,7 +458,10 @@ export function StudentPage() {
             background: token.colorBgContainer,
           })}
         >
-          <Typography.Text type="secondary" style={{ display: "block", marginBottom: 16 }}>
+          <Typography.Text
+            type="secondary"
+            style={{ display: "block", marginBottom: 16 }}
+          >
             No students enrolled yet. Create your first student to get started.
           </Typography.Text>
           <PermissionGuard permission={Permission.StudentsCreate}>
@@ -429,7 +484,10 @@ export function StudentPage() {
             background: token.colorBgContainer,
           })}
         >
-          <Typography.Text type="secondary" style={{ display: "block", marginBottom: 8 }}>
+          <Typography.Text
+            type="secondary"
+            style={{ display: "block", marginBottom: 8 }}
+          >
             No students found matching your search or filters.
           </Typography.Text>
           <Button
@@ -514,6 +572,10 @@ export function StudentPage() {
         summary={bulkState.summary}
         summaryState={bulkFlags.summaryState}
         onDownloadErrorReport={bulkActions.handleDownloadErrorReport}
+      />
+      <BulkEnrollModal
+        open={bulkEnrollOpen}
+        onClose={() => setBulkEnrollOpen(false)}
       />
     </Flex>
   );
