@@ -20,6 +20,8 @@ export function resolveHost(
   const hostname = normalizeHostname(rawHostname);
   const apexDomain = normalizeApexDomain(options.apexDomain);
 
+  console.log({ hostname, apexDomain });
+
   if (!hostname) {
     return {
       kind: "unknown",
@@ -68,6 +70,7 @@ export function resolveHost(
   const suffix = `.${apexDomain}`;
   if (hostname.endsWith(suffix)) {
     const slug = hostname.slice(0, -suffix.length);
+    console.log({ slug });
     if (isValidSlug(slug)) {
       return {
         kind: "tenant",
