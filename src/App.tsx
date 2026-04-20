@@ -1,9 +1,17 @@
+<<<<<<< Updated upstream
 import { ConfigProvider, Spin } from "antd";
 import { Provider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
 import { isEndpointAllowedOnCurrentHost } from "./app/api/apex-endpoint-whitelist";
 import { useAppSelector } from "./app/hooks";
 import { HostRouter } from "./app/routing/host-router";
+=======
+import { ConfigProvider } from "antd";
+import { Provider } from "react-redux";
+import { PersistGate } from "redux-persist/integration/react";
+import { useAppSelector } from "./app/hooks";
+import { AppRouter } from "./app/routing/AppRouter";
+>>>>>>> Stashed changes
 import { persistor, store } from "./app/store";
 import ThemeVars from "./app/theme/ThemeVars";
 import { buildThemeConfig } from "./app/theme/themeConfig";
@@ -11,6 +19,7 @@ import { useGetBrandConfigQuery } from "./features/theming/api/theming-api";
 
 function ThemedApp() {
   const primaryColor = useAppSelector((state) => state.theme.primaryColor);
+<<<<<<< Updated upstream
   const shouldLoadThemeConfig = isEndpointAllowedOnCurrentHost("/brand-config");
   const themeConfigQuery = useGetBrandConfigQuery(undefined, {
     skip: !shouldLoadThemeConfig,
@@ -44,6 +53,16 @@ function FullscreenLoader({ label }: { label: string }) {
     </div>
   );
 }
+=======
+  useGetBrandConfigQuery();
+  return (
+    <ConfigProvider theme={buildThemeConfig(primaryColor)}>
+      <ThemeVars />
+      <AppRouter />
+    </ConfigProvider>
+  );
+}
+>>>>>>> Stashed changes
 
 function App() {
   return (

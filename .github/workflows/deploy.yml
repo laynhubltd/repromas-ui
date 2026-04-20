@@ -1,0 +1,39 @@
+name: Build and Deploy React/Vite to CloudPanel
+
+on:
+  push:
+    branches:
+      - main # Triggers automatically when you push to the 'main' branch
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Get the latest code from GitHub
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # Step 2: Set up Node.js on GitHub's servers
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      # Step 3: Install dependencies and build the Vite app
+      - name: Install and Build
+        run: |
+          npm ci
+          npm run build
+
+      # Step 4: Rsync the finished 'dist' folder directly to CloudPanel
+      - name: Deploy to CloudPanel via SSH
+        uses: easingthemes/ssh-deploy@v5.1.0
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_KEY }} # Must match your GitHub Secret name exactly
+          ARGS: "-rltgoDzvO --delete" # --delete removes old files no longer in dist
+          SOURCE: "dist/" # Only the compiled output, not source code
+          REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+          REMOTE_USER: ${{ secrets.REMOTE_USER }}
+          TARGET: "/htdocs/repromas.app/" # Your CloudPanel domain folder
