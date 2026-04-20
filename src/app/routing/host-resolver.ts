@@ -94,7 +94,7 @@ function normalizeHostname(hostname: string): string {
 }
 
 function normalizeApexDomain(apexDomain?: string): string {
-  const value = (apexDomain ?? "repromas.com").trim().toLowerCase();
+  const value = (apexDomain ?? "repromas.app").trim().toLowerCase();
   return value.replace(/^\.+|\.+$/g, "");
 }
 
