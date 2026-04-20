@@ -30,10 +30,10 @@ jobs:
       # Step 4: Rsync the finished 'dist' folder directly to CloudPanel
       - name: Deploy to CloudPanel via SSH
         uses: easingthemes/ssh-deploy@v5.1.0
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_KEY }} # Must match your GitHub Secret name exactly
-          ARGS: "-rltgoDzvO --delete" # --delete removes old files no longer in dist
-          SOURCE: "dist/" # Only the compiled output, not source code
+        with:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          ARGS: "-rltgoDzvO --delete"
+          SOURCE: "dist/"
           REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
           REMOTE_USER: ${{ secrets.REMOTE_USER }}
           TARGET: "/htdocs/repromas.app/" # Your CloudPanel domain folder
