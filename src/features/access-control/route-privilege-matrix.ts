@@ -1,9 +1,5 @@
 import { appPaths } from "@/app/routing/app-path";
-<<<<<<< Updated upstream
 import { Permission } from "./permissions";
-=======
-import { Privilege } from "./privileges-enum";
->>>>>>> Stashed changes
 
 export const routePrivilegeMatrix: Record<string, Permission[]> = {
   [appPaths.dashboard]: [],

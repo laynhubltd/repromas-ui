@@ -1,20 +1,8 @@
 import useAuthState from "@/features/auth/use-auth-state";
-<<<<<<< Updated upstream
 import { Permission } from "./permissions";
 
 export function useAccessControl() {
   const { roles, permissions, activeRole } = useAuthState();
-=======
-import { hasItems } from "@/shared/utils/array-utils";
-import { Privilege } from "./privileges-enum";
-
-type PrivilegeConfig = { hasAll?: boolean };
-
-export function useAccessControl() {
-  const { currentRole, userProfile } = useAuthState();
-  const privileges = currentRole?.privileges ?? [];
-  const company = userProfile?.company;
->>>>>>> Stashed changes
 
   // When no role is active, all permission checks return false
   const effectivePermissions = activeRole !== null ? permissions : [];

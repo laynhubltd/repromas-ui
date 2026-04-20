@@ -5,22 +5,12 @@
 
 import { Permission } from "@/features/access-control/permissions";
 import type {
-<<<<<<< Updated upstream
     ApiRole,
     LoginRequest,
     LoginResponse,
     SimpleUserProfile,
     UserProfile,
 } from "./types";
-=======
-  LoginRequest,
-  LoginResponse,
-  SimpleUserProfile,
-  UserProfile,
-  UserRole,
-} from "./types";
-import { Privilege } from "@/features/access-control/privileges-enum";
->>>>>>> Stashed changes
 
 const MOCK_JWT_EXP = 9999999999; // Far future so token is never “expired”
 
