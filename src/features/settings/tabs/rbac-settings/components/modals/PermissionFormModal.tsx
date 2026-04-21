@@ -17,11 +17,31 @@ export type PermissionFormModalProps = {
   onClose: () => void;
 };
 
-export function PermissionFormModal({ open, target, onClose }: PermissionFormModalProps) {
+export function PermissionFormModal({
+  open,
+  target,
+  onClose,
+}: PermissionFormModalProps) {
   const token = useToken();
-  const { state, actions, form } = usePermissionFormModal(target, open, onClose);
-  const { isEditMode, isSubmitting, formError, catalogueEntries } = state;
-  const { handleSubmit, handleCancel, handleCatalogueSelect } = actions;
+  const { state, actions, form } = usePermissionFormModal(
+    target,
+    open,
+    onClose,
+  );
+  const {
+    isEditMode,
+    isSubmitting,
+    formError,
+    catalogueEntries,
+    isCatalogueLoading,
+    catalogueSearch,
+  } = state;
+  const {
+    handleSubmit,
+    handleCancel,
+    handleCatalogueSelect,
+    handleCatalogueSearchChange,
+  } = actions;
 
   const catalogueOptions = catalogueEntries
     .filter((entry) => entry.isActivated)
@@ -52,21 +72,31 @@ export function PermissionFormModal({ open, target, onClose }: PermissionFormMod
       <div style={{ padding: 24 }}>
         <ErrorAlert error={formError} />
 
-        <Form form={form} layout="vertical" requiredMark={false} onFinish={handleSubmit}>
+        <Form
+          form={form}
+          layout="vertical"
+          requiredMark={false}
+          onFinish={handleSubmit}
+        >
           {/* Activate mode: catalogue select */}
           {!isEditMode && (
             <Form.Item
               label={
                 <span>
                   Permission Catalogue{" "}
-                  <span style={{ color: token.colorError, fontWeight: 700 }}>*</span>
+                  <span style={{ color: token.colorError, fontWeight: 700 }}>
+                    *
+                  </span>
                 </span>
               }
             >
               <Select
                 showSearch
                 placeholder="Search and select a permission…"
-                optionFilterProp="label"
+                filterOption={false}
+                searchValue={catalogueSearch}
+                onSearch={handleCatalogueSearchChange}
+                loading={isCatalogueLoading}
                 options={catalogueOptions}
                 onChange={(_, option) => {
                   const opt = Array.isArray(option) ? option[0] : option;
@@ -75,7 +105,11 @@ export function PermissionFormModal({ open, target, onClose }: PermissionFormMod
                   }
                 }}
                 style={{ width: "100%" }}
-                notFoundContent="No unactivated permissions found"
+                notFoundContent={
+                  isCatalogueLoading
+                    ? "Searching…"
+                    : "No unactivated permissions found"
+                }
               />
             </Form.Item>
           )}
@@ -85,12 +119,18 @@ export function PermissionFormModal({ open, target, onClose }: PermissionFormMod
             name="name"
             label={
               <span>
-                Name <span style={{ color: token.colorError, fontWeight: 700 }}>*</span>
+                Name{" "}
+                <span style={{ color: token.colorError, fontWeight: 700 }}>
+                  *
+                </span>
               </span>
             }
             rules={permissionNameRules}
           >
-            <Input placeholder="e.g. Create Permission" style={{ height: 40 }} />
+            <Input
+              placeholder="e.g. Create Permission"
+              style={{ height: 40 }}
+            />
           </Form.Item>
 
           {/* Description field */}

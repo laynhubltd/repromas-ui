@@ -2,13 +2,18 @@
 import { applyFormErrors } from "@/shared/utils/error/applyFormErrors";
 import { parseApiError } from "@/shared/utils/error/parseApiError";
 import { Form, notification } from "antd";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import {
-    useCreatePermissionMutation,
-    useDeletePermissionMutation,
-    useGetPermissionCatalogueQuery,
-    useUpdatePermissionMutation,
+  useCreatePermissionMutation,
+  useDeletePermissionMutation,
+  useGetPermissionCatalogueQuery,
+  useUpdatePermissionMutation,
 } from "../api/rbacSettingsApi";
+import {
+  initialPermissionFormState,
+  PermissionFormActionType,
+  permissionFormReducer,
+} from "../state/permissionFormState";
 import type { Permission, PermissionCatalogue } from "../types/rbac";
 
 // ─── Upsert (Activate / Edit) ─────────────────────────────────────────────────
@@ -20,20 +25,54 @@ export function usePermissionFormModal(
 ) {
   const isEditMode = target !== null;
   const [form] = Form.useForm<{ name: string; description?: string }>();
-  const [formError, setFormError] = useState<string | null>(null);
-  const [selectedCatalogueEntry, setSelectedCatalogueEntry] =
-    useState<PermissionCatalogue | null>(null);
+  const [modalState, dispatch] = useReducer(
+    permissionFormReducer,
+    initialPermissionFormState,
+  );
+  const {
+    formError,
+    selectedCatalogueEntry,
+    catalogueSearch,
+    debouncedCatalogueSearch,
+  } = modalState;
 
-  const [createPermission, { isLoading: isCreating }] = useCreatePermissionMutation();
-  const [updatePermission, { isLoading: isUpdating }] = useUpdatePermissionMutation();
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const [createPermission, { isLoading: isCreating }] =
+    useCreatePermissionMutation();
+  const [updatePermission, { isLoading: isUpdating }] =
+    useUpdatePermissionMutation();
 
   const isSubmitting = isCreating || isUpdating;
 
-  // Fetch catalogue only in activate mode
-  const { data: catalogueData } = useGetPermissionCatalogueQuery(
-    {},
-    { skip: isEditMode || !open },
-  );
+  // Debounced search handler
+  const handleCatalogueSearchChange = useCallback((value: string) => {
+    dispatch({ type: PermissionFormActionType.SetCatalogueSearch, value });
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(() => {
+      dispatch({
+        type: PermissionFormActionType.SetCatalogueSearchDebounced,
+        value,
+      });
+    }, 300);
+  }, []);
+
+  // Cleanup debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    };
+  }, []);
+
+  // Fetch catalogue only in activate mode with server-side search
+  const catalogueQueryParams = debouncedCatalogueSearch
+    ? { "search[name]": debouncedCatalogueSearch }
+    : {};
+
+  const { data: catalogueData, isLoading: isCatalogueLoading } =
+    useGetPermissionCatalogueQuery(catalogueQueryParams, {
+      skip: isEditMode || !open,
+    });
   const catalogueEntries = catalogueData?.member ?? [];
 
   // Pre-fill form in edit mode
@@ -46,16 +85,14 @@ export function usePermissionFormModal(
     }
   }, [open, isEditMode, target, form]);
 
-  // Reset state when modal closes
-  useEffect(() => {
-    if (!open) {
-      setSelectedCatalogueEntry(null);
-      setFormError(null);
-    }
-  }, [open]);
+  const reset = useCallback(() => {
+    form.resetFields();
+    dispatch({ type: PermissionFormActionType.Reset });
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+  }, [form]);
 
   const handleCatalogueSelect = (entry: PermissionCatalogue) => {
-    setSelectedCatalogueEntry(entry);
+    dispatch({ type: PermissionFormActionType.SelectCatalogueEntry, entry });
     form.setFieldsValue({
       name: entry.name,
       description: entry.description ?? undefined,
@@ -65,7 +102,7 @@ export function usePermissionFormModal(
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
-      setFormError(null);
+      dispatch({ type: PermissionFormActionType.SetFormError, message: null });
 
       if (isEditMode) {
         await updatePermission({
@@ -77,7 +114,10 @@ export function usePermissionFormModal(
         notification.success({ message: "Permission updated successfully." });
       } else {
         if (!selectedCatalogueEntry) {
-          setFormError("Please select a permission from the catalogue.");
+          dispatch({
+            type: PermissionFormActionType.SetFormError,
+            message: "Please select a permission from the catalogue.",
+          });
           return;
         }
         await createPermission({
@@ -88,33 +128,47 @@ export function usePermissionFormModal(
         notification.success({ message: "Permission activated successfully." });
       }
 
-      form.resetFields();
-      setSelectedCatalogueEntry(null);
+      reset();
       onClose();
     } catch (err: unknown) {
       const parsed = parseApiError(err);
 
       if (parsed.status === 409) {
         notification.error({ message: parsed.message });
-        setFormError("This permission is already activated.");
+        dispatch({
+          type: PermissionFormActionType.SetFormError,
+          message: "This permission is already activated.",
+        });
         return;
       }
 
       notification.error({ message: parsed.message });
-      applyFormErrors(parsed, form, setFormError);
+      applyFormErrors(parsed, form, (msg) =>
+        dispatch({ type: PermissionFormActionType.SetFormError, message: msg }),
+      );
     }
   };
 
   const handleCancel = () => {
-    form.resetFields();
-    setFormError(null);
-    setSelectedCatalogueEntry(null);
+    reset();
     onClose();
   };
 
   return {
-    state: { isEditMode, isSubmitting, formError, catalogueEntries },
-    actions: { handleSubmit, handleCancel, handleCatalogueSelect },
+    state: {
+      isEditMode,
+      isSubmitting,
+      formError,
+      catalogueEntries,
+      isCatalogueLoading,
+      catalogueSearch,
+    },
+    actions: {
+      handleSubmit,
+      handleCancel,
+      handleCatalogueSelect,
+      handleCatalogueSearchChange,
+    },
     form,
   };
 }
@@ -123,18 +177,12 @@ export function usePermissionFormModal(
 
 export function useDeletePermissionModal(
   target: Permission | null,
-  open: boolean,
+  _open: boolean,
   onClose: () => void,
 ) {
-  const [deletePermission, { isLoading: isDeleting }] = useDeletePermissionMutation();
+  const [deletePermission, { isLoading: isDeleting }] =
+    useDeletePermissionMutation();
   const [error, setError] = useState<string | null>(null);
-
-  // Reset error when modal closes
-  useEffect(() => {
-    if (!open) {
-      setError(null);
-    }
-  }, [open]);
 
   const handleConfirm = async () => {
     if (!target) return;
