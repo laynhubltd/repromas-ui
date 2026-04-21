@@ -66,7 +66,7 @@ export function usePermissionFormModal(
 
   // Fetch catalogue only in activate mode with server-side search
   const catalogueQueryParams = debouncedCatalogueSearch
-    ? { "search[name]": debouncedCatalogueSearch }
+    ? { "search[slug]": debouncedCatalogueSearch }
     : {};
 
   const { data: catalogueData, isLoading: isCatalogueLoading } =
