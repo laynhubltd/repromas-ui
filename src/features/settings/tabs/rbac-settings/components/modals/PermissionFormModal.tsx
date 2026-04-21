@@ -44,7 +44,7 @@ export function PermissionFormModal({
   } = actions;
 
   const catalogueOptions = catalogueEntries
-    .filter((entry) => entry.isActivated)
+    .filter((entry) => entry.isActivated || !entry.isActivated)
     .map((entry) => ({
       value: entry.id,
       label: `${entry.name} (${entry.slug})`,
