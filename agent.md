@@ -1952,4 +1952,239 @@ MUST NOT duplicate the blob/anchor pattern in hooks, components, or API files
 
 ---
 
+# Feature State Management Rule (MANDATORY)
+
+Every feature and sub-feature that contains hooks with **2 or more related state values** MUST extract that state into a dedicated state file inside a `state/` folder. Inline `useState` calls for multi-value state are forbidden in hooks.
+
+## State Folder Location
+
+Top-level feature:
+
+```
+src/features/<feature>/state/
+```
+
+Tab sub-feature:
+
+```
+src/features/<feature>/tabs/<sub-feature>/state/
+```
+
+## When to Create a State File
+
+Create a state file when a hook manages **2 or more related state values** that:
+
+- Reset together (e.g. on modal close or form submit)
+- Transition together in response to the same event
+- Represent a single logical concern (e.g. form state, search state, panel state)
+
+A single isolated `useState` (e.g. `isOpen`, `error`) does not require a state file.
+
+## File Naming
+
+Name the file after the domain concern it represents — not the UI pattern.
+
+```
+state/
+  permissionFormState.ts     — form + catalogue search state for permission activation
+  roleFormState.ts           — form state for role create/edit
+  studentFilterState.ts      — filter + pagination state for student list
+```
+
+Rules:
+
+```
+MUST name the file after the domain concern — NOT the component or hook (e.g. permissionFormState.ts not usePermissionModalState.ts)
+MUST NOT name files after UI patterns (e.g. modalState.ts, formState.ts without a domain prefix)
+```
+
+## Required Exports Per State File
+
+Each state file MUST export exactly these four things:
+
+| Export                 | Type                      | Description                        |
+| ---------------------- | ------------------------- | ---------------------------------- |
+| `{Domain}ActionType`   | `const` object `as const` | All action type string constants   |
+| `{Domain}State`        | `type`                    | The state shape                    |
+| `{Domain}Action`       | `type`                    | Discriminated union of all actions |
+| `initial{Domain}State` | `const`                   | The default/reset state value      |
+| `{domain}Reducer`      | `function`                | Pure reducer — no side effects     |
+
+## Action Type Pattern (MANDATORY)
+
+Action types MUST be defined as a `const` object with `as const`. TypeScript `enum` is forbidden (`erasableSyntaxOnly` is enabled in this project).
+
+```ts
+// ✅ correct
+export const PermissionFormActionType = {
+  SelectCatalogueEntry: "SELECT_CATALOGUE_ENTRY",
+  SetCatalogueSearch: "SET_CATALOGUE_SEARCH",
+  SetCatalogueSearchDebounced: "SET_CATALOGUE_SEARCH_DEBOUNCED",
+  SetFormError: "SET_FORM_ERROR",
+  Reset: "RESET",
+} as const;
+
+// ❌ forbidden — enum is not allowed
+export enum PermissionFormActionType { ... }
+```
+
+The discriminated union uses `typeof` to derive the literal types:
+
+```ts
+export type PermissionFormAction =
+  | {
+      type: typeof PermissionFormActionType.SelectCatalogueEntry;
+      entry: PermissionCatalogue;
+    }
+  | {
+      type: typeof PermissionFormActionType.SetFormError;
+      message: string | null;
+    }
+  | { type: typeof PermissionFormActionType.Reset };
+```
+
+## Full State File Structure
+
+```ts
+// state/permissionFormState.ts
+
+// 1. Action type constants
+export const PermissionFormActionType = {
+  SelectCatalogueEntry: "SELECT_CATALOGUE_ENTRY",
+  SetCatalogueSearch: "SET_CATALOGUE_SEARCH",
+  SetCatalogueSearchDebounced: "SET_CATALOGUE_SEARCH_DEBOUNCED",
+  SetFormError: "SET_FORM_ERROR",
+  Reset: "RESET",
+} as const;
+
+// 2. State shape
+export type PermissionFormState = {
+  formError: string | null;
+  selectedCatalogueEntry: PermissionCatalogue | null;
+  catalogueSearch: string;
+  debouncedCatalogueSearch: string;
+};
+
+// 3. Action union
+export type PermissionFormAction =
+  | {
+      type: typeof PermissionFormActionType.SelectCatalogueEntry;
+      entry: PermissionCatalogue;
+    }
+  | { type: typeof PermissionFormActionType.SetCatalogueSearch; value: string }
+  | {
+      type: typeof PermissionFormActionType.SetCatalogueSearchDebounced;
+      value: string;
+    }
+  | {
+      type: typeof PermissionFormActionType.SetFormError;
+      message: string | null;
+    }
+  | { type: typeof PermissionFormActionType.Reset };
+
+// 4. Initial state
+export const initialPermissionFormState: PermissionFormState = {
+  formError: null,
+  selectedCatalogueEntry: null,
+  catalogueSearch: "",
+  debouncedCatalogueSearch: "",
+};
+
+// 5. Pure reducer
+export function permissionFormReducer(
+  state: PermissionFormState,
+  action: PermissionFormAction,
+): PermissionFormState {
+  switch (action.type) {
+    case PermissionFormActionType.SelectCatalogueEntry:
+      return { ...state, selectedCatalogueEntry: action.entry };
+    case PermissionFormActionType.SetCatalogueSearch:
+      return { ...state, catalogueSearch: action.value };
+    case PermissionFormActionType.SetCatalogueSearchDebounced:
+      return { ...state, debouncedCatalogueSearch: action.value };
+    case PermissionFormActionType.SetFormError:
+      return { ...state, formError: action.message };
+    case PermissionFormActionType.Reset:
+      return initialPermissionFormState;
+  }
+}
+```
+
+## Hook Usage Pattern
+
+The hook imports from the state file and uses `useReducer`. It exposes a `reset` function that dispatches `RESET` — never a `useEffect` watching `open` or `visible`.
+
+```ts
+import { useReducer, useCallback } from "react";
+import {
+  permissionFormReducer,
+  initialPermissionFormState,
+  PermissionFormActionType,
+} from "../state/permissionFormState";
+
+export function usePermissionFormModal(...) {
+  const [state, dispatch] = useReducer(permissionFormReducer, initialPermissionFormState);
+
+  const reset = useCallback(() => {
+    dispatch({ type: PermissionFormActionType.Reset });
+  }, []);
+
+  const handleCancel = () => {
+    reset();
+    onClose();
+  };
+
+  // dispatch individual actions
+  dispatch({ type: PermissionFormActionType.SetFormError, message: "Required" });
+  dispatch({ type: PermissionFormActionType.SelectCatalogueEntry, entry });
+}
+```
+
+## Reset Rule (MANDATORY)
+
+State MUST be reset by calling `dispatch({ type: ActionType.Reset })` directly inside `handleCancel` or after a successful submit. Never use a `useEffect` watching `open`/`visible` to reset state — this causes cascading renders.
+
+```ts
+// ✅ correct — reset on user action
+const handleCancel = () => {
+  reset();
+  onClose();
+};
+
+// ❌ forbidden — useEffect reset causes cascading renders
+useEffect(() => {
+  if (!open) {
+    setState1(null);
+    setState2("");
+  }
+}, [open]);
+```
+
+## Reducer Rules
+
+```
+MUST be a pure function — no API calls, no side effects, no async logic
+MUST return a new state object — never mutate state directly
+MUST handle every action type in the switch — TypeScript exhaustiveness is enforced by the return type
+MUST return initialState for the Reset action
+MUST NOT call dispatch, setState, or any hook inside the reducer
+```
+
+## Rules Summary
+
+```
+MUST create a state/ folder in every feature and sub-feature
+MUST extract multi-value related state into a dedicated state file
+MUST name the state file after the domain concern (e.g. permissionFormState.ts)
+MUST export ActionType const object, State type, Action union, initialState, and reducer from the state file
+MUST use const object with as const for action types — NOT TypeScript enum
+MUST use useReducer in the hook — NOT multiple useState calls for related state
+MUST reset state via dispatch(Reset) in handleCancel or post-submit — NOT via useEffect
+MUST keep the reducer pure — no side effects, no async, no API calls
+MUST NOT inline state shape, action types, or reducer logic inside hook files
+MAY use a single useState for truly isolated, unrelated state (e.g. a standalone boolean flag)
+```
+
+---
+
 # End of AGENT.md
