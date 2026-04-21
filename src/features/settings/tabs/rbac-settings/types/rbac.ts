@@ -78,7 +78,7 @@ export type PermissionListParams = {
 export type PermissionCatalogueListParams = {
   "exact[resource]"?: string;
   "exact[action]"?: string;
-  "search[name]"?: string;
+  "search[slug]"?: string;
 };
 
 export type RoleListParams = {
