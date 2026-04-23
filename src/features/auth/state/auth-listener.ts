@@ -1,7 +1,12 @@
 import { isTokenExpired } from "@/shared/utils/token-util";
 import { createListenerMiddleware } from "@reduxjs/toolkit";
 import { REHYDRATE } from "redux-persist";
-import { authCleared, roleSelected, roleSwitched, userLoggedIn } from "../events";
+import {
+    authCleared,
+    roleSelected,
+    roleSwitched,
+    userLoggedIn,
+} from "../events";
 import { type AuthState } from "./auth-slice";
 
 type ListenerRootState = { auth: AuthState };
@@ -27,8 +32,6 @@ startListening({
 startListening({
   actionCreator: roleSelected,
   effect: async (action, listenerApi) => {
-    // Hook point for future analytics / persistence
-    // Dispatch roleSwitched to signal mid-session completion
     listenerApi.dispatch(roleSwitched(action.payload));
   },
 });
@@ -43,6 +46,12 @@ startListening({
 startListening({
   predicate: (action) => action.type === REHYDRATE,
   effect: async (_action, listenerApi) => {
+    // Read state AFTER the REHYDRATE action has been applied by the reducer.
+    // The auth-slice REHYDRATE case now preserves a valid in-memory token
+    // (e.g. from a just-completed login) instead of overwriting it with the
+    // old persisted state. So this check is the final safety net: if after
+    // rehydration there is still no valid token, clear auth to ensure the
+    // user is redirected to login on page load with an expired session.
     const state = listenerApi.getState();
     const { token } = state.auth;
 

@@ -1,14 +1,24 @@
-import { createSlice, type AnyAction, type PayloadAction } from "@reduxjs/toolkit";
+import { isTokenExpired } from "@/shared/utils/token-util";
+import {
+    createSlice,
+    type AnyAction,
+    type PayloadAction,
+} from "@reduxjs/toolkit";
 import { REHYDRATE } from "redux-persist";
 import {
-  authCleared,
-  profileFetched,
-  roleSelected,
-  tokenRefreshed,
-  userLoggedIn,
-  userLoggedOut
+    authCleared,
+    profileFetched,
+    roleSelected,
+    tokenRefreshed,
+    userLoggedIn,
+    userLoggedOut,
 } from "../events";
-import type { ApiRole, SimpleUserProfile, UserProfile, UserRole } from "../types";
+import type {
+    ApiRole,
+    SimpleUserProfile,
+    UserProfile,
+    UserRole,
+} from "../types";
 
 export interface AuthState {
   userProfile: UserProfile | null;
@@ -124,7 +134,25 @@ const authSlice = createSlice({
         state.roleSwitcherOpen = false;
         state.currentRole = { name: action.payload.name };
       })
-      .addCase(REHYDRATE, (_state, action: AnyAction) => {
+      .addCase(REHYDRATE, (state, action: AnyAction) => {
+        // Guard: if the current in-memory state already has a valid (non-expired)
+        // token, do NOT overwrite it with the persisted payload.
+        //
+        // Why this matters: after a successful login, userLoggedIn sets the token
+        // in Redux memory and the listener calls persistor.flush() (async). If
+        // REHYDRATE fires before flush() completes, action.payload.auth still
+        // contains the OLD pre-login state (no token). Overwriting would wipe the
+        // freshly issued token → authCleared → redirect back to login → the
+        // "flash dashboard then back to login" bug.
+        if (state.token && !isTokenExpired(state.token)) {
+          return {
+            ...state,
+            bootstrapComplete: false,
+            roleSwitcherOpen: false,
+          };
+        }
+
+        // Normal rehydration path: restore persisted auth state.
         if (action.payload?.auth) {
           return {
             ...action.payload.auth,
@@ -132,6 +160,7 @@ const authSlice = createSlice({
             roleSwitcherOpen: false,
           };
         }
+
         return initialState;
       });
   },
