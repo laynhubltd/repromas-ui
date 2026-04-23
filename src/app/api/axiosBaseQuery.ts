@@ -17,6 +17,7 @@ import { errorsToObject, errorsToString } from "@/shared/utils/object-utils";
 import { getTenantFromHostname } from "@/shared/utils/tenant-util";
 import { isTokenExpired } from "@/shared/utils/token-util";
 import type { BaseQueryApi, BaseQueryFn } from "@reduxjs/toolkit/query";
+import { Mutex } from "async-mutex";
 import axios, { type AxiosError, type AxiosRequestConfig } from "axios";
 import { isEndpointAllowedOnCurrentHost } from "./apex-endpoint-whitelist";
 import { axiosInstance } from "./axiosInstance";
@@ -29,6 +30,26 @@ const AUTH_REFRESH_BLACKLIST = ["/auth/login", "/auth/refresh"];
 function isWhitelistedPath(path: string): boolean {
   return !AUTH_REFRESH_BLACKLIST.some((p) => path.includes(p));
 }
+
+/**
+ * Mutex for token refresh (async-mutex library).
+ *
+ * Problem: when multiple RTK Query requests fire simultaneously and all receive
+ * a 401, each one independently tries to refresh the token. The first refresh
+ * succeeds; the rest fail because the refresh token is single-use. Each failure
+ * then calls window.location.replace(), flooding the browser with navigation
+ * commands and triggering Chrome's "Throttling navigation" warning.
+ *
+ * Fix: the first 401 acquires the mutex lock and performs the refresh.
+ * Every other concurrent 401 waits at runExclusive() until the lock is
+ * released. When they resume, they re-read the token from Redux state —
+ * if it was refreshed successfully they retry their request; if not they
+ * find no token and fall through to the error path.
+ *
+ * async-mutex guarantees the lock is always released (even on throw),
+ * so there is no risk of deadlock.
+ */
+const refreshMutex = new Mutex();
 
 type AxiosBaseQueryArgs = {
   url: string;
@@ -46,6 +67,7 @@ export const axiosBaseQuery =
     void options;
 
     const getState = api.getState as GetStateWithAuth;
+
     if (!isEndpointAllowedOnCurrentHost(requestConfig.url)) {
       return {
         error: {
@@ -78,37 +100,62 @@ export const axiosBaseQuery =
 
       if (token && is401 && isTokenExpired(token)) {
         const refreshToken = state.auth?.refreshToken;
+
         if (refreshToken) {
-          try {
-            const refreshRes = await axios.post<{
-              token?: string;
-              refresh_token?: string;
-            }>(`${config.apiBaseUrl.replace(/\/api\/?$/, "")}/api/auth/refresh`, {
-              refresh_token: refreshToken,
-            });
-            const accessToken =
-              refreshRes.data?.token ??
-              (refreshRes.data as { accessToken?: string }).accessToken;
-            if (accessToken) {
-              api.dispatch(setToken({ accessToken, refreshToken }));
-              const retryHeaders = prepareHeaders(
-                requestConfig.headers,
-                requestConfig.url,
-                getState,
+          // Acquire the mutex — only one refresh runs at a time.
+          // All other concurrent 401s queue here and wait.
+          await refreshMutex.runExclusive(async () => {
+            // Re-read state inside the lock. A previous waiter may have
+            // already refreshed the token — if so, skip the refresh call.
+            const latestToken = (api.getState() as StateWithAuth).auth?.token;
+            if (latestToken && !isTokenExpired(latestToken)) return;
+
+            try {
+              const refreshRes = await axios.post<{
+                token?: string;
+                refresh_token?: string;
+              }>(
+                `${config.apiBaseUrl.replace(/\/api\/?$/, "")}/api/auth/refresh`,
+                { refresh_token: refreshToken },
               );
-              const retry = await axiosInstance({
-                ...requestConfig,
-                method: requestConfig.method ?? "GET",
-                headers: retryHeaders,
-              });
-              return { data: retry.data };
+              const newAccessToken =
+                refreshRes.data?.token ??
+                (refreshRes.data as { accessToken?: string }).accessToken;
+
+              if (newAccessToken) {
+                api.dispatch(
+                  setToken({ accessToken: newAccessToken, refreshToken }),
+                );
+              } else {
+                api.dispatch(clearAuth());
+                window.location.replace(appPaths.login);
+              }
+            } catch {
+              api.dispatch(clearAuth());
+              window.location.replace(appPaths.login);
             }
-          } catch {
-            // fall through to clear auth
+          });
+
+          // After the mutex releases, retry with the token now in state.
+          const updatedToken = (api.getState() as StateWithAuth).auth?.token;
+          if (updatedToken) {
+            const retryHeaders = prepareHeaders(
+              requestConfig.headers,
+              requestConfig.url,
+              getState,
+            );
+            const retry = await axiosInstance({
+              ...requestConfig,
+              method: requestConfig.method ?? "GET",
+              headers: retryHeaders,
+            });
+            return { data: retry.data };
           }
+        } else {
+          // No refresh token available — clear auth and redirect.
+          api.dispatch(clearAuth());
+          window.location.replace(appPaths.login);
         }
-        api.dispatch(clearAuth());
-        window.location.replace(appPaths.login);
       }
 
       return { error: parseError(axiosError) };
@@ -146,9 +193,6 @@ function parseError(error: AxiosError): ApiErrorResponse {
 
   const data = error.response.data as ApiErrorData | undefined;
 
-  // API Platform error shape: { type, title, status, detail }
-  // These have no .error or .message field — serialize the whole body so
-  // parseApiError can extract type/detail/fieldErrors correctly.
   const rawBody = error.response.data as Record<string, unknown> | undefined;
   const isApiPlatformError =
     rawBody &&
@@ -160,7 +204,10 @@ function parseError(error: AxiosError): ApiErrorResponse {
     return {
       status: error.response.status,
       error: JSON.stringify(rawBody),
-      message: (rawBody.detail as string) || (rawBody.title as string) || error.message,
+      message:
+        (rawBody.detail as string) ||
+        (rawBody.title as string) ||
+        error.message,
       errorFields: {},
     };
   }
