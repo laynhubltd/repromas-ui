@@ -45,42 +45,34 @@ export function HostRouter() {
     { skip: host.kind !== "tenant" || tenantSlug.length === 0 },
   );
 
-  /**
-   * Memoize the route tree so React Router receives a stable JSX reference.
-   *
-   * Problem: moduleMounter returns new <Route> JSX on every render. When auth
-   * state changes (e.g. during token refresh), the route tree is rebuilt,
-   * React Router treats it as new routes, remounts them, and any <Navigate>
-   * elements inside fire again — causing the navigation flood.
-   *
-   * Fix: only rebuild the route tree when the values that actually gate routing
-   * decisions change. Token refresh (which updates auth.token but doesn't
-   * change the routing outcome) is intentionally excluded.
-   */
+  // Derive the routing key — a string that changes only when the routing
+  // outcome actually changes. React Router remounts the route tree when
+  // the key changes, which is intentional (e.g. login → authenticated).
+  // It does NOT change on token refresh, profile fetches, or other state
+  // updates that don't affect which module is mounted.
+  const routingKey = [
+    host.kind,
+    tenantSlug,
+    tenantBootstrap.isLoading
+      ? "loading"
+      : tenantBootstrap.isError
+        ? "error"
+        : "ready",
+    tenantBootstrap.data?.status ?? "unknown",
+    auth.token ? "authed" : "anon",
+    auth.roleSwitcherOpen ? "picking" : "settled",
+    auth.activeRole?.scope ?? "none",
+  ].join("|");
+
   const routes = useMemo(
     () => moduleMounter({ auth, host, tenantSlug, tenantBootstrap, registry }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [
-      host.kind,
-      tenantSlug,
-      tenantBootstrap.isLoading,
-      tenantBootstrap.isFetching,
-      tenantBootstrap.isError,
-      // Use a stable identity for tenant data — only rebuild when slug or status changes
-      tenantBootstrap.data?.slug,
-      tenantBootstrap.data?.status,
-      // Gate: authenticated vs not
-      !!auth.token,
-      // Gate: role picker open
-      auth.roleSwitcherOpen,
-      // Gate: which module to mount (admin vs student)
-      auth.activeRole?.scope,
-    ],
+    [routingKey],
   );
 
   return (
     <Router>
-      <Routes>{routes}</Routes>
+      <Routes key={routingKey}>{routes}</Routes>
     </Router>
   );
 }
