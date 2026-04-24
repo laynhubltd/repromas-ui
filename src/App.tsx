@@ -51,22 +51,6 @@ function FullscreenLoader({ label }: { label: string }) {
 function App() {
   return (
     <Provider store={store}>
-      {/*
-       * PersistGate MUST block rendering until rehydration is complete.
-       *
-       * The previous `loading={null}` allowed the app to render immediately
-       * with empty Redux state, before REHYDRATE fired. On slow devices this
-       * created a race: the user could log in, get a token in Redux memory,
-       * and then REHYDRATE would fire with empty storage — wiping the token
-       * and redirecting back to login (the "flash dashboard → back to login" bug).
-       *
-       * The fix: pass a real loading component so PersistGate blocks the entire
-       * app tree until `_persist.rehydrated` is true. This guarantees that when
-       * the app first renders, the Redux store already contains the persisted
-       * auth state — no race condition possible regardless of device speed.
-       *
-       * Reference: https://github.com/rt2zz/redux-persist/blob/master/docs/PersistGate.md
-       */}
       <PersistGate
         loading={<FullscreenLoader label="Loading..." />}
         persistor={persistor}
