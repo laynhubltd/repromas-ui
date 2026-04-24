@@ -1,15 +1,15 @@
 import { getAdminRouteEntries } from "@/app/routing/module-routes/admin";
 import { getAuthenticationRoutes } from "@/app/routing/module-routes/authentication";
 import {
-    getOnboardingRouteEntries,
-    useValidateTenantQuery,
+  getOnboardingRouteEntries,
+  useValidateTenantQuery,
 } from "@/app/routing/module-routes/onboarding";
 import { getStudentRouteEntries } from "@/app/routing/module-routes/student";
 import useAuthState from "@/features/auth/use-auth-state";
 import { useMemo } from "react";
 import { BrowserRouter as Router, Routes } from "react-router-dom";
 import { resolveHost } from "./host-resolver";
-import { moduleMounter } from "./module-mounter";
+import { moduleMounter, resolveModuleRole } from "./module-mounter";
 import type { ModuleRegistry } from "./module-registry";
 
 /**
@@ -48,8 +48,20 @@ export function HostRouter() {
   // Derive the routing key — a string that changes only when the routing
   // outcome actually changes. React Router remounts the route tree when
   // the key changes, which is intentional (e.g. login → authenticated).
-  // It does NOT change on token refresh, profile fetches, or other state
-  // updates that don't affect which module is mounted.
+  // It does NOT change on token refresh, profile fetches, or background
+  // refetches — only on genuine routing-gate changes.
+  //
+  // Segments:
+  //   host.kind          — apex / tenant / unknown (which module family)
+  //   tenantSlug         — which institution
+  //   tenant load state  — loading / error / ready
+  //   tenant status      — ACTIVE / PENDING / etc.
+  //   authed / anon      — the main auth gate (boolean, not the token string)
+  //   picking / settled  — role picker open or not
+  //   moduleRole         — "admin" / "student" / "none" (resolved from activeRole)
+  //                        Using the resolved role (not raw scope) avoids unnecessary
+  //                        remounts when switching between two admin-scoped roles.
+  const moduleRole = resolveModuleRole(auth.activeRole) ?? "none";
   const routingKey = [
     host.kind,
     tenantSlug,
@@ -61,7 +73,7 @@ export function HostRouter() {
     tenantBootstrap.data?.status ?? "unknown",
     auth.token ? "authed" : "anon",
     auth.roleSwitcherOpen ? "picking" : "settled",
-    auth.activeRole?.scope ?? "none",
+    moduleRole,
   ].join("|");
 
   const routes = useMemo(
