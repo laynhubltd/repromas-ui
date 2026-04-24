@@ -1,15 +1,15 @@
 import { getAdminRouteEntries } from "@/app/routing/module-routes/admin";
 import { getAuthenticationRoutes } from "@/app/routing/module-routes/authentication";
 import {
-    getOnboardingRouteEntries,
-    useValidateTenantQuery,
+  getOnboardingRouteEntries,
+  useValidateTenantQuery,
 } from "@/app/routing/module-routes/onboarding";
 import { getStudentRouteEntries } from "@/app/routing/module-routes/student";
 import useAuthState from "@/features/auth/use-auth-state";
 import { useMemo } from "react";
 import { BrowserRouter as Router, Routes } from "react-router-dom";
 import { resolveHost } from "./host-resolver";
-import { moduleMounter } from "./module-mounter";
+import { moduleMounter, resolveModuleRole } from "./module-mounter";
 import type { ModuleRegistry } from "./module-registry";
 
 /**
@@ -45,42 +45,46 @@ export function HostRouter() {
     { skip: host.kind !== "tenant" || tenantSlug.length === 0 },
   );
 
-  /**
-   * Memoize the route tree so React Router receives a stable JSX reference.
-   *
-   * Problem: moduleMounter returns new <Route> JSX on every render. When auth
-   * state changes (e.g. during token refresh), the route tree is rebuilt,
-   * React Router treats it as new routes, remounts them, and any <Navigate>
-   * elements inside fire again — causing the navigation flood.
-   *
-   * Fix: only rebuild the route tree when the values that actually gate routing
-   * decisions change. Token refresh (which updates auth.token but doesn't
-   * change the routing outcome) is intentionally excluded.
-   */
+  // Derive the routing key — a string that changes only when the routing
+  // outcome actually changes. React Router remounts the route tree when
+  // the key changes, which is intentional (e.g. login → authenticated).
+  // It does NOT change on token refresh, profile fetches, or background
+  // refetches — only on genuine routing-gate changes.
+  //
+  // Segments:
+  //   host.kind          — apex / tenant / unknown (which module family)
+  //   tenantSlug         — which institution
+  //   tenant load state  — loading / error / ready
+  //   tenant status      — ACTIVE / PENDING / etc.
+  //   authed / anon      — the main auth gate (boolean, not the token string)
+  //   picking / settled  — role picker open or not
+  //   moduleRole         — "admin" / "student" / "none" (resolved from activeRole)
+  //                        Using the resolved role (not raw scope) avoids unnecessary
+  //                        remounts when switching between two admin-scoped roles.
+  const moduleRole = resolveModuleRole(auth.activeRole) ?? "none";
+  const routingKey = [
+    host.kind,
+    tenantSlug,
+    tenantBootstrap.isLoading
+      ? "loading"
+      : tenantBootstrap.isError
+        ? "error"
+        : "ready",
+    tenantBootstrap.data?.status ?? "unknown",
+    auth.token ? "authed" : "anon",
+    auth.roleSwitcherOpen ? "picking" : "settled",
+    moduleRole,
+  ].join("|");
+
   const routes = useMemo(
     () => moduleMounter({ auth, host, tenantSlug, tenantBootstrap, registry }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [
-      host.kind,
-      tenantSlug,
-      tenantBootstrap.isLoading,
-      tenantBootstrap.isFetching,
-      tenantBootstrap.isError,
-      // Use a stable identity for tenant data — only rebuild when slug or status changes
-      tenantBootstrap.data?.slug,
-      tenantBootstrap.data?.status,
-      // Gate: authenticated vs not
-      !!auth.token,
-      // Gate: role picker open
-      auth.roleSwitcherOpen,
-      // Gate: which module to mount (admin vs student)
-      auth.activeRole?.scope,
-    ],
+    [routingKey],
   );
 
   return (
     <Router>
-      <Routes>{routes}</Routes>
+      <Routes key={routingKey}>{routes}</Routes>
     </Router>
   );
 }

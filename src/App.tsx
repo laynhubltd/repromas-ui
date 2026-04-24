@@ -16,7 +16,10 @@ function ThemedApp() {
     skip: !shouldLoadThemeConfig,
   });
 
-  if (shouldLoadThemeConfig && (themeConfigQuery.isLoading || themeConfigQuery.isFetching)) {
+  if (
+    shouldLoadThemeConfig &&
+    (themeConfigQuery.isLoading || themeConfigQuery.isFetching)
+  ) {
     return <FullscreenLoader label="Loading theme..." />;
   }
 
@@ -48,7 +51,10 @@ function FullscreenLoader({ label }: { label: string }) {
 function App() {
   return (
     <Provider store={store}>
-      <PersistGate loading={null} persistor={persistor}>
+      <PersistGate
+        loading={<FullscreenLoader label="Loading..." />}
+        persistor={persistor}
+      >
         <ThemedApp />
       </PersistGate>
     </Provider>

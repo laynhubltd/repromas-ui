@@ -46,12 +46,12 @@ startListening({
 startListening({
   predicate: (action) => action.type === REHYDRATE,
   effect: async (_action, listenerApi) => {
-    // Read state AFTER the REHYDRATE action has been applied by the reducer.
-    // The auth-slice REHYDRATE case now preserves a valid in-memory token
-    // (e.g. from a just-completed login) instead of overwriting it with the
-    // old persisted state. So this check is the final safety net: if after
-    // rehydration there is still no valid token, clear auth to ensure the
-    // user is redirected to login on page load with an expired session.
+    // This runs AFTER PersistGate has blocked rendering until rehydration
+    // is complete — so there is no race with login. The app only renders
+    // once the persisted state is fully loaded into Redux.
+    //
+    // This listener's sole job: clear auth if the rehydrated token is
+    // expired, so the user is sent to login on page load with a stale session.
     const state = listenerApi.getState();
     const { token } = state.auth;
 
