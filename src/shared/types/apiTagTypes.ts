@@ -25,6 +25,8 @@ export const ApiTagTypes = {
   SystemConfiguration: "SystemConfiguration",
   RegistrationCreditLimit: "RegistrationCreditLimit",
   CourseRegistrationPool: "CourseRegistrationPool",
+  CourseAssessmentPolicy: "CourseAssessmentPolicy",
+  CourseAssessmentComponent: "CourseAssessmentComponent",
 } as const;
 
 export type ApiTagLiteral = (typeof ApiTagTypes)[keyof typeof ApiTagTypes];

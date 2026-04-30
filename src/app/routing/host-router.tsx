@@ -52,13 +52,13 @@ export function HostRouter() {
   // refetches — only on genuine routing-gate changes.
   //
   // Segments:
-  //   host.kind          — apex / tenant / unknown (which module family)
-  //   tenantSlug         — which institution
+  //   host.kind — apex / tenant / unknown (which module family)
+  //   tenantSlug — which institution
   //   tenant load state  — loading / error / ready
-  //   tenant status      — ACTIVE / PENDING / etc.
-  //   authed / anon      — the main auth gate (boolean, not the token string)
+  //   tenant status — ACTIVE / PENDING / etc.
+  //   authed / anon — the main auth gate (boolean, not the token string)
   //   picking / settled  — role picker open or not
-  //   moduleRole         — "admin" / "student" / "none" (resolved from activeRole)
+  //   moduleRole — "admin" / "student" / "none" (resolved from activeRole)
   //                        Using the resolved role (not raw scope) avoids unnecessary
   //                        remounts when switching between two admin-scoped roles.
   const moduleRole = resolveModuleRole(auth.activeRole) ?? "none";

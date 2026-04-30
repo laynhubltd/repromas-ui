@@ -188,6 +188,18 @@ export const Permission = {
   // SystemTimeFramesUpdate: 'system-time-frames:update',
   // SystemTimeFramesDelete: 'system-time-frames:delete',
   // SystemTimeFramesManage: 'system-time-frames:manage',
+
+  // Course Assessment Policies
+  CourseAssessmentPoliciesList: "course-configurations:list",
+  CourseAssessmentPoliciesRead: "course-configurations:read",
+  CourseAssessmentPoliciesCreate: "course-configurations:create",
+  CourseAssessmentPoliciesUpdate: "course-configurations:update",
+  CourseAssessmentPoliciesDelete: "course-configurations:delete",
+  // Course Assessment Components
+  CourseAssessmentComponentsList: "course-configurations:list",
+  CourseAssessmentComponentsCreate: "course-configurations:create",
+  CourseAssessmentComponentsUpdate: "course-configurations:update",
+  CourseAssessmentComponentsDelete: "course-configurations:delete",
 } as const;
 
 export type Permission = (typeof Permission)[keyof typeof Permission];
