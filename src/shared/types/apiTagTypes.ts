@@ -27,6 +27,8 @@ export const ApiTagTypes = {
   CourseRegistrationPool: "CourseRegistrationPool",
   CourseAssessmentPolicy: "CourseAssessmentPolicy",
   CourseAssessmentComponent: "CourseAssessmentComponent",
+  GradingSystem: "GradingSystem",
+  GradingSystemBoundary: "GradingSystemBoundary",
 } as const;
 
 export type ApiTagLiteral = (typeof ApiTagTypes)[keyof typeof ApiTagTypes];

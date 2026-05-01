@@ -1,14 +1,15 @@
 import { Permission } from "@/features/access-control/permissions";
 import { useAccessControl } from "@/features/access-control/use-access-control";
 import {
-    ApartmentOutlined,
-    BookOutlined,
-    DashboardOutlined,
-    FormOutlined,
-    RadiusSettingOutlined,
-    SettingOutlined,
-    UsergroupAddOutlined,
-    UserOutlined,
+  ApartmentOutlined,
+  BookOutlined,
+  DashboardOutlined,
+  FormOutlined,
+  RadiusSettingOutlined,
+  SettingOutlined,
+  TrophyOutlined,
+  UsergroupAddOutlined,
+  UserOutlined,
 } from "@ant-design/icons";
 import type { ItemType } from "antd/es/menu/interface";
 import { useMemo } from "react";
@@ -65,6 +66,12 @@ export const routesMenuList: RouteMenuItem[] = [
 
 /** Bottom sidebar section: config/settings (fixed at bottom, 2026 style). */
 export const bottomMenuList: RouteMenuItem[] = [
+  {
+    key: appPaths.gradingConfig,
+    icon: <TrophyOutlined />,
+    label: "Grading Config",
+    permission: Permission.GradingSchemaConfigsList,
+  },
   {
     key: appPaths.settings,
     icon: <SettingOutlined />,
