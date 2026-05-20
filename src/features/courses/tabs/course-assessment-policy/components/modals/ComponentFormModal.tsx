@@ -163,6 +163,20 @@ export function ComponentFormModal({
             />
           </Form.Item>
 
+          {/* ── Sort Order ─────────────────────────────────────────────── */}
+          <Form.Item
+            name="sortOrder"
+            label="Sort Order"
+            extra="Controls display order. Lower numbers appear first. Defaults to 0."
+          >
+            <InputNumber
+              min={0}
+              precision={0}
+              style={{ width: "100%", height: 40 }}
+              placeholder="e.g. 1"
+            />
+          </Form.Item>
+
           {/* ── Is Mandatory To Attempt ────────────────────────────────── */}
           <Form.Item name="isMandatoryToAttempt" valuePropName="checked">
             <Checkbox>Mandatory to attempt</Checkbox>

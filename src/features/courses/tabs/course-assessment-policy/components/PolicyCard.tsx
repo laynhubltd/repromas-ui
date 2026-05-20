@@ -73,7 +73,7 @@ export function PolicyCard({
     isError: isComponentsError,
     refetch: refetchComponents,
   } = useGetCourseAssessmentComponentsQuery(
-    { "exact[policyId]": policy.id, sort: "code:asc" },
+    { "exact[policyId]": policy.id, sort: "sortOrder:asc" },
     { skip: !isExpanded },
   );
 
@@ -234,6 +234,16 @@ export function PolicyCard({
                           gap={8}
                           style={{ flex: 1, minWidth: 0 }}
                         >
+                          {/* Sort order tag */}
+                          <Tag
+                            style={{
+                              margin: 0,
+                              fontSize: token.fontSizeSM - 1,
+                            }}
+                          >
+                            #{component.sortOrder}
+                          </Tag>
+
                           <Typography.Text
                             strong
                             style={{

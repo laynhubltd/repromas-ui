@@ -1,5 +1,6 @@
 // Feature: grading-config
 import { Tabs } from "@/components/ui-kit";
+import { EvaluationStatusTab } from "../tabs/evaluation-status";
 import { GradingSystemTab } from "../tabs/grading-system";
 import { GradingSystemBoundaryTab } from "../tabs/grading-system-boundary";
 
@@ -17,6 +18,11 @@ export function GradingConfigPage() {
             key: "grading-system-boundary",
             label: "Grade Boundaries",
             children: <GradingSystemBoundaryTab />,
+          },
+          {
+            key: "evaluation-status",
+            label: "Evaluation Status",
+            children: <EvaluationStatusTab />,
           },
         ]}
         defaultActiveKey="grading-system"

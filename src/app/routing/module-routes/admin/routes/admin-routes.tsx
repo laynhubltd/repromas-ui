@@ -45,6 +45,12 @@ const GradingConfigPage = lazy(() =>
   })),
 );
 
+const AssessmentPage = lazy(() =>
+  import("@/features/assessment").then((m) => ({
+    default: m.AssessmentPage,
+  })),
+);
+
 const GuardedDashboardShell = withAuthGuard({
   Component: DashboardShell,
   fallback: null,
@@ -67,6 +73,7 @@ export function getAdminRouteEntries() {
             element={<CourseRegistrationPage />}
           />
           <Route path="grading-config" element={<GradingConfigPage />} />
+          <Route path="assessment" element={<AssessmentPage />} />
         </Route>
       </Route>
     </>

@@ -4,6 +4,7 @@ import {
   ApartmentOutlined,
   BookOutlined,
   DashboardOutlined,
+  FileTextOutlined,
   FormOutlined,
   RadiusSettingOutlined,
   SettingOutlined,
@@ -61,6 +62,12 @@ export const routesMenuList: RouteMenuItem[] = [
     icon: <FormOutlined />,
     label: "Course Registration",
     permission: Permission.StudentCourseRegistrationsManage,
+  },
+  {
+    key: appPaths.assessment,
+    icon: <FileTextOutlined />,
+    label: "Assessment",
+    permission: Permission.StudentScoreSheetsList,
   },
 ];
 

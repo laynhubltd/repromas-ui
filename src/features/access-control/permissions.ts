@@ -174,6 +174,17 @@ export const Permission = {
   GradingUpdate: "grading:update",
   GradingDelete: "grading:delete",
   GradingManage: "grading:manage",
+  // Score Evaluation Statuses
+  ScoreEvaluationStatusesList: "grading:list",
+  ScoreEvaluationStatusesCreate: "grading:create",
+  ScoreEvaluationStatusesUpdate: "grading:update",
+  ScoreEvaluationStatusesDelete: "grading:delete",
+
+  // ScoreEvaluationStatusesList: "score-evaluation-statuses:list",
+  // ScoreEvaluationStatusesCreate: "score-evaluation-statuses:create",
+  // ScoreEvaluationStatusesUpdate: "score-evaluation-statuses:update",
+  // ScoreEvaluationStatusesDelete: "score-evaluation-statuses:delete",
+
   // System Time Frames
   SystemTimeFramesList: "grading:list",
   SystemTimeFramesRead: "grading:read",

@@ -15,6 +15,7 @@ type ComponentFormValues = {
   code: string;
   name: string;
   weightPercentage: number;
+  sortOrder: number;
   isMandatoryToAttempt: boolean;
   mustPass: boolean;
   minPassPercentage: number | null;
@@ -57,6 +58,7 @@ export function useComponentFormModal(
         code: target.code,
         name: target.name,
         weightPercentage: target.weightPercentage,
+        sortOrder: target.sortOrder,
         isMandatoryToAttempt: target.isMandatoryToAttempt,
         mustPass: target.mustPass,
         minPassPercentage: target.minPassPercentage,
@@ -66,6 +68,7 @@ export function useComponentFormModal(
     } else if (open && !target) {
       // Create mode: apply defaults
       form.setFieldsValue({
+        sortOrder: 0,
         isMandatoryToAttempt: true,
         mustPass: false,
       });
@@ -114,6 +117,7 @@ export function useComponentFormModal(
           code: values.code,
           name: values.name,
           weightPercentage: values.weightPercentage,
+          sortOrder: values.sortOrder ?? 0,
           isMandatoryToAttempt: values.isMandatoryToAttempt,
           mustPass: values.mustPass,
           minPassPercentage,
@@ -125,6 +129,7 @@ export function useComponentFormModal(
           code: values.code,
           name: values.name,
           weightPercentage: values.weightPercentage,
+          sortOrder: values.sortOrder ?? 0,
           isMandatoryToAttempt: values.isMandatoryToAttempt,
           mustPass: values.mustPass,
           minPassPercentage,

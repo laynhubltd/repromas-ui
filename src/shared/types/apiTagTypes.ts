@@ -29,6 +29,8 @@ export const ApiTagTypes = {
   CourseAssessmentComponent: "CourseAssessmentComponent",
   GradingSystem: "GradingSystem",
   GradingSystemBoundary: "GradingSystemBoundary",
+  ScoreEvaluationStatus: "ScoreEvaluationStatus",
+  StudentScoreSheetData: "StudentScoreSheetData",
 } as const;
 
 export type ApiTagLiteral = (typeof ApiTagTypes)[keyof typeof ApiTagTypes];

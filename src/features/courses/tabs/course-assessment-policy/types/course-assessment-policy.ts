@@ -29,6 +29,7 @@ export type CourseAssessmentComponent = {
   code: string;
   name: string;
   weightPercentage: number;
+  sortOrder: number;
   isMandatoryToAttempt: boolean;
   mustPass: boolean;
   minPassPercentage: number | null;
@@ -115,6 +116,7 @@ export type CreateComponentRequest = {
   code: string;
   name: string;
   weightPercentage: number;
+  sortOrder: number;
   isMandatoryToAttempt: boolean;
   mustPass: boolean;
   minPassPercentage: number | null;
@@ -126,6 +128,7 @@ export type UpdateComponentRequest = {
   code: string;
   name: string;
   weightPercentage: number;
+  sortOrder: number;
   isMandatoryToAttempt: boolean;
   mustPass: boolean;
   minPassPercentage: number | null;
