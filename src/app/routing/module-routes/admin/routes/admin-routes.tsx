@@ -45,6 +45,20 @@ const GradingConfigPage = lazy(() =>
   })),
 );
 
+const AdmissionConfigPage = lazy(() =>
+  import("@/features/admission-config").then((m) => ({
+    default: m.AdmissionConfigPage,
+  })),
+);
+
+const AdmissionCandidatePage = lazy(() =>
+  import(
+    "@/features/admission-candidate/components/AdmissionCandidatePage"
+  ).then((m) => ({
+    default: m.AdmissionCandidatePage,
+  })),
+);
+
 const AssessmentPage = lazy(() =>
   import("@/features/assessment").then((m) => ({
     default: m.AssessmentPage,
@@ -73,6 +87,11 @@ export function getAdminRouteEntries() {
             element={<CourseRegistrationPage />}
           />
           <Route path="grading-config" element={<GradingConfigPage />} />
+          <Route path="admission-config" element={<AdmissionConfigPage />} />
+          <Route
+            path="admission-candidates"
+            element={<AdmissionCandidatePage />}
+          />
           <Route path="assessment" element={<AssessmentPage />} />
         </Route>
       </Route>

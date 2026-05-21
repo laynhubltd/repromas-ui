@@ -31,6 +31,17 @@ export const ApiTagTypes = {
   GradingSystemBoundary: "GradingSystemBoundary",
   ScoreEvaluationStatus: "ScoreEvaluationStatus",
   StudentScoreSheetData: "StudentScoreSheetData",
+  AdmissionScoringStrategy: "AdmissionScoringStrategy",
+  AdmissionCycle: "AdmissionCycle",
+  AdmissionGeographyRule: "AdmissionGeographyRule",
+  State: "State",
+  OlevelSubject: "OlevelSubject",
+  ProgramAdmissionConfig: "ProgramAdmissionConfig",
+  ProgramOlevelRequirement: "ProgramOlevelRequirement",
+  JambSubjectCombination: "JambSubjectCombination",
+  JambCombinationGroup: "JambCombinationGroup",
+  JambCombinationOption: "JambCombinationOption",
+  AdmissionCandidate: "AdmissionCandidate",
 } as const;
 
 export type ApiTagLiteral = (typeof ApiTagTypes)[keyof typeof ApiTagTypes];

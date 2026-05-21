@@ -2,12 +2,14 @@ import { Permission } from "@/features/access-control/permissions";
 import { useAccessControl } from "@/features/access-control/use-access-control";
 import {
   ApartmentOutlined,
+  AuditOutlined,
   BookOutlined,
   DashboardOutlined,
   FileTextOutlined,
   FormOutlined,
   RadiusSettingOutlined,
   SettingOutlined,
+  SolutionOutlined,
   TrophyOutlined,
   UsergroupAddOutlined,
   UserOutlined,
@@ -38,6 +40,12 @@ export const routesMenuList: RouteMenuItem[] = [
     icon: <UsergroupAddOutlined />,
     label: "Students",
     permission: Permission.StudentsList,
+  },
+  {
+    key: appPaths.admissionCandidates,
+    icon: <SolutionOutlined />,
+    label: "Admission Candidates",
+    permission: Permission.AdmissionCandidatesList,
   },
   {
     key: appPaths.academicStructure,
@@ -78,6 +86,12 @@ export const bottomMenuList: RouteMenuItem[] = [
     icon: <TrophyOutlined />,
     label: "Grading Config",
     permission: Permission.GradingSchemaConfigsList,
+  },
+  {
+    key: appPaths.admissionConfig,
+    icon: <AuditOutlined />,
+    label: "Admission Config",
+    permission: Permission.SystemConfigsList,
   },
   {
     key: appPaths.settings,

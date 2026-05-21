@@ -7,5 +7,7 @@ export const routePrivilegeMatrix: Record<string, Permission[]> = {
   [appPaths.students]: [Permission.StudentsList],
   [appPaths.academicStructure]: [Permission.FacultiesList],
   [appPaths.settings]: [Permission.SystemConfigsList],
+  [appPaths.admissionConfig]: [Permission.SystemConfigsList],
+  [appPaths.admissionCandidates]: [Permission.AdmissionCandidatesList],
   [appPaths.courseRegistration]: [Permission.StudentCourseRegistrationsManage],
 };
