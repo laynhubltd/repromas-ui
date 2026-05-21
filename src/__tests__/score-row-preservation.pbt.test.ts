@@ -532,13 +532,6 @@ describe("P3 — Eval-status revert: save failure reverts localEvalStatusCode to
     const { useScoreRow } =
       await import("@/features/assessment/hooks/useScoreRow");
 
-    // The evaluation statuses available in makeRow()
-    const availableStatuses = [
-      { id: 1, code: "NORMAL" },
-      { id: 2, code: "INCOMPLETE" },
-      { id: 3, code: "CARRY_OVER" },
-    ];
-
     await fc.assert(
       fc.asyncProperty(
         // Generate the original eval status code
