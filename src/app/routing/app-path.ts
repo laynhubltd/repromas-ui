@@ -12,5 +12,9 @@ export const appPaths = {
   students: "/students",
   roleSelection: "/role-selection",
   courseRegistration: "/course-registration",
+  gradingConfig: "/grading-config",
+  admissionConfig: "/admission-config",
+  admissionCandidates: "/admission-candidates",
+  assessment: "/assessment",
   // Add other app paths here
 };

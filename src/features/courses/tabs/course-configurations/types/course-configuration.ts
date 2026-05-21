@@ -37,6 +37,7 @@ export type CourseConfigListParams = {
   "exact[semesterType]"?: number;
   "exact[courseId]"?: number;
   "exact[courseStatus]"?: CourseStatus;
+  "search[course.code]"?: string;
   include?: string;
 };
 

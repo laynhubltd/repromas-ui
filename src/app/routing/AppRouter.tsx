@@ -26,6 +26,11 @@ const AcademicStructure = lazy(() =>
   ),
 );
 const Settings = lazy(() => import("@/features/settings/components/Settings"));
+const GradingConfigPage = lazy(() =>
+  import("@/features/grading-config").then((m) => ({
+    default: m.GradingConfigPage,
+  })),
+);
 
 const GuardedDashboardShell = withAuthGuard({
   Component: DashboardShell,
@@ -50,6 +55,7 @@ export function AppRouter() {
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="academic-structure" element={<AcademicStructure />} />
           <Route path="settings" element={<Settings />} />
+          <Route path="grading-config" element={<GradingConfigPage />} />
         </Route>
 
         <Route

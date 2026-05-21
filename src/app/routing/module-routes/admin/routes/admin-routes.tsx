@@ -39,6 +39,32 @@ const CourseRegistrationPage = lazy(() =>
   })),
 );
 
+const GradingConfigPage = lazy(() =>
+  import("@/features/grading-config").then((m) => ({
+    default: m.GradingConfigPage,
+  })),
+);
+
+const AdmissionConfigPage = lazy(() =>
+  import("@/features/admission-config").then((m) => ({
+    default: m.AdmissionConfigPage,
+  })),
+);
+
+const AdmissionCandidatePage = lazy(() =>
+  import(
+    "@/features/admission-candidate/components/AdmissionCandidatePage"
+  ).then((m) => ({
+    default: m.AdmissionCandidatePage,
+  })),
+);
+
+const AssessmentPage = lazy(() =>
+  import("@/features/assessment").then((m) => ({
+    default: m.AssessmentPage,
+  })),
+);
+
 const GuardedDashboardShell = withAuthGuard({
   Component: DashboardShell,
   fallback: null,
@@ -60,6 +86,13 @@ export function getAdminRouteEntries() {
             path="course-registration"
             element={<CourseRegistrationPage />}
           />
+          <Route path="grading-config" element={<GradingConfigPage />} />
+          <Route path="admission-config" element={<AdmissionConfigPage />} />
+          <Route
+            path="admission-candidates"
+            element={<AdmissionCandidatePage />}
+          />
+          <Route path="assessment" element={<AssessmentPage />} />
         </Route>
       </Route>
     </>

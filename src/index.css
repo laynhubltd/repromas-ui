@@ -11,3 +11,16 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* ─── Score sheet: force full-opacity input text in grade book cells ─────── */
+.score-cell-input input.ant-input-number-input {
+  color: inherit !important;
+  -webkit-text-fill-color: inherit !important;
+  opacity: 1 !important;
+}
+
+.score-cell-input.ant-input-number-disabled input.ant-input-number-input {
+  color: inherit !important;
+  -webkit-text-fill-color: inherit !important;
+  opacity: 1 !important;
+}

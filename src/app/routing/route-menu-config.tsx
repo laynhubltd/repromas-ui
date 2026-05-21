@@ -1,14 +1,18 @@
 import { Permission } from "@/features/access-control/permissions";
 import { useAccessControl } from "@/features/access-control/use-access-control";
 import {
-    ApartmentOutlined,
-    BookOutlined,
-    DashboardOutlined,
-    FormOutlined,
-    RadiusSettingOutlined,
-    SettingOutlined,
-    UsergroupAddOutlined,
-    UserOutlined,
+  ApartmentOutlined,
+  AuditOutlined,
+  BookOutlined,
+  DashboardOutlined,
+  FileTextOutlined,
+  FormOutlined,
+  RadiusSettingOutlined,
+  SettingOutlined,
+  SolutionOutlined,
+  TrophyOutlined,
+  UsergroupAddOutlined,
+  UserOutlined,
 } from "@ant-design/icons";
 import type { ItemType } from "antd/es/menu/interface";
 import { useMemo } from "react";
@@ -38,6 +42,12 @@ export const routesMenuList: RouteMenuItem[] = [
     permission: Permission.StudentsList,
   },
   {
+    key: appPaths.admissionCandidates,
+    icon: <SolutionOutlined />,
+    label: "Admission Candidates",
+    permission: Permission.AdmissionCandidatesList,
+  },
+  {
     key: appPaths.academicStructure,
     icon: <ApartmentOutlined />,
     label: "Faculty & Departments",
@@ -61,10 +71,28 @@ export const routesMenuList: RouteMenuItem[] = [
     label: "Course Registration",
     permission: Permission.StudentCourseRegistrationsManage,
   },
+  {
+    key: appPaths.assessment,
+    icon: <FileTextOutlined />,
+    label: "Assessment",
+    permission: Permission.StudentScoreSheetsList,
+  },
 ];
 
 /** Bottom sidebar section: config/settings (fixed at bottom, 2026 style). */
 export const bottomMenuList: RouteMenuItem[] = [
+  {
+    key: appPaths.gradingConfig,
+    icon: <TrophyOutlined />,
+    label: "Grading Config",
+    permission: Permission.GradingSchemaConfigsList,
+  },
+  {
+    key: appPaths.admissionConfig,
+    icon: <AuditOutlined />,
+    label: "Admission Config",
+    permission: Permission.SystemConfigsList,
+  },
   {
     key: appPaths.settings,
     icon: <SettingOutlined />,

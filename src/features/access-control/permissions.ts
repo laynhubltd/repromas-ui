@@ -174,6 +174,17 @@ export const Permission = {
   GradingUpdate: "grading:update",
   GradingDelete: "grading:delete",
   GradingManage: "grading:manage",
+  // Score Evaluation Statuses
+  ScoreEvaluationStatusesList: "grading:list",
+  ScoreEvaluationStatusesCreate: "grading:create",
+  ScoreEvaluationStatusesUpdate: "grading:update",
+  ScoreEvaluationStatusesDelete: "grading:delete",
+
+  // ScoreEvaluationStatusesList: "score-evaluation-statuses:list",
+  // ScoreEvaluationStatusesCreate: "score-evaluation-statuses:create",
+  // ScoreEvaluationStatusesUpdate: "score-evaluation-statuses:update",
+  // ScoreEvaluationStatusesDelete: "score-evaluation-statuses:delete",
+
   // System Time Frames
   SystemTimeFramesList: "grading:list",
   SystemTimeFramesRead: "grading:read",
@@ -188,6 +199,63 @@ export const Permission = {
   // SystemTimeFramesUpdate: 'system-time-frames:update',
   // SystemTimeFramesDelete: 'system-time-frames:delete',
   // SystemTimeFramesManage: 'system-time-frames:manage',
+
+  // Course Assessment Policies
+  CourseAssessmentPoliciesList: "course-configurations:list",
+  CourseAssessmentPoliciesRead: "course-configurations:read",
+  CourseAssessmentPoliciesCreate: "course-configurations:create",
+  CourseAssessmentPoliciesUpdate: "course-configurations:update",
+  CourseAssessmentPoliciesDelete: "course-configurations:delete",
+  // Course Assessment Components
+  CourseAssessmentComponentsList: "course-configurations:list",
+  CourseAssessmentComponentsCreate: "course-configurations:create",
+  CourseAssessmentComponentsUpdate: "course-configurations:update",
+  CourseAssessmentComponentsDelete: "course-configurations:delete",
+  // Admission Scoring Strategies
+  AdmissionScoringStrategiesList: "system-configs:list",
+  AdmissionScoringStrategiesCreate: "system-configs:create",
+  AdmissionScoringStrategiesUpdate: "system-configs:update",
+  AdmissionScoringStrategiesDelete: "system-configs:delete",
+  AdmissionScoringStrategiesManage: "system-configs:manage",
+  // Admission Program Config (Cut-offs / Quota)
+  AdmissionProgramAdmissionConfigsList: "system-configs:list",
+  AdmissionProgramAdmissionConfigsCreate: "system-configs:create",
+  AdmissionProgramAdmissionConfigsUpdate: "system-configs:update",
+  AdmissionProgramAdmissionConfigsDelete: "system-configs:delete",
+  AdmissionProgramAdmissionConfigsManage: "system-configs:manage",
+  // Admission Cycles
+  AdmissionCyclesList: "system-configs:list",
+  AdmissionCyclesCreate: "system-configs:create",
+  AdmissionCyclesUpdate: "system-configs:update",
+  AdmissionCyclesDelete: "system-configs:delete",
+  AdmissionCyclesTransition: "system-configs:manage",
+  // Admission Geography Rules
+  AdmissionGeographyRulesList: "system-configs:list",
+  AdmissionGeographyRulesCreate: "system-configs:create",
+  AdmissionGeographyRulesUpdate: "system-configs:update",
+  AdmissionGeographyRulesDelete: "system-configs:delete",
+  // Admission O-Level Subjects
+  AdmissionOlevelSubjectsList: "system-configs:list",
+  AdmissionOlevelSubjectsCreate: "system-configs:create",
+  AdmissionOlevelSubjectsUpdate: "system-configs:update",
+  AdmissionOlevelSubjectsDelete: "system-configs:delete",
+  AdmissionOlevelSubjectsManage: "system-configs:manage",
+  // Admission Program O'Level Requirements
+  AdmissionProgramOlevelRulesList: "system-configs:list",
+  AdmissionProgramOlevelRulesCreate: "system-configs:create",
+  AdmissionProgramOlevelRulesUpdate: "system-configs:update",
+  AdmissionProgramOlevelRulesDelete: "system-configs:delete",
+  // Admission JAMB Rules
+  AdmissionJambRulesList: "system-configs:list",
+  AdmissionJambRulesCreate: "system-configs:create",
+  AdmissionJambRulesUpdate: "system-configs:update",
+  AdmissionJambRulesDelete: "system-configs:delete",
+  AdmissionJambRulesManage: "system-configs:manage",
+  // Admission Candidates
+  AdmissionCandidatesList: "system-configs:list",
+  AdmissionCandidatesCreate: "system-configs:create",
+  AdmissionCandidatesUpdate: "system-configs:update",
+  AdmissionCandidatesManage: "system-configs:manage",
 } as const;
 
 export type Permission = (typeof Permission)[keyof typeof Permission];
