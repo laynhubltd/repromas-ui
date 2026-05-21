@@ -135,7 +135,6 @@ export function useCourseAssessmentPolicyTab() {
       courseCodeSearch: state.courseCodeSearch,
       page: state.page,
       itemsPerPage: state.itemsPerPage,
-      totalItems,
       expandedPolicyIds: state.expandedPolicyIds,
       policyFormTarget: state.policyFormTarget,
       policyFormOpen: state.policyFormOpen,

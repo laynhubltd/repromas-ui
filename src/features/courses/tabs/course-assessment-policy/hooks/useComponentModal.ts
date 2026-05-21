@@ -19,7 +19,7 @@ type ComponentFormValues = {
   isMandatoryToAttempt: boolean;
   mustPass: boolean;
   minPassPercentage: number | null;
-  subComponents: unknown | null;
+  subComponents?: unknown;
 };
 
 /**
@@ -62,7 +62,6 @@ export function useComponentFormModal(
         isMandatoryToAttempt: target.isMandatoryToAttempt,
         mustPass: target.mustPass,
         minPassPercentage: target.minPassPercentage,
-        subComponents: target.subComponents,
       });
       setMustPassValue(target.mustPass);
     } else if (open && !target) {

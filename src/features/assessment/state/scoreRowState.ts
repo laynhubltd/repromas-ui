@@ -156,9 +156,7 @@ export function scoreRowReducer(
     case ScoreRowActionType.Reset:
       return initialScoreRowState(action.payload.row);
 
-    default: {
-      const _exhaustive: never = action;
+    default:
       return state;
-    }
   }
 }
