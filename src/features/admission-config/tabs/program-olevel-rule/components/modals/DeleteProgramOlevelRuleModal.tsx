@@ -1,7 +1,6 @@
 import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import { useToken } from "@/shared/hooks/useToken";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Button, Modal, Typography } from "antd";
 import { useDeleteProgramOlevelRuleModal } from "../../hooks/useProgramOlevelRuleModal";
 import type { ProgramOlevelRequirement } from "../../types/program-olevel-rule";
@@ -20,7 +19,7 @@ export function DeleteProgramOlevelRuleModal({
   const token = useToken();
 
   const {
-    state: { error, isDeleting },
+    state: { isDeleting },
     actions: { handleConfirm, handleCancel },
   } = useDeleteProgramOlevelRuleModal(target, open, onClose);
 
@@ -46,8 +45,6 @@ export function DeleteProgramOlevelRuleModal({
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert variant="form" error={error} />
-
         <Typography.Paragraph style={{ marginBottom: 8 }}>
           Remove the O'Level requirement for{" "}
           <Typography.Text strong>{subjectName}</Typography.Text> on{" "}

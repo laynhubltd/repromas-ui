@@ -4,7 +4,6 @@ import { useGetFacultiesQuery } from "@/features/academic-structure/api/facultie
 import { useGetProgramsQuery } from "@/features/program/tabs/programs/api/programsApi";
 import { useGetRolesQuery } from "@/features/role/api/rolesApi";
 import { useToken } from "@/shared/hooks/useToken";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Alert, Badge, Button, DatePicker, Form, Input, Modal, Select, Tag, Typography } from "antd";
 import { useStaffFormModal } from "../../hooks/useStaffModal";
 import type { Staff } from "../../types/staff";
@@ -43,7 +42,7 @@ const SCOPE_COLOR: Record<string, string> = {
 export function StaffFormModal({ open, target, onClose }: StaffFormModalProps) {
   const token = useToken();
   const { state, actions, form } = useStaffFormModal(target, open, onClose);
-  const { formError, isLoading, isEditMode } = state;
+  const { isLoading, isEditMode } = state;
   const { handleSubmit, handleCancel } = actions;
 
   // Watch roleId to determine scope
@@ -113,8 +112,6 @@ export function StaffFormModal({ open, target, onClose }: StaffFormModalProps) {
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert variant="form" error={formError} />
-
         {/* Create mode: info callout */}
         {!isEditMode && (
           <div style={{ marginBottom: 16 }}>

@@ -1123,59 +1123,93 @@ Automatic Refetch
 
 # Error Handling Rule
 
-All RTK Query mutation errors in hooks MUST be handled using `parseApiError` from `@/shared/utils/error/parseApiError`.
+All RTK Query errors in hooks MUST be handled through the global error pipeline via `useApiError` from `@/shared/hooks/useApiError`.
+
+Pipeline: `transport error → parseApiError → resolveUiDecision → applyUiDecision`
 
 ## Imports
 
 ```ts
-import { applyFormErrors } from "@/shared/utils/error/applyFormErrors";
-import { parseApiError } from "@/shared/utils/error/parseApiError";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
 ```
 
-## Standard catch block pattern
-
-Every catch block MUST call `notification.error` first, then apply form/field errors.
-
-For hooks with a form:
+For list/detail GET fetch errors (section ErrorAlert):
 
 ```ts
-import { notification } from "antd";
-import { applyFormErrors } from "@/shared/utils/error/applyFormErrors";
-import { parseApiError } from "@/shared/utils/error/parseApiError";
+import { deriveSectionErrorMessage } from "@/shared/utils/error/deriveSectionErrorMessage";
+```
+
+## Modal / mutation catch block (POST, PATCH, PUT, DELETE)
+
+Mutation errors MUST show a **popup toast** with what happened (`message`) and what to do next (`actionHint`). Do not use in-modal `<ErrorAlert>` banners for API mutation failures.
+
+```ts
+const handleApiError = useApiError();
 
 } catch (err: unknown) {
-  const parsed = parseApiError(err);
-  notification.error({ message: parsed.message });
-  applyFormErrors(parsed, form, setFormError);
+  handleApiError(err, {
+    context: { screen: RequestScreen.Modal, method: "POST" },
+    form, // optional — maps fieldErrors to inputs; popup shows summary automatically
+  });
 }
 ```
 
-For hooks without a form (e.g. delete modals):
+For delete / action modals (no form):
 
 ```ts
-import { notification } from "antd";
-import { parseApiError } from "@/shared/utils/error/parseApiError";
-
 } catch (err: unknown) {
-  const parsed = parseApiError(err);
-  notification.error({ message: parsed.message });
-  setError(parsed.message);
+  handleApiError(err, {
+    context: { screen: RequestScreen.Action, method: "DELETE" },
+  });
 }
+```
+
+For tab-level POST actions (seed, bulk upload, sync):
+
+```ts
+} catch (err: unknown) {
+  handleApiError(err, {
+    context: { screen: RequestScreen.Action, method: "POST" },
+  });
+}
+```
+
+## List / detail GET fetch errors
+
+Use section `ErrorAlert` — no toast for fetch failures:
+
+```ts
+const sectionError = useMemo(
+  () =>
+    deriveSectionErrorMessage(isError, queryError, {
+      screen: RequestScreen.List,
+      method: "GET",
+    }),
+  [isError, queryError],
+);
+```
+
+```tsx
+<ErrorAlert variant="section" error={sectionError ?? "Failed to load items."} onRetry={refetch} />
 ```
 
 ## Rules
 
 ```
-MUST call notification.error({ message: parsed.message }) in every catch block
-MUST parse the error once: const parsed = parseApiError(err) — do NOT call parseApiError twice
-MUST use applyFormErrors(parsed, form, setFormError) for form hooks
-MUST use setError(parsed.message) for non-form hooks (delete modals)
-MUST NOT use hardcoded fallback error strings
+MUST use useApiError() in every mutation catch block — do NOT call parseApiError directly in hooks
+MUST show popup toast for modal and POST/PATCH/PUT/DELETE mutation errors (handled by pipeline showPopup)
+MUST pass form to useApiError when the hook has a form — inline field errors only, no setFormError for API errors
+MUST use deriveSectionErrorMessage for list/detail GET query errors
+MUST NOT use notification.error + manual parseApiError + applyFormErrors (superseded pattern)
+MUST NOT use hardcoded fallback error strings as the sole error message
 MUST NOT use extractNameError (removed — replaced by parseApiError)
 MUST NOT write custom error parsing logic in hooks or components
-MUST NOT manually iterate fieldErrors — use applyFormErrors instead
+MUST NOT manually iterate fieldErrors — the dispatcher handles field mapping
+MUST NOT branch on parsed.status in hooks for UI decisions — use the UiDecision return value
 parseApiError always returns a non-null ParsedApiError — no null checks needed
 message is always a non-empty string — safe to display directly
+applyFormErrors is internal to applyUiDecision — hooks should not import it directly
 ```
 
 ## ParsedApiError shape
@@ -1188,6 +1222,51 @@ message is always a non-empty string — safe to display directly
   fieldErrors: Record<string, string>; // field → message map, {} when none
   raw: ApiErrorBody; // original parsed body
 }
+```
+
+---
+
+# Mutation Success Rule
+
+Every successful POST, PATCH, PUT, or DELETE in feature hooks MUST show a **popup toast** via `notifyMutationSuccess` from `@/shared/utils/feedback/notifyMutationSuccess`.
+
+## Imports
+
+```ts
+import {
+  mutationSuccessMessage,
+  notifyMutationSuccess,
+} from "@/shared/utils/feedback/notifyMutationSuccess";
+```
+
+## Standard pattern
+
+Call after `.unwrap()` succeeds, before reset/close:
+
+```ts
+await createFaculty(values).unwrap();
+notifyMutationSuccess(mutationSuccessMessage("Faculty", "created"));
+form.resetFields();
+onClose();
+```
+
+| Operation | Verb | Example message |
+| --------- | ---- | --------------- |
+| POST create | `"created"` | `Faculty created successfully.` |
+| PATCH/PUT update | `"updated"` | `Faculty updated successfully.` |
+| DELETE | `"deleted"` | `Faculty deleted successfully.` |
+| Domain actions | custom string | `"Catalog seeded successfully."` |
+
+## Rules
+
+```
+MUST call notifyMutationSuccess after every successful POST/PATCH/PUT/DELETE mutation
+MUST prefer mutationSuccessMessage(entityLabel, verb) for CRUD modals
+MAY use custom copy for domain actions (seed, activate, bulk import counts)
+MUST NOT toast on GET requests or passive RTK cache refetch
+MUST NOT use in-modal success banners — popup only (symmetry with error toasts)
+Bulk uploads: toast only on full success (summary modal handles partial/failure)
+Auth signup and registration flows may keep their existing success copy
 ```
 
 ---

@@ -1,6 +1,8 @@
 // Feature: auth/candidate-signup
 import { useGetStatesQuery } from "@/features/admission-config/tabs/geography-rule/api/statesApi";
-import { parseApiError } from "@/shared/utils/error/parseApiError";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
+import { formatUserMessage } from "@/shared/utils/error/applyUiDecision";
 import { validators } from "@/shared/utils/validators";
 import { Form, notification } from "antd";
 import dayjs, { type Dayjs } from "dayjs";
@@ -53,6 +55,8 @@ function formatCycleDates(config: AdmissionSignupConfig): string | null {
 }
 
 export function useCandidateSignUpPage() {
+  const handleApiError = useApiError();
+
   const [pageState, dispatch] = useReducer(
     candidateSignupReducer,
     initialCandidateSignupState,
@@ -123,32 +127,31 @@ export function useCandidateSignUpPage() {
       return;
     }
 
-    if (isConfigError && configError && "status" in configError) {
-      const status = configError.status as number;
-      if (status === 404) {
+    if (isConfigError && configError) {
+      const decision = handleApiError(configError, {
+        context: { screen: RequestScreen.Form, method: "GET" },
+        setFormError: () => undefined,
+        notify: () => undefined,
+      });
+
+      if (decision.parsed.status === 404) {
         dispatch({
           type: CandidateSignupActionType.SetBlockedReason,
           reason: "not_open",
         });
-        return;
-      }
-      if (status === 409) {
+      } else if (decision.parsed.status === 409) {
         dispatch({
           type: CandidateSignupActionType.SetBlockedReason,
           reason: "ambiguous",
         });
-        return;
+      } else {
+        dispatch({
+          type: CandidateSignupActionType.SetFormError,
+          message: formatUserMessage(decision),
+        });
       }
     }
-
-    if (isConfigError) {
-      const parsed = parseApiError(configError);
-      dispatch({
-        type: CandidateSignupActionType.SetFormError,
-        message: parsed.message,
-      });
-    }
-  }, [isConfigLoading, config, isConfigError, configError, applyConfigStep]);
+  }, [isConfigLoading, config, isConfigError, configError, applyConfigStep, handleApiError]);
 
   const handleJambLookup = async () => {
     try {
@@ -169,12 +172,10 @@ export function useCandidateSignUpPage() {
         result,
       });
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      dispatch({
-        type: CandidateSignupActionType.SetFormError,
-        message: parsed.message,
+      handleApiError(err, {
+        context: { screen: RequestScreen.Form, method: "POST" },
+        form: jambLookupForm,
       });
-      notification.error({ message: parsed.message });
     }
   };
 
@@ -201,12 +202,10 @@ export function useCandidateSignUpPage() {
         description: "Welcome! You are now signed in.",
       });
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      dispatch({
-        type: CandidateSignupActionType.SetFormError,
-        message: parsed.message,
+      handleApiError(err, {
+        context: { screen: RequestScreen.Form, method: "POST" },
+        form: jambSignupForm,
       });
-      notification.error({ message: parsed.message });
     }
   };
 
@@ -235,16 +234,14 @@ export function useCandidateSignUpPage() {
         description: "Welcome! You are now signed in.",
       });
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      dispatch({
-        type: CandidateSignupActionType.SetFormError,
-        message: parsed.message,
+      handleApiError(err, {
+        context: { screen: RequestScreen.Form, method: "POST" },
+        form: openSignupForm,
       });
-      notification.error({ message: parsed.message });
     }
   };
 
-  const handleOpenStateChange = (stateId: number | undefined) => {
+  const handleOpenStateChange = (stateId: number) => {
     setOpenStateId(stateId);
     openSignupForm.setFieldValue("lgaId", undefined);
   };

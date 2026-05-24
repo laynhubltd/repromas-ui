@@ -2,7 +2,6 @@ import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { ADMISSION_CYCLE_STATUS_OPTIONS } from "@/shared/constants/admissionCycleOptions";
 import { Alert, Button, Modal, Typography } from "antd";
 import { useTransitionAdmissionCycleModal } from "../../hooks/useAdmissionCycleModal";
@@ -29,7 +28,7 @@ export function TransitionAdmissionCycleModal({
     open,
     onClose,
   );
-  const { error, isTransitioning, nextStatus, buttonLabel, warningMessage } =
+  const { isTransitioning, nextStatus, buttonLabel, warningMessage } =
     state;
   const { handleConfirm, handleCancel } = actions;
 
@@ -62,8 +61,6 @@ export function TransitionAdmissionCycleModal({
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert variant="form" error={error} />
-
         <ConditionalRenderer when={canShowTransition}>
           <Typography.Text style={{ display: "block", marginBottom: 12 }}>
             Advance{" "}

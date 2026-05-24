@@ -6,11 +6,10 @@ import {
 import { useGetLevelsQuery } from "@/features/settings/tabs/level-config/api/levelApi";
 import { useGetTransitionStatusesQuery } from "@/features/settings/tabs/student-transition-status/api/studentTransitionStatusApi";
 import { useGetSemestersQuery } from "@/features/settings/tabs/system-timeframes/api/systemTimeFramesApi";
-import {
-    HttpStatusCode,
-    parseApiError,
-} from "@/shared/utils/error/parseApiError";
-import { Form, notification } from "antd";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
+import { notifyMutationSuccess } from "@/shared/utils/feedback/notifyMutationSuccess";
+import { Form } from "antd";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useGetStudentsQuery } from "../api/studentsApi";
 import { useBulkCreateTransitionMutation } from "../api/studentTransitionsApi";
@@ -42,8 +41,8 @@ export function useBulkEnrollModal(open: boolean, onClose: () => void) {
   // ── Selection / submission state ──────────────────────────────────────────
 
   const [selectedStudentIds, setSelectedStudentIds] = useState<number[]>([]);
-  const [formError, setFormError] = useState<string | null>(null);
   const [result, setResult] = useState<BulkCreateTransitionResult | null>(null);
+  const handleApiError = useApiError();
 
   // ── Session-scoped semester dropdown ──────────────────────────────────────
 
@@ -71,7 +70,6 @@ export function useBulkEnrollModal(open: boolean, onClose: () => void) {
       setDebouncedStudentSearch("");
       setStudentPage(1);
       setSelectedStudentIds([]);
-      setFormError(null);
       setResult(null);
       setSelectedSessionId(undefined);
       setSelectedLevelId(undefined);
@@ -200,7 +198,6 @@ export function useBulkEnrollModal(open: boolean, onClose: () => void) {
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
-      setFormError(null);
 
       // Deduplicate studentIds before submission (Requirement 13.6)
       const uniqueStudentIds = [...new Set(selectedStudentIds)];
@@ -216,20 +213,22 @@ export function useBulkEnrollModal(open: boolean, onClose: () => void) {
         remarks: values.remarks ?? null,
       }).unwrap();
 
+      if (
+        response.summary.totalFailed === 0 &&
+        response.summary.totalSkipped === 0
+      ) {
+        notifyMutationSuccess(
+          `${response.summary.totalCreated} enrollment${response.summary.totalCreated === 1 ? "" : "s"} created successfully.`,
+        );
+      }
+
       // 201 — set result, keep modal open to show summary
       setResult(response);
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-
-      if (parsed.status === HttpStatusCode.UnprocessableEntity) {
-        // 422 — no transitions written; show detail as ErrorAlert
-        setFormError(parsed.message);
-        return;
-      }
-
-      // 400 — show notification + inline error
-      notification.error({ message: parsed.message });
-      setFormError(parsed.message);
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "POST" },
+        form,
+      });
     }
   };
 
@@ -242,7 +241,6 @@ export function useBulkEnrollModal(open: boolean, onClose: () => void) {
 
   const handleCancel = useCallback(() => {
     form.resetFields();
-    setFormError(null);
     setResult(null);
     setSelectedStudentIds([]);
     setSelectedSessionId(undefined);
@@ -260,7 +258,6 @@ export function useBulkEnrollModal(open: boolean, onClose: () => void) {
       studentSearch,
       studentPage,
       selectedStudentIds,
-      formError,
       isSubmitting,
       result,
       selectedLevelId,

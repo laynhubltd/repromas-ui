@@ -1,7 +1,6 @@
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
 import { DataLoader } from "@/shared/ui/DataLoader";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { DownloadOutlined, InboxOutlined } from "@ant-design/icons";
 import { Alert, Button, Modal, Typography } from "antd";
 import { useRef } from "react";
@@ -11,7 +10,6 @@ export type AdmissionCandidateBulkUploadModalProps = {
   onClose: () => void;
   selectedFile: File | null;
   isUploading: boolean;
-  uploadError: string | null;
   hasFile: boolean;
   canUpload: boolean;
   cycleSelected: boolean;
@@ -25,7 +23,6 @@ export function AdmissionCandidateBulkUploadModal({
   onClose,
   selectedFile,
   isUploading,
-  uploadError,
   hasFile,
   canUpload,
   cycleSelected,
@@ -189,7 +186,6 @@ export function AdmissionCandidateBulkUploadModal({
           </div>
         </ConditionalRenderer>
 
-        <ErrorAlert error={uploadError} />
       </div>
 
       <div

@@ -1,6 +1,5 @@
 // Feature: settings-timeframe
 import { useToken } from "@/shared/hooks/useToken";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Button, Modal, Typography } from "antd";
 import type { SystemTimeFrame } from "../types/system-timeframe";
 
@@ -10,7 +9,6 @@ type DeleteTimeFrameModalProps = {
   onClose: () => void;
   onConfirm: () => void;
   isLoading: boolean;
-  error?: string | null;
 };
 
 export function DeleteTimeFrameModal({
@@ -19,7 +17,6 @@ export function DeleteTimeFrameModal({
   onClose,
   onConfirm,
   isLoading,
-  error,
 }: DeleteTimeFrameModalProps) {
   const token = useToken();
 
@@ -43,7 +40,6 @@ export function DeleteTimeFrameModal({
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert variant="form" error={error} />
         <Typography.Text>
           Delete this time frame? This cannot be undone. Consider deactivating it instead.
         </Typography.Text>

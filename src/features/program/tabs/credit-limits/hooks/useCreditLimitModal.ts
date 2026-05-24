@@ -1,10 +1,7 @@
-import { applyFormErrors } from "@/shared/utils/error/applyFormErrors";
-import {
-    HttpStatusCode,
-    parseApiError,
-} from "@/shared/utils/error/parseApiError";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
 import { Form, notification } from "antd";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import {
     useCreateRegistrationCreditLimitMutation,
     useDeleteRegistrationCreditLimitMutation,
@@ -29,7 +26,7 @@ export function useCreditLimitFormModal(
     useCreateRegistrationCreditLimitMutation();
   const [updateRegistrationCreditLimit, { isLoading: isUpdating }] =
     useUpdateRegistrationCreditLimitMutation();
-  const [formError, setFormError] = useState<string | null>(null);
+  const handleApiError = useApiError();
 
   const isLoading = isCreating || isUpdating;
 
@@ -73,14 +70,12 @@ export function useCreditLimitFormModal(
     }
     if (!open) {
       form.resetFields();
-      setFormError(null);
     }
   }, [open, target, form]);
 
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
-      setFormError(null);
 
       if (isEditMode) {
         // PUT requires all fields — send complete shape
@@ -114,37 +109,26 @@ export function useCreditLimitFormModal(
       });
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-
-      if (parsed.status === HttpStatusCode.Conflict) {
-        notification.error({ message: parsed.message });
-        setFormError(
-          "A rule with this exact combination already exists. Adjust one or more dimensions or update the existing rule instead.",
-        );
-        return;
-      }
-
-      if (isEditMode && parsed.status === HttpStatusCode.NotFound) {
-        notification.error({
-          message: "This credit limit rule no longer exists.",
-        });
+      const decision = handleApiError(err, {
+        context: {
+          screen: RequestScreen.Modal,
+          method: isEditMode ? "PATCH" : "POST",
+        },
+        form,
+      });
+      if (isEditMode && decision.disableForm) {
         onClose();
-        return;
       }
-
-      notification.error({ message: parsed.message });
-      applyFormErrors(parsed, form, setFormError);
     }
   };
 
   const handleCancel = () => {
     form.resetFields();
-    setFormError(null);
     onClose();
   };
 
   return {
-    state: { formError, isLoading, isEditMode },
+    state: { isLoading, isEditMode },
     actions: { handleSubmit, handleCancel },
     form,
     flags: { suggestedPriorityWeight, dimensionCount },
@@ -160,42 +144,32 @@ export function useDeleteCreditLimitModal(
 ) {
   const [deleteRegistrationCreditLimit, { isLoading }] =
     useDeleteRegistrationCreditLimitMutation();
-  const [error, setError] = useState<string | null>(null);
+  const handleApiError = useApiError();
 
-  useEffect(() => {
-    if (!open) {
-      setError(null);
-    }
-  }, [open]);
+  void open;
 
   const handleConfirm = async () => {
     if (!target) return;
     try {
-      setError(null);
       await deleteRegistrationCreditLimit({ id: target.id }).unwrap();
       notification.success({ message: "Credit limit deleted successfully." });
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-
-      if (parsed.status === HttpStatusCode.NotFound) {
-        // 404 — close silently; cache invalidation removes it from the list
+      const decision = handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "DELETE" },
+      });
+      if (decision.parsed.status === 404) {
         onClose();
-        return;
       }
-
-      notification.error({ message: parsed.message });
-      setError(parsed.message);
     }
   };
 
   const handleCancel = () => {
-    setError(null);
     onClose();
   };
 
   return {
-    state: { error, isLoading },
+    state: { isLoading },
     actions: { handleConfirm, handleCancel },
   };
 }

@@ -1,6 +1,10 @@
-import { applyFormErrors } from "@/shared/utils/error/applyFormErrors";
-import { HttpStatusCode, parseApiError } from "@/shared/utils/error/parseApiError";
-import { Form, notification } from "antd";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
+import {
+  mutationSuccessMessage,
+  notifyMutationSuccess,
+} from "@/shared/utils/feedback/notifyMutationSuccess";
+import { Form } from "antd";
 import { useEffect, useState } from "react";
 import {
     useCreateTransitionStatusMutation,
@@ -32,7 +36,7 @@ export function useTransitionStatusFormModal(
   const [form] = Form.useForm<TransitionStatusFormValues>();
   const [createTransitionStatus, { isLoading: isCreating }] = useCreateTransitionStatusMutation();
   const [updateTransitionStatus, { isLoading: isUpdating }] = useUpdateTransitionStatusMutation();
-  const [formError, setFormError] = useState<string | null>(null);
+  const handleApiError = useApiError();
   const [isInUse, setIsInUse] = useState(false);
   const [showCourseRegWarning, setShowCourseRegWarning] = useState(false);
 
@@ -71,7 +75,6 @@ export function useTransitionStatusFormModal(
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
-      setFormError(null);
 
       if (isEditMode) {
         // PUT always sends all 7 writable fields
@@ -97,38 +100,30 @@ export function useTransitionStatusFormModal(
         }).unwrap();
       }
 
+      notifyMutationSuccess(
+        mutationSuccessMessage(
+          "Transition status",
+          isEditMode ? "updated" : "created",
+        ),
+      );
       form.resetFields();
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-
-      if (parsed.status === HttpStatusCode.Conflict) {
-        // 409 — duplicate name: inline field error, modal stays open
-        notification.error({ message: parsed.message });
-        const detail = (parsed.raw as { detail?: string }).detail ?? parsed.message;
-        if (detail.toLowerCase().includes("name") || detail.toLowerCase().includes("duplicate")) {
-          form.setFields([{ name: "name", errors: [parsed.message] }]);
-        } else {
-          setFormError(parsed.message);
-        }
-        return;
-      }
-
-      if (isEditMode && parsed.status === HttpStatusCode.NotFound) {
-        // 404 on PUT — close modal and notify
-        notification.error({ message: parsed.message });
+      const decision = handleApiError(err, {
+        context: {
+          screen: RequestScreen.Modal,
+          method: isEditMode ? "PATCH" : "POST",
+        },
+        form,
+      });
+      if (isEditMode && decision.disableForm) {
         onClose();
-        return;
       }
-
-      notification.error({ message: parsed.message });
-      applyFormErrors(parsed, form, setFormError);
     }
   };
 
   const handleCancel = () => {
     form.resetFields();
-    setFormError(null);
     setIsInUse(false);
     setShowCourseRegWarning(false);
     onClose();
@@ -136,7 +131,6 @@ export function useTransitionStatusFormModal(
 
   return {
     state: {
-      formError,
       isLoading,
       isEditMode,
       isInUse,
@@ -161,45 +155,36 @@ export function useDeleteTransitionStatusModal(
   onClose: () => void
 ) {
   const [deleteTransitionStatus, { isLoading }] = useDeleteTransitionStatusMutation();
-  const [error, setError] = useState<string | null>(null);
+  const handleApiError = useApiError();
 
   const isBlocked = usageCount > 0;
 
-  useEffect(() => {
-    if (!open) {
-      setError(null);
-    }
-  }, [open]);
+  void open;
 
   const handleConfirm = async () => {
     if (!target) return;
     try {
-      setError(null);
       await deleteTransitionStatus(target.id).unwrap();
+      notifyMutationSuccess(
+        mutationSuccessMessage("Transition status", "deleted"),
+      );
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-
-      if (parsed.status === HttpStatusCode.NotFound) {
-        // 404 — close silently; list refetches via cache invalidation
+      const decision = handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "DELETE" },
+      });
+      if (decision.parsed.status === 404) {
         onClose();
-        return;
       }
-
-      // 409 or any other error — show inline error, modal stays open
-      notification.error({ message: parsed.message });
-      setError(parsed.message);
     }
   };
 
   const handleCancel = () => {
-    setError(null);
     onClose();
   };
 
   return {
     state: {
-      error,
       isLoading,
       isBlocked,
       usageCount,

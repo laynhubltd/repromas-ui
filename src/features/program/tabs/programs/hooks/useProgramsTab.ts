@@ -1,4 +1,6 @@
 import { useAccessControl } from "@/features/access-control";
+import { RequestScreen } from "@/shared/types/error-ui";
+import { deriveSectionErrorMessage } from "@/shared/utils/error/deriveSectionErrorMessage";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useGetProgramsQuery } from "../api/programsApi";
 import type { Program } from "../types/program";
@@ -60,7 +62,16 @@ export function useProgramsTab() {
     ...(showDepartmentFilter ? { include: "department" } : {}),
   };
 
-  const { data, isLoading, isError, refetch } = useGetProgramsQuery(queryParams);
+  const { data, isLoading, isError, error: queryError, refetch } = useGetProgramsQuery(queryParams);
+
+  const sectionError = useMemo(
+    () =>
+      deriveSectionErrorMessage(isError, queryError, {
+        screen: RequestScreen.List,
+        method: "GET",
+      }),
+    [isError, queryError],
+  );
 
   const programs = data?.member ?? [];
   const totalItems = data?.totalItems ?? 0;
@@ -147,6 +158,7 @@ export function useProgramsTab() {
       totalItems,
       isLoading,
       isError,
+      sectionError,
       page,
       itemsPerPage,
       nameSearch,

@@ -1,5 +1,5 @@
 import { useToken } from "@/shared/hooks/useToken";
-import { Alert, Button, Form, Input, Modal } from "antd";
+import { Button, Form, Input, Modal } from "antd";
 import { useCreateVersionModal } from "../hooks/useCreateVersionModal";
 
 interface CreateVersionModalProps {
@@ -10,7 +10,7 @@ interface CreateVersionModalProps {
 export function CreateVersionModal({ open, onClose }: CreateVersionModalProps) {
   const token = useToken();
   const { state, actions, form } = useCreateVersionModal(onClose);
-  const { formError, isLoading } = state;
+  const { isLoading } = state;
   const { handleSubmit, handleCancel } = actions;
 
   return (
@@ -32,9 +32,6 @@ export function CreateVersionModal({ open, onClose }: CreateVersionModalProps) {
       }}
     >
       <div style={{ padding: 24 }}>
-        {formError && (
-          <Alert type="error" message={formError} style={{ marginBottom: 16 }} showIcon />
-        )}
         <Form form={form} layout="vertical" requiredMark={false} onFinish={handleSubmit}>
           <Form.Item
             name="name"

@@ -4,7 +4,6 @@ import { useGetOlevelSubjectsQuery } from "@/features/admission-config/tabs/olev
 import { OLEVEL_SUBJECT_SORT_DEFAULT } from "@/shared/constants/olevelSubjectOptions";
 import { REQUIREMENT_CATEGORY_FORM_OPTIONS } from "@/shared/constants/programOlevelRuleOptions";
 import { useToken } from "@/shared/hooks/useToken";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Button, Flex, Form, Modal, Radio, Select, Typography } from "antd";
 import { useMemo } from "react";
 import { useProgramOlevelRuleFormModal } from "../../hooks/useProgramOlevelRuleModal";
@@ -31,7 +30,7 @@ export function ProgramOlevelRuleFormModal({
   const token = useToken();
 
   const {
-    state: { isEditMode, formError, isSubmitting, programLocked },
+    state: { isEditMode, isSubmitting, programLocked },
     actions: { handleSubmit, handleCancel },
     form,
   } = useProgramOlevelRuleFormModal(target, open, onClose, presetProgramId);
@@ -103,8 +102,6 @@ export function ProgramOlevelRuleFormModal({
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert variant="form" error={formError} />
-
         {catalogEmpty && (
           <Typography.Text
             type="warning"

@@ -45,6 +45,7 @@ export function FeeItemsTab() {
     activeCount,
     isLoading,
     isError,
+    sectionError,
     search,
     page,
     isActiveFilter,
@@ -260,7 +261,7 @@ export function FeeItemsTab() {
         <ConditionalRenderer when={isError}>
           <ErrorAlert
             variant="section"
-            error="Failed to load fee items."
+            error={sectionError ?? "Failed to load fee items."}
             onRetry={refetch}
           />
         </ConditionalRenderer>

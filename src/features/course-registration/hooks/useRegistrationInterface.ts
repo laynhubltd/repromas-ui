@@ -1,3 +1,4 @@
+import { RequestScreen } from "@/shared/types/error-ui";
 import { notification } from "antd";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -11,9 +12,9 @@ import type {
 } from "../types/course-registration";
 import {
   MAX_RETRY_ATTEMPTS,
+  applyRegistrationError,
   getRetryDelay,
   isRetryableNetworkError,
-  parseCourseRegistrationError,
 } from "../utils/courseRegistrationErrors";
 import {
   allMandatoryCoursesSelected,
@@ -160,11 +161,9 @@ export function useRegistrationInterface(
   // but the user still needs a popup to understand why the pool didn't load.
   useEffect(() => {
     if (isQueryError && queryError) {
-      const parsed = parseCourseRegistrationError(queryError);
-      notification.error({
-        message: "Course Registration Unavailable",
-        description: parsed.message,
-        duration: 6,
+      applyRegistrationError(queryError, {
+        screen: RequestScreen.List,
+        method: "GET",
       });
     }
   }, [isQueryError, queryError]);
@@ -369,7 +368,10 @@ export function useRegistrationInterface(
    */
   const handleSubmitError = useCallback(
     (err: unknown, retryFn?: () => void) => {
-      const parsed = parseCourseRegistrationError(err);
+      const parsed = applyRegistrationError(err, {
+        screen: RequestScreen.Action,
+        method: "POST",
+      });
 
       setErrorState({
         message: parsed.message,
@@ -384,16 +386,10 @@ export function useRegistrationInterface(
         setServerMissingConfigIds(parsed.serverMissingConfigIds);
       }
 
-      notification.error({ message: parsed.message });
-
       // Automatic retry for network failures (Requirement 7.1)
       if (isRetryableNetworkError(parsed) && retryFn) {
         scheduleNetworkRetry(retryFn);
-        return;
       }
-
-      // Stale data: show the error with a refresh button — don't auto-refetch
-      // as that would discard the user's current selection unexpectedly.
     },
     [scheduleNetworkRetry],
   );

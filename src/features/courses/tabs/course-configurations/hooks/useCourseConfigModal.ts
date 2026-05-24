@@ -1,9 +1,13 @@
 import { useGetSemesterTypesQuery } from "@/features/settings/tabs/academic-calendar/api/academicCalendarApi";
 import { useGetLevelsQuery } from "@/features/settings/tabs/level-config/api/levelApi";
-import { applyFormErrors } from "@/shared/utils/error/applyFormErrors";
-import { HttpStatusCode, parseApiError } from "@/shared/utils/error/parseApiError";
-import { Form, notification } from "antd";
-import { useEffect, useState } from "react";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
+import {
+  mutationSuccessMessage,
+  notifyMutationSuccess,
+} from "@/shared/utils/feedback/notifyMutationSuccess";
+import { Form } from "antd";
+import { useEffect } from "react";
 import { useGetCoursesQuery } from "../../courses/api/coursesApi";
 import {
     useCreateCourseConfigurationMutation,
@@ -44,7 +48,7 @@ export function useCourseConfigFormModal(
     useCreateCourseConfigurationMutation();
   const [updateCourseConfiguration, { isLoading: isUpdating }] =
     useUpdateCourseConfigurationMutation();
-  const [formError, setFormError] = useState<string | null>(null);
+  const handleApiError = useApiError();
 
   const isLoading = isCreating || isUpdating;
 
@@ -95,9 +99,6 @@ export function useCourseConfigFormModal(
         form.setFieldsValue(prefill);
       }
     }
-    if (!open) {
-      setFormError(null);
-    }
   }, [open, target, form, prefillLevelId, prefillSemesterTypeId]);
 
   // Reset form when modal closes
@@ -121,7 +122,6 @@ export function useCourseConfigFormModal(
   const handleSubmit = async (programId: number, versionId: number) => {
     try {
       const values = await form.validateFields();
-      setFormError(null);
 
       if (isEditMode) {
         await updateCourseConfiguration({
@@ -145,32 +145,35 @@ export function useCourseConfigFormModal(
         }).unwrap();
       }
 
+      notifyMutationSuccess(
+        mutationSuccessMessage(
+          "Course configuration",
+          isEditMode ? "updated" : "created",
+        ),
+      );
       form.resetFields();
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-
-      if (parsed.status === HttpStatusCode.Conflict) {
-        // 409 duplicate 4-tuple → form-level ErrorAlert (no specific field)
-        setFormError(parsed.message);
-      } else if (parsed.status === HttpStatusCode.UnprocessableEntity) {
-        // 422 creditUnit domain error → inline field error
-        applyFormErrors(parsed, form, setFormError);
-      } else {
-        applyFormErrors(parsed, form, setFormError);
+      const decision = handleApiError(err, {
+        context: {
+          screen: RequestScreen.Modal,
+          method: isEditMode ? "PATCH" : "POST",
+        },
+        form,
+      });
+      if (isEditMode && decision.disableForm) {
+        onClose();
       }
     }
   };
 
   const handleCancel = () => {
     form.resetFields();
-    setFormError(null);
     onClose();
   };
 
   return {
-    state: { formError, isLoading, isEditMode },
+    state: { isLoading, isEditMode },
     actions: { handleSubmit, handleCancel, handleCourseChange },
     form,
     courses,
@@ -193,35 +196,31 @@ export function useDeleteCourseConfigModal(
   onClose: () => void,
 ) {
   const [deleteCourseConfiguration, { isLoading }] = useDeleteCourseConfigurationMutation();
-  const [error, setError] = useState<string | null>(null);
+  const handleApiError = useApiError();
 
-  // Reset error when modal opens/closes
-  useEffect(() => {
-    if (!open) {
-      setError(null);
-    }
-  }, [open]);
+  void open;
 
   const handleConfirm = async () => {
     if (!target) return;
     try {
-      setError(null);
       await deleteCourseConfiguration(target.id).unwrap();
+      notifyMutationSuccess(
+        mutationSuccessMessage("Course configuration", "deleted"),
+      );
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-      setError(parsed.message);
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "DELETE" },
+      });
     }
   };
 
   const handleCancel = () => {
-    setError(null);
     onClose();
   };
 
   return {
-    state: { error, isLoading },
+    state: { isLoading },
     actions: { handleConfirm, handleCancel },
   };
 }

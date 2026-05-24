@@ -3,7 +3,6 @@ import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import {
   Button,
   Collapse,
@@ -45,7 +44,6 @@ export function BulkEnrollModal({ open, onClose }: BulkEnrollModalProps) {
     studentSearch,
     studentPage,
     selectedStudentIds,
-    formError,
     isSubmitting,
     result,
     selectedLevelId,
@@ -127,11 +125,6 @@ export function BulkEnrollModal({ open, onClose }: BulkEnrollModalProps) {
       }}
     >
       <div style={{ padding: `${token.paddingMD}px` }}>
-        {/* Error alert for 422 / 400 */}
-        <ConditionalRenderer when={!!formError}>
-          <ErrorAlert variant="form" error={formError} />
-        </ConditionalRenderer>
-
         {/* Result summary banner after 201 */}
         <ConditionalRenderer when={!!result}>
           <div

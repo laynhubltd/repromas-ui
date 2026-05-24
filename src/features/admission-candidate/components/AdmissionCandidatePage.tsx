@@ -630,7 +630,6 @@ export function AdmissionCandidatePage() {
         onClose={handleCloseBulkUploadModal}
         selectedFile={bulkState.selectedFile}
         isUploading={bulkState.isUploading}
-        uploadError={bulkState.uploadError}
         hasFile={bulkFlags.hasFile}
         canUpload={bulkFlags.canUpload}
         cycleSelected={cycleId !== undefined}

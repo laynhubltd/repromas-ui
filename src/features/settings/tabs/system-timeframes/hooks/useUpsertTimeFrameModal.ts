@@ -1,4 +1,10 @@
 // Feature: settings-timeframe
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
+import {
+  mutationSuccessMessage,
+  notifyMutationSuccess,
+} from "@/shared/utils/feedback/notifyMutationSuccess";
 import { Form } from "antd";
 import { useEffect, useState } from "react";
 import {
@@ -21,7 +27,6 @@ import type {
   Scope,
   SystemTimeFrame,
 } from "../types/system-timeframe";
-import { normalizeTimeFrameApiError } from "../utils/validators";
 
 export type UpsertTimeFrameFormValues = {
   eventType: EventType;
@@ -37,7 +42,6 @@ export type UpsertTimeFrameFormValues = {
 
 export type UseUpsertTimeFrameModalResult = {
   form: ReturnType<typeof Form.useForm<UpsertTimeFrameFormValues>>[0];
-  formError: string | null;
   isSubmitting: boolean;
   sessions: AcademicSession[];
   semesters: Semester[];
@@ -56,8 +60,9 @@ export function useUpsertTimeFrameModal(
   onClose: () => void,
 ): UseUpsertTimeFrameModalResult {
   const [form] = Form.useForm<UpsertTimeFrameFormValues>();
-  const [formError, setFormError] = useState<string | null>(null);
   const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null);
+  const handleApiError = useApiError();
+  const isEditMode = target !== null;
 
   const [createTimeFrame, { isLoading: isCreating }] = useCreateSystemTimeFrameMutation();
   const [updateTimeFrame, { isLoading: isUpdating }] = useUpdateSystemTimeFrameMutation();
@@ -109,7 +114,6 @@ export function useUpsertTimeFrameModal(
 
   // ── Session change handler — clears semesterId ─────────────────────────────
   const onSessionChange = (sessionId: number | null) => {
-    console.log({ sessionId });
     setSelectedSessionId(sessionId);
     form.setFieldValue("semesterId", null);
   };
@@ -118,7 +122,6 @@ export function useUpsertTimeFrameModal(
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
-      setFormError(null);
 
       const payload: CreateSystemTimeFrameRequest = {
         eventType: values.eventType,
@@ -138,20 +141,29 @@ export function useUpsertTimeFrameModal(
         await createTimeFrame(payload).unwrap();
       }
 
+      notifyMutationSuccess(
+        mutationSuccessMessage("Time frame", target ? "updated" : "created"),
+      );
       form.resetFields();
       setSelectedSessionId(null);
       onClose();
     } catch (err: unknown) {
-      // Ant Design form validation errors are thrown as plain objects without status/data
-      // — only handle API errors (those have a status or data property)
       const isApiError =
         err !== null &&
         typeof err === "object" &&
         ("status" in (err as object) || "data" in (err as object));
 
       if (isApiError) {
-        const message = normalizeTimeFrameApiError(err);
-        setFormError(message ?? "An unexpected error occurred. Please try again.");
+        const decision = handleApiError(err, {
+          context: {
+            screen: RequestScreen.Modal,
+            method: isEditMode ? "PATCH" : "POST",
+          },
+          form,
+        });
+        if (isEditMode && decision.disableForm) {
+          onClose();
+        }
       }
     }
   };
@@ -159,14 +171,12 @@ export function useUpsertTimeFrameModal(
   // ── Cancel ─────────────────────────────────────────────────────────────────
   const handleCancel = () => {
     form.resetFields();
-    setFormError(null);
     setSelectedSessionId(null);
     onClose();
   };
 
   return {
     form,
-    formError,
     isSubmitting,
     sessions,
     semesters,

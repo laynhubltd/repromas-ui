@@ -8,7 +8,15 @@
  * Requirements: 7.1, 7.2, 7.3, 7.4, 7.5
  */
 
+import {
+  type RequestContext,
+} from "@/shared/types/error-ui";
+import {
+  applyUiDecision,
+  type UiDecisionHandlers,
+} from "@/shared/utils/error/applyUiDecision";
 import { parseApiError } from "@/shared/utils/error/parseApiError";
+import { resolveUiDecision } from "@/shared/utils/error/resolveUiDecision";
 
 // ─── Extended API error body shapes ──────────────────────────────────────────
 // The factory API attaches extra fields to some 422 bodies that are not part
@@ -353,6 +361,29 @@ export function parseCourseRegistrationError(
       };
     }
   }
+}
+
+/**
+ * Applies registration-specific error UI via the global pipeline.
+ *
+ * Parses the factory API error for structured registration state (eligibility,
+ * stale data, missing courses), then dispatches a context-aware toast/banner
+ * through `applyUiDecision` using the registration copy.
+ */
+export function applyRegistrationError(
+  error: unknown,
+  context: RequestContext,
+  handlers: UiDecisionHandlers = {},
+): CourseRegistrationError {
+  const registrationError = parseCourseRegistrationError(error);
+  const apiParsed = parseApiError(error);
+  const decision = {
+    ...resolveUiDecision(apiParsed, context),
+    message: registrationError.message,
+    actionHint: registrationError.recoveryGuidance ?? "",
+  };
+  applyUiDecision(decision, handlers);
+  return registrationError;
 }
 
 // ─── Retry helpers ────────────────────────────────────────────────────────────

@@ -4,13 +4,23 @@ import { useGetProgramsQuery } from "@/features/program/tabs/programs/api/progra
 import type { Program } from "@/features/program/tabs/programs/types/program";
 import { useGetLevelsQuery } from "@/features/settings/tabs/level-config/api/levelApi";
 import type { Level } from "@/features/settings/tabs/level-config/types/level";
-import { parseApiError } from "@/shared/utils/error/parseApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
+import { deriveSectionErrorMessage } from "@/shared/utils/error/deriveSectionErrorMessage";
 import { useCallback, useEffect, useReducer, useRef } from "react";
 import {
     AssessmentActionType,
     assessmentReducer,
     initialAssessmentState,
 } from "../state/assessmentFilterState";
+
+function resolveListQueryError(rawError: unknown): string {
+  return (
+    deriveSectionErrorMessage(true, rawError, {
+      screen: RequestScreen.List,
+      method: "GET",
+    }) ?? "Failed to load data."
+  );
+}
 
 export function useAssessmentFilter() {
   const [state, dispatch] = useReducer(
@@ -65,7 +75,7 @@ export function useAssessmentFilter() {
 
   const programOptions: Program[] = programsData?.member ?? [];
   const programError = programRawError
-    ? parseApiError(programRawError).message
+    ? resolveListQueryError(programRawError)
     : null;
 
   // ─── Levels query ─────────────────────────────────────────────────────────
@@ -80,7 +90,7 @@ export function useAssessmentFilter() {
 
   const levelOptions: Level[] = levelsData?.member ?? [];
   const levelError = levelRawError
-    ? parseApiError(levelRawError).message
+    ? resolveListQueryError(levelRawError)
     : null;
 
   // ─── Course configurations query ──────────────────────────────────────────
@@ -105,7 +115,7 @@ export function useAssessmentFilter() {
   const courseConfigOptions: CourseConfiguration[] =
     courseConfigsData?.member ?? [];
   const courseConfigError = courseConfigRawError
-    ? parseApiError(courseConfigRawError).message
+    ? resolveListQueryError(courseConfigRawError)
     : null;
 
   // ─── Actions ──────────────────────────────────────────────────────────────

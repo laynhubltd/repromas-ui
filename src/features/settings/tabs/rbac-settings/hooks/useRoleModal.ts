@@ -1,8 +1,8 @@
 // Feature: rbac-settings
-import { applyFormErrors } from "@/shared/utils/error/applyFormErrors";
-import { parseApiError } from "@/shared/utils/error/parseApiError";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
 import { Form, notification } from "antd";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import {
     useCreateRoleMutation,
     useDeleteRoleMutation,
@@ -25,7 +25,7 @@ export function useRoleFormModal(
 ) {
   const isEditMode = target !== null;
   const [form] = Form.useForm<RoleFormValues>();
-  const [formError, setFormError] = useState<string | null>(null);
+  const handleApiError = useApiError();
 
   const [createRole, { isLoading: isCreating }] = useCreateRoleMutation();
   const [updateRole, { isLoading: isUpdating }] = useUpdateRoleMutation();
@@ -47,17 +47,9 @@ export function useRoleFormModal(
     }
   }, [open, isEditMode, target, form]);
 
-  // Reset error when modal closes
-  useEffect(() => {
-    if (!open) {
-      setFormError(null);
-    }
-  }, [open]);
-
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
-      setFormError(null);
 
       if (isEditMode) {
         await updateRole({
@@ -79,26 +71,26 @@ export function useRoleFormModal(
       form.resetFields();
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-
-      if (parsed.status === 409) {
-        setFormError("A role with this name already exists.");
-        return;
+      const decision = handleApiError(err, {
+        context: {
+          screen: RequestScreen.Modal,
+          method: isEditMode ? "PATCH" : "POST",
+        },
+        form,
+      });
+      if (isEditMode && decision.disableForm) {
+        onClose();
       }
-
-      notification.error({ message: parsed.message });
-      applyFormErrors(parsed, form, setFormError);
     }
   };
 
   const handleCancel = () => {
     form.resetFields();
-    setFormError(null);
     onClose();
   };
 
   return {
-    state: { isEditMode, isSubmitting, formError },
+    state: { isEditMode, isSubmitting },
     actions: { handleSubmit, handleCancel },
     form,
   };
@@ -113,41 +105,30 @@ export function useDeleteRoleModal(
   onDeleted?: (roleId: number) => void,
 ) {
   const [deleteRole, { isLoading: isDeleting }] = useDeleteRoleMutation();
-  const [error, setError] = useState<string | null>(null);
+  const handleApiError = useApiError();
 
-  // Reset error when modal closes
-  useEffect(() => {
-    if (!open) {
-      setError(null);
-    }
-  }, [open]);
+  void open;
 
   const handleConfirm = async () => {
     if (!target) return;
     try {
-      setError(null);
       await deleteRole(target.id).unwrap();
       notification.success({ message: "Role deleted successfully." });
       onDeleted?.(target.id);
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      if (parsed.status === 409) {
-        setError("This role is assigned to one or more users. Revoke all assignments before deleting.");
-      } else {
-        notification.error({ message: parsed.message });
-        setError(parsed.message);
-      }
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "DELETE" },
+      });
     }
   };
 
   const handleCancel = () => {
-    setError(null);
     onClose();
   };
 
   return {
-    state: { isDeleting, error },
+    state: { isDeleting },
     actions: { handleConfirm, handleCancel },
   };
 }

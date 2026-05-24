@@ -1,6 +1,5 @@
 import { PRICING_RULE_UI_COPY } from "@/shared/constants/pricingRuleOptions";
 import { useToken } from "@/shared/hooks/useToken";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Alert, Button, Flex, Form, InputNumber, Modal, Select, Switch, Typography } from "antd";
 import { useAddPricingRuleLineModal } from "../../hooks/usePricingRuleLineItemModal";
 import type { PricingRule } from "../../types/pricing-rule";
@@ -24,7 +23,6 @@ export function AddPricingRuleLineModal({
   const {
     form,
     state: {
-      formError,
       isSubmitting,
       isFeeItemsLoading,
       feeItemOptions,
@@ -58,8 +56,6 @@ export function AddPricingRuleLineModal({
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert variant="form" error={formError} />
-
         {allFeeItemsUsed ? (
           <Alert
             type="info"

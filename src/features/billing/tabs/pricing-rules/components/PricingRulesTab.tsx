@@ -45,6 +45,7 @@ export function PricingRulesTab() {
     totalItems,
     isLoading,
     isError,
+    sectionError,
     page,
     eventCodeFilter,
     indigeneFilter,
@@ -264,7 +265,7 @@ export function PricingRulesTab() {
         <ConditionalRenderer when={isError}>
           <ErrorAlert
             variant="section"
-            error="Failed to load pricing rules."
+            error={sectionError ?? "Failed to load pricing rules."}
             onRetry={refetch}
           />
         </ConditionalRenderer>

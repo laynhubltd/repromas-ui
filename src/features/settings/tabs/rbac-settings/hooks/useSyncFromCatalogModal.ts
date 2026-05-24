@@ -1,5 +1,6 @@
 // Feature: rbac-settings
-import { parseApiError } from "@/shared/utils/error/parseApiError";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
 import { notification } from "antd";
 import { useCallback, useReducer } from "react";
 import { useSyncPermissionsFromCatalogMutation } from "../api/rbacSettingsApi";
@@ -14,7 +15,8 @@ export function useSyncFromCatalogModal(onClose: () => void) {
     syncFromCatalogReducer,
     initialSyncFromCatalogState,
   );
-  const { step, assignToSystemAdministrator, lastResult, error } = state;
+  const { step, assignToSystemAdministrator, lastResult } = state;
+  const handleApiError = useApiError();
 
   const [syncPermissionsFromCatalog, { isLoading: isSyncing }] =
     useSyncPermissionsFromCatalogMutation();
@@ -29,8 +31,6 @@ export function useSyncFromCatalogModal(onClose: () => void) {
   }, [reset, onClose]);
 
   const handleConfirm = useCallback(async () => {
-    dispatch({ type: SyncFromCatalogActionType.SetError, message: null });
-
     try {
       const result = await syncPermissionsFromCatalog({
         skipExistingTenantPermissions: true,
@@ -44,11 +44,11 @@ export function useSyncFromCatalogModal(onClose: () => void) {
         description: `${result.tenantPermissionsCreatedCount} tenant permission(s) created, ${result.assignedToSystemAdministratorCount} assigned to System Administrator.`,
       });
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      dispatch({ type: SyncFromCatalogActionType.SetError, message: parsed.message });
-      notification.error({ message: parsed.message });
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "POST" },
+      });
     }
-  }, [syncPermissionsFromCatalog, assignToSystemAdministrator]);
+  }, [syncPermissionsFromCatalog, assignToSystemAdministrator, handleApiError]);
 
   const handleDone = useCallback(() => {
     reset();
@@ -67,7 +67,6 @@ export function useSyncFromCatalogModal(onClose: () => void) {
       step,
       assignToSystemAdministrator,
       lastResult,
-      error,
       isSyncing,
     },
     actions: {

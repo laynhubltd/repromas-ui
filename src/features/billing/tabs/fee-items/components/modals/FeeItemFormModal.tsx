@@ -2,7 +2,6 @@ import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import { FEE_ITEM_TOOLTIPS } from "@/shared/constants/feeItemOptions";
 import { useToken } from "@/shared/hooks/useToken";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Button, Form, Input, Modal, Switch, Tooltip } from "antd";
 import { QuestionCircleOutlined } from "@ant-design/icons";
 import { useFeeItemFormModal } from "../../hooks/useFeeItemModal";
@@ -52,7 +51,7 @@ export function FeeItemFormModal({
   const token = useToken();
 
   const {
-    state: { isEditMode, formError, isSubmitting },
+    state: { isEditMode, isSubmitting },
     actions: { handleSubmit, handleCancel },
     form,
   } = useFeeItemFormModal(target, open, onClose);
@@ -76,8 +75,6 @@ export function FeeItemFormModal({
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert variant="form" error={formError} />
-
         <Form
           form={form}
           layout="vertical"

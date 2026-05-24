@@ -1,10 +1,10 @@
 import { useGetStatesQuery } from "@/features/admission-config/tabs/geography-rule/api/statesApi";
 import { useGetAdmissionCyclesQuery } from "@/features/admission-config/tabs/admission-cycle/api/admissionCycleApi";
-import { applyFormErrors } from "@/shared/utils/error/applyFormErrors";
-import { parseApiError } from "@/shared/utils/error/parseApiError";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
 import { Form, notification } from "antd";
 import type { Dayjs } from "dayjs";
-import { useCallback, useReducer } from "react";
+import { useCallback } from "react";
 import {
   useCreateAdmissionCandidateMutation,
   useGetAdmissionCandidateQuery,
@@ -12,11 +12,6 @@ import {
   useOfferAdmissionCandidateMutation,
   usePatchAdmissionCandidateMetadataMutation,
 } from "../api/admissionCandidateApi";
-import {
-  admissionCandidateFormReducer,
-  AdmissionCandidateFormActionType,
-  initialAdmissionCandidateFormState,
-} from "../state/admissionCandidateFormState";
 import type { AdmissionCandidate } from "../types/admission-candidate";
 import { ADMISSION_CANDIDATE_DETAIL_INCLUDE } from "@/shared/constants/admissionCandidateOptions";
 
@@ -43,12 +38,9 @@ export function useAdmissionCandidateFormModal(
   onClose: () => void,
 ) {
   const [form] = Form.useForm<CreateFormValues>();
-  const [formState, dispatch] = useReducer(
-    admissionCandidateFormReducer,
-    initialAdmissionCandidateFormState,
-  );
   const [createCandidate, { isLoading: isCreating }] =
     useCreateAdmissionCandidateMutation();
+  const handleApiError = useApiError();
 
   const { data: cyclesData } = useGetAdmissionCyclesQuery({
     itemsPerPage: 100,
@@ -60,7 +52,6 @@ export function useAdmissionCandidateFormModal(
   const states = statesData?.member ?? [];
 
   const reset = useCallback(() => {
-    dispatch({ type: AdmissionCandidateFormActionType.Reset });
     form.resetFields();
   }, [form]);
 
@@ -79,10 +70,6 @@ export function useAdmissionCandidateFormModal(
     }
     try {
       const values = await form.validateFields();
-      dispatch({
-        type: AdmissionCandidateFormActionType.SetFormError,
-        message: null,
-      });
 
       let metadata: Record<string, unknown> | null = null;
       if (values.metadataJson?.trim()) {
@@ -111,14 +98,10 @@ export function useAdmissionCandidateFormModal(
       reset();
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-      applyFormErrors(parsed, form, (msg) =>
-        dispatch({
-          type: AdmissionCandidateFormActionType.SetFormError,
-          message: msg,
-        }),
-      );
+      handleApiError(err, {
+        context: { screen: RequestScreen.Modal, method: "POST" },
+        form,
+      });
     }
   };
 
@@ -132,7 +115,6 @@ export function useAdmissionCandidateFormModal(
 
   return {
     state: {
-      formError: formState.formError,
       isLoading: isCreating,
       cycles,
       states,
@@ -155,12 +137,9 @@ export function useAdmissionCandidateMetadataModal(
   onClose: () => void,
 ) {
   const [form] = Form.useForm<MetadataFormValues>();
-  const [formState, dispatch] = useReducer(
-    admissionCandidateFormReducer,
-    initialAdmissionCandidateFormState,
-  );
   const [patchMetadata, { isLoading }] =
     usePatchAdmissionCandidateMetadataMutation();
+  const handleApiError = useApiError();
 
   const { data: candidate } = useGetAdmissionCandidateQuery(
     { id: candidateId!, include: ADMISSION_CANDIDATE_DETAIL_INCLUDE },
@@ -168,7 +147,6 @@ export function useAdmissionCandidateMetadataModal(
   );
 
   const reset = useCallback(() => {
-    dispatch({ type: AdmissionCandidateFormActionType.Reset });
     form.resetFields();
   }, [form]);
 
@@ -191,10 +169,6 @@ export function useAdmissionCandidateMetadataModal(
     if (candidateId === null) return;
     try {
       const values = await form.validateFields();
-      dispatch({
-        type: AdmissionCandidateFormActionType.SetFormError,
-        message: null,
-      });
 
       const metadata =
         values.metadataJson.trim() === ""
@@ -206,20 +180,15 @@ export function useAdmissionCandidateMetadataModal(
       reset();
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-      applyFormErrors(parsed, form, (msg) =>
-        dispatch({
-          type: AdmissionCandidateFormActionType.SetFormError,
-          message: msg,
-        }),
-      );
+      handleApiError(err, {
+        context: { screen: RequestScreen.Modal, method: "PATCH" },
+        form,
+      });
     }
   };
 
   return {
     state: {
-      formError: formState.formError,
       isLoading,
       candidate,
     },
@@ -236,27 +205,23 @@ export function useOfferAdmissionCandidateModal(
   onClose: () => void,
 ) {
   const [offerCandidate, { isLoading }] = useOfferAdmissionCandidateMutation();
-  const [error, setError] = useReducer(
-    (_: string | null, msg: string | null) => msg,
-    null,
-  );
+  const handleApiError = useApiError();
 
   const handleConfirm = async () => {
     if (!candidate) return;
-    setError(null);
     try {
       await offerCandidate({ id: candidate.id }).unwrap();
       notification.success({ message: "Offer processed successfully" });
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-      setError(parsed.message);
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "POST" },
+      });
     }
   };
 
   return {
-    state: { isLoading, error, candidate },
+    state: { isLoading, candidate },
     actions: { handleConfirm, handleCancel: onClose },
   };
 }
@@ -270,27 +235,23 @@ export function useMatriculateAdmissionCandidateModal(
 ) {
   const [matriculateCandidate, { isLoading }] =
     useMatriculateAdmissionCandidateMutation();
-  const [error, setError] = useReducer(
-    (_: string | null, msg: string | null) => msg,
-    null,
-  );
+  const handleApiError = useApiError();
 
   const handleConfirm = async () => {
     if (!candidate) return;
-    setError(null);
     try {
       await matriculateCandidate({ id: candidate.id }).unwrap();
       notification.success({ message: "Candidate matriculated successfully" });
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-      setError(parsed.message);
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "POST" },
+      });
     }
   };
 
   return {
-    state: { isLoading, error, candidate },
+    state: { isLoading, candidate },
     actions: { handleConfirm, handleCancel: onClose },
   };
 }

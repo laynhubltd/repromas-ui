@@ -1,5 +1,7 @@
 // Feature: settings-timeframe
-import { useEffect, useState } from "react";
+import { RequestScreen } from "@/shared/types/error-ui";
+import { deriveSectionErrorMessage } from "@/shared/utils/error/deriveSectionErrorMessage";
+import { useEffect, useMemo, useState } from "react";
 import {
     useGetAcademicSessionsQuery,
     useGetSemesterTypesQuery,
@@ -90,7 +92,16 @@ export function useSystemTimeFrameTab() {
   // ── Queries ────────────────────────────────────────────────────────────────
   const queryParams = buildQueryParams(filters, page, sort);
 
-  const { data: timeFramesData, isLoading, isError } = useGetSystemTimeFramesQuery(queryParams);
+  const { data: timeFramesData, isLoading, isError, error: queryError } = useGetSystemTimeFramesQuery(queryParams);
+
+  const sectionError = useMemo(
+    () =>
+      deriveSectionErrorMessage(isError, queryError, {
+        screen: RequestScreen.List,
+        method: "GET",
+      }),
+    [isError, queryError],
+  );
 
   // Sync totalItems from query result
   useEffect(() => {
@@ -159,6 +170,7 @@ export function useSystemTimeFrameTab() {
     groupedTimeFrames,
     isLoading,
     isError,
+    sectionError,
     filters,
     page,
     totalItems,

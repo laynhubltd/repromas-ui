@@ -1,6 +1,5 @@
 import { BILLABLE_EVENT_UI_COPY } from "@/shared/constants/billableEventOptions";
 import { useToken } from "@/shared/hooks/useToken";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Button, Modal, Typography } from "antd";
 import { useDeleteBillableEventModal } from "../../hooks/useBillableEventModal";
 import type { BillableEvent } from "../../types/billable-event";
@@ -18,7 +17,7 @@ export function DeleteBillableEventModal({
 }: DeleteBillableEventModalProps) {
   const token = useToken();
   const {
-    state: { error, isDeleting },
+    state: { isDeleting },
     actions: { handleConfirm, handleCancel },
   } = useDeleteBillableEventModal(target, open, onClose);
 
@@ -41,8 +40,6 @@ export function DeleteBillableEventModal({
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert variant="form" error={error} />
-
         <Typography.Paragraph>
           {BILLABLE_EVENT_UI_COPY.deleteFeeDescription.replace(
             "{name}",

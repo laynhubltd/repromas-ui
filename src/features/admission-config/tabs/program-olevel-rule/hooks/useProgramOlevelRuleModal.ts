@@ -1,17 +1,12 @@
-import { applyFormErrors } from "@/shared/utils/error/applyFormErrors";
-import { parseApiError } from "@/shared/utils/error/parseApiError";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
 import { Form, notification } from "antd";
-import { useCallback, useEffect, useReducer, useState } from "react";
+import { useCallback, useEffect } from "react";
 import {
   useCreateProgramOlevelRequirementMutation,
   useDeleteProgramOlevelRequirementMutation,
   useUpdateProgramOlevelRequirementMutation,
 } from "../api/programOlevelRuleApi";
-import {
-  initialProgramOlevelRuleFormState,
-  programOlevelRuleFormReducer,
-  ProgramOlevelRuleFormActionType,
-} from "../state/programOlevelRuleFormState";
 import type { ProgramOlevelRequirement } from "../types/program-olevel-rule";
 
 type ProgramOlevelRuleFormValues = {
@@ -28,16 +23,12 @@ export function useProgramOlevelRuleFormModal(
 ) {
   const isEditMode = target !== null;
   const [form] = Form.useForm<ProgramOlevelRuleFormValues>();
-  const [modalState, dispatch] = useReducer(
-    programOlevelRuleFormReducer,
-    initialProgramOlevelRuleFormState,
-  );
-  const { formError } = modalState;
 
   const [createRequirement, { isLoading: isCreating }] =
     useCreateProgramOlevelRequirementMutation();
   const [updateRequirement, { isLoading: isUpdating }] =
     useUpdateProgramOlevelRequirementMutation();
+  const handleApiError = useApiError();
 
   const isSubmitting = isCreating || isUpdating;
 
@@ -59,16 +50,11 @@ export function useProgramOlevelRuleFormModal(
 
   const reset = useCallback(() => {
     form.resetFields();
-    dispatch({ type: ProgramOlevelRuleFormActionType.Reset });
   }, [form]);
 
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
-      dispatch({
-        type: ProgramOlevelRuleFormActionType.SetFormError,
-        message: null,
-      });
 
       const programId = values.programId;
       const subjectId = values.subjectId;
@@ -100,14 +86,13 @@ export function useProgramOlevelRuleFormModal(
       reset();
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-      applyFormErrors(parsed, form, (msg) =>
-        dispatch({
-          type: ProgramOlevelRuleFormActionType.SetFormError,
-          message: msg,
-        }),
-      );
+      handleApiError(err, {
+        context: {
+          screen: RequestScreen.Modal,
+          method: isEditMode ? "PATCH" : "POST",
+        },
+        form,
+      });
     }
   };
 
@@ -119,7 +104,6 @@ export function useProgramOlevelRuleFormModal(
   return {
     state: {
       isEditMode,
-      formError,
       isSubmitting,
       programLocked: isEditMode || presetProgramId !== undefined,
     },
@@ -135,31 +119,29 @@ export function useDeleteProgramOlevelRuleModal(
 ) {
   const [deleteRequirement, { isLoading: isDeleting }] =
     useDeleteProgramOlevelRequirementMutation();
-  const [error, setError] = useState<string | null>(null);
+  const handleApiError = useApiError();
 
   const handleConfirm = async () => {
     if (!target) return;
     try {
-      setError(null);
       await deleteRequirement(target.id).unwrap();
       notification.success({
         message: "Program O'Level requirement removed successfully.",
       });
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-      setError(parsed.message);
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "DELETE" },
+      });
     }
   };
 
   const handleCancel = () => {
-    setError(null);
     onClose();
   };
 
   return {
-    state: { error, isDeleting },
+    state: { isDeleting },
     actions: { handleConfirm, handleCancel },
   };
 }

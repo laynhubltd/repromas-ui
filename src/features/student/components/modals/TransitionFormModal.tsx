@@ -3,7 +3,6 @@ import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Alert, Badge, Button, DatePicker, Form, Input, Modal, Select, Tag } from "antd";
 import dayjs from "dayjs";
 import { useTransitionFormModal } from "../../hooks/useTransitionModal";
@@ -28,7 +27,7 @@ export type TransitionFormModalProps = {
 export function TransitionFormModal({ open, studentId, target, onClose }: TransitionFormModalProps) {
   const token = useToken();
   const { state, actions, form, refs } = useTransitionFormModal(target, open, onClose, studentId);
-  const { formError, isLoading, isEditMode } = state;
+  const { isLoading, isEditMode } = state;
   const { handleSubmit, handleCancel, handleSessionChange } = actions;
   const {
     statuses,
@@ -60,8 +59,6 @@ export function TransitionFormModal({ open, studentId, target, onClose }: Transi
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert variant="form" error={formError} />
-
         {/* Create mode: immutability warning */}
         <ConditionalRenderer when={!isEditMode}>
           <div style={{ marginBottom: 16 }}>

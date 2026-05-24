@@ -2,7 +2,6 @@ import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Button, Modal, Spin, Typography } from "antd";
 import type { ReactNode } from "react";
 import { useDeleteAdmissionCycleModal } from "../../hooks/useAdmissionCycleModal";
@@ -21,7 +20,7 @@ export function DeleteAdmissionCycleModal({
 }: DeleteAdmissionCycleModalProps) {
   const token = useToken();
   const { state, actions } = useDeleteAdmissionCycleModal(target, open, onClose);
-  const { isDeleting, error, isCheckingCandidates, candidateCount, canDelete } =
+  const { isDeleting, isCheckingCandidates, candidateCount, canDelete } =
     state;
   const { handleConfirm, handleCancel } = actions;
 
@@ -44,8 +43,6 @@ export function DeleteAdmissionCycleModal({
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert variant="form" error={error} />
-
         <ConditionalRenderer when={target !== null}>
           <ConditionalRenderer when={isCheckingCandidates}>
             <FlexCentered>

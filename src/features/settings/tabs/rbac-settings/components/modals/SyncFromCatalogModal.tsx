@@ -2,7 +2,6 @@
 import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import { useToken } from "@/shared/hooks/useToken";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Alert, Button, Checkbox, Flex, Modal, Typography } from "antd";
 import { useSyncFromCatalogModal } from "../../hooks/useSyncFromCatalogModal";
 import type { SyncFromCatalogResponse } from "../../types/rbac";
@@ -96,7 +95,7 @@ export function SyncFromCatalogModal({
 }: SyncFromCatalogModalProps) {
   const token = useToken();
   const { state, actions, flags } = useSyncFromCatalogModal(onClose);
-  const { assignToSystemAdministrator, lastResult, error, isSyncing } = state;
+  const { assignToSystemAdministrator, lastResult, isSyncing } = state;
   const {
     handleConfirm,
     handleCancel,
@@ -127,8 +126,6 @@ export function SyncFromCatalogModal({
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert error={error} />
-
         {isConfirmStep && (
           <Flex vertical gap={16}>
             <Typography.Text>

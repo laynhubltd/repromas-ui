@@ -1,5 +1,4 @@
 import { useToken } from "@/shared/hooks/useToken";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Button, Modal, Typography } from "antd";
 import { useDeleteSemesterModal } from "../../hooks/useSemesterModal";
 import type { Semester } from "../../types/academic-calendar";
@@ -13,7 +12,7 @@ export type DeleteSemesterModalProps = {
 export function DeleteSemesterModal({ open, target, onClose }: DeleteSemesterModalProps) {
   const token = useToken();
   const { state, actions } = useDeleteSemesterModal(target, onClose);
-  const { error, isLoading } = state;
+  const { isLoading } = state;
   const { handleConfirm, handleCancel } = actions;
 
   return (
@@ -36,8 +35,6 @@ export function DeleteSemesterModal({ open, target, onClose }: DeleteSemesterMod
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert variant="form" error={error} />
-
         <Typography.Text>
           Are you sure you want to delete this semester? This action cannot be undone.
         </Typography.Text>

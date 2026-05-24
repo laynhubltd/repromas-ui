@@ -1,7 +1,9 @@
 import { OLEVEL_SUBJECT_SORT_DEFAULT } from "@/shared/constants/olevelSubjectOptions";
-import { parseApiError } from "@/shared/utils/error/parseApiError";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
+import { deriveSectionErrorMessage } from "@/shared/utils/error/deriveSectionErrorMessage";
 import { Modal, notification } from "antd";
-import { useCallback, useEffect, useReducer, useRef } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
 import {
   useGetOlevelSubjectsQuery,
   usePopulateOlevelSubjectsMutation,
@@ -23,6 +25,7 @@ export function useOlevelSubjectTab() {
   );
 
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleApiError = useApiError();
 
   useEffect(() => {
     return () => {
@@ -39,8 +42,22 @@ export function useOlevelSubjectTab() {
       : {}),
   };
 
-  const { data, isLoading, isError, refetch } =
-    useGetOlevelSubjectsQuery(queryParams);
+  const {
+    data,
+    isLoading,
+    isError,
+    error: queryError,
+    refetch,
+  } = useGetOlevelSubjectsQuery(queryParams);
+
+  const sectionError = useMemo(
+    () =>
+      deriveSectionErrorMessage(isError, queryError, {
+        screen: RequestScreen.List,
+        method: "GET",
+      }),
+    [isError, queryError],
+  );
 
   const [populateOlevelSubjects, { isLoading: isPopulating }] =
     usePopulateOlevelSubjectsMutation();
@@ -108,12 +125,13 @@ export function useOlevelSubjectTab() {
             message: `Catalog updated: ${result.created} created, ${result.updated} updated, ${result.skipped} skipped.`,
           });
         } catch (err: unknown) {
-          const parsed = parseApiError(err);
-          notification.error({ message: parsed.message });
+          handleApiError(err, {
+            context: { screen: RequestScreen.Action, method: "POST" },
+          });
         }
       },
     });
-  }, [populateOlevelSubjects]);
+  }, [populateOlevelSubjects, handleApiError]);
 
   const hasData = subjects.length > 0;
   const isSearchActive = state.search !== "";
@@ -124,6 +142,7 @@ export function useOlevelSubjectTab() {
       totalItems,
       isLoading,
       isError,
+      sectionError,
       isPopulating,
       search: state.search,
       page: state.page,

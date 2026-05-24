@@ -1,7 +1,11 @@
 import { useAccessControl } from "@/features/access-control";
-import { applyFormErrors } from "@/shared/utils/error/applyFormErrors";
-import { parseApiError } from "@/shared/utils/error/parseApiError";
-import { Form, notification } from "antd";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
+import {
+  mutationSuccessMessage,
+  notifyMutationSuccess,
+} from "@/shared/utils/feedback/notifyMutationSuccess";
+import { Form } from "antd";
 import { useEffect, useState } from "react";
 import {
     useCreateCourseMutation,
@@ -37,6 +41,7 @@ export function useCourseFormModal(
   const [updateCourse, { isLoading: isUpdating }] = useUpdateCourseMutation();
   const [formError, setFormError] = useState<string | null>(null);
   const { activeRole } = useAccessControl();
+  const handleApiError = useApiError();
 
   const isLoading = isCreating || isUpdating;
 
@@ -99,12 +104,22 @@ export function useCourseFormModal(
         }).unwrap();
       }
 
+      notifyMutationSuccess(
+        mutationSuccessMessage("Course", isEditMode ? "updated" : "created"),
+      );
       form.resetFields();
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-      applyFormErrors(parsed, form, setFormError);
+      const decision = handleApiError(err, {
+        context: {
+          screen: RequestScreen.Modal,
+          method: isEditMode ? "PATCH" : "POST",
+        },
+        form,
+      });
+      if (isEditMode && decision.disableForm) {
+        onClose();
+      }
     }
   };
 
@@ -132,35 +147,29 @@ export function useDeleteCourseModal(
   onClose: () => void,
 ) {
   const [deleteCourse, { isLoading }] = useDeleteCourseMutation();
-  const [error, setError] = useState<string | null>(null);
+  const handleApiError = useApiError();
 
-  // Reset error when modal opens/closes
-  useEffect(() => {
-    if (!open) {
-      setError(null);
-    }
-  }, [open]);
+  void open;
 
   const handleConfirm = async () => {
     if (!target) return;
     try {
-      setError(null);
       await deleteCourse(target.id).unwrap();
+      notifyMutationSuccess(mutationSuccessMessage("Course", "deleted"));
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-      setError(parsed.message);
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "DELETE" },
+      });
     }
   };
 
   const handleCancel = () => {
-    setError(null);
     onClose();
   };
 
   return {
-    state: { error, isLoading },
+    state: { isLoading },
     actions: { handleConfirm, handleCancel },
   };
 }

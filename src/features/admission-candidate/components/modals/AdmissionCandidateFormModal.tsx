@@ -1,5 +1,4 @@
 import { useToken } from "@/shared/hooks/useToken";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import {
   CANDIDATE_GENDER_FORM_OPTIONS,
 } from "@/shared/constants/admissionCandidateOptions";
@@ -54,7 +53,6 @@ export function AdmissionCandidateFormModal({
       okButtonProps={{ disabled: !canIngest }}
     >
       <Form form={form} layout="vertical" style={{ marginTop: token.paddingMD }}>
-        <ErrorAlert error={state.formError} />
         <Form.Item name="cycleId" label="Admission Cycle" rules={cycleIdRules}>
           <Select
             placeholder="Select cycle"

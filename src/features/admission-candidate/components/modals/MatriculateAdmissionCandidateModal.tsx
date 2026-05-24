@@ -1,4 +1,3 @@
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Modal, Typography } from "antd";
 import { useMatriculateAdmissionCandidateModal } from "../../hooks/useAdmissionCandidateModal";
 import type { AdmissionCandidate } from "../../types/admission-candidate";
@@ -30,7 +29,6 @@ export function MatriculateAdmissionCandidateModal({
       confirmLoading={state.isLoading}
       destroyOnHidden
     >
-      <ErrorAlert error={state.error} />
       <Typography.Paragraph>
         Matriculate{" "}
         <strong>

@@ -1,8 +1,8 @@
 import { BILLABLE_EVENT_UI_COPY } from "@/shared/constants/billableEventOptions";
-import { applyFormErrors } from "@/shared/utils/error/applyFormErrors";
-import { parseApiError } from "@/shared/utils/error/parseApiError";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
 import { Form, Modal, notification } from "antd";
-import { useCallback, useEffect, useReducer, useState } from "react";
+import { useCallback, useEffect, useReducer } from "react";
 import {
   useCreateBillableEventMutation,
   useDeleteBillableEventMutation,
@@ -76,6 +76,7 @@ export function useBillableEventFormModal(
   const [updateBillableEvent, { isLoading: isUpdating }] =
     useUpdateBillableEventMutation();
 
+  const handleApiError = useApiError();
   const isSubmitting = isCreating || isUpdating;
 
   const reset = useCallback(() => {
@@ -222,14 +223,13 @@ export function useBillableEventFormModal(
       reset();
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-      applyFormErrors(parsed, form, (msg) =>
-        dispatch({
-          type: BillableEventFormActionType.SetFormError,
-          message: msg,
-        }),
-      );
+      handleApiError(err, {
+        context: {
+          screen: RequestScreen.Modal,
+          method: isEditMode ? "PATCH" : "POST",
+        },
+        form,
+      });
     }
   };
 
@@ -267,31 +267,29 @@ export function useDeleteBillableEventModal(
 ) {
   const [deleteBillableEvent, { isLoading: isDeleting }] =
     useDeleteBillableEventMutation();
-  const [error, setError] = useState<string | null>(null);
+  const handleApiError = useApiError();
 
   const handleConfirm = async () => {
     if (!target) return;
     try {
-      setError(null);
       await deleteBillableEvent(target.id).unwrap();
       notification.success({
         message: BILLABLE_EVENT_UI_COPY.feeDeletedSuccess,
       });
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-      setError(parsed.message);
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "DELETE" },
+      });
     }
   };
 
   const handleCancel = () => {
-    setError(null);
     onClose();
   };
 
   return {
-    state: { error, isDeleting },
+    state: { isDeleting },
     actions: { handleConfirm, handleCancel },
   };
 }

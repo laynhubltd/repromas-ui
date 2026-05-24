@@ -2,11 +2,11 @@ import {
   ADMISSION_CYCLE_TRANSITIONS,
   ADMISSION_CYCLE_TRANSITION_WARNINGS,
 } from "@/shared/constants/admissionCycleOptions";
-import { applyFormErrors } from "@/shared/utils/error/applyFormErrors";
-import { parseApiError } from "@/shared/utils/error/parseApiError";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
 import { Form, notification } from "antd";
 import dayjs, { type Dayjs } from "dayjs";
-import { useCallback, useEffect, useReducer, useState } from "react";
+import { useCallback, useEffect, useReducer } from "react";
 import {
   useCreateAdmissionCycleMutation,
   useDeleteAdmissionCycleMutation,
@@ -55,16 +55,16 @@ export function useAdmissionCycleFormModal(
 ) {
   const isEditMode = target !== null;
   const [form] = Form.useForm<AdmissionCycleFormValues>();
-  const [modalState, dispatch] = useReducer(
+  const [_, dispatch] = useReducer(
     admissionCycleFormReducer,
     initialAdmissionCycleFormState,
   );
-  const { formError } = modalState;
 
   const [createAdmissionCycle, { isLoading: isCreating }] =
     useCreateAdmissionCycleMutation();
   const [updateAdmissionCycle, { isLoading: isUpdating }] =
     useUpdateAdmissionCycleMutation();
+  const handleApiError = useApiError();
 
   const isSubmitting = isCreating || isUpdating;
 
@@ -111,10 +111,6 @@ export function useAdmissionCycleFormModal(
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
-      dispatch({
-        type: AdmissionCycleFormActionType.SetFormError,
-        message: null,
-      });
 
       const name = values.name.trim();
       const startDate = toIsoDateTime(values.startDate);
@@ -149,14 +145,13 @@ export function useAdmissionCycleFormModal(
       reset();
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-      applyFormErrors(parsed, form, (msg) =>
-        dispatch({
-          type: AdmissionCycleFormActionType.SetFormError,
-          message: msg,
-        }),
-      );
+      handleApiError(err, {
+        context: {
+          screen: RequestScreen.Modal,
+          method: isEditMode ? "PATCH" : "POST",
+        },
+        form,
+      });
     }
   };
 
@@ -171,7 +166,6 @@ export function useAdmissionCycleFormModal(
   return {
     state: {
       isEditMode,
-      formError,
       isSubmitting,
       sessionOptions,
       canEditIdentityMode,
@@ -191,7 +185,7 @@ export function useDeleteAdmissionCycleModal(
 ) {
   const [deleteAdmissionCycle, { isLoading: isDeleting }] =
     useDeleteAdmissionCycleMutation();
-  const [error, setError] = useState<string | null>(null);
+  const handleApiError = useApiError();
 
   const { data: candidateData, isLoading: isCheckingCandidates } =
     useGetAdmissionCandidateCountQuery(
@@ -205,27 +199,24 @@ export function useDeleteAdmissionCycleModal(
   const handleConfirm = async () => {
     if (!target || !canDelete) return;
     try {
-      setError(null);
       await deleteAdmissionCycle(target.id).unwrap();
       notification.success({
         message: "Admission cycle deleted successfully.",
       });
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-      setError(parsed.message);
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "DELETE" },
+      });
     }
   };
 
   const handleCancel = () => {
-    setError(null);
     onClose();
   };
 
   return {
     state: {
-      error,
       isDeleting,
       isCheckingCandidates,
       candidateCount,
@@ -244,7 +235,7 @@ export function useTransitionAdmissionCycleModal(
 ) {
   const [transitionAdmissionCycle, { isLoading: isTransitioning }] =
     useTransitionAdmissionCycleMutation();
-  const [error, setError] = useState<string | null>(null);
+  const handleApiError = useApiError();
 
   const transitionMeta = target ? getTransitionMeta(target.status) : null;
   const nextStatus = transitionMeta?.nextStatus ?? null;
@@ -257,7 +248,6 @@ export function useTransitionAdmissionCycleModal(
   const handleConfirm = async () => {
     if (!target || !nextStatus) return;
     try {
-      setError(null);
       await transitionAdmissionCycle({
         id: target.id,
         status: nextStatus,
@@ -267,20 +257,18 @@ export function useTransitionAdmissionCycleModal(
       });
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-      setError(parsed.message);
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "PATCH" },
+      });
     }
   };
 
   const handleCancel = () => {
-    setError(null);
     onClose();
   };
 
   return {
     state: {
-      error,
       isTransitioning,
       nextStatus,
       buttonLabel,

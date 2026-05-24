@@ -1,6 +1,5 @@
 import { PRICING_RULE_UI_COPY } from "@/shared/constants/pricingRuleOptions";
 import { useToken } from "@/shared/hooks/useToken";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Alert, Button, Modal, Typography } from "antd";
 import { useDeletePricingRuleLineModal } from "../../hooks/usePricingRuleLineItemModal";
 import type { PricingRule, PricingRuleItemRead } from "../../types/pricing-rule";
@@ -24,7 +23,7 @@ export function DeletePricingRuleLineModal({
   const token = useToken();
 
   const {
-    state: { error, isDeleting },
+    state: { isDeleting },
     actions: { handleConfirm, handleCancel },
   } = useDeletePricingRuleLineModal({
     rule,
@@ -53,8 +52,6 @@ export function DeletePricingRuleLineModal({
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert variant="form" error={error} />
-
         <Typography.Paragraph>
           Remove{" "}
           <Typography.Text strong>{line?.feeItemName}</Typography.Text>

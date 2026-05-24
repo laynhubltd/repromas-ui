@@ -1,6 +1,5 @@
 // Feature: settings-timeframe
 import { useToken } from "@/shared/hooks/useToken";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Button, Checkbox, DatePicker, Form, Modal, Select, Tag } from "antd";
 import dayjs from "dayjs";
 import { useUpsertTimeFrameModal } from "../hooks/useUpsertTimeFrameModal";
@@ -37,7 +36,6 @@ export function UpsertTimeFrameModal({ open, target, onClose }: UpsertTimeFrameM
 
   const {
     form,
-    formError,
     isSubmitting,
     sessions,
     semesters,
@@ -81,8 +79,6 @@ export function UpsertTimeFrameModal({ open, target, onClose }: UpsertTimeFrameM
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert variant="form" error={formError} />
-
         <Form form={form} layout="vertical" requiredMark={false} onFinish={handleSubmit}>
           {/* Event Type */}
           <Form.Item

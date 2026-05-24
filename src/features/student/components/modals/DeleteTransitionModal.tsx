@@ -2,7 +2,6 @@
 import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import { useToken } from "@/shared/hooks/useToken";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Button, Modal } from "antd";
 import { useDeleteTransitionModal } from "../../hooks/useTransitionModal";
 import type { StudentEnrollmentTransition } from "../../types/studentTransition";
@@ -17,7 +16,7 @@ export type DeleteTransitionModalProps = {
 export function DeleteTransitionModal({ open, target, studentId, onClose }: DeleteTransitionModalProps) {
   const token = useToken();
   const { state, actions } = useDeleteTransitionModal(target, open, onClose, studentId);
-  const { error, isLoading } = state;
+  const { isLoading } = state;
   const { handleConfirm, handleCancel } = actions;
 
   return (
@@ -39,7 +38,6 @@ export function DeleteTransitionModal({ open, target, studentId, onClose }: Dele
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert variant="form" error={error} />
         <p style={{ margin: 0, color: token.colorText }}>
           Delete enrollment transition for semester #{target?.semesterId}? This will update the
           student's current enrollment status.

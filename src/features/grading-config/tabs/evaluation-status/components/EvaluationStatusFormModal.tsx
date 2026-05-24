@@ -3,7 +3,6 @@ import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Alert, Button, Form, Input, Modal, Switch, Typography } from "antd";
 import { useEvaluationStatusFormModal } from "../hooks/useEvaluationStatusModal";
 import type { ScoreEvaluationStatus } from "../types/evaluation-status";
@@ -29,7 +28,6 @@ export function EvaluationStatusFormModal({
   const {
     isEditMode,
     isSubmitting,
-    formError,
     isDefault,
     requiresRetake,
     earnsCredit,
@@ -62,8 +60,6 @@ export function EvaluationStatusFormModal({
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert variant="form" error={formError} />
-
         <Form
           form={form}
           layout="vertical"

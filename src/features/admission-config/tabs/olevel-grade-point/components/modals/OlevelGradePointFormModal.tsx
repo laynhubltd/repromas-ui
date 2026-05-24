@@ -1,7 +1,6 @@
 import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import { useToken } from "@/shared/hooks/useToken";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Button, Form, Input, InputNumber, Modal } from "antd";
 import { useOlevelGradePointFormModal } from "../../hooks/useOlevelGradePointModal";
 import type { OlevelGradePoint } from "../../types/olevel-grade-point";
@@ -21,7 +20,7 @@ export function OlevelGradePointFormModal({
   const token = useToken();
 
   const {
-    state: { isEditMode, formError, isSubmitting },
+    state: { isEditMode, isSubmitting },
     actions: { handleSubmit, handleCancel },
     form,
   } = useOlevelGradePointFormModal(target, open, onClose);
@@ -45,8 +44,6 @@ export function OlevelGradePointFormModal({
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert variant="form" error={formError} />
-
         <Form
           form={form}
           layout="vertical"

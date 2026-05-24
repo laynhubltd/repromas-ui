@@ -2,7 +2,6 @@ import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Button, Modal, Typography } from "antd";
 import { useDeleteOlevelGradePointModal } from "../../hooks/useOlevelGradePointModal";
 import type { OlevelGradePoint } from "../../types/olevel-grade-point";
@@ -20,7 +19,7 @@ export function DeleteOlevelGradePointModal({
 }: DeleteOlevelGradePointModalProps) {
   const token = useToken();
   const { state, actions } = useDeleteOlevelGradePointModal(target, open, onClose);
-  const { isDeleting, error } = state;
+  const { isDeleting } = state;
   const { handleConfirm, handleCancel } = actions;
 
   return (
@@ -42,8 +41,6 @@ export function DeleteOlevelGradePointModal({
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert variant="form" error={error} />
-
         <ConditionalRenderer when={target !== null}>
           <Typography.Text>
             Delete grade mapping{" "}

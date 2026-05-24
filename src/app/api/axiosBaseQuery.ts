@@ -48,6 +48,16 @@ function isWhitelistedPath(path: string): boolean {
  *
  * async-mutex guarantees the lock is always released (even on throw),
  * so there is no risk of deadlock.
+ *
+ * Relationship with the global UI error pipeline:
+ * This transport layer is the authoritative handler for the 401-refresh
+ * lifecycle. When refresh fails it clears auth and navigates to the login
+ * route synchronously. The shared `resolveUiDecision` for status 401 also
+ * emits `clearAuth: true` and `redirectTo: '/auth/login'`, and the shared
+ * dispatcher (`applyUiDecision`) treats those side-effects as idempotent —
+ * it skips navigation when the user is already on the target path. So both
+ * layers can run safely; the dispatcher acts as a fallback for any 401 that
+ * bubbles past transport (e.g. expired token without a refresh token).
  */
 const refreshMutex = new Mutex();
 
@@ -215,12 +225,7 @@ function parseError(error: AxiosError): ApiErrorResponse {
   return {
     status: error.response.status,
     error: data?.error as string | undefined,
-    message:
-      data?.error != null
-        ? typeof data.error === "object"
-          ? errorsToString(data.error)
-          : data.error
-        : error.message,
+    message: extractLegacyErrorMessage(data, error.message),
     timeStamp: data?.timeStamp,
     "x-request-id": data?.["x-request-id"],
     errorFields:
@@ -228,4 +233,24 @@ function parseError(error: AxiosError): ApiErrorResponse {
         ? errorsToObject(data.error)
         : {},
   };
+}
+
+/**
+ * Legacy / alternate backend shapes (no RFC 9457 `type` + `detail`):
+ * - `{ error: string | Record<field, messages> }` (Nest-style)
+ * - `{ message: string, details?: ... }` (Symfony-style — e.g. course conflicts)
+ */
+function extractLegacyErrorMessage(
+  data: ApiErrorData | undefined,
+  axiosMessage: string,
+): string {
+  if (data?.error != null) {
+    return typeof data.error === "object"
+      ? errorsToString(data.error)
+      : String(data.error);
+  }
+  if (typeof data?.message === "string" && data.message.trim().length > 0) {
+    return data.message.trim();
+  }
+  return axiosMessage;
 }

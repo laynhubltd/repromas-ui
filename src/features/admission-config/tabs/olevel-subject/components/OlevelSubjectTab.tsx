@@ -30,6 +30,7 @@ export function OlevelSubjectTab() {
     totalItems,
     isLoading,
     isError,
+    sectionError,
     isPopulating,
     search,
     page,
@@ -102,7 +103,7 @@ export function OlevelSubjectTab() {
         <ConditionalRenderer when={isError}>
           <ErrorAlert
             variant="section"
-            error="Failed to load O'Level subjects."
+            error={sectionError ?? "Failed to load O'Level subjects."}
             onRetry={refetch}
           />
         </ConditionalRenderer>

@@ -1,4 +1,6 @@
 import { useAccessControl } from "@/features/access-control";
+import { RequestScreen } from "@/shared/types/error-ui";
+import { deriveSectionErrorMessage } from "@/shared/utils/error/deriveSectionErrorMessage";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useGetCoursesQuery } from "../api/coursesApi";
 import type { Course } from "../types/course";
@@ -134,7 +136,16 @@ export function useCourseTab() {
     debouncedTitle,
   });
 
-  const { data, isLoading, isError, refetch } = useGetCoursesQuery(queryParams);
+  const { data, isLoading, isError, error: queryError, refetch } = useGetCoursesQuery(queryParams);
+
+  const sectionError = useMemo(
+    () =>
+      deriveSectionErrorMessage(isError, queryError, {
+        screen: RequestScreen.List,
+        method: "GET",
+      }),
+    [isError, queryError],
+  );
 
   const courses = data?.member ?? [];
   const totalItems = data?.totalItems ?? 0;
@@ -249,6 +260,7 @@ export function useCourseTab() {
       totalItems,
       isLoading,
       isError,
+      sectionError,
       page,
       itemsPerPage,
       sort,

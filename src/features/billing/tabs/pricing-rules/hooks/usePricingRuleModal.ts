@@ -1,9 +1,9 @@
 import { PRICING_RULE_UI_COPY } from "@/shared/constants/pricingRuleOptions";
-import { applyFormErrors } from "@/shared/utils/error/applyFormErrors";
-import { parseApiError } from "@/shared/utils/error/parseApiError";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
 import { Form, notification } from "antd";
 import dayjs from "dayjs";
-import { useCallback, useEffect, useReducer, useState } from "react";
+import { useCallback, useEffect, useReducer } from "react";
 import {
   useCreatePricingRuleMutation,
   useDeletePricingRuleMutation,
@@ -53,6 +53,7 @@ export function usePricingRuleFormModal({
   const [updatePricingRule, { isLoading: isUpdating }] =
     useUpdatePricingRuleMutation();
 
+  const handleApiError = useApiError();
   const isSubmitting = isCreating || isUpdating;
 
   useEffect(() => {
@@ -244,10 +245,15 @@ export function usePricingRuleFormModal({
       reset();
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
+      const decision = handleApiError(err, {
+        context: {
+          screen: RequestScreen.Modal,
+          method: isEditMode ? "PATCH" : "POST",
+        },
+        form,
+      });
 
-      if (parsed.status === 409 && isImmutableConflictError(parsed.message)) {
+      if (decision.parsed.status === 409 && isImmutableConflictError(decision.message)) {
         dispatch({
           type: PricingRuleFormActionType.SetIsLocked,
           value: true,
@@ -256,13 +262,6 @@ export function usePricingRuleFormModal({
           onRuleLocked?.(target.id);
         }
       }
-
-      applyFormErrors(parsed, form, (msg) =>
-        dispatch({
-          type: PricingRuleFormActionType.SetFormError,
-          message: msg,
-        }),
-      );
     }
   };
 
@@ -307,14 +306,13 @@ export function useDeletePricingRuleModal(
 ) {
   const [deletePricingRule, { isLoading: isDeleting }] =
     useDeletePricingRuleMutation();
-  const [error, setError] = useState<string | null>(null);
+  const handleApiError = useApiError();
 
   const isRetire = options?.isLocked ?? false;
 
   const handleConfirm = async () => {
     if (!target) return;
     try {
-      setError(null);
       await deletePricingRule(target.id).unwrap();
       notification.success({
         message: isRetire
@@ -326,19 +324,18 @@ export function useDeletePricingRuleModal(
       }
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-      setError(parsed.message);
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "DELETE" },
+      });
     }
   };
 
   const handleCancel = () => {
-    setError(null);
     onClose();
   };
 
   return {
-    state: { error, isDeleting, isRetire },
+    state: { isDeleting, isRetire },
     actions: { handleConfirm, handleCancel },
   };
 }

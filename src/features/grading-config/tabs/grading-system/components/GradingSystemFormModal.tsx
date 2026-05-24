@@ -9,7 +9,6 @@ import { useGetLevelsQuery } from "@/features/settings/tabs/level-config/api/lev
 import { GRADING_SYSTEM_SCOPE_OPTIONS } from "@/shared/constants/gradingSystemOptions";
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import {
     Button,
     Form,
@@ -47,7 +46,7 @@ export function GradingSystemFormModal({
     open,
     onClose,
   );
-  const { isEditMode, isSubmitting, formError, scope, isGpaBased } = state;
+  const { isEditMode, isSubmitting, scope, isGpaBased } = state;
   const {
     handleSubmit,
     handleCancel,
@@ -128,8 +127,6 @@ export function GradingSystemFormModal({
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert variant="form" error={formError} />
-
         <Form
           form={form}
           layout="vertical"

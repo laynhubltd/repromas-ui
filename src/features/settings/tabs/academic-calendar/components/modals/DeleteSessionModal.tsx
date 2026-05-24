@@ -1,5 +1,4 @@
 import { useToken } from "@/shared/hooks/useToken";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Button, Modal, Typography } from "antd";
 import { useDeleteSessionModal } from "../../hooks/useSessionModal";
 import type { AcademicSession } from "../../types/academic-calendar";
@@ -13,7 +12,7 @@ export type DeleteSessionModalProps = {
 export function DeleteSessionModal({ open, target, onClose }: DeleteSessionModalProps) {
   const token = useToken();
   const { state, actions } = useDeleteSessionModal(target, onClose);
-  const { error, isLoading } = state;
+  const { isLoading } = state;
   const { handleConfirm, handleCancel } = actions;
 
   return (
@@ -36,8 +35,6 @@ export function DeleteSessionModal({ open, target, onClose }: DeleteSessionModal
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert variant="form" error={error} />
-
         <Typography.Text>
           All semesters under this session will be permanently deleted.
         </Typography.Text>

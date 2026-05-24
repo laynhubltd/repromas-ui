@@ -1,8 +1,8 @@
 // Feature: grading-config — Grading System modal hooks
-import { applyFormErrors } from "@/shared/utils/error/applyFormErrors";
-import { parseApiError } from "@/shared/utils/error/parseApiError";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
 import { Form, notification } from "antd";
-import { useCallback, useEffect, useReducer, useState } from "react";
+import { useCallback, useEffect, useReducer } from "react";
 import {
     useCreateGradingSystemMutation,
     useDeleteGradingSystemMutation,
@@ -65,7 +65,8 @@ export function useGradingSystemFormModal(
     gradingSystemFormReducer,
     initialGradingSystemFormState,
   );
-  const { formError, scope, isGpaBased } = modalState;
+  const { scope, isGpaBased } = modalState;
+  const handleApiError = useApiError();
 
   const [createGradingSystem, { isLoading: isCreating }] =
     useCreateGradingSystemMutation();
@@ -161,24 +162,13 @@ export function useGradingSystemFormModal(
       reset();
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-
-      if (parsed.status === 409) {
-        notification.error({ message: parsed.message });
-        dispatch({
-          type: GradingSystemFormActionType.SetFormError,
-          message: parsed.message,
-        });
-        return;
-      }
-
-      notification.error({ message: parsed.message });
-      applyFormErrors(parsed, form, (msg) =>
-        dispatch({
-          type: GradingSystemFormActionType.SetFormError,
-          message: msg,
-        }),
-      );
+      handleApiError(err, {
+        context: {
+          screen: RequestScreen.Modal,
+          method: isEditMode ? "PATCH" : "POST",
+        },
+        form,
+      });
     }
   };
 
@@ -191,7 +181,6 @@ export function useGradingSystemFormModal(
     state: {
       isEditMode,
       isSubmitting,
-      formError,
       scope,
       isGpaBased,
     },
@@ -220,31 +209,29 @@ export function useDeleteGradingSystemModal(
 ) {
   const [deleteGradingSystem, { isLoading: isDeleting }] =
     useDeleteGradingSystemMutation();
-  const [error, setError] = useState<string | null>(null);
+  const handleApiError = useApiError();
 
   const handleConfirm = async () => {
     if (!target) return;
     try {
-      setError(null);
       await deleteGradingSystem(target.id).unwrap();
       notification.success({
         message: "Grading system deleted successfully.",
       });
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-      setError(parsed.message);
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "DELETE" },
+      });
     }
   };
 
   const handleCancel = () => {
-    setError(null);
     onClose();
   };
 
   return {
-    state: { isDeleting, error, boundaryCount },
+    state: { isDeleting, boundaryCount },
     actions: { handleConfirm, handleCancel },
   };
 }

@@ -1,6 +1,5 @@
 // Feature: program-graduation-config
 import { useToken } from "@/shared/hooks/useToken";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Button, Modal, Typography } from "antd";
 import { useDeleteProgramModal } from "../../hooks/useProgramModal";
 import type { Program } from "../../types/program";
@@ -14,7 +13,7 @@ export type DeleteProgramModalProps = {
 export function DeleteProgramModal({ open, target, onClose }: DeleteProgramModalProps) {
   const token = useToken();
   const { state, actions } = useDeleteProgramModal(target, onClose);
-  const { error, isLoading } = state;
+  const { isLoading } = state;
   const { handleConfirm, handleCancel } = actions;
 
   return (
@@ -35,7 +34,6 @@ export function DeleteProgramModal({ open, target, onClose }: DeleteProgramModal
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert error={error} />
         <Typography.Text>
           Delete program{" "}
           <Typography.Text strong>'{target?.name}'</Typography.Text>? Deleting this program will

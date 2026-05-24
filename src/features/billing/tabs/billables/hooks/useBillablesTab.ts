@@ -2,7 +2,9 @@ import {
   BILLABLE_EVENT_ITEMS_PER_PAGE,
   BILLABLE_EVENT_SORT_DEFAULT,
 } from "@/shared/constants/billableEventOptions";
-import { parseApiError } from "@/shared/utils/error/parseApiError";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
+import { deriveSectionErrorMessage } from "@/shared/utils/error/deriveSectionErrorMessage";
 import { notification } from "antd";
 import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
 import {
@@ -52,8 +54,22 @@ export function useBillablesTab() {
       : {}),
   };
 
-  const { data, isLoading, isError, refetch } =
-    useGetBillableEventsQuery(queryParams);
+  const {
+    data,
+    isLoading,
+    isError,
+    error: queryError,
+    refetch,
+  } = useGetBillableEventsQuery(queryParams);
+
+  const sectionError = useMemo(
+    () =>
+      deriveSectionErrorMessage(isError, queryError, {
+        screen: RequestScreen.List,
+        method: "GET",
+      }),
+    [isError, queryError],
+  );
 
   const { data: allConfiguredData } = useGetBillableEventsQuery({
     itemsPerPage: 100,
@@ -195,6 +211,8 @@ export function useBillablesTab() {
     dispatch({ type: BillablesTabActionType.CloseDelete });
   }, []);
 
+  const handleApiError = useApiError();
+
   const handleSeedFromCatalog = useCallback(async () => {
     try {
       const result = await seedFromCatalog({
@@ -212,10 +230,11 @@ export function useBillablesTab() {
       });
       refetch();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "POST" },
+      });
     }
-  }, [seedFromCatalog, refetch]);
+  }, [seedFromCatalog, refetch, handleApiError]);
 
   return {
     state: {
@@ -226,6 +245,7 @@ export function useBillablesTab() {
       labelMaps,
       isLoading,
       isError,
+      sectionError,
       isSeeding,
       search: state.search,
       page: state.page,

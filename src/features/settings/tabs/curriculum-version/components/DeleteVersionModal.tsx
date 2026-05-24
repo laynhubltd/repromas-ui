@@ -1,5 +1,5 @@
 import { useToken } from "@/shared/hooks/useToken";
-import { Alert, Button, Modal, Typography } from "antd";
+import { Button, Modal, Typography } from "antd";
 import { useDeleteVersionModal } from "../hooks/useDeleteVersionModal";
 import type { CurriculumVersion } from "../types/curriculum-version";
 
@@ -12,7 +12,7 @@ interface DeleteVersionModalProps {
 export function DeleteVersionModal({ open, target, onClose }: DeleteVersionModalProps) {
   const token = useToken();
   const { state, actions } = useDeleteVersionModal(target, onClose);
-  const { error, isLoading } = state;
+  const { isLoading } = state;
   const { handleConfirm, handleCancel } = actions;
 
   return (
@@ -33,9 +33,6 @@ export function DeleteVersionModal({ open, target, onClose }: DeleteVersionModal
       }}
     >
       <div style={{ padding: 24 }}>
-        {error && (
-          <Alert type="error" description={error} style={{ marginBottom: 16 }} showIcon />
-        )}
         <Typography.Text>
           Are you sure you want to delete{" "}
           <Typography.Text strong>{target?.name}</Typography.Text>? This action cannot be undone.

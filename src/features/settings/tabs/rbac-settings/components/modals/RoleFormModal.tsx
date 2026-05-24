@@ -2,7 +2,6 @@
 import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import { useToken } from "@/shared/hooks/useToken";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Button, Form, Input, Modal, Select } from "antd";
 import { useRoleFormModal } from "../../hooks/useRoleModal";
 import { ROLE_SCOPE_OPTIONS, type Role } from "../../types/rbac";
@@ -17,7 +16,7 @@ export type RoleFormModalProps = {
 export function RoleFormModal({ open, target, onClose }: RoleFormModalProps) {
   const token = useToken();
   const { state, actions, form } = useRoleFormModal(target, open, onClose);
-  const { isEditMode, isSubmitting, formError } = state;
+  const { isEditMode, isSubmitting } = state;
   const { handleSubmit, handleCancel } = actions;
 
   return (
@@ -39,8 +38,6 @@ export function RoleFormModal({ open, target, onClose }: RoleFormModalProps) {
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert error={formError} />
-
         <Form form={form} layout="vertical" requiredMark={false} onFinish={handleSubmit}>
           {/* Name field */}
           <Form.Item

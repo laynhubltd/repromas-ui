@@ -1,7 +1,11 @@
-import { applyFormErrors } from "@/shared/utils/error/applyFormErrors";
-import { parseApiError } from "@/shared/utils/error/parseApiError";
-import { Form, notification } from "antd";
-import { useEffect, useState } from "react";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
+import {
+  mutationSuccessMessage,
+  notifyMutationSuccess,
+} from "@/shared/utils/feedback/notifyMutationSuccess";
+import { Form } from "antd";
+import { useEffect } from "react";
 import {
     useCreateSemesterTypeMutation,
     useDeleteSemesterTypeMutation,
@@ -31,7 +35,7 @@ export function useSemesterTypeFormModal(
   const [form] = Form.useForm<SemesterTypeFormValues>();
   const [createSemesterType, { isLoading: isCreating }] = useCreateSemesterTypeMutation();
   const [updateSemesterType, { isLoading: isUpdating }] = useUpdateSemesterTypeMutation();
-  const [formError, setFormError] = useState<string | null>(null);
+  const handleApiError = useApiError();
 
   const isLoading = isCreating || isUpdating;
 
@@ -50,14 +54,12 @@ export function useSemesterTypeFormModal(
   useEffect(() => {
     if (!open) {
       form.resetFields();
-      setFormError(null);
     }
   }, [open, form]);
 
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
-      setFormError(null);
 
       if (isEditMode) {
         await updateSemesterType({
@@ -74,37 +76,32 @@ export function useSemesterTypeFormModal(
         }).unwrap();
       }
 
+      notifyMutationSuccess(
+        mutationSuccessMessage("Semester type", isEditMode ? "updated" : "created"),
+      );
       form.resetFields();
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-
-      // 409 conflict — map inline field errors by checking detail content
-      if (parsed.status === 409) {
-        const detail = (parsed.raw.detail ?? "").toLowerCase();
-        if (detail.includes("code")) {
-          form.setFields([{ name: "code", errors: [parsed.message] }]);
-          return;
-        }
-        if (detail.includes("sortorder") || detail.includes("sort_order") || detail.includes("sort order")) {
-          form.setFields([{ name: "sortOrder", errors: [parsed.message] }]);
-          return;
-        }
+      const decision = handleApiError(err, {
+        context: {
+          screen: RequestScreen.Modal,
+          method: isEditMode ? "PATCH" : "POST",
+        },
+        form,
+      });
+      if (isEditMode && decision.disableForm) {
+        onClose();
       }
-
-      applyFormErrors(parsed, form, setFormError);
     }
   };
 
   const handleCancel = () => {
     form.resetFields();
-    setFormError(null);
     onClose();
   };
 
   return {
-    state: { formError, isLoading, isEditMode },
+    state: { isLoading, isEditMode },
     actions: { handleSubmit, handleCancel },
     form,
   };
@@ -117,35 +114,30 @@ export function useDeleteSemesterTypeModal(
   onClose: () => void
 ) {
   const [deleteSemesterType, { isLoading }] = useDeleteSemesterTypeMutation();
-  const [error, setError] = useState<string | null>(null);
+  const handleApiError = useApiError();
 
   const handleConfirm = async () => {
     if (!target) return;
     try {
-      setError(null);
       await deleteSemesterType(target.id).unwrap();
+      notifyMutationSuccess(mutationSuccessMessage("Semester type", "deleted"));
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-
-      if (parsed.status === 404) {
-        notification.success({ message: "Already removed" });
+      const decision = handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "DELETE" },
+      });
+      if (decision.parsed.status === 404) {
         onClose();
-        return;
       }
-
-      notification.error({ message: parsed.message });
-      setError(parsed.message);
     }
   };
 
   const handleCancel = () => {
-    setError(null);
     onClose();
   };
 
   return {
-    state: { error, isLoading },
+    state: { isLoading },
     actions: { handleConfirm, handleCancel },
   };
 }

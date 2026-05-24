@@ -1,7 +1,6 @@
 import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import { useToken } from "@/shared/hooks/useToken";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Button, Form, Input, Modal } from "antd";
 import { useOlevelSubjectFormModal } from "../../hooks/useOlevelSubjectModal";
 import type { OlevelSubject } from "../../types/olevel-subject";
@@ -21,7 +20,7 @@ export function OlevelSubjectFormModal({
   const token = useToken();
 
   const {
-    state: { isEditMode, formError, isSubmitting },
+    state: { isEditMode, isSubmitting },
     actions: { handleSubmit, handleCancel },
     form,
   } = useOlevelSubjectFormModal(target, open, onClose);
@@ -45,8 +44,6 @@ export function OlevelSubjectFormModal({
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert variant="form" error={formError} />
-
         <Form
           form={form}
           layout="vertical"

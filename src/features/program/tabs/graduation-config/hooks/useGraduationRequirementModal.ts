@@ -1,7 +1,11 @@
-import { applyFormErrors } from "@/shared/utils/error/applyFormErrors";
-import { parseApiError } from "@/shared/utils/error/parseApiError";
-import { Form, notification } from "antd";
-import { useEffect, useState } from "react";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
+import {
+  mutationSuccessMessage,
+  notifyMutationSuccess,
+} from "@/shared/utils/feedback/notifyMutationSuccess";
+import { Form } from "antd";
+import { useEffect } from "react";
 import {
     useCreateGraduationRequirementMutation,
     useDeleteGraduationRequirementMutation,
@@ -25,7 +29,7 @@ export function useGraduationRequirementFormModal(
   const [form] = Form.useForm();
   const [createRequirement, { isLoading: isCreating }] = useCreateGraduationRequirementMutation();
   const [updateRequirement, { isLoading: isUpdating }] = useUpdateGraduationRequirementMutation();
-  const [formError, setFormError] = useState<string | null>(null);
+  const handleApiError = useApiError();
 
   const isLoading = isCreating || isUpdating;
 
@@ -41,15 +45,11 @@ export function useGraduationRequirementFormModal(
         minElectiveCredits: target.minElectiveCredits,
       });
     }
-    if (!open) {
-      setFormError(null);
-    }
   }, [open, target, form]);
 
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
-      setFormError(null);
       if (isEditMode) {
         await updateRequirement({
           id: target.id,
@@ -69,23 +69,35 @@ export function useGraduationRequirementFormModal(
           minElectiveCredits: values.minElectiveCredits,
         }).unwrap();
       }
+      notifyMutationSuccess(
+        mutationSuccessMessage(
+          "Graduation requirement",
+          isEditMode ? "updated" : "created",
+        ),
+      );
       form.resetFields();
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-      applyFormErrors(parsed, form, setFormError);
+      const decision = handleApiError(err, {
+        context: {
+          screen: RequestScreen.Modal,
+          method: isEditMode ? "PATCH" : "POST",
+        },
+        form,
+      });
+      if (isEditMode && decision.disableForm) {
+        onClose();
+      }
     }
   };
 
   const handleCancel = () => {
     form.resetFields();
-    setFormError(null);
     onClose();
   };
 
   return {
-    state: { formError, isLoading, isEditMode },
+    state: { isLoading, isEditMode },
     actions: { handleSubmit, handleCancel },
     form,
   };
@@ -102,28 +114,29 @@ export function useDeleteGraduationRequirementModal(
   onClose: () => void,
 ) {
   const [deleteRequirement, { isLoading }] = useDeleteGraduationRequirementMutation();
-  const [error, setError] = useState<string | null>(null);
+  const handleApiError = useApiError();
 
   const handleConfirm = async () => {
     if (!target) return;
     try {
-      setError(null);
       await deleteRequirement(target.id).unwrap();
+      notifyMutationSuccess(
+        mutationSuccessMessage("Graduation requirement", "deleted"),
+      );
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-      setError(parsed.message);
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "DELETE" },
+      });
     }
   };
 
   const handleCancel = () => {
-    setError(null);
     onClose();
   };
 
   return {
-    state: { error, isLoading },
+    state: { isLoading },
     actions: { handleConfirm, handleCancel },
   };
 }

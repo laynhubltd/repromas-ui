@@ -4,7 +4,6 @@ import { Permission } from "@/features/access-control/permissions";
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
 import { DataLoader } from "@/shared/ui/DataLoader";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { DownloadOutlined, InboxOutlined } from "@ant-design/icons";
 import { Button, Modal, Typography } from "antd";
 import { useRef } from "react";
@@ -14,7 +13,6 @@ export type BulkUploadModalProps = {
   onClose: () => void;
   selectedFile: File | null;
   isUploading: boolean;
-  uploadError: string | null;
   hasFile: boolean;
   onFileChange: (file: File | null) => void;
   onUpload: () => void;
@@ -26,7 +24,6 @@ export function BulkUploadModal({
   onClose,
   selectedFile,
   isUploading,
-  uploadError,
   hasFile,
   onFileChange,
   onUpload,
@@ -163,11 +160,6 @@ export function BulkUploadModal({
               Remove
             </Button>
           </div>
-        </ConditionalRenderer>
-
-        {/* Upload error */}
-        <ConditionalRenderer when={uploadError !== null}>
-          <ErrorAlert error={uploadError} />
         </ConditionalRenderer>
       </div>
 

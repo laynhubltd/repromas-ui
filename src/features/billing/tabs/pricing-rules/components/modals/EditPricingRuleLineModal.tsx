@@ -1,6 +1,5 @@
 import { PRICING_RULE_UI_COPY } from "@/shared/constants/pricingRuleOptions";
 import { useToken } from "@/shared/hooks/useToken";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import {
   Button,
   Flex,
@@ -34,7 +33,7 @@ export function EditPricingRuleLineModal({
 
   const {
     form,
-    state: { formError, isSubmitting, isFeeItemsLoading, feeItemOptions },
+    state: { isSubmitting, isFeeItemsLoading, feeItemOptions },
     actions: { handleSubmit, handleCancel },
   } = useEditPricingRuleLineModal({
     rule,
@@ -63,8 +62,6 @@ export function EditPricingRuleLineModal({
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert variant="form" error={formError} />
-
         <Form form={form} layout="vertical" requiredMark={false}>
           <Form.Item name="feeItemId" label="Fee item" rules={feeItemIdRules}>
             <Select

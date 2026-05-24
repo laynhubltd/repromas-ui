@@ -1,7 +1,6 @@
 // Feature: program-graduation-config
 import { useGetDepartmentsQuery } from "@/features/academic-structure/api/departmentsApi";
 import { useToken } from "@/shared/hooks/useToken";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Button, Form, Input, InputNumber, Modal, Select } from "antd";
 import { useEffect, useState } from "react";
 import { useProgramFormModal } from "../../hooks/useProgramModal";
@@ -25,7 +24,7 @@ export type ProgramFormModalProps = {
 export function ProgramFormModal({ open, target, onClose, defaultDepartmentId }: ProgramFormModalProps) {
   const token = useToken();
   const { state, actions, form } = useProgramFormModal(target, open, onClose);
-  const { formError, isLoading, isEditMode } = state;
+  const { isLoading, isEditMode } = state;
   const { handleSubmit, handleCancel } = actions;
 
   // Track durationInYears for dynamic maxResidency helper text and rules
@@ -75,7 +74,6 @@ export function ProgramFormModal({ open, target, onClose, defaultDepartmentId }:
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert error={formError} />
         <Form form={form} layout="vertical" requiredMark={false} onFinish={handleSubmit}>
           <Form.Item
             name="departmentId"

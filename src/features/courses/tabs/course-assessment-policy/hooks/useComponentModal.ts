@@ -1,6 +1,10 @@
-import { applyFormErrors } from "@/shared/utils/error/applyFormErrors";
-import { parseApiError } from "@/shared/utils/error/parseApiError";
-import { Form, notification } from "antd";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
+import {
+  mutationSuccessMessage,
+  notifyMutationSuccess,
+} from "@/shared/utils/feedback/notifyMutationSuccess";
+import { Form } from "antd";
 import { useEffect, useState } from "react";
 import {
     useCreateCourseAssessmentComponentMutation,
@@ -41,7 +45,7 @@ export function useComponentFormModal(
     useCreateCourseAssessmentComponentMutation();
   const [updateComponent, { isLoading: isUpdating }] =
     useUpdateCourseAssessmentComponentMutation();
-  const [formError, setFormError] = useState<string | null>(null);
+  const handleApiError = useApiError();
 
   // Conditional field state — watched to drive disabled/required logic in the form
   const [mustPassValue, setMustPassValue] = useState<boolean>(false);
@@ -73,9 +77,6 @@ export function useComponentFormModal(
       });
       setMustPassValue(false);
     }
-    if (!open) {
-      setFormError(null);
-    }
   }, [open, target, form]);
 
   // Reset form when modal closes
@@ -103,7 +104,6 @@ export function useComponentFormModal(
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
-      setFormError(null);
 
       // Enforce conditional field nullification before submission
       const minPassPercentage = values.mustPass
@@ -136,18 +136,30 @@ export function useComponentFormModal(
         }).unwrap();
       }
 
+      notifyMutationSuccess(
+        mutationSuccessMessage(
+          "Assessment component",
+          isEditMode ? "updated" : "created",
+        ),
+      );
       form.resetFields();
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      // 422 field-level errors and all other errors
-      applyFormErrors(parsed, form, setFormError);
+      const decision = handleApiError(err, {
+        context: {
+          screen: RequestScreen.Modal,
+          method: isEditMode ? "PATCH" : "POST",
+        },
+        form,
+      });
+      if (isEditMode && decision.disableForm) {
+        onClose();
+      }
     }
   };
 
   const handleClose = () => {
     form.resetFields();
-    setFormError(null);
     onClose();
   };
 
@@ -155,7 +167,6 @@ export function useComponentFormModal(
     state: {
       isEditMode,
       isSubmitting,
-      formError,
       mustPassValue,
     },
     actions: {
@@ -185,30 +196,26 @@ export function useDeleteComponentModal(
 ) {
   const [deleteComponent, { isLoading: isDeleting }] =
     useDeleteCourseAssessmentComponentMutation();
-  const [error, setError] = useState<string | null>(null);
+  const handleApiError = useApiError();
 
-  // Reset error when modal opens/closes
-  useEffect(() => {
-    if (!open) {
-      setError(null);
-    }
-  }, [open]);
+  void open;
 
   const handleConfirm = async () => {
     if (!target) return;
     try {
-      setError(null);
       await deleteComponent(target.id).unwrap();
+      notifyMutationSuccess(
+        mutationSuccessMessage("Assessment component", "deleted"),
+      );
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-      setError(parsed.message);
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "DELETE" },
+      });
     }
   };
 
   const handleClose = () => {
-    setError(null);
     onClose();
   };
 
@@ -220,7 +227,6 @@ export function useDeleteComponentModal(
   return {
     state: {
       isDeleting,
-      error,
     },
     actions: {
       handleConfirm,

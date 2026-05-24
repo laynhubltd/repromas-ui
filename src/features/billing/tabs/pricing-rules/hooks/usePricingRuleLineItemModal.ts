@@ -3,10 +3,10 @@ import {
   PRICING_RULE_FEE_ITEM_PICKER_PAGE_SIZE,
   PRICING_RULE_UI_COPY,
 } from "@/shared/constants/pricingRuleOptions";
-import { applyFormErrors } from "@/shared/utils/error/applyFormErrors";
-import { parseApiError } from "@/shared/utils/error/parseApiError";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
 import { Form, notification } from "antd";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import {
   useCreatePricingRuleItemMutation,
   useDeletePricingRuleItemMutation,
@@ -15,7 +15,6 @@ import {
 import type { PricingRule, PricingRuleItemRead } from "../types/pricing-rule";
 import {
   getNextLineSortOrder,
-  isDuplicateFeeItemError,
   isImmutableConflictError,
 } from "../utils/pricingRuleDisplay";
 import { formatAmountString } from "../utils/computeGrossPreview";
@@ -40,7 +39,6 @@ export function useAddPricingRuleLineModal({
   onRuleLocked,
 }: UseAddPricingRuleLineModalOptions) {
   const [form] = Form.useForm<AddLineFormValues>();
-  const [formError, setFormError] = useState<string | null>(null);
 
   const { data: feeItemsData, isLoading: isFeeItemsLoading } = useGetFeeItemsQuery(
     {
@@ -53,6 +51,7 @@ export function useAddPricingRuleLineModal({
 
   const [createLine, { isLoading: isSubmitting }] =
     useCreatePricingRuleItemMutation();
+  const handleApiError = useApiError();
 
   const usedFeeItemIds = useMemo(
     () => new Set((rule?.items ?? []).map((item) => item.feeItemId)),
@@ -74,7 +73,6 @@ export function useAddPricingRuleLineModal({
 
   useEffect(() => {
     if (!open) return;
-    setFormError(null);
     form.setFieldsValue({
       feeItemId: undefined as unknown as number,
       amount: undefined as unknown as number,
@@ -84,7 +82,6 @@ export function useAddPricingRuleLineModal({
 
   const reset = useCallback(() => {
     form.resetFields();
-    setFormError(null);
   }, [form]);
 
   const handleCancel = () => {
@@ -97,7 +94,6 @@ export function useAddPricingRuleLineModal({
 
     try {
       const values = await form.validateFields();
-      setFormError(null);
 
       await createLine({
         pricingRuleId: rule.id,
@@ -111,25 +107,20 @@ export function useAddPricingRuleLineModal({
       reset();
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
+      const decision = handleApiError(err, {
+        context: { screen: RequestScreen.Modal, method: "POST" },
+        form,
+      });
 
-      if (parsed.status === 409 && isImmutableConflictError(parsed.message)) {
+      if (decision.parsed.status === 409 && isImmutableConflictError(decision.message)) {
         onRuleLocked?.(rule.id);
       }
-
-      if (parsed.status === 400 && isDuplicateFeeItemError(parsed.message)) {
-        form.setFields([{ name: "feeItemId", errors: [parsed.message] }]);
-      }
-
-      applyFormErrors(parsed, form, setFormError);
     }
   };
 
   return {
     form,
     state: {
-      formError,
       isSubmitting,
       isFeeItemsLoading,
       feeItemOptions,
@@ -166,7 +157,6 @@ export function useEditPricingRuleLineModal({
   onRuleLocked,
 }: UseEditPricingRuleLineModalOptions) {
   const [form] = Form.useForm<EditLineFormValues>();
-  const [formError, setFormError] = useState<string | null>(null);
 
   const { data: feeItemsData, isLoading: isFeeItemsLoading } = useGetFeeItemsQuery(
     {
@@ -179,6 +169,7 @@ export function useEditPricingRuleLineModal({
 
   const [updateLine, { isLoading: isSubmitting }] =
     useUpdatePricingRuleItemMutation();
+  const handleApiError = useApiError();
 
   const usedFeeItemIds = useMemo(() => {
     const ids = new Set((rule?.items ?? []).map((item) => item.feeItemId));
@@ -213,7 +204,6 @@ export function useEditPricingRuleLineModal({
 
   useEffect(() => {
     if (!open || !line) return;
-    setFormError(null);
     const parsedAmount = parseFloat(line.amount);
     form.setFieldsValue({
       feeItemId: line.feeItemId,
@@ -224,7 +214,6 @@ export function useEditPricingRuleLineModal({
 
   const reset = useCallback(() => {
     form.resetFields();
-    setFormError(null);
   }, [form]);
 
   const handleCancel = () => {
@@ -237,7 +226,6 @@ export function useEditPricingRuleLineModal({
 
     try {
       const values = await form.validateFields();
-      setFormError(null);
 
       await updateLine({
         id: line.id,
@@ -251,25 +239,20 @@ export function useEditPricingRuleLineModal({
       reset();
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
+      const decision = handleApiError(err, {
+        context: { screen: RequestScreen.Modal, method: "PATCH" },
+        form,
+      });
 
-      if (parsed.status === 409 && isImmutableConflictError(parsed.message)) {
+      if (decision.parsed.status === 409 && isImmutableConflictError(decision.message)) {
         onRuleLocked?.(rule.id);
       }
-
-      if (parsed.status === 400 && isDuplicateFeeItemError(parsed.message)) {
-        form.setFields([{ name: "feeItemId", errors: [parsed.message] }]);
-      }
-
-      applyFormErrors(parsed, form, setFormError);
     }
   };
 
   return {
     form,
     state: {
-      formError,
       isSubmitting,
       isFeeItemsLoading,
       feeItemOptions,
@@ -292,20 +275,15 @@ type UseDeletePricingRuleLineModalOptions = {
 export function useDeletePricingRuleLineModal({
   rule,
   line,
-  open,
+  open: _open,
   onClose,
   onRuleLocked,
 }: UseDeletePricingRuleLineModalOptions) {
-  const [error, setError] = useState<string | null>(null);
   const [deleteLine, { isLoading: isDeleting }] =
     useDeletePricingRuleItemMutation();
-
-  useEffect(() => {
-    if (open) setError(null);
-  }, [open]);
+  const handleApiError = useApiError();
 
   const handleCancel = () => {
-    setError(null);
     onClose();
   };
 
@@ -313,23 +291,22 @@ export function useDeletePricingRuleLineModal({
     if (!rule || !line) return;
 
     try {
-      setError(null);
       await deleteLine(line.id).unwrap();
       notification.success({ message: PRICING_RULE_UI_COPY.lineDeleteSuccess });
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      setError(parsed.message);
-      notification.error({ message: parsed.message });
+      const decision = handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "DELETE" },
+      });
 
-      if (parsed.status === 409 && isImmutableConflictError(parsed.message)) {
+      if (decision.parsed.status === 409 && isImmutableConflictError(decision.message)) {
         onRuleLocked?.(rule.id);
       }
     }
   };
 
   return {
-    state: { error, isDeleting },
+    state: { isDeleting },
     actions: { handleConfirm, handleCancel },
   };
 }

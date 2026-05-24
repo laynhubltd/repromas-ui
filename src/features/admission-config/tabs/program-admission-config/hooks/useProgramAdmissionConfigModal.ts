@@ -1,7 +1,7 @@
-import { applyFormErrors } from "@/shared/utils/error/applyFormErrors";
-import { parseApiError } from "@/shared/utils/error/parseApiError";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
 import { Form, notification } from "antd";
-import { useCallback, useEffect, useMemo, useReducer, useState } from "react";
+import { useCallback, useEffect, useMemo, useReducer } from "react";
 import {
   useCreateProgramAdmissionConfigMutation,
   useDeleteProgramAdmissionConfigMutation,
@@ -58,6 +58,7 @@ export function useProgramAdmissionConfigFormModal(
     useCreateProgramAdmissionConfigMutation();
   const [updateConfig, { isLoading: isUpdating }] =
     useUpdateProgramAdmissionConfigMutation();
+  const handleApiError = useApiError();
 
   const isSubmitting = isCreating || isUpdating;
 
@@ -170,14 +171,13 @@ export function useProgramAdmissionConfigFormModal(
       reset();
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-      applyFormErrors(parsed, form, (message) =>
-        dispatch({
-          type: ProgramAdmissionConfigFormActionType.SetFormError,
-          message,
-        }),
-      );
+      handleApiError(err, {
+        context: {
+          screen: RequestScreen.Modal,
+          method: isEditMode ? "PATCH" : "POST",
+        },
+        form,
+      });
     }
   };
 
@@ -210,7 +210,7 @@ export function useDeleteProgramAdmissionConfigModal(
 ) {
   const [deleteConfig, { isLoading: isDeleting }] =
     useDeleteProgramAdmissionConfigMutation();
-  const [error, setError] = useState<string | null>(null);
+  const handleApiError = useApiError();
 
   const totalSeatsUsed =
     (target?.meritSeatsUsed ?? 0) +
@@ -221,26 +221,24 @@ export function useDeleteProgramAdmissionConfigModal(
   const handleConfirm = async () => {
     if (!target || blockedByAllocations) return;
     try {
-      setError(null);
       await deleteConfig(target.id).unwrap();
       notification.success({
         message: "Admission cut-offs and quota removed successfully.",
       });
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-      setError(parsed.message);
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "DELETE" },
+      });
     }
   };
 
   const handleCancel = () => {
-    setError(null);
     onClose();
   };
 
   return {
-    state: { isDeleting, error, blockedByAllocations, totalSeatsUsed },
+    state: { isDeleting, blockedByAllocations, totalSeatsUsed },
     actions: { handleConfirm, handleCancel },
   };
 }

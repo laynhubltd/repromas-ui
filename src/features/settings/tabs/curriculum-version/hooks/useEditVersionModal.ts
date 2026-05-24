@@ -1,14 +1,14 @@
-import { applyFormErrors } from "@/shared/utils/error/applyFormErrors";
-import { parseApiError } from "@/shared/utils/error/parseApiError";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
 import { Form, notification } from "antd";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useUpdateCurriculumVersionMutation } from "../api/curriculumVersionApi";
 import type { CurriculumVersion } from "../types/curriculum-version";
 
 export function useEditVersionModal(target: CurriculumVersion | null, open: boolean, onClose: () => void) {
   const [form] = Form.useForm<{ name: string }>();
   const [updateCurriculumVersion, { isLoading }] = useUpdateCurriculumVersionMutation();
-  const [formError, setFormError] = useState<string | null>(null);
+  const handleApiError = useApiError();
 
   useEffect(() => {
     if (open && target) {
@@ -20,25 +20,29 @@ export function useEditVersionModal(target: CurriculumVersion | null, open: bool
     if (!target) return;
     try {
       const values = await form.validateFields();
-      setFormError(null);
       await updateCurriculumVersion({ id: target.id, name: values.name.trim() }).unwrap();
       notification.success({ message: "Version updated successfully" });
       form.resetFields();
       window.dispatchEvent(new CustomEvent("curriculumVersionUpdated"));
       onClose();
     } catch (err: unknown) {
-      applyFormErrors(parseApiError(err), form, setFormError);
+      const decision = handleApiError(err, {
+        context: { screen: RequestScreen.Modal, method: "PATCH" },
+        form,
+      });
+      if (decision.disableForm) {
+        onClose();
+      }
     }
   };
 
   const handleCancel = () => {
     form.resetFields();
-    setFormError(null);
     onClose();
   };
 
   return {
-    state: { formError, isLoading },
+    state: { isLoading },
     actions: { handleSubmit, handleCancel },
     form,
   };

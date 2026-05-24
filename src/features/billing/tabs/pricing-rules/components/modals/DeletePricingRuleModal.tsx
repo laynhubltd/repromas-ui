@@ -1,6 +1,5 @@
 import { PRICING_RULE_UI_COPY } from "@/shared/constants/pricingRuleOptions";
 import { useToken } from "@/shared/hooks/useToken";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Button, Modal, Typography } from "antd";
 import { useDeletePricingRuleModal } from "../../hooks/usePricingRuleModal";
 import type { PricingRule } from "../../types/pricing-rule";
@@ -23,7 +22,7 @@ export function DeletePricingRuleModal({
   const token = useToken();
 
   const {
-    state: { error, isDeleting, isRetire },
+    state: { isDeleting, isRetire },
     actions: { handleConfirm, handleCancel },
   } = useDeletePricingRuleModal(target, open, onClose, {
     isLocked,
@@ -49,8 +48,6 @@ export function DeletePricingRuleModal({
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert variant="form" error={error} />
-
         <Typography.Paragraph>
           {isRetire ? (
             <>

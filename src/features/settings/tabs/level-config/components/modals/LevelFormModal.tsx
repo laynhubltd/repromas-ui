@@ -1,6 +1,5 @@
 // Feature: level-config
 import { useToken } from "@/shared/hooks/useToken";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Button, Form, Input, InputNumber, Modal } from "antd";
 import { useLevelFormModal } from "../../hooks/useLevelModal";
 import type { Level } from "../../types/level";
@@ -20,7 +19,7 @@ export type LevelFormModalProps = {
 export function LevelFormModal({ open, target, onClose }: LevelFormModalProps) {
   const token = useToken();
   const { state, actions, form } = useLevelFormModal(target, open, onClose);
-  const { formError, isLoading, isEditMode } = state;
+  const { isLoading, isEditMode } = state;
   const { handleSubmit, handleCancel } = actions;
 
   return (
@@ -42,7 +41,6 @@ export function LevelFormModal({ open, target, onClose }: LevelFormModalProps) {
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert error={formError} />
         <Form form={form} layout="vertical" requiredMark={false} onFinish={handleSubmit}>
           <Form.Item
             name="name"

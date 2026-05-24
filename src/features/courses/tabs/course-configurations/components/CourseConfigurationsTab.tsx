@@ -28,6 +28,7 @@ export function CourseConfigurationsTab() {
     totalItems,
     isLoading,
     isError,
+    sectionError,
     selectedProgramId,
     selectedVersionId,
     filterLevelId,
@@ -234,7 +235,7 @@ export function CourseConfigurationsTab() {
         <ConditionalRenderer when={isError}>
           <ErrorAlert
             variant="section"
-            error="Failed to load course configurations"
+            error={sectionError ?? "Failed to load course configurations"}
             onRetry={refetch}
           />
         </ConditionalRenderer>

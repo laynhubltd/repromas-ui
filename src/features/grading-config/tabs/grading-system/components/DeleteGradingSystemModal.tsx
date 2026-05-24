@@ -3,7 +3,6 @@ import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Button, Modal, Typography } from "antd";
 import { useDeleteGradingSystemModal } from "../hooks/useGradingSystemModal";
 import type { GradingSystem } from "../types/grading-system";
@@ -21,7 +20,7 @@ export function DeleteGradingSystemModal({
 }: DeleteGradingSystemModalProps) {
   const token = useToken();
   const { state, actions } = useDeleteGradingSystemModal(target, open, onClose);
-  const { isDeleting, error, boundaryCount } = state;
+  const { isDeleting, boundaryCount } = state;
   const { handleConfirm, handleCancel } = actions;
 
   const hasBoundaryCount = typeof boundaryCount === "number";
@@ -45,8 +44,6 @@ export function DeleteGradingSystemModal({
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert variant="form" error={error} />
-
         <ConditionalRenderer when={target !== null}>
           <Typography.Text>
             Are you sure you want to delete{" "}

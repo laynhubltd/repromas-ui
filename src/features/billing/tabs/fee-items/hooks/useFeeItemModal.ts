@@ -1,6 +1,6 @@
 import { FEE_ITEM_UI_COPY } from "@/shared/constants/feeItemOptions";
-import { applyFormErrors } from "@/shared/utils/error/applyFormErrors";
-import { parseApiError } from "@/shared/utils/error/parseApiError";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
 import { Form, notification } from "antd";
 import { useCallback, useEffect, useReducer, useState } from "react";
 import {
@@ -29,14 +29,11 @@ export function useFeeItemFormModal(
 ) {
   const isEditMode = target !== null;
   const [form] = Form.useForm<FeeItemFormValues>();
-  const [modalState, dispatch] = useReducer(
-    feeItemFormReducer,
-    initialFeeItemFormState,
-  );
-  const { formError } = modalState;
+  const [, dispatch] = useReducer(feeItemFormReducer, initialFeeItemFormState);
 
   const [createFeeItem, { isLoading: isCreating }] = useCreateFeeItemMutation();
   const [updateFeeItem, { isLoading: isUpdating }] = useUpdateFeeItemMutation();
+  const handleApiError = useApiError();
 
   const isSubmitting = isCreating || isUpdating;
 
@@ -66,10 +63,6 @@ export function useFeeItemFormModal(
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
-      dispatch({
-        type: FeeItemFormActionType.SetFormError,
-        message: null,
-      });
 
       const name = values.name.trim();
       const accountingCode = values.accountingCode?.trim() || null;
@@ -98,14 +91,13 @@ export function useFeeItemFormModal(
       reset();
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-      applyFormErrors(parsed, form, (msg) =>
-        dispatch({
-          type: FeeItemFormActionType.SetFormError,
-          message: msg,
-        }),
-      );
+      handleApiError(err, {
+        context: {
+          screen: RequestScreen.Modal,
+          method: isEditMode ? "PATCH" : "POST",
+        },
+        form,
+      });
     }
   };
 
@@ -115,7 +107,7 @@ export function useFeeItemFormModal(
   };
 
   return {
-    state: { isEditMode, formError, isSubmitting },
+    state: { isEditMode, isSubmitting },
     actions: { handleSubmit, handleCancel },
     form,
   };
@@ -127,35 +119,33 @@ export function useDeleteFeeItemModal(
   onClose: () => void,
 ) {
   const [deleteFeeItem, { isLoading: isDeleting }] = useDeleteFeeItemMutation();
-  const [error, setError] = useState<string | null>(null);
   const [suggestDeactivate, setSuggestDeactivate] = useState(false);
+  const handleApiError = useApiError();
 
   const handleConfirm = async () => {
     if (!target) return;
     try {
-      setError(null);
       setSuggestDeactivate(false);
       await deleteFeeItem(target.id).unwrap();
       notification.success({ message: FEE_ITEM_UI_COPY.deleteSuccess });
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-      setError(parsed.message);
-      if (parsed.status === 409) {
+      const decision = handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "DELETE" },
+      });
+      if (decision.parsed.status === 409) {
         setSuggestDeactivate(true);
       }
     }
   };
 
   const handleCancel = () => {
-    setError(null);
     setSuggestDeactivate(false);
     onClose();
   };
 
   return {
-    state: { error, isDeleting, suggestDeactivate },
+    state: { isDeleting, suggestDeactivate },
     actions: { handleConfirm, handleCancel },
   };
 }

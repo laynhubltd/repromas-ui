@@ -1,6 +1,5 @@
 import { FEE_ITEM_UI_COPY } from "@/shared/constants/feeItemOptions";
 import { useToken } from "@/shared/hooks/useToken";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Alert, Button, Modal, Typography } from "antd";
 import { useDeleteFeeItemModal } from "../../hooks/useFeeItemModal";
 import type { FeeItem } from "../../types/fee-item";
@@ -19,7 +18,7 @@ export function DeleteFeeItemModal({
   const token = useToken();
 
   const {
-    state: { error, isDeleting, suggestDeactivate },
+    state: { isDeleting, suggestDeactivate },
     actions: { handleConfirm, handleCancel },
   } = useDeleteFeeItemModal(target, open, onClose);
 
@@ -42,8 +41,6 @@ export function DeleteFeeItemModal({
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert variant="form" error={error} />
-
         <Typography.Paragraph>
           Are you sure you want to delete{" "}
           <Typography.Text strong>{target?.name}</Typography.Text>? This cannot

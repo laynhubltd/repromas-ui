@@ -1,7 +1,6 @@
 import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import { useToken } from "@/shared/hooks/useToken";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
 import {
   ADMISSION_CYCLE_IDENTITY_MODE_OPTIONS,
@@ -51,7 +50,6 @@ export function AdmissionCycleFormModal({
   const {
     state: {
       isEditMode,
-      formError,
       isSubmitting,
       sessionOptions,
       canEditIdentityMode,
@@ -82,8 +80,6 @@ export function AdmissionCycleFormModal({
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert variant="form" error={formError} />
-
         <Form
           form={form}
           layout="vertical"

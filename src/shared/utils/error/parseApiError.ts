@@ -59,12 +59,83 @@ export interface ParsedApiError {
   message: string;
   /** Empty object when no field-level errors */
   fieldErrors: Record<string, string>;
+  /**
+   * True for 422 errors that indicate a tenant/admin configuration gap rather
+   * than a user input issue. Decision layer renders these as admin-audience
+   * banners without a "Try again" affordance.
+   */
+  isSetupError: boolean;
+  /**
+   * True for the specific "Invalid request payload" 400 returned by the
+   * backend when the frontend sent malformed JSON / wrong field types. These
+   * are frontend contract bugs and should be logged + masked from users.
+   */
+  isPayloadShapeError: boolean;
   raw: ApiErrorBody;
 }
 
-// ─── Internal constant ────────────────────────────────────────────────────────
+// ─── Internal constants ───────────────────────────────────────────────────────
 
 const INTERNAL_FALLBACK = 'Something went wrong. Please try again.';
+
+/**
+ * Exact `detail` string the backend returns for malformed request payloads.
+ * When we see this we treat it as a frontend contract bug, not a user input
+ * issue (per the global error handling guide).
+ */
+const INVALID_PAYLOAD_DETAIL =
+  'Invalid request payload. Please check that all required fields are present and have the correct types.';
+
+/**
+ * Substring patterns the backend uses to indicate tenant setup / configuration
+ * gaps (422 application errors). Each entry maps the technical phrase to a
+ * user-friendly message + actionable guidance.
+ *
+ * Sourced from doc/global-error-handling-guide.md.
+ */
+const SETUP_ERROR_PATTERNS: Array<{
+  match: RegExp;
+  message: string;
+}> = [
+  {
+    match: /no default scoreevaluationstatus/i,
+    message:
+      'Score sheets cannot be created because no default evaluation status is configured. Please contact your administrator.',
+  },
+  {
+    match: /no assessment policy found/i,
+    message:
+      'Scores cannot be graded because no assessment policy is configured for this course. Please contact your administrator.',
+  },
+  {
+    match: /no grading system found/i,
+    message:
+      "Scores cannot be graded because no grading system is linked to this course's program. Please contact your administrator.",
+  },
+  {
+    match: /no components defined for policy/i,
+    message:
+      'Score sheet download is unavailable because the assessment policy has no components configured. Please contact your administrator.',
+  },
+  {
+    match: /no current semester found/i,
+    message:
+      'No active semester is configured for this course. Please contact your administrator.',
+  },
+];
+
+function isSetupErrorMessage(message: string): boolean {
+  return SETUP_ERROR_PATTERNS.some((entry) => entry.match.test(message));
+}
+
+function resolveSetupMessage(message: string): string {
+  for (const entry of SETUP_ERROR_PATTERNS) {
+    if (entry.match.test(message)) {
+      return entry.message;
+    }
+  }
+  return message;
+}
 
 // ─── Public function ──────────────────────────────────────────────────────────
 
@@ -86,11 +157,18 @@ export function parseApiError(error: unknown): ParsedApiError {
     }
 
     // Fallback: build from ApiErrorResponse fields directly
+    const status = Number(apiError.status) || HttpStatusCode.InternalServerError;
+    const rawMessage = apiError.message || INTERNAL_FALLBACK;
+    const isSetup =
+      status === HttpStatusCode.UnprocessableEntity &&
+      isSetupErrorMessage(rawMessage);
     return {
-      type: deriveTypeFromStatus(Number(apiError.status)),
-      status: Number(apiError.status) || HttpStatusCode.InternalServerError,
-      message: apiError.message || INTERNAL_FALLBACK,
+      type: deriveTypeFromStatus(status),
+      status,
+      message: isSetup ? resolveSetupMessage(rawMessage) : rawMessage,
       fieldErrors: apiError.errorFields ?? {},
+      isSetupError: isSetup,
+      isPayloadShapeError: false,
       raw: buildSyntheticBody(apiError),
     };
   }
@@ -124,6 +202,8 @@ function parseBody(body: ApiErrorBody): ParsedApiError {
       status: body.status,
       message: body.detail || body.title || INTERNAL_FALLBACK,
       fieldErrors,
+      isSetupError: false,
+      isPayloadShapeError: false,
       raw: body,
     };
   }
@@ -138,21 +218,33 @@ function parseBody(body: ApiErrorBody): ParsedApiError {
       status: body.status,
       message: c.message || body.detail || INTERNAL_FALLBACK,
       fieldErrors,
+      isSetupError: false,
+      isPayloadShapeError: false,
       raw: body,
     };
   }
 
   // Generic types — mask 500 detail
-  const message =
-    body.type === ApiErrorType.Internal
-      ? INTERNAL_FALLBACK
-      : body.detail || body.title || INTERNAL_FALLBACK;
+  const isInternal = body.type === ApiErrorType.Internal;
+  const rawDetail = body.detail || body.title || INTERNAL_FALLBACK;
+  const isPayloadShape =
+    body.type === ApiErrorType.BadRequest && body.detail === INVALID_PAYLOAD_DETAIL;
+  const isSetup =
+    body.status === HttpStatusCode.UnprocessableEntity &&
+    isSetupErrorMessage(rawDetail);
+  const message = isInternal
+    ? INTERNAL_FALLBACK
+    : isSetup
+      ? resolveSetupMessage(rawDetail)
+      : rawDetail;
 
   return {
     type: body.type,
     status: body.status,
     message,
     fieldErrors: {},
+    isSetupError: isSetup,
+    isPayloadShapeError: isPayloadShape,
     raw: body,
   };
 }
@@ -169,6 +261,8 @@ function internalFallback(): ParsedApiError {
     status: HttpStatusCode.InternalServerError,
     message: INTERNAL_FALLBACK,
     fieldErrors: {},
+    isSetupError: false,
+    isPayloadShapeError: false,
     raw,
   };
 }

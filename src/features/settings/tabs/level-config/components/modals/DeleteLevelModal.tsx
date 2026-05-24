@@ -1,6 +1,5 @@
 // Feature: level-config
 import { useToken } from "@/shared/hooks/useToken";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Button, Modal, Typography } from "antd";
 import { useDeleteLevelModal } from "../../hooks/useLevelModal";
 import type { Level } from "../../types/level";
@@ -14,7 +13,7 @@ export type DeleteLevelModalProps = {
 export function DeleteLevelModal({ open, target, onClose }: DeleteLevelModalProps) {
   const token = useToken();
   const { state, actions } = useDeleteLevelModal(target, onClose);
-  const { error, isLoading } = state;
+  const { isLoading } = state;
   const { handleConfirm, handleCancel } = actions;
 
   return (
@@ -35,7 +34,6 @@ export function DeleteLevelModal({ open, target, onClose }: DeleteLevelModalProp
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert error={error} />
         <Typography.Text>
           Delete level{" "}
           <Typography.Text strong>'{target?.name}'</Typography.Text>? This cannot be undone.

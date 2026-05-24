@@ -1,5 +1,6 @@
 // Feature: rbac-settings
-import { parseApiError } from "@/shared/utils/error/parseApiError";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
 import { notification } from "antd";
 import { useState } from "react";
 import {
@@ -11,6 +12,7 @@ import { groupPermissionsByResource } from "../utils/groupPermissionsByResource"
 export function useRolePermissionsDrawer(selectedRoleId: number | null, open: boolean) {
   const [addPermissionsModalOpen, setAddPermissionsModalOpen] = useState(false);
   const [removeConfirmId, setRemoveConfirmId] = useState<number | null>(null);
+  const handleApiError = useApiError();
 
   const { data: role, isLoading } = useGetRoleQuery(selectedRoleId!, {
     skip: !selectedRoleId || !open,
@@ -29,8 +31,9 @@ export function useRolePermissionsDrawer(selectedRoleId: number | null, open: bo
       notification.success({ message: "Permission removed successfully." });
       setRemoveConfirmId(null);
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "DELETE" },
+      });
     }
   };
 

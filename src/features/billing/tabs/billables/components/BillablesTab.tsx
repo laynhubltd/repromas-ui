@@ -54,6 +54,7 @@ export function BillablesTab() {
     labelMaps,
     isLoading,
     isError,
+    sectionError,
     isSeeding,
     search,
     page,
@@ -265,7 +266,7 @@ export function BillablesTab() {
         <ConditionalRenderer when={isError}>
           <ErrorAlert
             variant="section"
-            error={BILLABLE_EVENT_UI_COPY.loadFeesError}
+            error={sectionError ?? BILLABLE_EVENT_UI_COPY.loadFeesError}
             onRetry={refetch}
           />
         </ConditionalRenderer>

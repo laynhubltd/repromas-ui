@@ -2,7 +2,6 @@
 import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import { useToken } from "@/shared/hooks/useToken";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Button, Modal, Typography } from "antd";
 import { useDeleteCreditLimitModal } from "../../hooks/useCreditLimitModal";
 import type { RegistrationCreditLimit } from "../../types/credit-limits";
@@ -20,7 +19,7 @@ export function DeleteCreditLimitModal({
 }: DeleteCreditLimitModalProps) {
   const token = useToken();
   const { state, actions } = useDeleteCreditLimitModal(target, open, onClose);
-  const { error, isLoading } = state;
+  const { isLoading } = state;
   const { handleConfirm, handleCancel } = actions;
 
   return (
@@ -48,7 +47,6 @@ export function DeleteCreditLimitModal({
           gap: 12,
         }}
       >
-        <ErrorAlert error={error} />
         <Typography.Text>
           Are you sure you want to delete this credit limit configuration? This
           action cannot be undone.

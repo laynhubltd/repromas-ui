@@ -3,7 +3,9 @@ import {
   FEE_ITEM_ITEMS_PER_PAGE,
   FEE_ITEM_SORT_DEFAULT,
 } from "@/shared/constants/feeItemOptions";
-import { useCallback, useEffect, useReducer, useRef } from "react";
+import { RequestScreen } from "@/shared/types/error-ui";
+import { deriveSectionErrorMessage } from "@/shared/utils/error/deriveSectionErrorMessage";
+import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
 import { useGetFeeItemsQuery } from "../api/feeItemApi";
 import {
   FeeItemsTabActionType,
@@ -40,7 +42,17 @@ export function useFeeItemsTab() {
       : {}),
   };
 
-  const { data, isLoading, isError, refetch } = useGetFeeItemsQuery(queryParams);
+  const { data, isLoading, isError, error: queryError, refetch } =
+    useGetFeeItemsQuery(queryParams);
+
+  const sectionError = useMemo(
+    () =>
+      deriveSectionErrorMessage(isError, queryError, {
+        screen: RequestScreen.List,
+        method: "GET",
+      }),
+    [isError, queryError],
+  );
 
   const feeItems = data?.member ?? [];
   const totalItems = data?.totalItems ?? 0;
@@ -118,6 +130,7 @@ export function useFeeItemsTab() {
       activeCount,
       isLoading,
       isError,
+      sectionError,
       search: state.search,
       page: state.page,
       isActiveFilter: state.isActiveFilter,

@@ -3,6 +3,12 @@ import type { AccordionItem } from "@/components/ui-kit";
 import { Accordion } from "@/components/ui-kit";
 import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
+import {
+  mutationSuccessMessage,
+  notifyMutationSuccess,
+} from "@/shared/utils/feedback/notifyMutationSuccess";
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer, centeredBox } from "@/shared/ui/ConditionalRenderer";
 import { DataLoader } from "@/shared/ui/DataLoader";
@@ -10,12 +16,10 @@ import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { SkeletonRows } from "@/shared/ui/SkeletonRows";
 import { PlusOutlined } from "@ant-design/icons";
 import { Button, Flex, Pagination, Typography } from "antd";
-import { useState } from "react";
 import { useDeleteSystemTimeFrameMutation, useUpdateSystemTimeFrameMutation } from "../api/systemTimeFramesApi";
 import { useSystemTimeFrameTab } from "../hooks/useSystemTimeFrameTab";
 import type { EventType, SystemTimeFrame } from "../types/system-timeframe";
 import { buildTogglePayload, getAccordionHeaderLabel } from "../utils/displayHelpers";
-import { normalizeTimeFrameApiError } from "../utils/validators";
 import { DeleteTimeFrameModal } from "./DeleteTimeFrameModal";
 import { TimeFrameFilterPanel } from "./TimeFrameFilterPanel";
 import { TimeFrameTable } from "./TimeFrameTable";
@@ -25,12 +29,14 @@ const ITEMS_PER_PAGE = 30;
 
 export function SystemTimeFramesTab() {
   const token = useToken();
+  const handleApiError = useApiError();
 
   // ── List hook ──────────────────────────────────────────────────────────────
   const {
     groupedTimeFrames,
     isLoading,
     isError,
+    sectionError,
     filters,
     page,
     totalItems,
@@ -56,36 +62,39 @@ export function SystemTimeFramesTab() {
 
   // ── Delete mutation ────────────────────────────────────────────────────────
   const [deleteTimeFrame, { isLoading: isDeleting }] = useDeleteSystemTimeFrameMutation();
-  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const handleConfirmDelete = async () => {
     if (!deleteTarget) return;
-    setDeleteError(null);
     try {
       await deleteTimeFrame(deleteTarget.id).unwrap();
+      notifyMutationSuccess(mutationSuccessMessage("Time frame", "deleted"));
       onCloseDelete();
-    } catch (err) {
-      const msg = normalizeTimeFrameApiError(err);
-      setDeleteError(msg ?? "Failed to delete time frame. Please try again.");
+    } catch (err: unknown) {
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "DELETE" },
+      });
     }
   };
 
   const handleCloseDelete = () => {
-    setDeleteError(null);
     onCloseDelete();
   };
 
   // ── Toggle active mutation ─────────────────────────────────────────────────
   const [updateTimeFrame] = useUpdateSystemTimeFrameMutation();
-  const [toggleError, setToggleError] = useState<string | null>(null);
 
   const handleToggleActive = async (record: SystemTimeFrame) => {
-    setToggleError(null);
     try {
       await updateTimeFrame(buildTogglePayload(record)).unwrap();
-    } catch (err) {
-      const msg = normalizeTimeFrameApiError(err);
-      setToggleError(msg ?? "Failed to update time frame status.");
+      notifyMutationSuccess(
+        record.isActive
+          ? "Time frame deactivated successfully."
+          : "Time frame activated successfully.",
+      );
+    } catch (err: unknown) {
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "PATCH" },
+      });
     }
   };
 
@@ -141,16 +150,11 @@ export function SystemTimeFramesTab() {
         </Flex>
       </Flex>
 
-      {/* Toggle error */}
-      <ConditionalRenderer when={!!toggleError}>
-        <ErrorAlert variant="section" error={toggleError} />
-      </ConditionalRenderer>
-
       {/* Content area */}
       <DataLoader loading={isLoading} loader={<SkeletonRows count={4} variant="card" />}>
         {/* Error state */}
         <ConditionalRenderer when={isError}>
-          <ErrorAlert variant="section" error="Failed to load system time frames" />
+          <ErrorAlert variant="section" error={sectionError ?? "Failed to load system time frames"} />
         </ConditionalRenderer>
 
         {/* Empty state */}
@@ -209,7 +213,6 @@ export function SystemTimeFramesTab() {
         onClose={handleCloseDelete}
         onConfirm={handleConfirmDelete}
         isLoading={isDeleting}
-        error={deleteError}
       />
     </Flex>
   );

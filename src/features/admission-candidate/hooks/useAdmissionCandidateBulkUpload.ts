@@ -1,6 +1,8 @@
 import type { AppStore } from "@/app/store";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
+import { notifyMutationSuccess } from "@/shared/utils/feedback/notifyMutationSuccess";
 import { downloadBlob } from "@/shared/utils/download/downloadFile";
-import { parseApiError } from "@/shared/utils/error/parseApiError";
 import { notification } from "antd";
 import { useCallback, useState } from "react";
 import { useStore } from "react-redux";
@@ -49,16 +51,15 @@ export function useAdmissionCandidateBulkUpload({
 }: UseAdmissionCandidateBulkUploadArgs) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
   const [summary, setSummary] = useState<CapsBulkUploadSummary | null>(null);
   const [summaryModalOpen, setSummaryModalOpen] = useState(false);
 
   const [capsBulkUpload] = useCapsBulkUploadMutation();
   const store = useStore() as AppStore;
+  const handleApiError = useApiError();
 
   const handleFileChange = useCallback((file: File | null) => {
     setSelectedFile(file);
-    setUploadError(null);
   }, []);
 
   const handleUpload = useCallback(async () => {
@@ -71,21 +72,25 @@ export function useAdmissionCandidateBulkUpload({
       return;
     }
     setIsUploading(true);
-    setUploadError(null);
     try {
       const formData = new FormData();
       formData.append("file", selectedFile);
       const result = await capsBulkUpload({ cycleId, formData }).unwrap();
+      if (deriveCapsSummaryState(result) === "success") {
+        notifyMutationSuccess(
+          `${result.processedCount} candidate${result.processedCount === 1 ? "" : "s"} imported successfully.`,
+        );
+      }
       setSummary(result);
       setSummaryModalOpen(true);
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-      setUploadError(parsed.message);
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "POST" },
+      });
     } finally {
       setIsUploading(false);
     }
-  }, [selectedFile, cycleId, canIngest, capsBulkUpload]);
+  }, [selectedFile, cycleId, canIngest, capsBulkUpload, handleApiError]);
 
   const handleDownloadTemplate = useCallback(async () => {
     if (cycleId === undefined) {
@@ -95,10 +100,11 @@ export function useAdmissionCandidateBulkUpload({
     try {
       await downloadCapsTemplate(store, cycleId);
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "GET" },
+      });
     }
-  }, [store, cycleId]);
+  }, [store, cycleId, handleApiError]);
 
   const handleDownloadErrorReport = useCallback(() => {
     if (!summary) return;
@@ -112,7 +118,6 @@ export function useAdmissionCandidateBulkUpload({
 
   const handleCloseSummary = useCallback(() => {
     setSelectedFile(null);
-    setUploadError(null);
     setSummary(null);
     setSummaryModalOpen(false);
     onClose();
@@ -124,7 +129,6 @@ export function useAdmissionCandidateBulkUpload({
     state: {
       selectedFile,
       isUploading,
-      uploadError,
       summary,
       summaryModalOpen,
     },

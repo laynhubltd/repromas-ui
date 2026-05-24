@@ -1,5 +1,4 @@
 // Feature: staff
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Button, Modal, Typography } from "antd";
 import { useDeleteStaffModal } from "../../hooks/useStaffModal";
 import type { Staff } from "../../types/staff";
@@ -12,7 +11,7 @@ export type DeleteStaffModalProps = {
 
 export function DeleteStaffModal({ open, target, onClose }: DeleteStaffModalProps) {
   const { state, actions } = useDeleteStaffModal(target, onClose);
-  const { error, isLoading } = state;
+  const { isLoading } = state;
   const { handleConfirm, handleCancel } = actions;
 
   return (
@@ -25,8 +24,6 @@ export function DeleteStaffModal({ open, target, onClose }: DeleteStaffModalProp
       destroyOnHidden
     >
       <div style={{ padding: "16px 0" }}>
-        <ErrorAlert variant="form" error={error} />
-
         <Typography.Text>
           Delete staff record for{" "}
           <Typography.Text strong>'{target?.fileNumber}'</Typography.Text>? The user account will

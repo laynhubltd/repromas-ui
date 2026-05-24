@@ -1,5 +1,4 @@
 import { useToken } from "@/shared/hooks/useToken";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Button, DatePicker, Form, Modal, Select, Switch } from "antd";
 import { useSemesterFormModal } from "../../hooks/useSemesterModal";
 import type { Semester, SemesterType } from "../../types/academic-calendar";
@@ -22,7 +21,7 @@ export function SemesterFormModal({
 }: SemesterFormModalProps) {
   const token = useToken();
   const { state, actions, form } = useSemesterFormModal(target, sessionId, open, onClose);
-  const { formError, isLoading, isEditMode } = state;
+  const { isLoading, isEditMode } = state;
   const { handleSubmit, handleCancel } = actions;
 
   return (
@@ -45,8 +44,6 @@ export function SemesterFormModal({
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert variant="form" error={formError} />
-
         <Form form={form} layout="vertical" requiredMark={false} onFinish={handleSubmit}>
           <Form.Item name="semesterTypeId" label="Semester Type" rules={semesterTypeIdRules}>
             <Select

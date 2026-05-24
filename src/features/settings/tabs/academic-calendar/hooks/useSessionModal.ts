@@ -1,7 +1,11 @@
-import { applyFormErrors } from "@/shared/utils/error/applyFormErrors";
-import { parseApiError } from "@/shared/utils/error/parseApiError";
-import { Form, notification } from "antd";
-import { useEffect, useState } from "react";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
+import {
+  mutationSuccessMessage,
+  notifyMutationSuccess,
+} from "@/shared/utils/feedback/notifyMutationSuccess";
+import { Form } from "antd";
+import { useEffect } from "react";
 import {
     useCreateAcademicSessionMutation,
     useDeleteAcademicSessionMutation,
@@ -32,7 +36,7 @@ export function useSessionFormModal(
   const [form] = Form.useForm<SessionFormValues>();
   const [createAcademicSession, { isLoading: isCreating }] = useCreateAcademicSessionMutation();
   const [updateAcademicSession, { isLoading: isUpdating }] = useUpdateAcademicSessionMutation();
-  const [formError, setFormError] = useState<string | null>(null);
+  const handleApiError = useApiError();
 
   const isLoading = isCreating || isUpdating;
 
@@ -52,14 +56,12 @@ export function useSessionFormModal(
   useEffect(() => {
     if (!open) {
       form.resetFields();
-      setFormError(null);
     }
   }, [open, form]);
 
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
-      setFormError(null);
 
       if (isEditMode) {
         await updateAcademicSession({
@@ -77,36 +79,32 @@ export function useSessionFormModal(
         }).unwrap();
       }
 
+      notifyMutationSuccess(
+        mutationSuccessMessage("Academic session", isEditMode ? "updated" : "created"),
+      );
       form.resetFields();
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-
-      // 409 conflict — duplicate name
-      if (parsed.status === 409) {
-        form.setFields([{ name: "name", errors: [parsed.message] }]);
-        return;
+      const decision = handleApiError(err, {
+        context: {
+          screen: RequestScreen.Modal,
+          method: isEditMode ? "PATCH" : "POST",
+        },
+        form,
+      });
+      if (isEditMode && decision.disableForm) {
+        onClose();
       }
-
-      // 400 date order — endDate not after startDate
-      if (parsed.status === 400) {
-        form.setFields([{ name: "endDate", errors: [parsed.message] }]);
-        return;
-      }
-
-      applyFormErrors(parsed, form, setFormError);
     }
   };
 
   const handleCancel = () => {
     form.resetFields();
-    setFormError(null);
     onClose();
   };
 
   return {
-    state: { formError, isLoading, isEditMode },
+    state: { isLoading, isEditMode },
     actions: { handleSubmit, handleCancel },
     form,
   };
@@ -119,35 +117,30 @@ export function useDeleteSessionModal(
   onClose: () => void
 ) {
   const [deleteAcademicSession, { isLoading }] = useDeleteAcademicSessionMutation();
-  const [error, setError] = useState<string | null>(null);
+  const handleApiError = useApiError();
 
   const handleConfirm = async () => {
     if (!target) return;
     try {
-      setError(null);
       await deleteAcademicSession(target.id).unwrap();
+      notifyMutationSuccess(mutationSuccessMessage("Academic session", "deleted"));
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-
-      if (parsed.status === 404) {
-        notification.success({ message: "Already removed" });
+      const decision = handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "DELETE" },
+      });
+      if (decision.parsed.status === 404) {
         onClose();
-        return;
       }
-
-      notification.error({ message: parsed.message });
-      setError(parsed.message);
     }
   };
 
   const handleCancel = () => {
-    setError(null);
     onClose();
   };
 
   return {
-    state: { error, isLoading },
+    state: { isLoading },
     actions: { handleConfirm, handleCancel },
   };
 }

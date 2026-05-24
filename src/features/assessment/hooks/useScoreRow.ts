@@ -1,4 +1,5 @@
-import { parseApiError } from "@/shared/utils/error/parseApiError";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
 import { notification } from "antd";
 import { useCallback, useReducer } from "react";
 import {
@@ -11,9 +12,10 @@ import {
   scoreRowReducer,
 } from "../state/scoreRowState";
 import type { ScoreSheetRow } from "../types/score-sheet";
-import { map500Detail } from "../utils/scoreSheetErrors";
 
 export function useScoreRow(row: ScoreSheetRow) {
+  const handleApiError = useApiError();
+
   // ─── Reducer ──────────────────────────────────────────────────────────────
   const [state, dispatch] = useReducer(scoreRowReducer, undefined, () =>
     initialScoreRowState(row),
@@ -59,23 +61,13 @@ export function useScoreRow(row: ScoreSheetRow) {
         });
         notification.success({ message: "Scores saved" });
       } catch (err: unknown) {
-        if ((err as { status?: number }).status === 500) {
-          const detail: string =
-            (err as { data?: { detail?: string } }).data?.detail ?? "";
-          const mappedMessage = map500Detail(detail);
-          notification.error({ message: mappedMessage });
-          dispatch({
-            type: ScoreRowActionType.SetErrorCell,
-            payload: { key, message: mappedMessage },
-          });
-        } else {
-          const parsed = parseApiError(err);
-          notification.error({ message: parsed.message });
-          dispatch({
-            type: ScoreRowActionType.SetErrorCell,
-            payload: { key, message: parsed.message },
-          });
-        }
+        const decision = handleApiError(err, {
+          context: { screen: RequestScreen.Action, method: "POST" },
+        });
+        dispatch({
+          type: ScoreRowActionType.SetErrorCell,
+          payload: { key, message: decision.message },
+        });
         dispatch({
           type: ScoreRowActionType.ClearSavingCell,
           payload: { key },
@@ -87,6 +79,7 @@ export function useScoreRow(row: ScoreSheetRow) {
       row.scores,
       row.registrationId,
       upsertStudentScoreSheet,
+      handleApiError,
     ],
   );
 
@@ -131,8 +124,9 @@ export function useScoreRow(row: ScoreSheetRow) {
           payload: { isSaving: false },
         });
       } catch (err: unknown) {
-        const parsed = parseApiError(err);
-        notification.error({ message: parsed.message });
+        const decision = handleApiError(err, {
+          context: { screen: RequestScreen.Action, method: "PATCH" },
+        });
         // Revert optimistic update
         dispatch({
           type: ScoreRowActionType.SetLocalEvalStatusCode,
@@ -140,7 +134,7 @@ export function useScoreRow(row: ScoreSheetRow) {
         });
         dispatch({
           type: ScoreRowActionType.SetEvalStatusError,
-          payload: { error: parsed.message },
+          payload: { error: decision.message },
         });
         dispatch({
           type: ScoreRowActionType.SetIsSavingEvalStatus,
@@ -153,6 +147,7 @@ export function useScoreRow(row: ScoreSheetRow) {
       row.evaluationStatuses,
       row.evaluationStatusCode,
       updateEvaluationStatus,
+      handleApiError,
     ],
   );
 

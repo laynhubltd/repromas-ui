@@ -10,6 +10,8 @@ import {
   PRICING_RULE_SCOPE_OPTIONS,
   PRICING_RULE_SORT_DEFAULT,
 } from "@/shared/constants/pricingRuleOptions";
+import { RequestScreen } from "@/shared/types/error-ui";
+import { deriveSectionErrorMessage } from "@/shared/utils/error/deriveSectionErrorMessage";
 import { useCallback, useMemo, useReducer } from "react";
 import { useGetPricingRulesQuery } from "../api/pricingRuleApi";
 import {
@@ -46,8 +48,17 @@ export function usePricingRulesTab() {
       : {}),
   };
 
-  const { data, isLoading, isError, refetch } =
+  const { data, isLoading, isError, error: queryError, refetch } =
     useGetPricingRulesQuery(queryParams);
+
+  const sectionError = useMemo(
+    () =>
+      deriveSectionErrorMessage(isError, queryError, {
+        screen: RequestScreen.List,
+        method: "GET",
+      }),
+    [isError, queryError],
+  );
 
   const { data: billableEventsData } = useGetBillableEventsQuery({
     itemsPerPage: 100,
@@ -252,6 +263,7 @@ export function usePricingRulesTab() {
       totalItems,
       isLoading,
       isError,
+      sectionError,
       page: state.page,
       eventCodeFilter: state.eventCodeFilter,
       indigeneFilter: state.indigeneFilter,

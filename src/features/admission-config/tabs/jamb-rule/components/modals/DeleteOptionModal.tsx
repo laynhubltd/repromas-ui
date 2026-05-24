@@ -1,5 +1,4 @@
 import { useToken } from "@/shared/hooks/useToken";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Button, Modal, Typography } from "antd";
 import { useDeleteJambOptionModal } from "../../hooks/useJambRuleModal";
 import type { JambCombinationOption } from "../../types/jamb-rule";
@@ -17,7 +16,7 @@ export function DeleteOptionModal({
 }: DeleteOptionModalProps) {
   const token = useToken();
   const { state, actions } = useDeleteJambOptionModal(target, onClose);
-  const { error, isDeleting } = state;
+  const { isDeleting } = state;
   const { handleConfirm, handleCancel } = actions;
 
   return (
@@ -38,8 +37,6 @@ export function DeleteOptionModal({
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert error={error} />
-
         <Typography.Text>
           Remove{" "}
           <Typography.Text strong>

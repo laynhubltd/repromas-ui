@@ -1,7 +1,7 @@
-import { applyFormErrors } from "@/shared/utils/error/applyFormErrors";
-import { parseApiError } from "@/shared/utils/error/parseApiError";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
 import { Form, notification } from "antd";
-import { useCallback, useEffect, useReducer, useState } from "react";
+import { useCallback, useEffect, useReducer } from "react";
 import {
   useCreateJambCombinationGroupMutation,
   useCreateJambCombinationOptionMutation,
@@ -54,6 +54,7 @@ export function useJambCombinationFormModal(
     useCreateJambSubjectCombinationMutation();
   const [updateCombination, { isLoading: isUpdating }] =
     useUpdateJambSubjectCombinationMutation();
+  const handleApiError = useApiError();
 
   const isSubmitting = isCreating || isUpdating;
 
@@ -139,11 +140,13 @@ export function useJambCombinationFormModal(
       reset();
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-      applyFormErrors(parsed, form, (msg) =>
-        dispatch({ type: JambRuleFormActionType.SetFormError, message: msg }),
-      );
+      handleApiError(err, {
+        context: {
+          screen: RequestScreen.Modal,
+          method: isEditMode ? "PATCH" : "POST",
+        },
+        form,
+      });
     }
   };
 
@@ -166,12 +169,11 @@ export function useDeleteJambCombinationModal(
 ) {
   const [deleteCombination, { isLoading: isDeleting }] =
     useDeleteJambSubjectCombinationMutation();
-  const [error, setError] = useState<string | null>(null);
+  const handleApiError = useApiError();
 
   const handleConfirm = async () => {
     if (!target) return;
     try {
-      setError(null);
       await deleteCombination(target.id).unwrap();
       notification.success({
         message: "JAMB combination deleted. All groups and options were removed.",
@@ -179,19 +181,18 @@ export function useDeleteJambCombinationModal(
       onDeleted?.();
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-      setError(parsed.message);
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "DELETE" },
+      });
     }
   };
 
   const handleCancel = () => {
-    setError(null);
     onClose();
   };
 
   return {
-    state: { error, isDeleting },
+    state: { isDeleting },
     actions: { handleConfirm, handleCancel },
   };
 }
@@ -223,6 +224,7 @@ export function useJambGroupFormModal(
     useCreateJambCombinationGroupMutation();
   const [updateGroup, { isLoading: isUpdating }] =
     useUpdateJambCombinationGroupMutation();
+  const handleApiError = useApiError();
 
   const isSubmitting = isCreating || isUpdating;
 
@@ -318,11 +320,13 @@ export function useJambGroupFormModal(
       reset();
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-      applyFormErrors(parsed, form, (msg) =>
-        dispatch({ type: JambRuleFormActionType.SetFormError, message: msg }),
-      );
+      handleApiError(err, {
+        context: {
+          screen: RequestScreen.Modal,
+          method: isEditMode ? "PATCH" : "POST",
+        },
+        form,
+      });
     }
   };
 
@@ -344,31 +348,29 @@ export function useDeleteJambGroupModal(
 ) {
   const [deleteGroup, { isLoading: isDeleting }] =
     useDeleteJambCombinationGroupMutation();
-  const [error, setError] = useState<string | null>(null);
+  const handleApiError = useApiError();
 
   const handleConfirm = async () => {
     if (!target) return;
     try {
-      setError(null);
       await deleteGroup(target.id).unwrap();
       notification.success({
         message: "Group deleted. All options in this group were removed.",
       });
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-      setError(parsed.message);
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "DELETE" },
+      });
     }
   };
 
   const handleCancel = () => {
-    setError(null);
     onClose();
   };
 
   return {
-    state: { error, isDeleting },
+    state: { isDeleting },
     actions: { handleConfirm, handleCancel },
   };
 }
@@ -406,6 +408,7 @@ export function useJambOptionFormModal(
     useCreateJambCombinationOptionMutation();
   const [updateOption, { isLoading: isUpdating }] =
     useUpdateJambCombinationOptionMutation();
+  const handleApiError = useApiError();
 
   const isSubmitting = isCreating || isUpdating;
 
@@ -474,11 +477,13 @@ export function useJambOptionFormModal(
       reset();
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-      applyFormErrors(parsed, form, (msg) =>
-        dispatch({ type: JambRuleFormActionType.SetFormError, message: msg }),
-      );
+      handleApiError(err, {
+        context: {
+          screen: RequestScreen.Modal,
+          method: isEditMode ? "PATCH" : "POST",
+        },
+        form,
+      });
     }
   };
 
@@ -509,29 +514,27 @@ export function useDeleteJambOptionModal(
 ) {
   const [deleteOption, { isLoading: isDeleting }] =
     useDeleteJambCombinationOptionMutation();
-  const [error, setError] = useState<string | null>(null);
+  const handleApiError = useApiError();
 
   const handleConfirm = async () => {
     if (!target) return;
     try {
-      setError(null);
       await deleteOption(target.id).unwrap();
       notification.success({ message: "Subject option removed." });
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-      setError(parsed.message);
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "DELETE" },
+      });
     }
   };
 
   const handleCancel = () => {
-    setError(null);
     onClose();
   };
 
   return {
-    state: { error, isDeleting },
+    state: { isDeleting },
     actions: { handleConfirm, handleCancel },
   };
 }

@@ -3,7 +3,6 @@ import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Alert, Button, Form, Input, Modal, Select, Switch, Typography } from "antd";
 import { useEffect } from "react";
 import { useTransitionStatusFormModal } from "../../hooks/useTransitionStatusModal";
@@ -31,7 +30,7 @@ export function TransitionStatusFormModal({
 }: TransitionStatusFormModalProps) {
   const token = useToken();
   const { state, actions, form } = useTransitionStatusFormModal(target, open, onClose);
-  const { formError, isLoading, isEditMode, isInUse, showCourseRegWarning } = state;
+  const { isLoading, isEditMode, isInUse, showCourseRegWarning } = state;
   const { handleSubmit, handleCancel, handleCanRegisterCoursesChange, setIsInUse } = actions;
 
   // Sync the isInUse prop (from parent UsageCheck) into the hook when the modal opens
@@ -60,8 +59,6 @@ export function TransitionStatusFormModal({
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert variant="form" error={formError} />
-
         {/* Warning: status is in use */}
         <ConditionalRenderer when={isInUse}>
           <div style={{ marginBottom: 16 }}>

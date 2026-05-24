@@ -2,7 +2,6 @@
 import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import { useToken } from "@/shared/hooks/useToken";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Button, Modal } from "antd";
 import { useDeleteSystemConfigModal } from "../../hooks/useSystemConfigModal";
 import type { SystemConfig } from "../../types/system-config";
@@ -16,7 +15,7 @@ export type DeleteSystemConfigModalProps = {
 export function DeleteSystemConfigModal({ open, target, onClose }: DeleteSystemConfigModalProps) {
   const token = useToken();
   const { state, actions } = useDeleteSystemConfigModal(target, open, onClose);
-  const { error, isLoading } = state;
+  const { isLoading } = state;
   const { handleConfirm, handleCancel } = actions;
 
   return (
@@ -38,7 +37,6 @@ export function DeleteSystemConfigModal({ open, target, onClose }: DeleteSystemC
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert variant="form" error={error} />
         <p style={{ margin: 0, color: token.colorText }}>
           Delete this configuration? Removing CREDIT_LOAD_LIMITS while students are actively
           registering will cause registration failures for affected students.
