@@ -8,10 +8,10 @@ import { LogoutOutlined, SwapOutlined, UserOutlined } from "@ant-design/icons";
 import type { ItemType } from "antd/es/menu/interface";
 import { useMemo } from "react";
 import { Link, Outlet } from "react-router-dom";
-import { useStudentRouteMenuItems } from "./student-route-menu-config";
+import { useRestrictedStudentRouteMenuItems } from "./student-route-menu-config";
 
 export default function StudentShell() {
-  const routeMenuItems = useStudentRouteMenuItems();
+  const routeMenuItems = useRestrictedStudentRouteMenuItems();
   const colors = useThemeColors();
   const { userProfile, roles, activeRole } = useAuthState();
   const dispatch = useAppDispatch();

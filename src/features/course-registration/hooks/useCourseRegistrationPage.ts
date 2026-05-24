@@ -1,6 +1,8 @@
 import { useAccessControl } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
+import { StudentPortalScope } from "@/features/access-control/student-portal-scopes";
 import useAuthState from "@/features/auth/use-auth-state";
+import { getStudentIdFromAuth } from "@/features/auth/utils/getStudentIdFromAuth";
 import { useGetStudentQuery } from "@/features/student/api/studentsApi";
 import { useIsMobile, useIsXs } from "@/hooks/useBreakpoint";
 import { useCallback, useMemo, useState } from "react";
@@ -32,8 +34,8 @@ export type StudentHeaderInfo = {
  * - Student profile fetching for header display (student users only)
  */
 export function useCourseRegistrationPage() {
-  const { activeRole, userProfile } = useAuthState();
-  const { hasPermission } = useAccessControl();
+  const { activeRole, entity } = useAuthState();
+  const { hasPermission, hasStudentPortalScope } = useAccessControl();
   const isMobile = useIsMobile();
   const isXs = useIsXs();
 
@@ -54,35 +56,35 @@ export function useCourseRegistrationPage() {
   const isStudent = userScope === "student";
 
   /**
-   * For student users, extract their student ID from the auth profile.
-   * The userProfile.id is the student entity ID when the active role scope is STUDENT.
+   * For student users, resolve the enrolled student id from auth.entity,
+   * falling back to activeRole.scopeReferenceId when entity is absent.
    */
   const studentIdFromAuth = useMemo((): number | null => {
     if (!isStudent) return null;
-    if (!userProfile?.id) return null;
-    const parsed = parseInt(userProfile.id, 10);
-    return isNaN(parsed) ? null : parsed;
-  }, [isStudent, userProfile]);
+    return getStudentIdFromAuth(entity, activeRole?.scopeReferenceId ?? null);
+  }, [isStudent, entity, activeRole?.scopeReferenceId]);
 
-  const hasPermissionToAccess = hasPermission(
-    Permission.StudentCourseRegistrationsManage,
-  );
+  const hasPermissionToAccess = isStudent
+    ? hasStudentPortalScope([StudentPortalScope.Student])
+    : hasPermission(Permission.StudentCourseRegistrationsManage);
 
   // ─── Student Profile Validation ───────────────────────────────────────────
 
   /**
-   * Validates that a student user has a complete and valid profile.
-   * Returns an error message when the profile is missing or the ID is invalid,
-   * null when the profile is valid (or the user is not a student).
+   * Validates that a student user has a resolvable student id in auth context.
+   * Returns an error message when the id is missing or invalid,
+   * null when valid (or the user is not a student).
    */
   const studentProfileError = useMemo((): string | null => {
     if (!isStudent) return null;
-    if (!userProfile) return "Student profile not found. Please log in again.";
-    if (!userProfile.id || isNaN(parseInt(userProfile.id, 10))) {
+    if (!activeRole) {
+      return "Student profile not found. Please log in again.";
+    }
+    if (studentIdFromAuth === null) {
       return "Invalid student profile. Please contact support.";
     }
     return null;
-  }, [isStudent, userProfile]);
+  }, [isStudent, activeRole, studentIdFromAuth]);
 
   // ─── Student Record Fetch (student users only) ────────────────────────────
   // Fetch the full student record to get name and program information for the
@@ -148,7 +150,7 @@ export function useCourseRegistrationPage() {
 
   // ─── Derived State ────────────────────────────────────────────────────────
 
-  /** The effective student ID — from selection (admin) or auth (student). */
+  /** The effective student ID — from auth entity (student) or selection (admin). */
   const effectiveStudentId = isStudent ? studentIdFromAuth : selectedStudentId;
 
   return {

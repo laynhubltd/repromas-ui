@@ -9,7 +9,8 @@ import { StudentSelectionPanel } from "./StudentSelectionPanel";
  *
  * Determines the layout based on user scope:
  * - Admin/Staff: Two-column layout (student selection + registration interface)
- * - Student: Single-column layout (registration interface only)
+ * - Student: Single-column layout (registration interface only; student id from
+ *   auth.entity, with scopeReferenceId fallback — see useCourseRegistrationPage)
  *
  * Responsive behaviour:
  * - Desktop (≥ 768px): side-by-side columns for admin/staff
@@ -56,7 +57,8 @@ export function CourseRegistrationPage() {
   }
 
   // ─── Student Layout (single-column) ───────────────────────────────────────
-  // Students see only the registration interface — no student selection panel.
+  // Students see only the registration interface; state.studentId is the enrolled
+  // student record id from auth.entity (not the auth profile id).
 
   if (state.isStudent) {
     return (
