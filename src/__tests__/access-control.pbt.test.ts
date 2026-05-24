@@ -19,10 +19,11 @@ import type { Permission } from "@/features/access-control/permissions";
 import { routePrivilegeMatrix } from "@/features/access-control/route-privilege-matrix";
 import { useAccessControl } from "@/features/access-control/use-access-control";
 import { authReducer } from "@/features/auth/state/auth-slice";
+import type { ApiRole } from "@/features/auth/types";
 
 // ── Store helpers ─────────────────────────────────────────────────────────────
 
-function makeAuthStore(permissions: string[], roles: { name: string; scope: string; scopeReferenceId: string | null }[] = []) {
+function makeAuthStore(permissions: string[], roles: ApiRole[] = []) {
   return configureStore({
     reducer: { auth: authReducer },
     preloadedState: {
@@ -39,6 +40,8 @@ function makeAuthStore(permissions: string[], roles: { name: string; scope: stri
         permissions,
         activeRole: null,
         roleSwitcherOpen: false,
+        tenantId: null,
+        entity: null,
       },
     },
   });

@@ -5,6 +5,7 @@ import { Tabs } from "@/components/ui-kit";
 import { AdmissionCycleTab } from "../tabs/admission-cycle";
 import { GeographyRuleTab } from "../tabs/geography-rule";
 import { JambRuleTab } from "../tabs/jamb-rule";
+import { OlevelGradePointTab } from "../tabs/olevel-grade-point";
 import { OlevelSubjectTab } from "../tabs/olevel-subject";
 import { ProgramAdmissionConfigTab } from "../tabs/program-admission-config";
 import { ProgramOlevelRuleTab } from "../tabs/program-olevel-rule";
@@ -37,6 +38,11 @@ export function AdmissionConfigPage() {
             key: "olevel-subject",
             label: "O'Level Subjects",
             children: <OlevelSubjectTab />,
+          },
+          {
+            key: "olevel-grade-point",
+            label: "O'Level Grading",
+            children: <OlevelGradePointTab />,
           },
           {
             key: "program-olevel-rule",

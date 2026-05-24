@@ -14,6 +14,9 @@ export type AdmissionCycleStatus =
   | "LIST_RELEASED"
   | "CLOSED";
 
+/** Controls public candidate self-registration UX for the cycle. */
+export type AdmissionIdentityMode = "JAMB" | "OPEN";
+
 /**
  * Admission Cycle resource — top-level container for one admission exercise.
  * All fields use camelCase matching the API response.
@@ -23,6 +26,7 @@ export type AdmissionCycle = {
   sessionId: number; // immutable after creation
   name: string;
   status: AdmissionCycleStatus; // managed via transition endpoint only
+  admissionIdentityMode: AdmissionIdentityMode;
   startDate: string | null; // ISO 8601 or null
   endDate: string | null; // ISO 8601 or null
   createdAt: string; // ISO 8601; always set
@@ -34,6 +38,7 @@ export type AdmissionCycle = {
 export type CreateAdmissionCycleRequest = {
   sessionId: number;
   name: string;
+  admissionIdentityMode?: AdmissionIdentityMode;
   startDate?: string | null;
   endDate?: string | null;
 };
@@ -44,6 +49,7 @@ export type CreateAdmissionCycleRequest = {
 export type UpdateAdmissionCycleRequest = {
   id: number;
   name: string;
+  admissionIdentityMode?: AdmissionIdentityMode;
   startDate?: string | null;
   endDate?: string | null;
 };

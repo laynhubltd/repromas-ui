@@ -17,18 +17,11 @@ import {
 import { Badge, Button, Flex, Input, Popover, Select, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useRolesPanel } from "../../hooks/useRolesPanel";
-import type { Role, RoleScope } from "../../types/rbac";
+import { ROLE_SCOPE_OPTIONS, type Role, type RoleScope } from "../../types/rbac";
 import { DeleteRoleModal } from "../modals/DeleteRoleModal";
 import { RoleFormModal } from "../modals/RoleFormModal";
 import { ScopeBadge } from "../ScopeBadge";
 import { RolePermissionsDrawer } from "./RolePermissionsDrawer";
-
-const SCOPE_FILTER_OPTIONS = [
-  { value: "GLOBAL", label: "Global" },
-  { value: "FACULTY", label: "Faculty" },
-  { value: "DEPARTMENT", label: "Department" },
-  { value: "PROGRAM", label: "Program" },
-];
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, {
@@ -157,7 +150,7 @@ export function RolesPanel() {
           placeholder="All scopes"
           value={scopeFilter}
           onChange={(val) => handleScopeFilterChange(val as RoleScope | undefined)}
-          options={SCOPE_FILTER_OPTIONS}
+          options={ROLE_SCOPE_OPTIONS}
           style={{ width: "100%" }}
         />
       </div>
@@ -199,7 +192,7 @@ export function RolesPanel() {
               placeholder="Filter by scope"
               value={scopeFilter}
               onChange={(val) => handleScopeFilterChange(val as RoleScope | undefined)}
-              options={SCOPE_FILTER_OPTIONS}
+              options={ROLE_SCOPE_OPTIONS}
               style={{ width: 180 }}
             />
           )}

@@ -9,7 +9,9 @@ export const GROUP_BY_ITEMS_PER_PAGE = 100;
 
 // ─── Pure helper functions (exported for property-based testing) ──────────────
 
-export function computeScopeFlags(role: { scope: string; scopeReferenceId: string | null } | null | undefined) {
+export function computeScopeFlags(
+  role: { scope: string; scopeReferenceId?: string | number | null } | null | undefined,
+) {
   const flag = role?.scope === "GLOBAL" || role?.scope === "FACULTY";
   return {
     showDepartmentColumn: flag,

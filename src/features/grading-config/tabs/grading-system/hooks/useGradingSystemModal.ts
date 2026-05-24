@@ -34,8 +34,8 @@ type GradingSystemFormValues = {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 /**
- * Strips immutable fields (scope, referenceId, curriculumVersionId) from a
- * GradingSystem to produce the PUT payload shape.
+ * Strips immutable fields (scope, referenceId) from a GradingSystem to produce
+ * the PUT payload shape.
  *
  * Exported as a named export so it can be tested independently (task 12.4 PBT).
  */
@@ -48,6 +48,7 @@ export function buildUpdatePayload(
     isGpaBased: system.isGpaBased,
     maxCgpa: system.maxCgpa,
     levelId: system.levelId,
+    curriculumVersionId: system.curriculumVersionId,
   };
 }
 
@@ -129,13 +130,14 @@ export function useGradingSystemFormModal(
       });
 
       if (isEditMode) {
-        // PUT: only mutable fields — strip scope, referenceId, curriculumVersionId
+        // PUT: mutable fields — scope and referenceId remain immutable
         await updateGradingSystem({
           id: target.id,
           name: values.name,
           isGpaBased: values.isGpaBased,
           maxCgpa: values.maxCgpa,
           levelId: values.levelId,
+          curriculumVersionId: values.curriculumVersionId,
         }).unwrap();
         notification.success({
           message: "Grading system updated successfully.",
@@ -149,7 +151,7 @@ export function useGradingSystemFormModal(
           scope: values.scope,
           referenceId: values.referenceId,
           levelId: values.levelId,
-          curriculumVersionId: values.curriculumVersionId,
+          curriculumVersionId: values.curriculumVersionId!,
         }).unwrap();
         notification.success({
           message: "Grading system created successfully.",

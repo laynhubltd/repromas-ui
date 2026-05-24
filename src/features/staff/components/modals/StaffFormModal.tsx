@@ -29,6 +29,7 @@ const SCOPE_LABEL: Record<string, string> = {
   FACULTY: "Faculty",
   DEPARTMENT: "Department",
   PROGRAM: "Program",
+  CANDIDATE: "Candidate",
 };
 
 const SCOPE_COLOR: Record<string, string> = {
@@ -36,6 +37,7 @@ const SCOPE_COLOR: Record<string, string> = {
   FACULTY: "green",
   DEPARTMENT: "orange",
   PROGRAM: "purple",
+  CANDIDATE: "cyan",
 };
 
 export function StaffFormModal({ open, target, onClose }: StaffFormModalProps) {
@@ -89,7 +91,8 @@ export function StaffFormModal({ open, target, onClose }: StaffFormModalProps) {
     !isEditMode &&
     selectedRoleId != null &&
     selectedScope != null &&
-    selectedScope !== "GLOBAL";
+    selectedScope !== "GLOBAL" &&
+    selectedScope !== "CANDIDATE";
 
   return (
     <Modal

@@ -4,20 +4,15 @@
  */
 
 import { Permission } from "@/features/access-control/permissions";
-import type {
-    ApiRole,
-    LoginRequest,
-    LoginResponse,
-    SimpleUserProfile,
-    UserProfile,
-} from "./types";
+import type { ApiRole, AuthProfile, LoginRequest, LoginResponse } from "./types";
 
 const MOCK_JWT_EXP = 9999999999; // Far future so token is never “expired”
 
 function base64UrlEncode(input: string): string {
-  const base64 = typeof btoa !== "undefined"
-    ? btoa(input)
-    : Buffer.from(input, "utf8").toString("base64");
+  const base64 =
+    typeof btoa !== "undefined"
+      ? btoa(input)
+      : Buffer.from(input, "utf8").toString("base64");
   return base64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
@@ -25,7 +20,11 @@ function base64UrlEncode(input: string): string {
 function createMockJwt(sub = "mock-user"): string {
   const header = base64UrlEncode(JSON.stringify({ alg: "HS256", typ: "JWT" }));
   const payload = base64UrlEncode(
-    JSON.stringify({ sub, exp: MOCK_JWT_EXP, iat: Math.floor(Date.now() / 1000) }),
+    JSON.stringify({
+      sub,
+      exp: MOCK_JWT_EXP,
+      iat: Math.floor(Date.now() / 1000),
+    }),
   );
   const signature = base64UrlEncode("mock-signature");
   return `${header}.${payload}.${signature}`;
@@ -35,6 +34,7 @@ const MOCK_ROLE: ApiRole = {
   name: "Admin",
   scope: "GLOBAL",
   scopeReferenceId: null,
+  entity: null,
 };
 
 const MOCK_PERMISSIONS: string[] = [
@@ -43,30 +43,27 @@ const MOCK_PERMISSIONS: string[] = [
   Permission.SystemConfigsList,
 ];
 
-const MOCK_PROFILE: SimpleUserProfile = {
-  profileId: "mock-profile-1",
-  role: { name: "Admin", description: "Mock admin for development" },
-  company: { id: "mock-company-1", name: "Repromas Demo", type: "school" },
-};
-
 /** Returns mock login response for any email/password when mock auth is enabled. */
 export function getMockLoginResponse(credentials: LoginRequest): LoginResponse {
   const token = createMockJwt(credentials.email);
-  const user: UserProfile = {
-    id: "mock-user-id",
-    email: credentials.email,
+  const profile: AuthProfile = {
+    id: 1,
+    userId: 1,
+    tenantId: 1,
     firstName: "Mock",
     lastName: "User",
-    role: MOCK_ROLE,
-    company: { id: "mock-company-1", name: "Repromas Demo", type: "school" },
+    phoneNumber: null,
+    dateOfBirth: null,
+    score: 0,
+    metadata: null,
+    email: credentials.email,
   };
   return {
     token,
     refresh_token: `mock-refresh-${credentials.email}-${Date.now()}`,
+    profile,
     roles: [MOCK_ROLE],
     permissions: MOCK_PERMISSIONS,
-    user,
-    profiles: [MOCK_PROFILE],
   };
 }
 

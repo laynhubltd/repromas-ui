@@ -1,3 +1,4 @@
+import StudentShell from "@/app/routing/student-shell";
 import withAuthGuard from "@/features/auth/with-auth-guard";
 import { lazy } from "react";
 import { Route } from "react-router-dom";
@@ -12,28 +13,21 @@ const CourseRegistrationPage = lazy(() =>
   })),
 );
 
-function StudentShell() {
-  return <StudentHomePage />;
-}
-
 const GuardedStudentShell = withAuthGuard({
   Component: StudentShell,
-  fallback: null,
-});
-
-const GuardedCourseRegistration = withAuthGuard({
-  Component: CourseRegistrationPage,
   fallback: null,
 });
 
 export function getStudentRouteEntries() {
   return (
     <>
-      <Route path="/student" element={<GuardedStudentShell />} />
-      <Route
-        path="/course-registration"
-        element={<GuardedCourseRegistration />}
-      />
+      <Route path="/" element={<GuardedStudentShell />}>
+        <Route path="student" element={<StudentHomePage />} />
+        <Route
+          path="course-registration"
+          element={<CourseRegistrationPage />}
+        />
+      </Route>
     </>
   );
 }

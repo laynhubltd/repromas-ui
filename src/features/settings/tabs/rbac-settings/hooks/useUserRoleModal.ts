@@ -9,6 +9,7 @@ import {
     useRevokeRoleFromUserMutation,
 } from "../api/rbacSettingsApi";
 import type { Role, RoleScope, UserRole } from "../types/rbac";
+import { roleScopeOmitsReference } from "../types/rbac";
 
 // ─── Assign Role to User ──────────────────────────────────────────────────────
 
@@ -59,7 +60,10 @@ export function useUserRoleFormModal(
       await assignRole({
         userId,
         roleId: values.roleId,
-        scopeReferenceId: selectedScope === "GLOBAL" ? null : (values.scopeReferenceId ?? null),
+        scopeReferenceId:
+          selectedScope && roleScopeOmitsReference(selectedScope)
+            ? null
+            : (values.scopeReferenceId ?? null),
       }).unwrap();
 
       notification.success({ message: "Role assigned successfully." });

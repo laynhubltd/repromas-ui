@@ -18,20 +18,35 @@ import { resolveModuleRole } from "@/app/routing/host-router";
 import { useAccessControl } from "@/features/access-control/use-access-control";
 import { authCleared, roleSelected, userLoggedIn, userLoggedOut } from "@/features/auth/events";
 import { authReducer, type AuthState } from "@/features/auth/state/auth-slice";
-import type { ApiRole } from "@/features/auth/types";
+import type { ApiRole, AuthProfile } from "@/features/auth/types";
 
 // ── Shared arbitraries & helpers ──────────────────────────────────────────────
+
+const sampleProfile: AuthProfile = {
+  id: 1,
+  userId: 1,
+  tenantId: 1,
+  firstName: null,
+  lastName: null,
+  phoneNumber: null,
+  dateOfBirth: null,
+  score: 0,
+  metadata: null,
+  email: "test@example.com",
+};
 
 const apiRoleArb = fc.record({
   name: fc.string(),
   scope: fc.string(),
-  scopeReferenceId: fc.option(fc.string()),
+  scopeReferenceId: fc.option(fc.integer(), { nil: null }),
+  entity: fc.constant(null),
 });
 
 function makeLoginResponse(overrides: { roles?: ApiRole[]; permissions?: string[] } = {}) {
   return {
     token: "test-token",
     refresh_token: "test-refresh",
+    profile: sampleProfile,
     roles: overrides.roles ?? [],
     permissions: overrides.permissions ?? [],
   };

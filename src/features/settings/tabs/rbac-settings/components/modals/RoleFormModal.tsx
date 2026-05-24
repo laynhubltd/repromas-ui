@@ -5,15 +5,8 @@ import { useToken } from "@/shared/hooks/useToken";
 import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Button, Form, Input, Modal, Select } from "antd";
 import { useRoleFormModal } from "../../hooks/useRoleModal";
-import type { Role } from "../../types/rbac";
+import { ROLE_SCOPE_OPTIONS, type Role } from "../../types/rbac";
 import { roleDescriptionRules, roleNameRules } from "../../utils/validators";
-
-const SCOPE_OPTIONS = [
-  { value: "GLOBAL", label: "Global" },
-  { value: "FACULTY", label: "Faculty" },
-  { value: "DEPARTMENT", label: "Department" },
-  { value: "PROGRAM", label: "Program" },
-];
 
 export type RoleFormModalProps = {
   open: boolean;
@@ -72,7 +65,7 @@ export function RoleFormModal({ open, target, onClose }: RoleFormModalProps) {
             }
             initialValue="GLOBAL"
           >
-            <Select options={SCOPE_OPTIONS} style={{ width: "100%" }} />
+            <Select options={ROLE_SCOPE_OPTIONS} style={{ width: "100%" }} />
           </Form.Item>
 
           {/* Description field */}

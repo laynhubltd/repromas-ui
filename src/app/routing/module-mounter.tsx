@@ -26,7 +26,11 @@ type ModuleRole = "admin" | "student";
 
 export type ModuleMounterProps = {
   auth: ReturnType<typeof useAuthState>;
-  host: { kind: "apex" | "tenant" | "unknown"; hostname: string; tenantSlug: string | null };
+  host: {
+    kind: "apex" | "tenant" | "unknown";
+    hostname: string;
+    tenantSlug: string | null;
+  };
   tenantSlug: string;
   tenantBootstrap: ReturnType<typeof useValidateTenantQuery>;
   registry: ModuleRegistry;
@@ -39,6 +43,8 @@ export type ModuleMounterProps = {
  */
 const SCOPE_TO_ROLE: Record<string, ModuleRole> = {
   STUDENT: "student",
+  // Temporary: route admission candidates to student module until a dedicated portal exists.
+  CANDIDATE: "student",
   GLOBAL: "admin",
   FACULTY: "admin",
   DEPARTMENT: "admin",
@@ -46,14 +52,18 @@ const SCOPE_TO_ROLE: Record<string, ModuleRole> = {
   LECTURER: "admin",
 };
 
-export function resolveModuleRole(activeRole: ApiRole | null): ModuleRole | null {
+export function resolveModuleRole(
+  activeRole: ApiRole | null,
+): ModuleRole | null {
   if (!activeRole) return null;
   return SCOPE_TO_ROLE[activeRole.scope.trim().toUpperCase()] ?? null;
 }
 
 // ─── Guard predicates (individually testable) ─────────────────────────────────
 
-function isTenantBootstrapping(b: ReturnType<typeof useValidateTenantQuery>): boolean {
+function isTenantBootstrapping(
+  b: ReturnType<typeof useValidateTenantQuery>,
+): boolean {
   return b.isLoading || b.isFetching;
 }
 
@@ -160,7 +170,8 @@ export function moduleMounter({
   }
 
   // 10. Authenticated module routes
-  const defaultPath = moduleRole === "student" ? "/student" : appPaths.dashboard;
+  const defaultPath =
+    moduleRole === "student" ? appPaths.studentHome : appPaths.dashboard;
   const moduleRoutes =
     moduleRole === "admin"
       ? registry.admin.getRouteEntries()
@@ -169,9 +180,18 @@ export function moduleMounter({
   return withRootShell(
     <>
       <Route index element={<Navigate to={defaultPath} replace />} />
-      <Route path={appPaths.login} element={<Navigate to={defaultPath} replace />} />
-      <Route path={appPaths.signUp} element={<Navigate to={defaultPath} replace />} />
-      <Route path={appPaths.forgotPassword} element={<Navigate to={defaultPath} replace />} />
+      <Route
+        path={appPaths.login}
+        element={<Navigate to={defaultPath} replace />}
+      />
+      <Route
+        path={appPaths.signUp}
+        element={<Navigate to={defaultPath} replace />}
+      />
+      <Route
+        path={appPaths.forgotPassword}
+        element={<Navigate to={defaultPath} replace />}
+      />
       <Route path={appPaths.unauthorized} element={<Unauthorized />} />
       {moduleRoutes}
       <Route path="*" element={<Navigate to={defaultPath} replace />} />

@@ -8,7 +8,9 @@ function ThemeVars() {
   useEffect(() => {
     const root = document.documentElement;
     root.style.setProperty("--color-primary", primaryColor);
-    root.style.setProperty("--color-primary-dark", darkenHex(primaryColor, 0.18));
+    const primarySecondary = darkenHex(primaryColor, 0.18);
+    root.style.setProperty("--color-primary-secondary", primarySecondary);
+    root.style.setProperty("--color-primary-dark", primarySecondary);
     root.style.setProperty("--color-primary-darker", darkenHex(primaryColor, 0.32));
     root.style.setProperty("--color-primary-light", lightenHex(primaryColor, 0.28));
     root.style.setProperty("--color-primary-lighter", lightenHex(primaryColor, 0.5));

@@ -23,6 +23,7 @@ import {
 import { useGradingSystemFormModal } from "../hooks/useGradingSystemModal";
 import type { GradingSystem } from "../types/grading-system";
 import {
+    curriculumVersionIdRules,
     maxCgpaRules,
     nameRules,
     referenceIdRules,
@@ -77,10 +78,7 @@ export function GradingSystemFormModal({
     { skip: !open },
   );
   const { data: curriculumVersionsData, isLoading: cvLoading } =
-    useGetCurriculumVersionsQuery(
-      { itemsPerPage: 200 },
-      { skip: !open || isEditMode },
-    );
+    useGetCurriculumVersionsQuery({ itemsPerPage: 200 }, { skip: !open });
 
   const faculties = facultiesData?.member ?? [];
   const departments = departmentsData?.member ?? [];
@@ -274,40 +272,44 @@ export function GradingSystemFormModal({
             />
           </Form.Item>
 
-          {/* curriculumVersionId — optional, editable in create mode, read-only in edit mode */}
-          <ConditionalRenderer when={!isEditMode}>
-            <Form.Item
-              name="curriculumVersionId"
-              label="Curriculum Version (optional)"
-              style={{ marginBottom: 0 }}
-            >
-              <Select
-                placeholder={
-                  cvLoading
-                    ? "Loading..."
-                    : "Select curriculum version (optional)"
-                }
-                disabled={cvLoading}
-                loading={cvLoading}
-                allowClear
-                showSearch
-                optionFilterProp="label"
-                style={{ height: 40 }}
-                options={curriculumVersions.map((cv) => ({
-                  value: cv.id,
-                  label: cv.name,
-                }))}
-              />
-            </Form.Item>
-          </ConditionalRenderer>
-
-          <ConditionalRenderer when={isEditMode && target !== null}>
-            <Form.Item label="Curriculum Version" style={{ marginBottom: 0 }}>
-              <Typography.Text>
-                {target?.curriculumVersion?.name ?? "—"}
-              </Typography.Text>
-            </Form.Item>
-          </ConditionalRenderer>
+          {/* curriculumVersionId — required on create, optional on edit */}
+          <Form.Item
+            name="curriculumVersionId"
+            label={
+              isEditMode ? (
+                "Curriculum Version (optional)"
+              ) : (
+                <span>
+                  Curriculum Version{" "}
+                  <span style={{ color: token.colorError, fontWeight: 700 }}>
+                    *
+                  </span>
+                </span>
+              )
+            }
+            rules={isEditMode ? undefined : curriculumVersionIdRules}
+            style={{ marginBottom: 0 }}
+          >
+            <Select
+              placeholder={
+                cvLoading
+                  ? "Loading..."
+                  : isEditMode
+                    ? "Select curriculum version (optional)"
+                    : "Select curriculum version"
+              }
+              disabled={cvLoading}
+              loading={cvLoading}
+              allowClear={isEditMode}
+              showSearch
+              optionFilterProp="label"
+              style={{ height: 40 }}
+              options={curriculumVersions.map((cv) => ({
+                value: cv.id,
+                label: cv.name,
+              }))}
+            />
+          </Form.Item>
         </Form>
       </div>
 

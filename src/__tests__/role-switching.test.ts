@@ -82,8 +82,18 @@ vi.mock("@/app/routing/module-routes/student", () => ({ getStudentRouteEntries: 
 
 // ── Shared fixtures ───────────────────────────────────────────────────────────
 
-const adminRole: ApiRole = { name: "Admin", scope: "GLOBAL", scopeReferenceId: null };
-const studentRole: ApiRole = { name: "Student", scope: "STUDENT", scopeReferenceId: null };
+const adminRole: ApiRole = {
+  name: "Admin",
+  scope: "GLOBAL",
+  scopeReferenceId: null,
+  entity: null,
+};
+const studentRole: ApiRole = {
+  name: "Student",
+  scope: "STUDENT",
+  scopeReferenceId: null,
+  entity: null,
+};
 
 const baseAuthState: AuthState = {
   userProfile: null,
@@ -98,6 +108,8 @@ const baseAuthState: AuthState = {
   permissions: [],
   activeRole: null,
   roleSwitcherOpen: false,
+  tenantId: null,
+  entity: null,
 };
 
 function makeStore(authOverrides: Partial<AuthState> = {}) {

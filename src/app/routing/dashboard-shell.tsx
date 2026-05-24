@@ -15,7 +15,7 @@ import {
 export default function DashboardShell() {
   const restrictedItems = useRestrictedRouteMenuItem();
   const restrictedBottomItems = useRestrictedBottomMenuItem();
-  const { userProfile, roles } = useAuthState();
+  const { userProfile, roles, activeRole } = useAuthState();
   const dispatch = useAppDispatch();
   const [logout] = useLogoutMutation();
 
@@ -88,6 +88,7 @@ export default function DashboardShell() {
       bottomMenuItems={bottomMenuItems}
       userMenuItems={userMenuItems}
       userDisplayName={displayName}
+      userRoleLabel={activeRole?.name}
     >
       <Outlet />
     </MainLayout>

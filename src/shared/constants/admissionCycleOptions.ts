@@ -3,7 +3,10 @@
  * Requirements: 14.1–14.3
  */
 
-import type { AdmissionCycleStatus } from "@/features/admission-config/tabs/admission-cycle/types/admission-cycle";
+import type {
+  AdmissionCycleStatus,
+  AdmissionIdentityMode,
+} from "@/features/admission-config/tabs/admission-cycle/types/admission-cycle";
 
 /**
  * Status options for admission cycle status badges and filter selects.
@@ -20,6 +23,36 @@ export const ADMISSION_CYCLE_STATUS_OPTIONS: {
   { value: "LIST_RELEASED",    label: "List Released",    color: "purple" },
   { value: "CLOSED",           label: "Closed",           color: "default" },
 ];
+
+export const ADMISSION_CYCLE_IDENTITY_MODE_OPTIONS: {
+  value: AdmissionIdentityMode;
+  label: string;
+  helper: string;
+  color: string;
+}[] = [
+  {
+    value: "JAMB",
+    label: "JAMB / CAPS",
+    helper:
+      "Candidates verify JAMB registration; upload CAPS before opening applications.",
+    color: "blue",
+  },
+  {
+    value: "OPEN",
+    label: "Open admission",
+    helper:
+      "Candidates register directly with personal details; no JAMB lookup.",
+    color: "purple",
+  },
+];
+
+export const identityModeLabelByValue = Object.fromEntries(
+  ADMISSION_CYCLE_IDENTITY_MODE_OPTIONS.map((opt) => [opt.value, opt.label]),
+) as Record<AdmissionIdentityMode, string>;
+
+export const identityModeColorByValue = Object.fromEntries(
+  ADMISSION_CYCLE_IDENTITY_MODE_OPTIONS.map((opt) => [opt.value, opt.color]),
+) as Record<AdmissionIdentityMode, string>;
 
 /**
  * Maps each non-CLOSED status to its next transition status and the button label

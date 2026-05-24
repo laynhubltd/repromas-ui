@@ -20,6 +20,12 @@ export type MainLayoutProps = {
   menuItems: MenuProps["items"];
   /** Optional items fixed at bottom of sidebar (e.g. Settings). Rendered below main nav with a config-style label. */
   bottomMenuItems?: MenuProps["items"];
+  /** Sidebar background color. Defaults to theme colorPrimary. */
+  sidebarBackground?: string;
+  /** Label above bottom menu section. Defaults to "CONFIGURATION". Pass empty string to hide. */
+  bottomSectionLabel?: string;
   userMenuItems: MenuProps["items"];
   userDisplayName: string;
+  /** Active role name shown under the display name in the header. */
+  userRoleLabel?: string;
 };

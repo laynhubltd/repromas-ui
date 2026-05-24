@@ -3,7 +3,22 @@ import { Permission } from "@/features/access-control/permissions";
 import { useToken } from "@/shared/hooks/useToken";
 import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
-import { Button, DatePicker, Form, Input, Modal, Select, Typography } from "antd";
+import {
+  ADMISSION_CYCLE_IDENTITY_MODE_OPTIONS,
+  identityModeColorByValue,
+  identityModeLabelByValue,
+} from "@/shared/constants/admissionCycleOptions";
+import {
+  Button,
+  DatePicker,
+  Form,
+  Input,
+  Modal,
+  Radio,
+  Select,
+  Tag,
+  Typography,
+} from "antd";
 import dayjs from "dayjs";
 import { useAdmissionCycleFormModal } from "../../hooks/useAdmissionCycleModal";
 import type {
@@ -34,7 +49,14 @@ export function AdmissionCycleFormModal({
   const token = useToken();
 
   const {
-    state: { isEditMode, formError, isSubmitting, sessionOptions },
+    state: {
+      isEditMode,
+      formError,
+      isSubmitting,
+      sessionOptions,
+      canEditIdentityMode,
+      identityMode,
+    },
     actions: { handleSubmit, handleCancel, handleSessionChange },
     form,
   } = useAdmissionCycleFormModal(target, open, onClose, sessions, usedSessionIds);
@@ -125,6 +147,52 @@ export function AdmissionCycleFormModal({
               style={{ height: 40 }}
             />
           </Form.Item>
+
+          <ConditionalRenderer when={canEditIdentityMode}>
+            <Form.Item
+              name="admissionIdentityMode"
+              label={
+                <span>
+                  Identity mode{" "}
+                  <span style={{ color: token.colorError, fontWeight: 700 }}>
+                    *
+                  </span>
+                </span>
+              }
+              rules={[{ required: true, message: "Select an identity mode." }]}
+            >
+              <Radio.Group style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {ADMISSION_CYCLE_IDENTITY_MODE_OPTIONS.map((opt) => (
+                  <Radio key={opt.value} value={opt.value}>
+                    <Typography.Text strong>{opt.label}</Typography.Text>
+                    <Typography.Text
+                      type="secondary"
+                      style={{ display: "block", fontSize: token.fontSizeSM }}
+                    >
+                      {opt.helper}
+                    </Typography.Text>
+                  </Radio>
+                ))}
+              </Radio.Group>
+            </Form.Item>
+          </ConditionalRenderer>
+
+          <ConditionalRenderer when={!canEditIdentityMode}>
+            <Form.Item name="admissionIdentityMode" hidden>
+              <Input />
+            </Form.Item>
+            <Form.Item label="Identity mode">
+              <Tag color={identityModeColorByValue[identityMode] ?? "default"}>
+                {identityModeLabelByValue[identityMode] ?? identityMode}
+              </Tag>
+              <Typography.Text
+                type="secondary"
+                style={{ display: "block", fontSize: token.fontSizeSM, marginTop: 8 }}
+              >
+                Identity mode is locked after applications open.
+              </Typography.Text>
+            </Form.Item>
+          </ConditionalRenderer>
 
           <Form.Item
             name="startDate"

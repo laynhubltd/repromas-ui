@@ -5,6 +5,8 @@ import { useToken } from "@/shared/hooks/useToken";
 import {
   ADMISSION_CYCLE_ITEMS_PER_PAGE,
   ADMISSION_CYCLE_STATUS_OPTIONS,
+  identityModeColorByValue,
+  identityModeLabelByValue,
 } from "@/shared/constants/admissionCycleOptions";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
 import { DataLoader } from "@/shared/ui/DataLoader";
@@ -33,6 +35,7 @@ import type { ColumnsType } from "antd/es/table";
 import { useState } from "react";
 import { useAdmissionCycleTab } from "../hooks/useAdmissionCycleTab";
 import type { AdmissionCycleRow } from "../hooks/useAdmissionCycleTab";
+import type { AdmissionIdentityMode } from "../types/admission-cycle";
 import { AdmissionCycleRowActions } from "./AdmissionCycleStatusAction";
 import { AdmissionCycleFormModal } from "./modals/AdmissionCycleFormModal";
 import { DeleteAdmissionCycleModal } from "./modals/DeleteAdmissionCycleModal";
@@ -135,6 +138,17 @@ export function AdmissionCycleTab() {
       ),
     },
     {
+      title: "Identity mode",
+      dataIndex: "admissionIdentityMode",
+      key: "admissionIdentityMode",
+      width: 160,
+      render: (mode: AdmissionIdentityMode) => (
+        <Tag color={identityModeColorByValue[mode] ?? "default"}>
+          {identityModeLabelByValue[mode] ?? mode}
+        </Tag>
+      ),
+    },
+    {
       title: "Start",
       dataIndex: "startDate",
       key: "startDate",
@@ -224,7 +238,7 @@ export function AdmissionCycleTab() {
         intent="info"
         collapsible
         title="Admission Cycles"
-        body="An admission cycle is the top-level container for one admission exercise per academic session. Each session allows at most one cycle. Cycles start in Pre-processing and advance forward only — open applications, run screening, release lists, then close. Status changes use dedicated transition actions, not the edit form."
+        body="An admission cycle is the top-level container for one admission exercise per academic session. Each session allows at most one cycle. During pre-processing, choose JAMB/CAPS or open admission — this drives the public candidate sign-up flow. Identity mode cannot be changed after applications open. Cycles start in Pre-processing and advance forward only — open applications, run screening, release lists, then close. Status changes use dedicated transition actions, not the edit form."
       />
 
       <Row gutter={[16, 16]}>

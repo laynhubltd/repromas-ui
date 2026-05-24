@@ -1,23 +1,24 @@
 import { isTokenExpired } from "@/shared/utils/token-util";
 import {
-    createSlice,
-    type AnyAction,
-    type PayloadAction,
+  createSlice,
+  type AnyAction,
+  type PayloadAction,
 } from "@reduxjs/toolkit";
 import { REHYDRATE } from "redux-persist";
 import {
-    authCleared,
-    profileFetched,
-    roleSelected,
-    tokenRefreshed,
-    userLoggedIn,
-    userLoggedOut,
+  authCleared,
+  profileFetched,
+  roleSelected,
+  tokenRefreshed,
+  userLoggedIn,
+  userLoggedOut,
 } from "../events";
+import { mapAuthProfileToUserProfile } from "../utils/mapLoginResponse";
 import type {
-    ApiRole,
-    SimpleUserProfile,
-    UserProfile,
-    UserRole,
+  ApiRole,
+  SimpleUserProfile,
+  UserProfile,
+  UserRole,
 } from "../types";
 
 export interface AuthState {
@@ -33,6 +34,8 @@ export interface AuthState {
   permissions: string[];
   activeRole: ApiRole | null;
   roleSwitcherOpen: boolean;
+  tenantId: number | null;
+  entity: unknown | null;
 }
 
 const initialState: AuthState = {
@@ -48,6 +51,8 @@ const initialState: AuthState = {
   permissions: [],
   activeRole: null,
   roleSwitcherOpen: false,
+  tenantId: null,
+  entity: null,
 };
 
 const authSlice = createSlice({
@@ -65,6 +70,8 @@ const authSlice = createSlice({
       state.bootstrapComplete = action.payload.bootstrapComplete;
       state.roles = action.payload.roles ?? [];
       state.permissions = action.payload.permissions ?? [];
+      state.tenantId = action.payload.tenantId ?? null;
+      state.entity = action.payload.entity ?? null;
     },
     setUser: (state, action: PayloadAction<UserProfile>) => {
       state.userProfile = action.payload;
@@ -99,25 +106,34 @@ const authSlice = createSlice({
         const roles = action.payload.roles ?? [];
         state.roles = roles;
         state.permissions = action.payload.permissions ?? [];
-        state.userProfile = action.payload.user ?? null;
-        state.profiles = action.payload.profiles ?? [];
+        state.userProfile = mapAuthProfileToUserProfile(action.payload.profile);
+        state.tenantId = action.payload.profile.tenantId;
+        state.profiles = [];
         state.isAuthenticated = true;
-        state.bootstrapComplete = false;
+        state.bootstrapComplete = true;
 
         if (roles.length === 1) {
           state.activeRole = roles[0];
           state.roleSwitcherOpen = false;
+          state.entity = roles[0]?.entity ?? null;
         } else if (roles.length > 1) {
           state.activeRole = null;
           state.roleSwitcherOpen = true;
+          state.entity = null;
         } else {
           state.activeRole = null;
           state.roleSwitcherOpen = false;
+          state.entity = null;
         }
 
-        // backward compat: keep currentRole in sync
         const first = roles[0];
-        state.currentRole = first ? { name: first.name } : null;
+        state.currentRole = first
+          ? {
+              name: first.name,
+              scope: first.scope,
+              scopeReferenceId: first.scopeReferenceId,
+            }
+          : null;
       })
       .addCase(profileFetched, (state, action) => {
         state.userProfile = action.payload;
@@ -132,18 +148,14 @@ const authSlice = createSlice({
       .addCase(roleSelected, (state, action) => {
         state.activeRole = action.payload;
         state.roleSwitcherOpen = false;
-        state.currentRole = { name: action.payload.name };
+        state.entity = action.payload.entity ?? null;
+        state.currentRole = {
+          name: action.payload.name,
+          scope: action.payload.scope,
+          scopeReferenceId: action.payload.scopeReferenceId,
+        };
       })
       .addCase(REHYDRATE, (state, action: AnyAction) => {
-        // Guard: if the current in-memory state already has a valid (non-expired)
-        // token, do NOT overwrite it with the persisted payload.
-        //
-        // Why this matters: after a successful login, userLoggedIn sets the token
-        // in Redux memory and the listener calls persistor.flush() (async). If
-        // REHYDRATE fires before flush() completes, action.payload.auth still
-        // contains the OLD pre-login state (no token). Overwriting would wipe the
-        // freshly issued token → authCleared → redirect back to login → the
-        // "flash dashboard then back to login" bug.
         if (state.token && !isTokenExpired(state.token)) {
           return {
             ...state,
@@ -152,7 +164,6 @@ const authSlice = createSlice({
           };
         }
 
-        // Normal rehydration path: restore persisted auth state.
         if (action.payload?.auth) {
           return {
             ...action.payload.auth,

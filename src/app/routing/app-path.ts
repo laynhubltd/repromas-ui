@@ -1,6 +1,7 @@
 export const appPaths = {
   login: "/auth/login",
   signUp: "/auth/signup",
+  candidateSignUp: "/auth/candidate-signup",
   forgotPassword: "/auth/forgot-password",
   unauthorized: "/unauthorized",
   dashboard: "/dashboard",
@@ -11,10 +12,12 @@ export const appPaths = {
   staff: "/staff",
   students: "/students",
   roleSelection: "/role-selection",
+  studentHome: "/student",
   courseRegistration: "/course-registration",
   gradingConfig: "/grading-config",
   admissionConfig: "/admission-config",
   admissionCandidates: "/admission-candidates",
   assessment: "/assessment",
+  billing: "/billing",
   // Add other app paths here
 };

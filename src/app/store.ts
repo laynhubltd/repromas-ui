@@ -1,4 +1,5 @@
 import { authApi } from "@/features/auth/api/auth-api";
+import "@/features/auth/candidate-signup/api/candidateSignupApi";
 import { authListenerMiddleware } from "@/features/auth/state/auth-listener";
 import { combineReducers, configureStore } from "@reduxjs/toolkit";
 import { setupListeners } from "@reduxjs/toolkit/query";

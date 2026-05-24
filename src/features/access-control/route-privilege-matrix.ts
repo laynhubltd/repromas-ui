@@ -10,4 +10,5 @@ export const routePrivilegeMatrix: Record<string, Permission[]> = {
   [appPaths.admissionConfig]: [Permission.SystemConfigsList],
   [appPaths.admissionCandidates]: [Permission.AdmissionCandidatesList],
   [appPaths.courseRegistration]: [Permission.StudentCourseRegistrationsManage],
+  [appPaths.billing]: [Permission.BillingBillableEventsList],
 };

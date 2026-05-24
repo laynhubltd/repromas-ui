@@ -23,11 +23,13 @@ import type {
   AcademicSessionOption,
   AdmissionCycle,
   AdmissionCycleStatus,
+  AdmissionIdentityMode,
 } from "../types/admission-cycle";
 
 type AdmissionCycleFormValues = {
   sessionId?: number;
   name: string;
+  admissionIdentityMode: AdmissionIdentityMode;
   startDate?: Dayjs | null;
   endDate?: Dayjs | null;
 };
@@ -79,11 +81,13 @@ export function useAdmissionCycleFormModal(
       form.setFieldsValue({
         sessionId: target.sessionId,
         name: target.name,
+        admissionIdentityMode: target.admissionIdentityMode ?? "JAMB",
         startDate: target.startDate ? dayjs(target.startDate) : null,
         endDate: target.endDate ? dayjs(target.endDate) : null,
       });
     } else {
       form.resetFields();
+      form.setFieldsValue({ admissionIdentityMode: "JAMB" });
     }
   }, [open, isEditMode, target, form]);
 
@@ -115,11 +119,14 @@ export function useAdmissionCycleFormModal(
       const name = values.name.trim();
       const startDate = toIsoDateTime(values.startDate);
       const endDate = toIsoDateTime(values.endDate);
+      const admissionIdentityMode =
+        values.admissionIdentityMode ?? target?.admissionIdentityMode ?? "JAMB";
 
       if (isEditMode && target) {
         await updateAdmissionCycle({
           id: target.id,
           name,
+          admissionIdentityMode,
           startDate,
           endDate,
         }).unwrap();
@@ -130,6 +137,7 @@ export function useAdmissionCycleFormModal(
         await createAdmissionCycle({
           sessionId: values.sessionId!,
           name,
+          admissionIdentityMode,
           startDate,
           endDate,
         }).unwrap();
@@ -157,12 +165,17 @@ export function useAdmissionCycleFormModal(
     onClose();
   };
 
+  const canEditIdentityMode =
+    !isEditMode || target?.status === "PRE_PROCESSING";
+
   return {
     state: {
       isEditMode,
       formError,
       isSubmitting,
       sessionOptions,
+      canEditIdentityMode,
+      identityMode: target?.admissionIdentityMode ?? "JAMB",
     },
     actions: { handleSubmit, handleCancel, handleSessionChange },
     form,

@@ -6,26 +6,49 @@
 
 import {
     authCleared,
+    roleSelected,
     userLoggedIn,
     userLoggedOut,
 } from "@/features/auth/events";
 import { authReducer, type AuthState } from "@/features/auth/state/auth-slice";
-import type { ApiRole } from "@/features/auth/types";
+import type { ApiRole, AuthProfile } from "@/features/auth/types";
 import { REHYDRATE } from "redux-persist";
 import { describe, expect, it } from "vitest";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
+const sampleProfile: AuthProfile = {
+  id: 2,
+  userId: 2,
+  tenantId: 3,
+  firstName: null,
+  lastName: null,
+  phoneNumber: null,
+  dateOfBirth: null,
+  score: 0,
+  metadata: null,
+  email: "admin@futb.edu.ng",
+};
+
 const adminRole: ApiRole = {
   name: "System Administrator",
   scope: "GLOBAL",
   scopeReferenceId: null,
+  entity: null,
 };
 
 const tenantRole: ApiRole = {
   name: "Tenant Manager",
   scope: "TENANT",
-  scopeReferenceId: "org-123",
+  scopeReferenceId: 123,
+  entity: null,
+};
+
+const studentRoleWithEntity: ApiRole = {
+  name: "Student",
+  scope: "STUDENT",
+  scopeReferenceId: 99,
+  entity: { id: 99, type: "student" },
 };
 
 const samplePermissions = ["faculties:list", "roles:list", "students:read"];
@@ -35,6 +58,7 @@ function loginPayload(overrides: Partial<Parameters<typeof userLoggedIn>[0]> = {
   return userLoggedIn({
     token: "tok-abc",
     refresh_token: "ref-xyz",
+    profile: sampleProfile,
     roles: [],
     permissions: [],
     ...overrides,
@@ -70,6 +94,7 @@ describe("14.1 — userLoggedIn stores roles and permissions", () => {
     const action = userLoggedIn({
       token: "tok",
       refresh_token: "ref",
+      profile: sampleProfile,
       roles: undefined as unknown as ApiRole[],
       permissions: ["faculties:list"],
     });
@@ -81,6 +106,7 @@ describe("14.1 — userLoggedIn stores roles and permissions", () => {
     const action = userLoggedIn({
       token: "tok",
       refresh_token: "ref",
+      profile: sampleProfile,
       roles: [adminRole],
       permissions: undefined as unknown as string[],
     });
@@ -99,6 +125,44 @@ describe("14.1 — userLoggedIn stores roles and permissions", () => {
   it("sets currentRole to null when roles is empty", () => {
     const state = authReducer(undefined, loginPayload({ roles: [] }));
     expect(state.currentRole).toBeNull();
+  });
+
+  it("populates userProfile from profile", () => {
+    const state = authReducer(undefined, loginPayload());
+    expect(state.userProfile?.email).toBe(sampleProfile.email);
+    expect(state.userProfile?.id).toBe(String(sampleProfile.id));
+    expect(state.tenantId).toBe(sampleProfile.tenantId);
+    expect(state.bootstrapComplete).toBe(true);
+  });
+
+  it("sets entity from single role on login", () => {
+    const state = authReducer(
+      undefined,
+      loginPayload({ roles: [studentRoleWithEntity] }),
+    );
+    expect(state.entity).toEqual(studentRoleWithEntity.entity);
+    expect(state.activeRole).toEqual(studentRoleWithEntity);
+  });
+
+  it("clears entity when multiple roles require picker", () => {
+    const state = authReducer(
+      undefined,
+      loginPayload({ roles: [adminRole, tenantRole] }),
+    );
+    expect(state.entity).toBeNull();
+    expect(state.roleSwitcherOpen).toBe(true);
+  });
+});
+
+describe("14.1b — roleSelected syncs entity", () => {
+  it("updates entity from selected role", () => {
+    const loggedIn = authReducer(
+      undefined,
+      loginPayload({ roles: [adminRole, studentRoleWithEntity] }),
+    );
+    const selected = authReducer(loggedIn, roleSelected(studentRoleWithEntity));
+    expect(selected.entity).toEqual(studentRoleWithEntity.entity);
+    expect(selected.activeRole).toEqual(studentRoleWithEntity);
   });
 });
 

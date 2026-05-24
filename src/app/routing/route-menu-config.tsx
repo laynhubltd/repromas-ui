@@ -5,6 +5,7 @@ import {
   AuditOutlined,
   BookOutlined,
   DashboardOutlined,
+  DollarOutlined,
   FileTextOutlined,
   FormOutlined,
   RadiusSettingOutlined,
@@ -76,6 +77,12 @@ export const routesMenuList: RouteMenuItem[] = [
     icon: <FileTextOutlined />,
     label: "Assessment",
     permission: Permission.StudentScoreSheetsList,
+  },
+  {
+    key: appPaths.billing,
+    icon: <DollarOutlined />,
+    label: "Billing",
+    permission: Permission.BillingBillableEventsList,
   },
 ];
 

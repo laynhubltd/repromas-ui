@@ -240,6 +240,11 @@ export const Permission = {
   AdmissionOlevelSubjectsUpdate: "system-configs:update",
   AdmissionOlevelSubjectsDelete: "system-configs:delete",
   AdmissionOlevelSubjectsManage: "system-configs:manage",
+  // Admission O-Level Grade Points
+  AdmissionOlevelGradePointsList: "system-configs:list",
+  AdmissionOlevelGradePointsCreate: "system-configs:create",
+  AdmissionOlevelGradePointsUpdate: "system-configs:update",
+  AdmissionOlevelGradePointsDelete: "system-configs:delete",
   // Admission Program O'Level Requirements
   AdmissionProgramOlevelRulesList: "system-configs:list",
   AdmissionProgramOlevelRulesCreate: "system-configs:create",
@@ -256,6 +261,34 @@ export const Permission = {
   AdmissionCandidatesCreate: "system-configs:create",
   AdmissionCandidatesUpdate: "system-configs:update",
   AdmissionCandidatesManage: "system-configs:manage",
+  // Billing Billable Events
+  // BillingBillableEventsList: "billing-billable-events:list",
+  // BillingBillableEventsCreate: "billing-billable-events:create",
+  // BillingBillableEventsUpdate: "billing-billable-events:update",
+  // BillingBillableEventsDelete: "billing-billable-events:delete",
+
+  BillingBillableEventsList: "system-configs:list",
+  BillingBillableEventsCreate: "system-configs:create",
+  BillingBillableEventsUpdate: "system-configs:update",
+  BillingBillableEventsDelete: "system-configs:delete",
+  // Billing Fee Items
+  // BillingFeeItemsList: "billing-fee-items:list",
+  // BillingFeeItemsCreate: "billing-fee-items:create",
+  // BillingFeeItemsUpdate: "billing-fee-items:update",
+  // BillingFeeItemsDelete: "billing-fee-items:delete",
+  BillingFeeItemsList: "system-configs:list",
+  BillingFeeItemsCreate: "system-configs:create",
+  BillingFeeItemsUpdate: "system-configs:update",
+  BillingFeeItemsDelete: "system-configs:delete",
+  // Billing Pricing Rules
+  // BillingPricingRulesList: "billing-pricing-rules:list",
+  // BillingPricingRulesCreate: "billing-pricing-rules:create",
+  // BillingPricingRulesUpdate: "billing-pricing-rules:update",
+  // BillingPricingRulesDelete: "billing-pricing-rules:delete",
+  BillingPricingRulesList: "system-configs:list",
+  BillingPricingRulesCreate: "system-configs:create",
+  BillingPricingRulesUpdate: "system-configs:update",
+  BillingPricingRulesDelete: "system-configs:delete",
 } as const;
 
 export type Permission = (typeof Permission)[keyof typeof Permission];

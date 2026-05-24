@@ -36,12 +36,17 @@ export const ApiTagTypes = {
   AdmissionGeographyRule: "AdmissionGeographyRule",
   State: "State",
   OlevelSubject: "OlevelSubject",
+  OlevelGradePoint: "OlevelGradePoint",
   ProgramAdmissionConfig: "ProgramAdmissionConfig",
   ProgramOlevelRequirement: "ProgramOlevelRequirement",
   JambSubjectCombination: "JambSubjectCombination",
   JambCombinationGroup: "JambCombinationGroup",
   JambCombinationOption: "JambCombinationOption",
   AdmissionCandidate: "AdmissionCandidate",
+  BillableEvent: "BillableEvent",
+  FeeItem: "FeeItem",
+  PricingRule: "PricingRule",
+  PricingRuleItem: "PricingRuleItem",
 } as const;
 
 export type ApiTagLiteral = (typeof ApiTagTypes)[keyof typeof ApiTagTypes];
