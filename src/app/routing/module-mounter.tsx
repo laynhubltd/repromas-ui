@@ -19,6 +19,7 @@ import { Navigate, Route } from "react-router-dom";
 import { appPaths } from "./app-path";
 import type { ModuleRegistry } from "./module-registry";
 import RouterShell from "./router-shell";
+import { isTokenExpired } from "@/shared/utils/token-util";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -138,8 +139,8 @@ export function moduleMounter({
     return fullScreenRoute(<InstitutionNotActive tenantSlug={tenantSlug} />);
   }
 
-  // 6. Unauthenticated — show auth routes
-  if (!auth.token) {
+  // 6. Unauthenticated or expired token — show auth routes
+  if (!auth.token || isTokenExpired(auth.token)) {
     return withRootShell(registry.authentication.getRouteEntries());
   }
 

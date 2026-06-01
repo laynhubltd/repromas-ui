@@ -11,6 +11,7 @@ import { BrowserRouter as Router, Routes } from "react-router-dom";
 import { resolveHost } from "./host-resolver";
 import { moduleMounter, resolveModuleRole } from "./module-mounter";
 import type { ModuleRegistry } from "./module-registry";
+import { isTokenExpired } from "@/shared/utils/token-util";
 
 /**
  * Composes the module registry — the only place that knows about concrete modules.
@@ -71,7 +72,7 @@ export function HostRouter() {
         ? "error"
         : "ready",
     tenantBootstrap.data?.status ?? "unknown",
-    auth.token ? "authed" : "anon",
+    auth.token && !isTokenExpired(auth.token) ? "authed" : "anon",
     auth.roleSwitcherOpen ? "picking" : "settled",
     moduleRole,
   ].join("|");
