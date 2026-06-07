@@ -1,5 +1,6 @@
 import DashboardShell from "@/app/routing/dashboard-shell";
 import ProtectedRoute from "@/app/routing/protected-route";
+import SetupGatedRoute from "@/app/routing/setup-gated-route";
 import withAuthGuard from "@/features/auth/with-auth-guard";
 import { lazy } from "react";
 import { Route } from "react-router-dom";
@@ -82,24 +83,26 @@ export function getAdminRouteEntries() {
       <Route path="/" element={<GuardedDashboardShell />}>
         <Route path="dashboard" element={<Dashboard />} />
         <Route element={<ProtectedRoute />}>
-          <Route path="academic-structure" element={<AcademicStructure />} />
-          <Route path="settings" element={<Settings />} />
-          <Route path="program" element={<ProgramPage />} />
-          <Route path="students" element={<StudentPage />} />
-          <Route path="staff" element={<StaffPage />} />
-          <Route path="courses" element={<CoursePage />} />
-          <Route
-            path="course-registration"
-            element={<CourseRegistrationPage />}
-          />
-          <Route path="grading-config" element={<GradingConfigPage />} />
-          <Route path="admission-config" element={<AdmissionConfigPage />} />
-          <Route
-            path="admission-candidates"
-            element={<AdmissionCandidatePage />}
-          />
-          <Route path="assessment" element={<AssessmentPage />} />
-          <Route path="billing" element={<BillingPage />} />
+          <Route element={<SetupGatedRoute />}>
+            <Route path="academic-structure" element={<AcademicStructure />} />
+            <Route path="settings" element={<Settings />} />
+            <Route path="program" element={<ProgramPage />} />
+            <Route path="students" element={<StudentPage />} />
+            <Route path="staff" element={<StaffPage />} />
+            <Route path="courses" element={<CoursePage />} />
+            <Route
+              path="course-registration"
+              element={<CourseRegistrationPage />}
+            />
+            <Route path="grading-config" element={<GradingConfigPage />} />
+            <Route path="admission-config" element={<AdmissionConfigPage />} />
+            <Route
+              path="admission-candidates"
+              element={<AdmissionCandidatePage />}
+            />
+            <Route path="assessment" element={<AssessmentPage />} />
+            <Route path="billing" element={<BillingPage />} />
+          </Route>
         </Route>
       </Route>
     </>

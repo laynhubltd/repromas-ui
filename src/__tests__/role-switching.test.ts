@@ -61,6 +61,14 @@ vi.mock("@/app/routing/route-menu-config", () => ({
   useRestrictedBottomMenuItem: () => [],
 }));
 
+vi.mock("@/features/tenant-setup/hooks/useSetupGatedMenuItems", () => ({
+  useSetupGatedMenuItems: (items: unknown[]) => items,
+}));
+
+vi.mock("@/features/tenant-setup", () => ({
+  SetupChecklistLauncher: () => null,
+}));
+
 vi.mock("@/app/routing/module-routes/onboarding", () => ({
   useValidateTenantQuery: () => ({
     isLoading: false,

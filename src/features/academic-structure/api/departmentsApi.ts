@@ -1,4 +1,5 @@
 import { baseApi } from "@/app/api/baseApi";
+import { ApiTagTypes } from "@/shared/types/apiTagTypes";
 import type {
     CreateDepartmentRequest,
     Department,
@@ -30,6 +31,8 @@ const departmentsApi = baseApi.injectEndpoints({
       query: (body) => ({ url: "/departments", method: "POST", data: body }),
       invalidatesTags: (_result, _err, { facultyId }) => [
         { type: "Department" as const, id: facultyId },
+        { type: "Department" as const, id: "LIST" },
+        ApiTagTypes.SetupStatus,
       ],
     }),
 

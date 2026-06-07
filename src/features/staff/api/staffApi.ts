@@ -26,7 +26,10 @@ const staffApi = baseApi.injectEndpoints({
 
     createStaff: builder.mutation<Staff, CreateStaffRequest>({
       query: (body) => ({ url: "academic/staff", method: "POST", data: body }),
-      invalidatesTags: [{ type: ApiTagTypes.Staff, id: "LIST" }],
+      invalidatesTags: [
+        { type: ApiTagTypes.Staff, id: "LIST" },
+        ApiTagTypes.SetupStatus,
+      ],
     }),
 
     updateStaff: builder.mutation<Staff, { id: number } & UpdateStaffRequest>({

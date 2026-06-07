@@ -17,7 +17,10 @@ const programsApi = baseApi.injectEndpoints({
 
     createProgram: builder.mutation<Program, CreateProgramRequest>({
       query: (body) => ({ url: "programs", method: "POST", data: body }),
-      invalidatesTags: [{ type: ApiTagTypes.Program, id: "LIST" }],
+      invalidatesTags: [
+        { type: ApiTagTypes.Program, id: "LIST" },
+        ApiTagTypes.SetupStatus,
+      ],
     }),
 
     updateProgram: builder.mutation<Program, { id: number } & UpdateProgramRequest>({

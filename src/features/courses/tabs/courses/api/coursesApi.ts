@@ -29,7 +29,10 @@ const coursesApi = baseApi.injectEndpoints({
 
     createCourse: builder.mutation<Course, CreateCourseRequest>({
       query: (body) => ({ url: "courses", method: "POST", data: body }),
-      invalidatesTags: [{ type: ApiTagTypes.Course, id: "LIST" }],
+      invalidatesTags: [
+        { type: ApiTagTypes.Course, id: "LIST" },
+        ApiTagTypes.SetupStatus,
+      ],
     }),
 
     updateCourse: builder.mutation<Course, UpdateCourseRequest>({

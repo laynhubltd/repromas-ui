@@ -24,11 +24,11 @@ const curriculumVersionApi = baseApi.injectEndpoints({
     }),
     createCurriculumVersion: builder.mutation<CurriculumVersion, CreateCurriculumVersionRequest>({
       query: (body) => ({ url: "/curriculum-versions", method: "POST", data: body }),
-      invalidatesTags: [ApiTagTypes.CurriculumVersion],
+      invalidatesTags: [ApiTagTypes.CurriculumVersion, ApiTagTypes.SetupStatus],
     }),
     updateCurriculumVersion: builder.mutation<CurriculumVersion, UpdateCurriculumVersionRequest>({
       query: ({ id, ...body }) => ({ url: `/curriculum-versions/${id}`, method: "PUT", data: body }),
-      invalidatesTags: [ApiTagTypes.CurriculumVersion],
+      invalidatesTags: [ApiTagTypes.CurriculumVersion, ApiTagTypes.SetupStatus],
     }),
     activateCurriculumVersion: builder.mutation<CurriculumVersion, ActivateCurriculumVersionRequest>({
       query: ({ id }) => ({
@@ -37,11 +37,11 @@ const curriculumVersionApi = baseApi.injectEndpoints({
         data: {},
         headers: { "Content-Type": "application/merge-patch+json" },
       }),
-      invalidatesTags: [ApiTagTypes.CurriculumVersion],
+      invalidatesTags: [ApiTagTypes.CurriculumVersion, ApiTagTypes.SetupStatus],
     }),
     deleteCurriculumVersion: builder.mutation<void, number>({
       query: (id) => ({ url: `/curriculum-versions/${id}`, method: "DELETE" }),
-      invalidatesTags: [ApiTagTypes.CurriculumVersion],
+      invalidatesTags: [ApiTagTypes.CurriculumVersion, ApiTagTypes.SetupStatus],
     }),
   }),
 });

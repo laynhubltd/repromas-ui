@@ -17,10 +17,12 @@ import {
 } from "@ant-design/icons";
 import type { ItemType } from "antd/es/menu/interface";
 import { useMemo } from "react";
+import type { SetupStepId } from "@/features/tenant-setup/types/setup";
 import { appPaths } from "./app-path";
 
 export type RouteMenuItem = ItemType & {
   permission?: Permission | Permission[];
+  setupStepId?: SetupStepId;
 };
 
 /** Main navigation items (top of sidebar). */
@@ -35,54 +37,63 @@ export const routesMenuList: RouteMenuItem[] = [
     icon: <UserOutlined />,
     label: "Staff",
     permission: Permission.StaffList,
+    setupStepId: "staff",
   },
   {
     key: appPaths.students,
     icon: <UsergroupAddOutlined />,
     label: "Students",
     permission: Permission.StudentsList,
+    setupStepId: "student",
   },
   {
     key: appPaths.admissionCandidates,
     icon: <SolutionOutlined />,
     label: "Admission Candidates",
     permission: Permission.AdmissionCandidatesList,
+    setupStepId: "admissionCandidate",
   },
   {
     key: appPaths.academicStructure,
     icon: <ApartmentOutlined />,
     label: "Faculty & Departments",
     permission: Permission.FacultiesList,
+    setupStepId: "department",
   },
   {
     key: appPaths.program,
     icon: <RadiusSettingOutlined />,
     label: "Program",
     permission: Permission.ProgramsList,
+    setupStepId: "program",
   },
   {
     key: appPaths.courses,
     icon: <BookOutlined />,
     label: "Courses",
     permission: Permission.CoursesList,
+    setupStepId: "course",
   },
   {
     key: appPaths.courseRegistration,
     icon: <FormOutlined />,
     label: "Course Registration",
     permission: Permission.StudentCourseRegistrationsManage,
+    setupStepId: "courseRegistration",
   },
   {
     key: appPaths.assessment,
     icon: <FileTextOutlined />,
     label: "Assessment",
     permission: Permission.StudentScoreSheetsList,
+    setupStepId: "assessment",
   },
   {
     key: appPaths.billing,
     icon: <DollarOutlined />,
     label: "Billing",
     permission: Permission.BillingBillableEventsList,
+    setupStepId: "billing",
   },
 ];
 
@@ -93,18 +104,21 @@ export const bottomMenuList: RouteMenuItem[] = [
     icon: <TrophyOutlined />,
     label: "Grading Config",
     permission: Permission.GradingSchemaConfigsList,
+    setupStepId: "gradingConfig",
   },
   {
     key: appPaths.admissionConfig,
     icon: <AuditOutlined />,
     label: "Admission Config",
     permission: Permission.SystemConfigsList,
+    setupStepId: "admissionConfig",
   },
   {
     key: appPaths.settings,
     icon: <SettingOutlined />,
     label: "Settings",
     permission: Permission.SystemConfigsList,
+    setupStepId: "settings",
   },
 ];
 
