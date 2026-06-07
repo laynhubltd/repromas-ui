@@ -16,7 +16,10 @@ const levelApi = baseApi.injectEndpoints({
     }),
     createLevel: builder.mutation<Level, CreateLevelRequest>({
       query: (body) => ({ url: "/levels", method: "POST", data: body }),
-      invalidatesTags: [{ type: ApiTagTypes.Level, id: "LIST" }],
+      invalidatesTags: [
+        { type: ApiTagTypes.Level, id: "LIST" },
+        ApiTagTypes.SetupStatus,
+      ],
     }),
     updateLevel: builder.mutation<Level, { id: number } & UpdateLevelRequest>({
       query: ({ id, ...body }) => ({ url: `/levels/${id}`, method: "PUT", data: body }),

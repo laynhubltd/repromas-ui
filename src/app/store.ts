@@ -20,6 +20,8 @@ import { baseApi } from "./api/baseApi";
 
 import themeReducer from "@/app/state/theme-slice";
 import { authReducer } from "@/features/auth/state/auth-slice";
+import setupUiReducer from "@/features/tenant-setup/state/setupUiSlice";
+import "@/features/tenant-setup/api/setupStatusApi";
 
 const persistConfig = {
   key: "root",
@@ -32,7 +34,7 @@ const rootReducer = combineReducers({
   [authApi.reducerPath]: authApi.reducer,
   auth: authReducer,
   theme: themeReducer,
-  // Add global UI state slices here
+  setupUi: setupUiReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

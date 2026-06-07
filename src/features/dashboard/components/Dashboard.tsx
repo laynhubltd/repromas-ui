@@ -1,10 +1,13 @@
+import { SetupChecklistCard } from "@/features/tenant-setup";
 import { DashCard, ResponsiveCollapsibleGrid } from "@/components/ui-kit";
+import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
 import {
   AppstoreOutlined,
   ClockCircleOutlined,
   TeamOutlined,
 } from "@ant-design/icons";
 import { Space, Typography } from "antd";
+import { useDashboard } from "../hooks/useDashboard";
 
 const DASHBOARD_KPI_ITEMS = [
   {
@@ -31,6 +34,8 @@ const DASHBOARD_KPI_ITEMS = [
 ] as const;
 
 export default function Dashboard() {
+  const { flags } = useDashboard();
+
   const kpiSections = DASHBOARD_KPI_ITEMS.map((item) => ({
     key: item.title,
     title: item.title,
@@ -65,13 +70,19 @@ export default function Dashboard() {
         Dashboard
       </Typography.Title>
 
-      <ResponsiveCollapsibleGrid
-        sections={kpiSections}
-        collapseBelow="md"
-        mobileExpansionMode="multiple"
-        defaultMobileExpandedKeys={[DASHBOARD_KPI_ITEMS[0].title]}
-        mobileAriaLabel="Dashboard KPI sections"
-      />
+      <ConditionalRenderer when={flags.showSetupChecklist}>
+        <SetupChecklistCard />
+      </ConditionalRenderer>
+
+      <ConditionalRenderer when={flags.showKpis}>
+        <ResponsiveCollapsibleGrid
+          sections={kpiSections}
+          collapseBelow="md"
+          mobileExpansionMode="multiple"
+          defaultMobileExpandedKeys={[DASHBOARD_KPI_ITEMS[0].title]}
+          mobileAriaLabel="Dashboard KPI sections"
+        />
+      </ConditionalRenderer>
     </Space>
   );
 }

@@ -31,7 +31,10 @@ const programAdmissionConfigApi = baseApi.injectEndpoints({
         method: "POST",
         data: body,
       }),
-      invalidatesTags: [ApiTagTypes.ProgramAdmissionConfig],
+      invalidatesTags: [
+        ApiTagTypes.ProgramAdmissionConfig,
+        ApiTagTypes.SetupStatus,
+      ],
     }),
 
     updateProgramAdmissionConfig: builder.mutation<

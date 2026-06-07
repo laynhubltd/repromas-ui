@@ -56,6 +56,7 @@ export const ApiTagTypes = {
   BillingPayment: "BillingPayment",
   BillingPaymentTransaction: "BillingPaymentTransaction",
   BillingInvoice: "BillingInvoice",
+  SetupStatus: "SetupStatus",
 } as const;
 
 export type ApiTagLiteral = (typeof ApiTagTypes)[keyof typeof ApiTagTypes];

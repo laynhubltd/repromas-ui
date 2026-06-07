@@ -55,6 +55,7 @@ const admissionCandidateApi = baseApi.injectEndpoints({
       invalidatesTags: [
         { type: ApiTagTypes.AdmissionCandidate, id: "LIST" },
         ApiTagTypes.AdmissionCycle,
+        ApiTagTypes.SetupStatus,
       ],
     }),
 

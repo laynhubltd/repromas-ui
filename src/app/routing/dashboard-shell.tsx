@@ -8,13 +8,19 @@ import type { ItemType } from "antd/es/menu/interface";
 import { useMemo } from "react";
 import { Link, Outlet } from "react-router-dom";
 import {
-    useRestrictedBottomMenuItem,
-    useRestrictedRouteMenuItem,
+  SetupChecklistLauncher,
+  useSetupGatedMenuItems,
+} from "@/features/tenant-setup";
+import {
+  useRestrictedBottomMenuItem,
+  useRestrictedRouteMenuItem,
 } from "./route-menu-config";
 
 export default function DashboardShell() {
   const restrictedItems = useRestrictedRouteMenuItem();
   const restrictedBottomItems = useRestrictedBottomMenuItem();
+  const gatedItems = useSetupGatedMenuItems(restrictedItems);
+  const gatedBottomItems = useSetupGatedMenuItems(restrictedBottomItems);
   const { userProfile, roles, activeRole } = useAuthState();
   const dispatch = useAppDispatch();
   const [logout] = useLogoutMutation();
@@ -30,6 +36,9 @@ export default function DashboardShell() {
       "key" in item &&
       "label" in item
     ) {
+      if ("disabled" in item && item.disabled) {
+        return item;
+      }
       return {
         ...item,
         label: <Link to={String(item.key)}>{item.label}</Link>,
@@ -39,13 +48,13 @@ export default function DashboardShell() {
   };
 
   const menuItems = useMemo<ItemType[]>(
-    () => restrictedItems.map(wrapWithLink),
-    [restrictedItems],
+    () => gatedItems.map(wrapWithLink),
+    [gatedItems],
   );
 
   const bottomMenuItems = useMemo<ItemType[]>(
-    () => restrictedBottomItems.map(wrapWithLink),
-    [restrictedBottomItems],
+    () => gatedBottomItems.map(wrapWithLink),
+    [gatedBottomItems],
   );
 
   const displayName =
@@ -91,6 +100,7 @@ export default function DashboardShell() {
       userRoleLabel={activeRole?.name}
     >
       <Outlet />
+      <SetupChecklistLauncher />
     </MainLayout>
   );
 }

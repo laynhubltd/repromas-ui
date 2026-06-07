@@ -24,3 +24,17 @@ code {
   -webkit-text-fill-color: inherit !important;
   opacity: 1 !important;
 }
+
+@keyframes setup-menu-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.65;
+  }
+}
+
+.setup-menu-item-current {
+  animation: setup-menu-pulse 2s ease-in-out infinite;
+}

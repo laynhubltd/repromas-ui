@@ -29,7 +29,10 @@ const studentsApi = baseApi.injectEndpoints({
 
     createStudent: builder.mutation<Student, CreateStudentRequest>({
       query: (body) => ({ url: "students", method: "POST", data: body }),
-      invalidatesTags: [{ type: ApiTagTypes.Student, id: "LIST" }],
+      invalidatesTags: [
+        { type: ApiTagTypes.Student, id: "LIST" },
+        ApiTagTypes.SetupStatus,
+      ],
     }),
 
     updateStudent: builder.mutation<Student, { id: number } & UpdateStudentRequest>({
