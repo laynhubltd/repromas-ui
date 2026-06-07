@@ -22,10 +22,14 @@ const pricingRuleApi = baseApi.injectEndpoints({
       providesTags: [ApiTagTypes.PricingRule],
     }),
 
-    getPricingRule: builder.query<PricingRule, number>({
-      query: (id) => ({
+    getPricingRule: builder.query<
+      PricingRule,
+      { id: number; include?: string }
+    >({
+      query: ({ id, include = "policy" }) => ({
         url: `/billing/pricing-rules/${id}`,
         method: "GET",
+        params: { include },
       }),
       providesTags: [ApiTagTypes.PricingRule],
     }),

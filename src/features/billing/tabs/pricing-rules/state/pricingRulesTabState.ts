@@ -2,12 +2,15 @@ import type {
   IndigeneStatus,
   PricingRule,
   PricingRuleItemRead,
+  PricingRulePolicyVersionFilter,
   PricingRuleScope,
 } from "../types/pricing-rule";
 
 export const PricingRulesTabActionType = {
   SetPage: "SET_PAGE",
   SetEventCodeFilter: "SET_EVENT_CODE_FILTER",
+  SetPolicyVersionFilter: "SET_POLICY_VERSION_FILTER",
+  SetHistoricalPolicyId: "SET_HISTORICAL_POLICY_ID",
   SetIndigeneFilter: "SET_INDIGENE_FILTER",
   SetScopeFilter: "SET_SCOPE_FILTER",
   SetIsActiveFilter: "SET_IS_ACTIVE_FILTER",
@@ -31,6 +34,8 @@ export const PricingRulesTabActionType = {
 export type PricingRulesTabState = {
   page: number;
   eventCodeFilter: string | undefined;
+  policyVersionFilter: PricingRulePolicyVersionFilter;
+  historicalPolicyId: number | undefined;
   indigeneFilter: IndigeneStatus | undefined;
   scopeFilter: PricingRuleScope | undefined;
   isActiveFilter: boolean | undefined;
@@ -55,6 +60,14 @@ export type PricingRulesTabAction =
   | {
       type: typeof PricingRulesTabActionType.SetEventCodeFilter;
       value: string | undefined;
+    }
+  | {
+      type: typeof PricingRulesTabActionType.SetPolicyVersionFilter;
+      value: PricingRulePolicyVersionFilter;
+    }
+  | {
+      type: typeof PricingRulesTabActionType.SetHistoricalPolicyId;
+      value: number | undefined;
     }
   | {
       type: typeof PricingRulesTabActionType.SetIndigeneFilter;
@@ -110,6 +123,8 @@ export type PricingRulesTabAction =
 export const initialPricingRulesTabState: PricingRulesTabState = {
   page: 1,
   eventCodeFilter: undefined,
+  policyVersionFilter: "active",
+  historicalPolicyId: undefined,
   indigeneFilter: undefined,
   scopeFilter: undefined,
   isActiveFilter: undefined,
@@ -138,7 +153,24 @@ export function pricingRulesTabReducer(
       return { ...state, page: action.value };
 
     case PricingRulesTabActionType.SetEventCodeFilter:
-      return { ...state, eventCodeFilter: action.value, page: 1 };
+      return {
+        ...state,
+        eventCodeFilter: action.value,
+        historicalPolicyId: undefined,
+        page: 1,
+      };
+
+    case PricingRulesTabActionType.SetPolicyVersionFilter:
+      return {
+        ...state,
+        policyVersionFilter: action.value,
+        historicalPolicyId:
+          action.value === "historical" ? state.historicalPolicyId : undefined,
+        page: 1,
+      };
+
+    case PricingRulesTabActionType.SetHistoricalPolicyId:
+      return { ...state, historicalPolicyId: action.value, page: 1 };
 
     case PricingRulesTabActionType.SetIndigeneFilter:
       return { ...state, indigeneFilter: action.value, page: 1 };
@@ -153,6 +185,8 @@ export function pricingRulesTabReducer(
       return {
         ...state,
         eventCodeFilter: undefined,
+        policyVersionFilter: "active",
+        historicalPolicyId: undefined,
         indigeneFilter: undefined,
         scopeFilter: undefined,
         isActiveFilter: undefined,

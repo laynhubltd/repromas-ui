@@ -3,29 +3,24 @@ import { Permission } from "@/features/access-control/permissions";
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
 import {
+  ADMISSION_CYCLE_ENTRY_MODE_OPTIONS,
   ADMISSION_CYCLE_IDENTITY_MODE_OPTIONS,
+  ADMISSION_CYCLE_UI_COPY,
   identityModeColorByValue,
   identityModeLabelByValue,
 } from "@/shared/constants/admissionCycleOptions";
-import {
-  Button,
-  DatePicker,
-  Form,
-  Input,
-  Modal,
-  Radio,
-  Select,
-  Tag,
-  Typography,
-} from "antd";
+import { Alert, Button, DatePicker, Form, Input, InputNumber, Modal, Radio, Select, Tag, Typography } from "antd";
 import dayjs from "dayjs";
 import { useAdmissionCycleFormModal } from "../../hooks/useAdmissionCycleModal";
 import type {
   AcademicSessionOption,
   AdmissionCycle,
 } from "../../types/admission-cycle";
+import { formatEntryBatchLabel } from "../../utils/admissionCycleDisplay";
 import {
+  batchNoRules,
   endDateAfterStartDateRule,
+  entryModeRules,
   nameRules,
   sessionIdRules,
 } from "../../utils/validators";
@@ -35,34 +30,103 @@ type AdmissionCycleFormModalProps = {
   target: AdmissionCycle | null;
   onClose: () => void;
   sessions: AcademicSessionOption[];
-  usedSessionIds: Set<number>;
+  existingCycles: AdmissionCycle[];
 };
+
+type AdmissionCycleEditFieldsProps = {
+  target: AdmissionCycle;
+  sessions: AcademicSessionOption[];
+  supersededCycleName: string | null;
+  token: ReturnType<typeof useToken>;
+};
+
+function AdmissionCycleEditFields({
+  target,
+  sessions,
+  supersededCycleName,
+  token,
+}: AdmissionCycleEditFieldsProps) {
+  return (
+    <>
+      <Form.Item label="Academic session">
+        <Typography.Text>
+          {sessions.find((s) => s.id === target.sessionId)?.name ??
+            "Unknown session"}
+        </Typography.Text>
+        <Typography.Text
+          type="secondary"
+          style={{ display: "block", fontSize: token.fontSizeSM }}
+        >
+          Session cannot be changed after creation.
+        </Typography.Text>
+      </Form.Item>
+
+      <Form.Item label={ADMISSION_CYCLE_UI_COPY.entryBatchFieldLabel}>
+        <Tag>{formatEntryBatchLabel(target.entryMode, target.batchNo)}</Tag>
+        <Typography.Text
+          type="secondary"
+          style={{ display: "block", fontSize: token.fontSizeSM, marginTop: 8 }}
+        >
+          {ADMISSION_CYCLE_UI_COPY.entryBatchImmutableHint}
+        </Typography.Text>
+      </Form.Item>
+
+      <ConditionalRenderer when={supersededCycleName !== null}>
+        <Form.Item label="Supersedes">
+          <Typography.Text>{supersededCycleName}</Typography.Text>
+        </Form.Item>
+      </ConditionalRenderer>
+
+      <Form.Item label="Status">
+        <Typography.Text>{target.status.replace(/_/g, " ")}</Typography.Text>
+        <Typography.Text
+          type="secondary"
+          style={{ display: "block", fontSize: token.fontSizeSM }}
+        >
+          Use advance or roll back actions to change cycle status.
+        </Typography.Text>
+      </Form.Item>
+    </>
+  );
+}
 
 export function AdmissionCycleFormModal({
   open,
   target,
   onClose,
   sessions,
-  usedSessionIds,
+  existingCycles,
 }: AdmissionCycleFormModalProps) {
   const token = useToken();
+  const modalKey = target?.id ?? "create";
 
   const {
     state: {
       isEditMode,
       isSubmitting,
       sessionOptions,
+      supersedesOptions,
       canEditIdentityMode,
       identityMode,
+      isSlotOccupied,
+      initialValues,
+      supersededCycleName,
     },
-    actions: { handleSubmit, handleCancel, handleSessionChange },
+    actions: {
+      handleSubmit,
+      handleCancel,
+      handleSessionChange,
+      handleEntryModeChange,
+      handleBatchNoChange,
+    },
     form,
-  } = useAdmissionCycleFormModal(target, open, onClose, sessions, usedSessionIds);
+  } = useAdmissionCycleFormModal(target, onClose, sessions, existingCycles);
 
   const startDate = Form.useWatch("startDate", form);
 
   return (
     <Modal
+      key={modalKey}
       title={isEditMode ? "Edit Admission Cycle" : "Create Admission Cycle"}
       open={open}
       onCancel={handleCancel}
@@ -81,9 +145,11 @@ export function AdmissionCycleFormModal({
     >
       <div style={{ padding: 24 }}>
         <Form
+          key={modalKey}
           form={form}
           layout="vertical"
           requiredMark={false}
+          initialValues={initialValues}
           onFinish={handleSubmit}
         >
           <ConditionalRenderer when={!isEditMode}>
@@ -108,22 +174,83 @@ export function AdmissionCycleFormModal({
                 optionFilterProp="label"
               />
             </Form.Item>
+
+            <Form.Item
+              name="entryMode"
+              label={
+                <span>
+                  Entry mode{" "}
+                  <span style={{ color: token.colorError, fontWeight: 700 }}>
+                    *
+                  </span>
+                </span>
+              }
+              rules={entryModeRules}
+            >
+              <Select
+                placeholder="Select entry mode"
+                options={ADMISSION_CYCLE_ENTRY_MODE_OPTIONS.map((opt) => ({
+                  value: opt.value,
+                  label: opt.label,
+                }))}
+                onChange={handleEntryModeChange}
+                style={{ height: 40 }}
+              />
+            </Form.Item>
+
+            <Form.Item
+              name="batchNo"
+              label={
+                <span>
+                  Batch number{" "}
+                  <span style={{ color: token.colorError, fontWeight: 700 }}>
+                    *
+                  </span>
+                </span>
+              }
+              rules={batchNoRules}
+            >
+              <InputNumber
+                min={1}
+                precision={0}
+                style={{ width: "100%", height: 40 }}
+                onChange={handleBatchNoChange}
+              />
+            </Form.Item>
+
+            <ConditionalRenderer when={supersedesOptions.length > 0}>
+              <Form.Item
+                name="supersedesCycleId"
+                label="Supersedes cycle (optional)"
+              >
+                <Select
+                  placeholder={ADMISSION_CYCLE_UI_COPY.supersedesPlaceholder}
+                  allowClear
+                  options={supersedesOptions}
+                  style={{ height: 40 }}
+                />
+              </Form.Item>
+            </ConditionalRenderer>
+
+            <ConditionalRenderer when={isSlotOccupied}>
+              <Alert
+                type="error"
+                showIcon
+                message={ADMISSION_CYCLE_UI_COPY.duplicateCycleAlertTitle}
+                description={ADMISSION_CYCLE_UI_COPY.duplicateCycleAlertDescription}
+                style={{ marginBottom: 16 }}
+              />
+            </ConditionalRenderer>
           </ConditionalRenderer>
 
-          <ConditionalRenderer when={isEditMode && target !== null}>
-            <Form.Item label="Academic session">
-              <Typography.Text>
-                {sessions.find((s) => s.id === target?.sessionId)?.name ??
-                  "Unknown session"}
-              </Typography.Text>
-              <Typography.Text
-                type="secondary"
-                style={{ display: "block", fontSize: token.fontSizeSM }}
-              >
-                Session cannot be changed after creation.
-              </Typography.Text>
-            </Form.Item>
-          </ConditionalRenderer>
+          {target !== null && isEditMode ? (
+            <AdmissionCycleEditFields
+              target={target}
+              sessions={sessions}
+              supersededCycleName={supersededCycleName}
+              token={token}
+            />
+          ) : null}
 
           <Form.Item
             name="name"
@@ -217,17 +344,6 @@ export function AdmissionCycleFormModal({
             <DatePicker style={{ width: "100%", height: 40 }} />
           </Form.Item>
 
-          <ConditionalRenderer when={isEditMode && target !== null}>
-            <Form.Item label="Status">
-              <Typography.Text>{target?.status.replace(/_/g, " ")}</Typography.Text>
-              <Typography.Text
-                type="secondary"
-                style={{ display: "block", fontSize: token.fontSizeSM }}
-              >
-                Use the advance action to change cycle status.
-              </Typography.Text>
-            </Form.Item>
-          </ConditionalRenderer>
         </Form>
       </div>
 
@@ -251,7 +367,7 @@ export function AdmissionCycleFormModal({
           <Button
             type="primary"
             loading={isSubmitting}
-            disabled={isSubmitting}
+            disabled={isSubmitting || (!isEditMode && isSlotOccupied)}
             onClick={() => form.submit()}
             block
             style={{ height: 48, fontWeight: 600 }}

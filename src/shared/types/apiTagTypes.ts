@@ -43,10 +43,19 @@ export const ApiTagTypes = {
   JambCombinationGroup: "JambCombinationGroup",
   JambCombinationOption: "JambCombinationOption",
   AdmissionCandidate: "AdmissionCandidate",
+  MeAdmissionCandidate: "MeAdmissionCandidate",
   BillableEvent: "BillableEvent",
+  BillableEventPolicy: "BillableEventPolicy",
   FeeItem: "FeeItem",
   PricingRule: "PricingRule",
   PricingRuleItem: "PricingRuleItem",
+  FeeCharge: "FeeCharge",
+  BillingWorkflow: "BillingWorkflow",
+  StudentInvoice: "StudentInvoice",
+  StudentPayment: "StudentPayment",
+  BillingPayment: "BillingPayment",
+  BillingPaymentTransaction: "BillingPaymentTransaction",
+  BillingInvoice: "BillingInvoice",
 } as const;
 
 export type ApiTagLiteral = (typeof ApiTagTypes)[keyof typeof ApiTagTypes];

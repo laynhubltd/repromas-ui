@@ -1,3 +1,5 @@
+import type { RoleEntity } from "../types/role-entity";
+
 type RawRecord = Record<string, unknown>;
 
 function readPositiveId(value: unknown): number | null {
@@ -18,7 +20,7 @@ function readPositiveId(value: unknown): number | null {
  * Prefer entity.id; fall back to scopeReferenceId when entity is absent.
  */
 export function getStudentIdFromAuth(
-  entity: unknown,
+  entity: RoleEntity | null,
   scopeReferenceId: number | null = null,
 ): number | null {
   if (entity && typeof entity === "object") {

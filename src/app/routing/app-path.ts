@@ -22,7 +22,9 @@ export const appPaths = {
   // Student Module Paths
   studentHome: "/student",
   StudentInvoices: "/invoices",
+  studentInvoicePay: "/invoices/:invoiceId",
   StudentPayments: "/payments",
+  studentPaymentReceipt: "/payments/:paymentId",
   StudentResults: "/results",
   StudentBioData: "/bio-data",
 

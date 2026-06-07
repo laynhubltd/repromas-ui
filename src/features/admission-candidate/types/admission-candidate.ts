@@ -85,7 +85,7 @@ export type AdmissionCandidateJambScore = {
 export type AdmissionCandidate = {
   id: number;
   cycleId: number;
-  jambRegNo: string;
+  jambRegNo: string | null;
   firstName: string;
   lastName: string;
   dateOfBirth: string | null;
@@ -125,19 +125,35 @@ export type AdmissionCandidateListParams = {
   "exact[entryMode]"?: CandidateEntryMode;
 };
 
+export type JambScoreInput = {
+  subjectId: number;
+  score: number;
+};
+
 export type CreateAdmissionCandidateRequest = {
   cycleId: number;
-  jambRegNo: string;
   firstName: string;
   lastName: string;
-  dateOfBirth?: string | null;
-  gender?: string | null;
   stateId: number;
+  appliedProgramId: number;
+  jambRegNo?: string | null;
   lgaId?: number | null;
   email?: string | null;
   phone?: string | null;
+  gender?: string | null;
+  dateOfBirth?: string | null;
   metadata?: Record<string, unknown> | null;
+  jambScores?: JambScoreInput[];
 };
+
+export type CreateAdmissionCandidateResponse = {
+  candidate: AdmissionCandidate;
+  application: AdmissionApplication | null;
+  jambScores: AdmissionCandidateJambScore[];
+  warnings: CapsUploadIssue[];
+};
+
+export type CandidateIntakeMode = "manual" | "jamb";
 
 export type PatchAdmissionCandidateMetadataRequest = {
   metadata: Record<string, unknown> | null;

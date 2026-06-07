@@ -1,8 +1,22 @@
+import type { AuthRoleScope, RoleEntity } from "./types/role-entity";
+
+export type { AuthRoleScope, RoleEntity } from "./types/role-entity";
+export type {
+  AuthCandidateEntity,
+  AuthDepartmentEntity,
+  AuthEnrollmentTransition,
+  AuthFacultyEntity,
+  AuthProgramEntity,
+  AuthSemesterEmbed,
+  AuthStudentEntity,
+  RoleEntityByScope,
+} from "./types/role-entity";
+
 export type ApiRole = {
   name: string;
-  scope: string;
+  scope: AuthRoleScope;
   scopeReferenceId: number | null;
-  entity: unknown | null;
+  entity: RoleEntity;
 };
 
 export type AuthProfile = {

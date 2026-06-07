@@ -1,11 +1,13 @@
 import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import {
+  ADMISSION_CYCLE_ROLLBACKS,
   ADMISSION_CYCLE_TRANSITIONS,
 } from "@/shared/constants/admissionCycleOptions";
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
 import {
+  ArrowLeftOutlined,
   ArrowRightOutlined,
   DeleteOutlined,
   EditOutlined,
@@ -14,12 +16,13 @@ import {
 import { Button, Dropdown } from "antd";
 import type { MenuProps } from "antd";
 import type { AdmissionCycleRow } from "../hooks/useAdmissionCycleTab";
+import type { TransitionDirection } from "../types/admission-cycle";
 
 type AdmissionCycleRowActionsProps = {
   cycle: AdmissionCycleRow;
   onEdit: (cycle: AdmissionCycleRow) => void;
   onDelete: (cycle: AdmissionCycleRow) => void;
-  onTransition: (cycle: AdmissionCycleRow) => void;
+  onTransition: (cycle: AdmissionCycleRow, direction: TransitionDirection) => void;
 };
 
 export function AdmissionCycleRowActions({
@@ -30,9 +33,13 @@ export function AdmissionCycleRowActions({
 }: AdmissionCycleRowActionsProps) {
   const token = useToken();
 
-  const transitionMeta =
+  const forwardMeta =
     cycle.status !== "CLOSED"
       ? ADMISSION_CYCLE_TRANSITIONS[cycle.status]
+      : null;
+  const rollbackMeta =
+    cycle.status !== "PRE_PROCESSING"
+      ? ADMISSION_CYCLE_ROLLBACKS[cycle.status]
       : null;
 
   const menuItems: MenuProps["items"] = [
@@ -46,17 +53,31 @@ export function AdmissionCycleRowActions({
       icon: <EditOutlined />,
       onClick: () => onEdit(cycle),
     },
-    ...(transitionMeta
+    ...(forwardMeta
       ? [
           {
-            key: "transition",
+            key: "transition-forward",
             label: (
               <PermissionGuard permission={Permission.AdmissionCyclesTransition}>
-                <span>{transitionMeta.buttonLabel}</span>
+                <span>{forwardMeta.buttonLabel}</span>
               </PermissionGuard>
             ),
             icon: <ArrowRightOutlined />,
-            onClick: () => onTransition(cycle),
+            onClick: () => onTransition(cycle, "forward"),
+          },
+        ]
+      : []),
+    ...(rollbackMeta
+      ? [
+          {
+            key: "transition-rollback",
+            label: (
+              <PermissionGuard permission={Permission.AdmissionCyclesTransition}>
+                <span>{rollbackMeta.buttonLabel}</span>
+              </PermissionGuard>
+            ),
+            icon: <ArrowLeftOutlined />,
+            onClick: () => onTransition(cycle, "rollback"),
           },
         ]
       : []),
@@ -91,29 +112,29 @@ export function AdmissionCycleRowActions({
 
 type AdmissionCycleStatusActionProps = {
   cycle: AdmissionCycleRow;
-  onTransition: (cycle: AdmissionCycleRow) => void;
+  onTransition: (cycle: AdmissionCycleRow, direction: TransitionDirection) => void;
 };
 
 export function AdmissionCycleStatusAction({
   cycle,
   onTransition,
 }: AdmissionCycleStatusActionProps) {
-  const transitionMeta =
+  const forwardMeta =
     cycle.status !== "CLOSED"
       ? ADMISSION_CYCLE_TRANSITIONS[cycle.status]
       : null;
 
   return (
-    <ConditionalRenderer when={transitionMeta !== null}>
+    <ConditionalRenderer when={forwardMeta !== null}>
       <PermissionGuard permission={Permission.AdmissionCyclesTransition}>
         <Button
           type="link"
           size="small"
           icon={<ArrowRightOutlined />}
-          onClick={() => onTransition(cycle)}
+          onClick={() => onTransition(cycle, "forward")}
           style={{ padding: 0, height: "auto" }}
         >
-          {transitionMeta?.buttonLabel}
+          {forwardMeta?.buttonLabel}
         </Button>
       </PermissionGuard>
     </ConditionalRenderer>

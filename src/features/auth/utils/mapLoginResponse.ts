@@ -1,6 +1,25 @@
 import type { ApiRole, AuthProfile, LoginResponse, UserProfile } from "../types";
+import {
+  AUTH_ROLE_SCOPES,
+  type AuthRoleScope,
+  type RoleEntity,
+} from "../types/role-entity";
 
 type RawRecord = Record<string, unknown>;
+
+function readAuthRoleScope(scope: string): AuthRoleScope {
+  if ((AUTH_ROLE_SCOPES as string[]).includes(scope)) {
+    return scope as AuthRoleScope;
+  }
+  return scope as AuthRoleScope;
+}
+
+function readRoleEntity(value: unknown): RoleEntity {
+  if (value === undefined || value === null) {
+    return null;
+  }
+  return value as RoleEntity;
+}
 
 function readString(raw: RawRecord, snake: string, camel: string): string {
   const value = raw[snake] ?? raw[camel];
@@ -51,9 +70,9 @@ function readRole(raw: unknown): ApiRole | null {
   const entity = r.entity;
   return {
     name: readString(r, "name", "name") || scope,
-    scope,
+    scope: readAuthRoleScope(scope),
     scopeReferenceId: readScopeReferenceId(r),
-    entity: entity === undefined ? null : entity,
+    entity: readRoleEntity(entity),
   };
 }
 

@@ -1,13 +1,19 @@
 /**
  * Tab state management for Admission Cycle feature
- * Requirements: 15.1–15.5
  */
 
-import type { AdmissionCycle, AdmissionCycleStatus } from "../types/admission-cycle";
+import type {
+  AdmissionCycle,
+  AdmissionCycleStatus,
+  AdmissionEntryMode,
+  TransitionDirection,
+} from "../types/admission-cycle";
 
 export const AdmissionCycleTabActionType = {
   SetStatusFilter: "SET_STATUS_FILTER",
   SetSessionFilter: "SET_SESSION_FILTER",
+  SetEntryModeFilter: "SET_ENTRY_MODE_FILTER",
+  SetBatchNoFilter: "SET_BATCH_NO_FILTER",
   SetSearch: "SET_SEARCH",
   SetDebouncedSearch: "SET_DEBOUNCED_SEARCH",
   SetPage: "SET_PAGE",
@@ -23,33 +29,62 @@ export const AdmissionCycleTabActionType = {
 export type AdmissionCycleTabState = {
   statusFilter: AdmissionCycleStatus | undefined;
   sessionFilter: number | undefined;
+  entryModeFilter: AdmissionEntryMode | undefined;
+  batchNoFilter: number | undefined;
   search: string;
   debouncedSearch: string;
   page: number;
-  formTarget: AdmissionCycle | null; // null = create mode
+  formTarget: AdmissionCycle | null;
   formOpen: boolean;
   deleteTarget: AdmissionCycle | null;
   transitionTarget: AdmissionCycle | null;
+  transitionDirection: TransitionDirection;
   transitionOpen: boolean;
 };
 
 export type AdmissionCycleTabAction =
-  | { type: typeof AdmissionCycleTabActionType.SetStatusFilter; value: AdmissionCycleStatus | undefined }
-  | { type: typeof AdmissionCycleTabActionType.SetSessionFilter; value: number | undefined }
+  | {
+      type: typeof AdmissionCycleTabActionType.SetStatusFilter;
+      value: AdmissionCycleStatus | undefined;
+    }
+  | {
+      type: typeof AdmissionCycleTabActionType.SetSessionFilter;
+      value: number | undefined;
+    }
+  | {
+      type: typeof AdmissionCycleTabActionType.SetEntryModeFilter;
+      value: AdmissionEntryMode | undefined;
+    }
+  | {
+      type: typeof AdmissionCycleTabActionType.SetBatchNoFilter;
+      value: number | undefined;
+    }
   | { type: typeof AdmissionCycleTabActionType.SetSearch; value: string }
   | { type: typeof AdmissionCycleTabActionType.SetDebouncedSearch; value: string }
   | { type: typeof AdmissionCycleTabActionType.SetPage; value: number }
-  | { type: typeof AdmissionCycleTabActionType.OpenForm; target: AdmissionCycle | null }
+  | {
+      type: typeof AdmissionCycleTabActionType.OpenForm;
+      target: AdmissionCycle | null;
+    }
   | { type: typeof AdmissionCycleTabActionType.CloseForm }
-  | { type: typeof AdmissionCycleTabActionType.OpenDelete; target: AdmissionCycle }
+  | {
+      type: typeof AdmissionCycleTabActionType.OpenDelete;
+      target: AdmissionCycle;
+    }
   | { type: typeof AdmissionCycleTabActionType.CloseDelete }
-  | { type: typeof AdmissionCycleTabActionType.OpenTransition; target: AdmissionCycle }
+  | {
+      type: typeof AdmissionCycleTabActionType.OpenTransition;
+      target: AdmissionCycle;
+      direction: TransitionDirection;
+    }
   | { type: typeof AdmissionCycleTabActionType.CloseTransition }
   | { type: typeof AdmissionCycleTabActionType.Reset };
 
 export const initialAdmissionCycleTabState: AdmissionCycleTabState = {
   statusFilter: undefined,
   sessionFilter: undefined,
+  entryModeFilter: undefined,
+  batchNoFilter: undefined,
   search: "",
   debouncedSearch: "",
   page: 1,
@@ -57,6 +92,7 @@ export const initialAdmissionCycleTabState: AdmissionCycleTabState = {
   formOpen: false,
   deleteTarget: null,
   transitionTarget: null,
+  transitionDirection: "forward",
   transitionOpen: false,
 };
 
@@ -69,6 +105,10 @@ export function admissionCycleTabReducer(
       return { ...state, statusFilter: action.value, page: 1 };
     case AdmissionCycleTabActionType.SetSessionFilter:
       return { ...state, sessionFilter: action.value, page: 1 };
+    case AdmissionCycleTabActionType.SetEntryModeFilter:
+      return { ...state, entryModeFilter: action.value, page: 1 };
+    case AdmissionCycleTabActionType.SetBatchNoFilter:
+      return { ...state, batchNoFilter: action.value, page: 1 };
     case AdmissionCycleTabActionType.SetSearch:
       return { ...state, search: action.value };
     case AdmissionCycleTabActionType.SetDebouncedSearch:
@@ -78,13 +118,18 @@ export function admissionCycleTabReducer(
     case AdmissionCycleTabActionType.OpenForm:
       return { ...state, formTarget: action.target, formOpen: true };
     case AdmissionCycleTabActionType.CloseForm:
-      return { ...state, formOpen: false };
+      return { ...state, formOpen: false, formTarget: null };
     case AdmissionCycleTabActionType.OpenDelete:
       return { ...state, deleteTarget: action.target };
     case AdmissionCycleTabActionType.CloseDelete:
       return { ...state, deleteTarget: null };
     case AdmissionCycleTabActionType.OpenTransition:
-      return { ...state, transitionTarget: action.target, transitionOpen: true };
+      return {
+        ...state,
+        transitionTarget: action.target,
+        transitionDirection: action.direction,
+        transitionOpen: true,
+      };
     case AdmissionCycleTabActionType.CloseTransition:
       return { ...state, transitionOpen: false };
     case AdmissionCycleTabActionType.Reset:

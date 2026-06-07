@@ -16,6 +16,7 @@ import {
 import { mapAuthProfileToUserProfile } from "../utils/mapLoginResponse";
 import type {
   ApiRole,
+  RoleEntity,
   SimpleUserProfile,
   UserProfile,
   UserRole,
@@ -35,7 +36,7 @@ export interface AuthState {
   activeRole: ApiRole | null;
   roleSwitcherOpen: boolean;
   tenantId: number | null;
-  entity: unknown | null;
+  entity: RoleEntity | null;
 }
 
 const initialState: AuthState = {

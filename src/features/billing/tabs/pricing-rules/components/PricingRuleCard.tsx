@@ -1,5 +1,6 @@
 import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
+import type { FeeEventsTabLabelMaps } from "@/features/billing/tabs/fee-events/types/fee-events-tab";
 import { PRICING_RULE_UI_COPY } from "@/shared/constants/pricingRuleOptions";
 import { useToken } from "@/shared/hooks/useToken";
 import {
@@ -10,7 +11,17 @@ import {
   PlusOutlined,
   RightOutlined,
 } from "@ant-design/icons";
-import { Alert, Badge, Button, Flex, Table, Tag, Tooltip, Typography } from "antd";
+import {
+  Alert,
+  Badge,
+  Button,
+  Descriptions,
+  Flex,
+  Table,
+  Tag,
+  Tooltip,
+  Typography,
+} from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useMemo } from "react";
 import type { PricingRule, PricingRuleItemRead } from "../types/pricing-rule";
@@ -25,6 +36,8 @@ type PricingRuleCardProps = {
   rule: PricingRule;
   eventNames: Map<string, string>;
   referenceNames: Map<number, string>;
+  labelMaps: FeeEventsTabLabelMaps;
+  policyVersionById?: Map<number, number>;
   isLocked: boolean;
   isExpanded: boolean;
   onExpandToggle: () => void;
@@ -46,6 +59,8 @@ export function PricingRuleCard({
   rule,
   eventNames,
   referenceNames,
+  labelMaps,
+  policyVersionById = new Map(),
   isLocked,
   isExpanded,
   onExpandToggle,
@@ -56,7 +71,14 @@ export function PricingRuleCard({
   onDeleteLine,
 }: PricingRuleCardProps) {
   const token = useToken();
-  const display = getPricingRuleCardDisplay(rule, referenceNames, eventNames);
+  const display = getPricingRuleCardDisplay(
+    rule,
+    referenceNames,
+    eventNames,
+    labelMaps,
+    policyVersionById,
+  );
+  const { policyDisplay } = display;
   const lineItems = sortPricingRuleItems(rule.items);
   const isGlobal = rule.scope === "GLOBAL";
   const showReference =
@@ -302,6 +324,46 @@ export function PricingRuleCard({
                 <Typography.Text strong style={{ fontSize: token.fontSizeLG }}>
                   {display.eventLabel}
                 </Typography.Text>
+                {display.policyVersionLabel ? (
+                  <Tooltip
+                    title={
+                      policyDisplay.policyEmbedMissing
+                        ? `${PRICING_RULE_UI_COPY.policyMissingEmbedTooltip} (ID ${rule.billableEventPolicyId})`
+                        : undefined
+                    }
+                  >
+                    <Tag color="geekblue" style={{ margin: 0 }}>
+                      {display.policyVersionLabel}
+                    </Tag>
+                  </Tooltip>
+                ) : (
+                  <Tooltip
+                    title={`${PRICING_RULE_UI_COPY.policyMissingEmbedTooltip} (ID ${rule.billableEventPolicyId})`}
+                  >
+                    <Tag style={{ margin: 0 }}>Policy</Tag>
+                  </Tooltip>
+                )}
+                {policyDisplay.policyStatusLabel ? (
+                  <Tag
+                    color={
+                      policyDisplay.isHistoricalPolicy ? "default" : "success"
+                    }
+                    style={{ margin: 0 }}
+                  >
+                    {policyDisplay.isHistoricalPolicy
+                      ? PRICING_RULE_UI_COPY.policyStatusHistorical
+                      : PRICING_RULE_UI_COPY.policyStatusActive}
+                  </Tag>
+                ) : null}
+                {policyDisplay.occurrenceLine &&
+                policyDisplay.occurrenceLine !== "—" ? (
+                  <Typography.Text
+                    type="secondary"
+                    style={{ fontSize: token.fontSizeSM }}
+                  >
+                    {policyDisplay.occurrenceLine}
+                  </Typography.Text>
+                ) : null}
                 {isLocked ? (
                   <Tag icon={<LockOutlined />} color="warning" style={{ margin: 0 }}>
                     Locked
@@ -372,6 +434,28 @@ export function PricingRuleCard({
 
       {isExpanded ? (
         <div style={{ padding: `${token.paddingSM}px ${token.paddingMD}px` }}>
+          {rule.policy ? (
+            <Descriptions
+              column={{ xs: 1, sm: 2 }}
+              size="small"
+              bordered
+              style={{ marginBottom: token.marginSM }}
+            >
+              <Descriptions.Item label="Policy version">
+                {display.policyVersionLabel ?? "—"}
+              </Descriptions.Item>
+              <Descriptions.Item label={PRICING_RULE_UI_COPY.policyOccurrenceLabel}>
+                {policyDisplay.occurrenceLine ?? "—"}
+              </Descriptions.Item>
+              <Descriptions.Item label="Payment timing">
+                {policyDisplay.paymentTimingLabel ?? "—"}
+              </Descriptions.Item>
+              <Descriptions.Item label="Policy status">
+                {policyDisplay.policyStatusLabel ?? "—"}
+              </Descriptions.Item>
+            </Descriptions>
+          ) : null}
+
           <Table<PricingRuleMetaRecord>
             rowKey="key"
             size="small"
@@ -389,7 +473,7 @@ export function PricingRuleCard({
             <Alert
               type="warning"
               showIcon
-              message={PRICING_RULE_UI_COPY.lineLockedHint}
+              title={PRICING_RULE_UI_COPY.lineLockedHint}
               style={{ marginBottom: token.marginSM }}
             />
           ) : null}

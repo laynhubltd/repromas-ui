@@ -4,6 +4,16 @@ export const eventCodeRules: Rule[] = [
   { required: true, message: "Fee event is required" },
 ];
 
+export const billableEventPolicyIdRules: Rule[] = [
+  {
+    validator: async (_, value: number | undefined) => {
+      if (value == null || value <= 0) {
+        throw new Error("Publish a policy before pricing");
+      }
+    },
+  },
+];
+
 export const scopeRules: Rule[] = [
   { required: true, message: "Scope is required" },
 ];

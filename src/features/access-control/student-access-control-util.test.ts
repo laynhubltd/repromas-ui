@@ -11,7 +11,7 @@ const studentRole: ApiRole = {
   name: "Student",
   scope: StudentPortalScope.Student,
   scopeReferenceId: 1,
-  entity: { id: 1 },
+  entity: { id: 1 } as ApiRole["entity"],
 };
 
 const candidateRole: ApiRole = {

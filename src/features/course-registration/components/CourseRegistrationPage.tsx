@@ -73,6 +73,7 @@ export function CourseRegistrationPage() {
           onSemesterTypeChange={actions.handleSemesterTypeChange}
           studentInfo={state.studentHeaderInfo}
           useMobileLayout={layout.useCourseCards}
+          skipBillingGuard={false}
         />
       </div>
     );
@@ -147,6 +148,7 @@ export function CourseRegistrationPage() {
             semesterTypeId={state.semesterTypeId}
             onSemesterTypeChange={actions.handleSemesterTypeChange}
             useMobileLayout={layout.useCourseCards}
+            skipBillingGuard
           />
         </Col>
       </Row>

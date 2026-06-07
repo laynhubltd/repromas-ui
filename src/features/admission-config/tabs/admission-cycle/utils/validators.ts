@@ -10,6 +10,25 @@ export const sessionIdRules: Rule[] = [
   { required: true, message: "Academic session is required" },
 ];
 
+export const entryModeRules: Rule[] = [
+  { required: true, message: "Entry mode is required" },
+];
+
+export const batchNoRules: Rule[] = [
+  { required: true, message: "Batch number is required" },
+  {
+    type: "number",
+    min: 1,
+    message: "Batch number must be at least 1",
+  },
+];
+
+export const transitionReasonRules: Rule[] = [
+  { required: true, message: "A reason is required to roll back the cycle." },
+  { whitespace: true, message: "Reason cannot be blank." },
+  { min: 3, message: "Reason must be at least 3 characters." },
+];
+
 export const endDateAfterStartDateRule = (
   getStartDate: () => string | null | undefined,
 ): Rule => ({

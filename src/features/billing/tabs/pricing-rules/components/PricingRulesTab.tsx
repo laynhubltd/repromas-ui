@@ -27,8 +27,10 @@ import {
   Select,
   Typography,
 } from "antd";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { usePricingRulesTab } from "../hooks/usePricingRulesTab";
+import type { PricingRule } from "../types/pricing-rule";
+import { formatVersionNoLabel } from "../utils/pricingRuleDisplay";
 import { PricingRuleCard } from "./PricingRuleCard";
 import { AddPricingRuleLineModal } from "./modals/AddPricingRuleLineModal";
 import { DeletePricingRuleLineModal } from "./modals/DeletePricingRuleLineModal";
@@ -36,10 +38,27 @@ import { EditPricingRuleLineModal } from "./modals/EditPricingRuleLineModal";
 import { DeletePricingRuleModal } from "./modals/DeletePricingRuleModal";
 import { PricingRuleFormModal } from "./modals/PricingRuleFormModal";
 
-export function PricingRulesTab() {
+type PricingRulesTabProps = {
+  initialEventCode?: string | null;
+  initialBillableEventPolicyId?: number | null;
+  initialCloneFromPolicyId?: number | null;
+  onNavigateToFeePolicy?: (eventId: number) => void;
+};
+
+export function PricingRulesTab({
+  initialEventCode = null,
+  initialBillableEventPolicyId = null,
+  initialCloneFromPolicyId = null,
+  onNavigateToFeePolicy,
+}: PricingRulesTabProps = {}) {
   const token = useToken();
   const [filterOpen, setFilterOpen] = useState(false);
-  const { state, actions, flags } = usePricingRulesTab();
+  const { state, actions, flags } = usePricingRulesTab({
+    initialEventCode,
+    initialBillableEventPolicyId,
+    initialCloneFromPolicyId,
+    onNavigateToFeePolicy,
+  });
   const {
     pricingRules,
     totalItems,
@@ -48,6 +67,17 @@ export function PricingRulesTab() {
     sectionError,
     page,
     eventCodeFilter,
+    policyVersionFilter,
+    historicalPolicyId,
+    historicalPolicyOptions,
+    policyVersionFilterOptions,
+    policyVersionById,
+    labelMaps,
+    groupedPricingRules,
+    eventByCode,
+    selectedEventMissingPolicy,
+    filteredEvent,
+    createPrefill,
     indigeneFilter,
     scopeFilter,
     isActiveFilter,
@@ -78,6 +108,8 @@ export function PricingRulesTab() {
   const {
     handlePageChange,
     handleEventCodeFilterChange,
+    handlePolicyVersionFilterChange,
+    handleHistoricalPolicyIdChange,
     handleIndigeneFilterChange,
     handleScopeFilterChange,
     handleIsActiveFilterChange,
@@ -97,10 +129,46 @@ export function PricingRulesTab() {
     handleCloseDeleteLine,
     refetch,
   } = actions;
-  const { hasData, isFilterActive } = flags;
+  const { hasData, isFilterActive, canCreatePricing } = flags;
+
+  const renderRuleCard = useCallback(
+    (rule: PricingRule) => (
+      <Col key={rule.id} span={24}>
+        <PricingRuleCard
+          rule={rule}
+          eventNames={eventNameMap}
+          referenceNames={referenceNameMap}
+          labelMaps={labelMaps}
+          policyVersionById={policyVersionById}
+          isLocked={lockedRuleIdSet.has(rule.id)}
+          isExpanded={expandedRuleIds.has(rule.id)}
+          onExpandToggle={() => handleExpandToggle(rule.id)}
+          onEdit={handleOpenEdit}
+          onDelete={handleOpenDelete}
+          onAddLine={handleOpenAddLine}
+          onEditLine={handleOpenEditLine}
+          onDeleteLine={handleOpenDeleteLine}
+        />
+      </Col>
+    ),
+    [
+      eventNameMap,
+      referenceNameMap,
+      labelMaps,
+      policyVersionById,
+      lockedRuleIdSet,
+      expandedRuleIds,
+      handleExpandToggle,
+      handleOpenEdit,
+      handleOpenDelete,
+      handleOpenAddLine,
+      handleOpenEditLine,
+      handleOpenDeleteLine,
+    ],
+  );
 
   const cardState = isLoading ? "loading" : "default";
-  const canCreate = hasBillableEvents && hasFeeItems;
+  const canCreate = canCreatePricing;
 
   const filterContent = (
     <Flex vertical gap={16} style={{ width: 280 }}>
@@ -117,6 +185,36 @@ export function PricingRulesTab() {
             options={eventCodeOptions}
           />
         </Form.Item>
+        {eventCodeFilter ? (
+          <>
+            <Form.Item
+              label={PRICING_RULE_UI_COPY.policyVersionFilterLabel}
+              style={{ marginBottom: 12 }}
+            >
+              <Select
+                value={policyVersionFilter}
+                onChange={handlePolicyVersionFilterChange}
+                style={{ width: "100%" }}
+                options={policyVersionFilterOptions}
+              />
+            </Form.Item>
+            {policyVersionFilter === "historical" ? (
+              <Form.Item
+                label={PRICING_RULE_UI_COPY.historicalPolicyPlaceholder}
+                style={{ marginBottom: 12 }}
+              >
+                <Select
+                  placeholder="Select version"
+                  allowClear
+                  value={historicalPolicyId}
+                  onChange={handleHistoricalPolicyIdChange}
+                  style={{ width: "100%" }}
+                  options={historicalPolicyOptions}
+                />
+              </Form.Item>
+            ) : null}
+          </>
+        ) : null}
         <Form.Item label="Indigene status" style={{ marginBottom: 12 }}>
           <Select
             placeholder="Any status"
@@ -177,7 +275,7 @@ export function PricingRulesTab() {
         <Alert
           type="warning"
           showIcon
-          message="Configure fees first"
+          title="Configure fees first"
           description="Add billable fees on the Fees tab before creating pricing rules."
         />
       </ConditionalRenderer>
@@ -186,8 +284,27 @@ export function PricingRulesTab() {
         <Alert
           type="warning"
           showIcon
-          message="Create fee items first"
+          title="Create fee items first"
           description="Add at least one active fee item on the Fee Items tab before setting prices."
+        />
+      </ConditionalRenderer>
+
+      <ConditionalRenderer when={selectedEventMissingPolicy}>
+        <Alert
+          type="warning"
+          showIcon
+          title={PRICING_RULE_UI_COPY.publishPolicyFirst}
+          description={PRICING_RULE_UI_COPY.noPolicyForEvent}
+          action={
+            filteredEvent && onNavigateToFeePolicy ? (
+              <Button
+                size="small"
+                onClick={() => onNavigateToFeePolicy(filteredEvent.id)}
+              >
+                Open Fee Policy
+              </Button>
+            ) : undefined
+          }
         />
       </ConditionalRenderer>
 
@@ -315,25 +432,23 @@ export function PricingRulesTab() {
 
         <ConditionalRenderer when={!isError && hasData}>
           <Flex vertical gap={16}>
-            <Row gutter={[16, 16]}>
-              {pricingRules.map((rule) => (
-                <Col key={rule.id} span={24}>
-                  <PricingRuleCard
-                    rule={rule}
-                    eventNames={eventNameMap}
-                    referenceNames={referenceNameMap}
-                    isLocked={lockedRuleIdSet.has(rule.id)}
-                    isExpanded={expandedRuleIds.has(rule.id)}
-                    onExpandToggle={() => handleExpandToggle(rule.id)}
-                    onEdit={handleOpenEdit}
-                    onDelete={handleOpenDelete}
-                    onAddLine={handleOpenAddLine}
-                    onEditLine={handleOpenEditLine}
-                    onDeleteLine={handleOpenDeleteLine}
-                  />
-                </Col>
-              ))}
-            </Row>
+            {groupedPricingRules ? (
+              groupedPricingRules.map((group) => (
+                <Flex key={group.key} vertical gap={12}>
+                  <Typography.Text
+                    type="secondary"
+                    strong
+                    style={{ fontSize: token.fontSizeSM }}
+                  >
+                    {PRICING_RULE_UI_COPY.policyVersionGroupTitle}{" "}
+                    {formatVersionNoLabel(group.versionNo) ?? group.key}
+                  </Typography.Text>
+                  <Row gutter={[16, 16]}>{group.rules.map(renderRuleCard)}</Row>
+                </Flex>
+              ))
+            ) : (
+              <Row gutter={[16, 16]}>{pricingRules.map(renderRuleCard)}</Row>
+            )}
 
             <Flex justify="flex-end">
               <Pagination
@@ -359,6 +474,9 @@ export function PricingRulesTab() {
         configuredEventCodes={
           new Set(eventCodeOptions.map((opt) => opt.value))
         }
+        eventByCode={eventByCode}
+        labelMaps={labelMaps}
+        createPrefill={createPrefill}
         initialLocked={formTarget ? lockedRuleIdSet.has(formTarget.id) : false}
         onRuleLocked={markRuleLocked}
       />

@@ -1,5 +1,6 @@
 import type {
   IndigeneStatus,
+  PricingRulePolicyVersionFilter,
   PricingRuleScope,
   StudentCategory,
 } from "@/features/billing/tabs/pricing-rules/types/pricing-rule";
@@ -37,10 +38,39 @@ export const STUDENT_CATEGORY_OPTIONS: {
   { value: "TRANSFER", label: "Transfer" },
 ];
 
+export const PRICING_RULE_POLICY_VERSION_FILTER_OPTIONS: {
+  value: PricingRulePolicyVersionFilter;
+  label: string;
+}[] = [
+  { value: "active", label: "Active policy only" },
+  { value: "historical", label: "Historical policy" },
+  { value: "all", label: "All policy versions" },
+];
+
 export const PRICING_RULE_UI_COPY = {
   explainerTitle: "Pricing rules",
   explainerBody:
-    "Set how much each fee costs for a given billable event, audience, and effective period. Amounts live on rule lines (fee item + amount), not on the fee item catalog. Configure Fees and Fee Items first.",
+    "Set fee amounts per policy version. Each rule is linked to the active policy at creation time — publish a new policy version on the Fee Policy tab, then create pricing for that version.",
+  noPolicyForEvent:
+    "This fee type has no published policy yet. Publish a policy on the Fee Policy tab before adding pricing rules.",
+  policyBindingReadOnly: "Pricing for policy",
+  publishPolicyFirst: "Publish a policy before pricing",
+  policyVersionFilterLabel: "Show pricing for",
+  historicalPolicyPlaceholder: "Select policy version",
+  configurePricingCta: "Configure pricing",
+  configurePricingAfterPublish:
+    "Pricing rules are linked to policy versions. Create or copy rules for the new version if amounts change.",
+  structuralPolicyBlocked:
+    "Cannot change billing period structure while students have unpaid charges. Settle open charges or contact an administrator for cutover.",
+  policyImmutableConflict:
+    "The policy version on a pricing rule cannot be changed after creation.",
+  policyMissingEmbedTooltip:
+    "Policy details unavailable. Reload the list with policy data included.",
+  policyOccurrenceLabel: "Billing frequency",
+  policyStatusActive: "Active policy",
+  policyStatusHistorical: "Historical policy",
+  policyVersionGroupTitle: "Policy version",
+  policyVersionUnknown: "(version unknown)",
   emptyTitle: "No pricing rules yet",
   emptyBody:
     "Create pricing rules after you have billable fees configured and at least one active fee item.",
@@ -53,7 +83,8 @@ export const PRICING_RULE_UI_COPY = {
   balanceWarning:
     "Saving does not change amounts already charged to existing candidates.",
   overlapHint:
-    "Another active rule may conflict on the same event, indigene status, scope, and dates. End-date the other rule or adjust dates.",
+    "Another active rule may conflict on the same fee type, policy version, indigene status, scope, and dates. End-date the other rule or adjust dates.",
+  copyFromPriorPolicy: "Copy amounts from previous policy",
   retireReplaceTitle: "Retire and create new version",
   retireReplaceBody:
     "End-date the current rule, then create a new rule with updated amounts and a new effective start date.",

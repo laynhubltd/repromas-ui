@@ -60,7 +60,7 @@ describe("mapLoginResponse", () => {
   });
 
   it("preserves role entity when present", () => {
-    const entity = { id: 99, type: "student" };
+    const entity = { id: 99, matricNumber: "2024/001" };
     const result = mapLoginResponse({
       token: "t",
       refresh_token: "r",

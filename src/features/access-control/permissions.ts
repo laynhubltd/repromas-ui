@@ -289,6 +289,13 @@ export const Permission = {
   BillingPricingRulesCreate: "system-configs:create",
   BillingPricingRulesUpdate: "system-configs:update",
   BillingPricingRulesDelete: "system-configs:delete",
+  // Billing finance read (wire to catalogue when available)
+  // BillingInvoicesList: "billing-invoices:list",
+  // BillingPaymentsList: "billing-payments:list",
+  // BillingPaymentTransactionsList: "billing-payment-transactions:list",
+  BillingInvoicesList: "system-configs:list",
+  BillingPaymentsList: "system-configs:list",
+  BillingPaymentTransactionsList: "system-configs:list",
 } as const;
 
 export type Permission = (typeof Permission)[keyof typeof Permission];

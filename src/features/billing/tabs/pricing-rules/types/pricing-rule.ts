@@ -1,3 +1,7 @@
+import type { BillableEventPolicy } from "@/features/billing/tabs/fee-policies/types/billable-event-policy";
+
+export type { BillableEventPolicy as PricingRulePolicyEmbed };
+
 export type PricingRuleScope = "GLOBAL" | "FACULTY" | "DEPARTMENT" | "PROGRAM";
 
 export type IndigeneStatus =
@@ -25,9 +29,17 @@ export type PricingRuleItemWrite = {
   sortOrder: number;
 };
 
+/** Filter pricing list by policy version scope (per selected fee event). */
+export type PricingRulePolicyVersionFilter =
+  | "active"
+  | "historical"
+  | "all";
+
 export type PricingRule = {
   id: number;
   eventCode: string;
+  billableEventPolicyId: number;
+  policy?: BillableEventPolicy | null;
   scope: PricingRuleScope;
   referenceId: number | null;
   academicSessionId: number | null;
@@ -46,6 +58,7 @@ export type PricingRule = {
 
 export type CreatePricingRuleRequest = {
   eventCode: string;
+  billableEventPolicyId: number;
   scope: PricingRuleScope;
   referenceId?: number | null;
   academicSessionId?: number | null;
@@ -67,7 +80,9 @@ export type PricingRuleListParams = {
   page?: number;
   itemsPerPage?: number;
   sort?: string;
+  include?: string;
   "exact[eventCode]"?: string;
+  "exact[billableEventPolicyId]"?: number;
   "exact[indigeneStatus]"?: IndigeneStatus;
   "exact[scope]"?: PricingRuleScope;
   "exact[referenceId]"?: number;

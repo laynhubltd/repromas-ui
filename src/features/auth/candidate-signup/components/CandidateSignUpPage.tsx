@@ -1,15 +1,11 @@
 // Feature: auth/candidate-signup
 import { appPaths } from "@/app/routing/app-path";
 import { AuthPageLayout } from "@/components/auth/AuthPageLayout";
+import { formatEntryBatchLabel } from "@/features/admission-config/tabs/admission-cycle/utils/admissionCycleDisplay";
 import { CANDIDATE_GENDER_OPTIONS } from "@/shared/constants/admissionCandidateOptions";
+import { CANDIDATE_SIGNUP_UI_COPY } from "@/shared/constants/candidateSignupOptions";
 import { useToken } from "@/shared/hooks/useToken";
 import { ErrorAlert } from "@/shared/ui/ErrorAlert";
-import {
-  firstNameRules,
-  jambRegNoRules,
-  lastNameRules,
-  stateIdRules,
-} from "@/features/admission-candidate/utils/validators";
 import { LockOutlined, UserOutlined } from "@ant-design/icons";
 import {
   Alert,
@@ -24,21 +20,34 @@ import {
 } from "antd";
 import { Link } from "react-router-dom";
 import { useCandidateSignUpPage } from "../hooks/useCandidateSignUpPage";
+import type { CandidateSignupBlockedReason } from "../state/candidateSignupState";
+import {
+  confirmPasswordRules,
+  dateOfBirthRules,
+  emailRules,
+  firstNameRules,
+  genderRules,
+  jambRegNoRules,
+  lastNameRules,
+  lgaIdRules,
+  passwordRules,
+  stateIdRules,
+} from "../utils/validators";
 
 const { Title, Text } = Typography;
 
 function BlockedMessage({
   reason,
 }: {
-  reason: "not_open" | "ambiguous" | "wrong_status" | null;
+  reason: CandidateSignupBlockedReason | null;
 }) {
   if (reason === "not_open" || reason === "wrong_status") {
     return (
       <Alert
         type="info"
         showIcon
-        message="Admissions are not open"
-        description="There is no active admission process at this time. Please check back later."
+        message={CANDIDATE_SIGNUP_UI_COPY.blockedNotOpenTitle}
+        description={CANDIDATE_SIGNUP_UI_COPY.blockedNotOpenDescription}
       />
     );
   }
@@ -47,8 +56,8 @@ function BlockedMessage({
       <Alert
         type="warning"
         showIcon
-        message="Unable to start registration"
-        description="Multiple admission cycles are open. Please contact the institution for assistance."
+        message={CANDIDATE_SIGNUP_UI_COPY.blockedAmbiguousTitle}
+        description={CANDIDATE_SIGNUP_UI_COPY.blockedAmbiguousDescription}
       />
     );
   }
@@ -57,7 +66,7 @@ function BlockedMessage({
 
 export function CandidateSignUpPage() {
   const t = useToken();
-  const { state, actions, flags, forms, validators } = useCandidateSignUpPage();
+  const { state, actions, flags, forms } = useCandidateSignUpPage();
   const {
     config,
     cycleDateLabel,
@@ -89,8 +98,13 @@ export function CandidateSignUpPage() {
     fontSize: t.fontSize,
   };
 
+  const entryBatchLabel =
+    config !== undefined && config !== null
+      ? formatEntryBatchLabel(config.entryMode, config.batchNo)
+      : null;
+
   return (
-    <AuthPageLayout illustration="signup">
+    <AuthPageLayout illustration="signup" fillViewport backTo={appPaths.login}>
       <div style={{ textAlign: "center", marginBottom: t.sizeLG }}>
         <Title
           level={2}
@@ -101,13 +115,21 @@ export function CandidateSignUpPage() {
             fontWeight: t.fontWeightStrong,
           }}
         >
-          {config?.name ?? "Candidate registration"}
+          {config?.name ?? CANDIDATE_SIGNUP_UI_COPY.pageTitleFallback}
         </Title>
-        {cycleDateLabel && (
+        {entryBatchLabel !== null ? (
+          <Text
+            type="secondary"
+            style={{ display: "block", fontSize: t.fontSizeSM }}
+          >
+            {entryBatchLabel}
+          </Text>
+        ) : null}
+        {cycleDateLabel ? (
           <Text type="secondary" style={{ fontSize: t.fontSizeSM }}>
             {cycleDateLabel}
           </Text>
-        )}
+        ) : null}
       </div>
 
       <ErrorAlert error={formError} />
@@ -118,11 +140,11 @@ export function CandidateSignUpPage() {
         </div>
       )}
 
-      {isBlocked && !isConfigLoading && (
+      {isBlocked && !isConfigLoading ? (
         <BlockedMessage reason={blockedReason} />
-      )}
+      ) : null}
 
-      {step === "jamb_lookup" && !isConfigLoading && (
+      {step === "jamb_lookup" && !isConfigLoading ? (
         <Form
           form={jambLookupForm}
           layout="vertical"
@@ -130,8 +152,11 @@ export function CandidateSignUpPage() {
           requiredMark={false}
           onFinish={handleJambLookup}
         >
-          <Text type="secondary" style={{ display: "block", marginBottom: t.sizeMD }}>
-            Enter your JAMB registration number to verify your CAPS record.
+          <Text
+            type="secondary"
+            style={{ display: "block", marginBottom: t.sizeMD }}
+          >
+            {CANDIDATE_SIGNUP_UI_COPY.jambLookupIntro}
           </Text>
           <Form.Item name="jambRegNo" rules={jambRegNoRules}>
             <Input placeholder="JAMB registration number" style={inputStyle} />
@@ -151,9 +176,9 @@ export function CandidateSignUpPage() {
             </Button>
           </Form.Item>
         </Form>
-      )}
+      ) : null}
 
-      {step === "jamb_details" && lookupResult && (
+      {step === "jamb_details" && lookupResult ? (
         <>
           <Descriptions
             bordered
@@ -164,9 +189,15 @@ export function CandidateSignUpPage() {
             <Descriptions.Item label="Name">
               {lookupResult.firstName} {lookupResult.lastName}
             </Descriptions.Item>
-            <Descriptions.Item label="Gender">{lookupResult.gender}</Descriptions.Item>
-            <Descriptions.Item label="State">{lookupResult.state}</Descriptions.Item>
-            <Descriptions.Item label="LGA">{lookupResult.lga}</Descriptions.Item>
+            <Descriptions.Item label="Gender">
+              {lookupResult.gender}
+            </Descriptions.Item>
+            <Descriptions.Item label="State">
+              {lookupResult.state}
+            </Descriptions.Item>
+            <Descriptions.Item label="LGA">
+              {lookupResult.lga}
+            </Descriptions.Item>
             <Descriptions.Item label="Applied program">
               {lookupResult.appliedProgram}
             </Descriptions.Item>
@@ -179,7 +210,7 @@ export function CandidateSignUpPage() {
             requiredMark={false}
             onFinish={handleJambSignup}
           >
-            <Form.Item name="email" rules={validators.emailRules}>
+            <Form.Item name="email" rules={emailRules}>
               <Input
                 prefix={<UserOutlined style={{ color: t.colorTextTertiary }} />}
                 placeholder="Email address"
@@ -187,7 +218,7 @@ export function CandidateSignUpPage() {
                 style={inputStyle}
               />
             </Form.Item>
-            <Form.Item name="password" rules={validators.passwordRules}>
+            <Form.Item name="password" rules={passwordRules}>
               <Input.Password
                 prefix={<LockOutlined style={{ color: t.colorTextTertiary }} />}
                 placeholder="Password"
@@ -197,17 +228,9 @@ export function CandidateSignUpPage() {
             <Form.Item
               name="confirmPassword"
               dependencies={["password"]}
-              rules={[
-                { required: true, message: "Please confirm your password" },
-                ({ getFieldValue }) => ({
-                  validator(_: unknown, value: string) {
-                    if (!value || getFieldValue("password") === value) {
-                      return Promise.resolve();
-                    }
-                    return Promise.reject(new Error("Passwords do not match"));
-                  },
-                }),
-              ]}
+              rules={confirmPasswordRules(() =>
+                jambSignupForm.getFieldValue("password"),
+              )}
             >
               <Input.Password
                 prefix={<LockOutlined style={{ color: t.colorTextTertiary }} />}
@@ -237,9 +260,9 @@ export function CandidateSignUpPage() {
             </Button>
           </Form>
         </>
-      )}
+      ) : null}
 
-      {step === "open_form" && !isConfigLoading && (
+      {step === "open_form" && !isConfigLoading ? (
         <Form
           form={openSignupForm}
           layout="vertical"
@@ -247,16 +270,26 @@ export function CandidateSignUpPage() {
           requiredMark={false}
           onFinish={handleOpenSignup}
         >
+          <Text
+            type="secondary"
+            style={{ display: "block", marginBottom: t.sizeMD }}
+          >
+            {CANDIDATE_SIGNUP_UI_COPY.openSignupIntro}
+          </Text>
           <Form.Item name="firstName" label="First name" rules={firstNameRules}>
             <Input style={inputStyle} />
           </Form.Item>
           <Form.Item name="lastName" label="Last name" rules={lastNameRules}>
             <Input style={inputStyle} />
           </Form.Item>
-          <Form.Item name="dateOfBirth" label="Date of birth" rules={[{ required: true, message: "Date of birth is required" }]}>
+          <Form.Item
+            name="dateOfBirth"
+            label="Date of birth"
+            rules={dateOfBirthRules}
+          >
             <DatePicker style={{ width: "100%", height: t.controlHeightLG }} />
           </Form.Item>
-          <Form.Item name="gender" label="Gender" rules={[{ required: true, message: "Gender is required" }]}>
+          <Form.Item name="gender" label="Gender" rules={genderRules}>
             <Select
               placeholder="Select gender"
               options={CANDIDATE_GENDER_OPTIONS}
@@ -272,7 +305,7 @@ export function CandidateSignUpPage() {
               onChange={handleOpenStateChange}
             />
           </Form.Item>
-          <Form.Item name="lgaId" label="LGA" rules={[{ required: true, message: "LGA is required" }]}>
+          <Form.Item name="lgaId" label="LGA" rules={lgaIdRules}>
             <Select
               showSearch
               optionFilterProp="label"
@@ -282,27 +315,19 @@ export function CandidateSignUpPage() {
               options={lgas.map((l) => ({ value: l.id, label: l.name }))}
             />
           </Form.Item>
-          <Form.Item name="email" label="Email" rules={validators.emailRules}>
+          <Form.Item name="email" label="Email" rules={emailRules}>
             <Input type="email" style={inputStyle} />
           </Form.Item>
-          <Form.Item name="password" label="Password" rules={validators.passwordRules}>
+          <Form.Item name="password" label="Password" rules={passwordRules}>
             <Input.Password style={inputStyle} />
           </Form.Item>
           <Form.Item
             name="confirmPassword"
             label="Confirm password"
             dependencies={["password"]}
-            rules={[
-              { required: true, message: "Please confirm your password" },
-              ({ getFieldValue }) => ({
-                validator(_: unknown, value: string) {
-                  if (!value || getFieldValue("password") === value) {
-                    return Promise.resolve();
-                  }
-                  return Promise.reject(new Error("Passwords do not match"));
-                },
-              }),
-            ]}
+            rules={confirmPasswordRules(() =>
+              openSignupForm.getFieldValue("password"),
+            )}
           >
             <Input.Password style={inputStyle} />
           </Form.Item>
@@ -324,7 +349,7 @@ export function CandidateSignUpPage() {
             </Button>
           </Form.Item>
         </Form>
-      )}
+      ) : null}
 
       <div
         style={{
@@ -336,7 +361,11 @@ export function CandidateSignUpPage() {
       >
         <Text type="secondary" style={{ fontSize: t.fontSizeSM }}>
           Already have an account?{" "}
-          <Link to={appPaths.login} className="auth-link" style={{ fontWeight: 500 }}>
+          <Link
+            to={appPaths.login}
+            className="auth-link"
+            style={{ fontWeight: 500 }}
+          >
             Sign in
           </Link>
         </Text>

@@ -2,13 +2,11 @@ import { baseApi } from "@/app/api/baseApi";
 import { userLoggedIn } from "@/features/auth/events";
 import type {
   AdmissionSignupConfig,
+  AdmissionSignupConfigParams,
   CandidateLookupRequest,
   CandidateLookupResponse,
   CandidateSignupRequest,
   CandidateSignupResponse,
-  LgaListParams,
-  NigerianLga,
-  PaginatedMember,
 } from "../types/candidate-signup";
 import { mapAdmissionSignupConfig } from "../utils/mapAdmissionSignupConfig";
 import { mapCandidateLookupResponse } from "../utils/mapCandidateLookupResponse";
@@ -17,10 +15,21 @@ import { mapCandidateSignupToLoginResponse } from "../utils/mapCandidateSignupTo
 
 const candidateSignupApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getAdmissionSignupConfig: builder.query<AdmissionSignupConfig, void>({
-      query: () => ({
+    getAdmissionSignupConfig: builder.query<
+      AdmissionSignupConfig,
+      AdmissionSignupConfigParams | void
+    >({
+      query: (params) => ({
         url: "/admission/signup-config",
         method: "GET",
+        params: params
+          ? {
+              ...(params.entryMode ? { entryMode: params.entryMode } : {}),
+              ...(params.sessionId !== undefined
+                ? { sessionId: params.sessionId }
+                : {}),
+            }
+          : undefined,
       }),
       transformResponse: (raw) => mapAdmissionSignupConfig(raw),
     }),
@@ -56,43 +65,6 @@ const candidateSignupApi = baseApi.injectEndpoints({
         }
       },
     }),
-
-    getLgasByState: builder.query<PaginatedMember<NigerianLga>, LgaListParams>({
-      query: ({ stateId, itemsPerPage = 200 }) => ({
-        url: "/lgas",
-        method: "GET",
-        params: {
-          "exact[state.id]": stateId,
-          itemsPerPage,
-        },
-      }),
-      transformResponse: (raw: unknown) => {
-        const data = raw as Record<string, unknown>;
-        const member = Array.isArray(data.member) ? data.member : [];
-        return {
-          member: member.map((item) => {
-            const lga = item as Record<string, unknown>;
-            return {
-              id: typeof lga.id === "number" ? lga.id : 0,
-              name: typeof lga.name === "string" ? lga.name : "",
-              code: typeof lga.code === "string" ? lga.code : undefined,
-              stateId:
-                typeof lga.stateId === "number"
-                  ? lga.stateId
-                  : typeof lga.state_id === "number"
-                    ? lga.state_id
-                    : undefined,
-            };
-          }),
-          totalItems:
-            typeof data.totalItems === "number"
-              ? data.totalItems
-              : typeof data.total_items === "number"
-                ? data.total_items
-                : member.length,
-        };
-      },
-    }),
   }),
 });
 
@@ -100,7 +72,6 @@ export const {
   useGetAdmissionSignupConfigQuery,
   useCandidateLookupMutation,
   useCandidateSignupMutation,
-  useGetLgasByStateQuery,
 } = candidateSignupApi;
 
 export default candidateSignupApi;

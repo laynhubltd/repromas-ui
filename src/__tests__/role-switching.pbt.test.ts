@@ -19,6 +19,7 @@ import { useAccessControl } from "@/features/access-control/use-access-control";
 import { authCleared, roleSelected, userLoggedIn, userLoggedOut } from "@/features/auth/events";
 import { authReducer, type AuthState } from "@/features/auth/state/auth-slice";
 import type { ApiRole, AuthProfile } from "@/features/auth/types";
+import { AUTH_ROLE_SCOPES } from "@/features/auth/types/role-entity";
 
 // ── Shared arbitraries & helpers ──────────────────────────────────────────────
 
@@ -35,9 +36,9 @@ const sampleProfile: AuthProfile = {
   email: "test@example.com",
 };
 
-const apiRoleArb = fc.record({
+const apiRoleArb: fc.Arbitrary<ApiRole> = fc.record({
   name: fc.string(),
-  scope: fc.string(),
+  scope: fc.constantFrom(...AUTH_ROLE_SCOPES),
   scopeReferenceId: fc.option(fc.integer(), { nil: null }),
   entity: fc.constant(null),
 });

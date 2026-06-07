@@ -9,6 +9,7 @@ import type {
   AdmissionCandidateListParams,
   CapsBulkUploadSummary,
   CreateAdmissionCandidateRequest,
+  CreateAdmissionCandidateResponse,
   MatriculateResponse,
   PaginatedResponse,
   PatchAdmissionCandidateMetadataRequest,
@@ -43,7 +44,7 @@ const admissionCandidateApi = baseApi.injectEndpoints({
     }),
 
     createAdmissionCandidate: builder.mutation<
-      AdmissionCandidate,
+      CreateAdmissionCandidateResponse,
       CreateAdmissionCandidateRequest
     >({
       query: (body) => ({

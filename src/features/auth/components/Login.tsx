@@ -1,5 +1,6 @@
 import { appPaths } from "@/app/routing/app-path";
 import { AuthPageLayout } from "@/components/auth/AuthPageLayout";
+import { AdmissionApplicationOpenNotice } from "@/features/auth/candidate-signup/components/AdmissionApplicationOpenNotice";
 import { useLogin } from "@/features/auth/hooks/useLogin";
 import { useToken } from "@/shared/hooks/useToken";
 import { validators } from "@/shared/utils/validators";
@@ -14,7 +15,13 @@ export default function Login() {
   const t = useToken();
   const navigate = useNavigate();
   const { state, actions, flags } = useLogin();
-  const { isLoading, isError, error, isSignupConfigLoading } = state;
+  const {
+    isLoading,
+    isError,
+    error,
+    isSignupConfigLoading,
+    admissionCycleName,
+  } = state;
   const { login } = actions;
   const { isCandidateSignupAvailable } = flags;
 
@@ -151,6 +158,7 @@ export default function Login() {
             borderTop: `1px solid ${t.colorBorderSecondary}`,
           }}
         >
+          <AdmissionApplicationOpenNotice cycleName={admissionCycleName} />
           <Button
             block
             onClick={() => navigate(appPaths.candidateSignUp)}

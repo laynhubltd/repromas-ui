@@ -1,5 +1,7 @@
 import { authApi } from "@/features/auth/api/auth-api";
+import "@/features/admission-config/tabs/geography-rule/api/statesApi";
 import "@/features/auth/candidate-signup/api/candidateSignupApi";
+import "@/features/candidate-profile/api/candidateProfileApi";
 import { authListenerMiddleware } from "@/features/auth/state/auth-listener";
 import { combineReducers, configureStore } from "@reduxjs/toolkit";
 import { setupListeners } from "@reduxjs/toolkit/query";

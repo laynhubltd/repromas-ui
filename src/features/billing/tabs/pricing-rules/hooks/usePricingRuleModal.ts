@@ -1,3 +1,4 @@
+import type { BillableEvent } from "@/features/billing/tabs/fee-events/types/billable-event";
 import { PRICING_RULE_UI_COPY } from "@/shared/constants/pricingRuleOptions";
 import { useApiError } from "@/shared/hooks/useApiError";
 import { RequestScreen } from "@/shared/types/error-ui";
@@ -7,6 +8,7 @@ import { useCallback, useEffect, useReducer } from "react";
 import {
   useCreatePricingRuleMutation,
   useDeletePricingRuleMutation,
+  useGetPricingRulesQuery,
   useUpdatePricingRuleMutation,
 } from "../api/pricingRuleApi";
 import {
@@ -25,12 +27,21 @@ import {
   type PricingRuleFormValues,
 } from "../utils/pricingRulePayload";
 
+export type PricingRuleCreatePrefill = {
+  eventCode?: string;
+  billableEventPolicyId?: number;
+  policyVersionNo?: number;
+  cloneFromPolicyId?: number;
+};
+
 type UsePricingRuleFormModalOptions = {
   target: PricingRule | null;
   open: boolean;
   onClose: () => void;
   initialLocked?: boolean;
   onRuleLocked?: (id: number) => void;
+  createPrefill?: PricingRuleCreatePrefill;
+  eventByCode?: Map<string, BillableEvent>;
 };
 
 export function usePricingRuleFormModal({
@@ -39,6 +50,8 @@ export function usePricingRuleFormModal({
   onClose,
   initialLocked = false,
   onRuleLocked,
+  createPrefill,
+  eventByCode = new Map(),
 }: UsePricingRuleFormModalOptions) {
   const isEditMode = target !== null;
   const [form] = Form.useForm<PricingRuleFormValues>();
@@ -56,6 +69,27 @@ export function usePricingRuleFormModal({
   const handleApiError = useApiError();
   const isSubmitting = isCreating || isUpdating;
 
+  const cloneFromPolicyId = createPrefill?.cloneFromPolicyId;
+  const { data: cloneSourceData } = useGetPricingRulesQuery(
+    {
+      itemsPerPage: 50,
+      "exact[billableEventPolicyId]": cloneFromPolicyId ?? 0,
+      ...(createPrefill?.eventCode
+        ? { "exact[eventCode]": createPrefill.eventCode }
+        : {}),
+    },
+    { skip: !open || !cloneFromPolicyId || isEditMode },
+  );
+
+  const resolveActivePolicyId = useCallback(
+    (eventCode: string | undefined): number | undefined => {
+      if (!eventCode) return undefined;
+      const event = eventByCode.get(eventCode);
+      return event?.currentPolicy?.id;
+    },
+    [eventByCode],
+  );
+
   useEffect(() => {
     if (!open) return;
 
@@ -68,7 +102,13 @@ export function usePricingRuleFormModal({
     if (isEditMode && target) {
       form.setFieldsValue(mapPricingRuleToFormValues(target));
     } else {
+      const eventCode = createPrefill?.eventCode;
+      const policyId =
+        createPrefill?.billableEventPolicyId ??
+        resolveActivePolicyId(eventCode);
       form.setFieldsValue({
+        eventCode,
+        billableEventPolicyId: policyId,
         scope: "GLOBAL",
         referenceId: null,
         indigeneStatus: "NON_INDIGENE",
@@ -79,7 +119,37 @@ export function usePricingRuleFormModal({
         items: [{ feeItemId: undefined as unknown as number, amount: undefined as unknown as number, isMandatory: true }],
       });
     }
-  }, [open, isEditMode, target, form, initialLocked]);
+  }, [
+    open,
+    isEditMode,
+    target,
+    form,
+    initialLocked,
+    createPrefill,
+    resolveActivePolicyId,
+  ]);
+
+  useEffect(() => {
+    if (!open || isEditMode || !cloneFromPolicyId) return;
+    const sourceRule = cloneSourceData?.member?.[0];
+    if (!sourceRule?.items?.length) return;
+    const currentItems = form.getFieldValue("items");
+    if (currentItems?.length > 1 || currentItems?.[0]?.feeItemId) return;
+    form.setFieldsValue({
+      items: sourceRule.items.map((item) => ({
+        feeItemId: item.feeItemId,
+        amount: parseFloat(item.amount),
+        isMandatory: item.isMandatory,
+      })),
+      scope: sourceRule.scope,
+      referenceId: sourceRule.referenceId,
+      academicSessionId: sourceRule.academicSessionId,
+      levelId: sourceRule.levelId,
+      studentCategory: sourceRule.studentCategory,
+      indigeneStatus: sourceRule.indigeneStatus,
+      priority: sourceRule.priority,
+    });
+  }, [open, isEditMode, cloneFromPolicyId, cloneSourceData, form]);
 
   const reset = useCallback(() => {
     form.resetFields();
@@ -103,7 +173,7 @@ export function usePricingRuleFormModal({
       });
 
       if (createStep === 0) {
-        await form.validateFields(["eventCode"]);
+        await form.validateFields(["eventCode", "billableEventPolicyId"]);
       } else if (createStep === 1) {
         const scope = form.getFieldValue("scope");
         const fields: (keyof PricingRuleFormValues)[] = [
@@ -136,12 +206,22 @@ export function usePricingRuleFormModal({
     });
     dispatch({ type: PricingRuleFormActionType.SetIsLocked, value: false });
     const tomorrow = dayjs().add(1, "day").format("YYYY-MM-DD");
+    const activePolicyId = resolveActivePolicyId(form.getFieldValue("eventCode"));
     form.setFieldsValue({
       effectiveFrom: tomorrow,
       effectiveTo: null,
       isActive: true,
+      billableEventPolicyId: activePolicyId,
     });
   };
+
+  const syncPolicyFromEvent = useCallback(
+    (eventCode: string | undefined) => {
+      const policyId = resolveActivePolicyId(eventCode);
+      form.setFieldValue("billableEventPolicyId", policyId);
+    },
+    [form, resolveActivePolicyId],
+  );
 
   const validateUniqueFeeItems = (values: PricingRuleFormValues): boolean => {
     const ids = values.items.map((line) => line.feeItemId).filter(Boolean);
@@ -290,6 +370,7 @@ export function usePricingRuleFormModal({
       enterRetireReplaceMode,
       switchToLockedMode,
       setCreateStep,
+      syncPolicyFromEvent,
     },
     form,
   };

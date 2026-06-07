@@ -90,7 +90,7 @@ export function ProgramAdmissionConfigTab() {
       width: 220,
       fixed: "left",
       render: (_, record) => (
-        <Space direction="vertical" size={0}>
+        <Space orientation="vertical" size={0}>
           <Typography.Text strong>
             {record.program?.name ?? "Unknown program"}
           </Typography.Text>
@@ -137,7 +137,7 @@ export function ProgramAdmissionConfigTab() {
       render: (_, record) => {
         const seats = computeQuotaSeats(record);
         return (
-          <Space direction="vertical" size={0}>
+          <Space orientation="vertical" size={0}>
             <Typography.Text type="secondary">
               Merit: {record.meritSeatsUsed} / {seats.meritAvailable}
             </Typography.Text>

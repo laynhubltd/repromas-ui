@@ -16,10 +16,21 @@ import { useToken } from "@/shared/hooks/useToken";
 import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Alert, Button, Flex, Form, Input, InputNumber, Modal, Select, Steps, Switch, Typography } from "antd";
 import { useMemo } from "react";
-import { usePricingRuleFormModal } from "../../hooks/usePricingRuleModal";
+import {
+  usePricingRuleFormModal,
+  type PricingRuleCreatePrefill,
+} from "../../hooks/usePricingRuleModal";
+import type { BillableEvent } from "@/features/billing/tabs/fee-events/types/billable-event";
+import type { FeeEventsTabLabelMaps } from "@/features/billing/tabs/fee-events/types/fee-events-tab";
+import {
+  formatVersionNoLabel,
+  getPolicyEmbedOccurrenceLine,
+  getPricingRulePolicyDisplay,
+} from "../../utils/pricingRuleDisplay";
 import type { PricingRule } from "../../types/pricing-rule";
 import { PricingRuleLineEditor } from "../PricingRuleLineEditor";
 import {
+  billableEventPolicyIdRules,
   effectiveFromRules,
   eventCodeRules,
   indigeneStatusRules,
@@ -35,6 +46,9 @@ type PricingRuleFormModalProps = {
   onClose: () => void;
   eventCodeOptions: { value: string; label: string }[];
   configuredEventCodes: Set<string>;
+  eventByCode?: Map<string, BillableEvent>;
+  labelMaps: FeeEventsTabLabelMaps;
+  createPrefill?: PricingRuleCreatePrefill;
   initialLocked?: boolean;
   onRuleLocked?: (id: number) => void;
 };
@@ -51,6 +65,9 @@ export function PricingRuleFormModal({
   onClose,
   eventCodeOptions,
   configuredEventCodes,
+  eventByCode = new Map(),
+  labelMaps,
+  createPrefill,
   initialLocked = false,
   onRuleLocked,
 }: PricingRuleFormModalProps) {
@@ -72,6 +89,7 @@ export function PricingRuleFormModal({
       handleNextStep,
       handlePrevStep,
       enterRetireReplaceMode,
+      syncPolicyFromEvent,
     },
     form,
   } = usePricingRuleFormModal({
@@ -80,10 +98,35 @@ export function PricingRuleFormModal({
     onClose,
     initialLocked,
     onRuleLocked,
+    createPrefill,
+    eventByCode,
   });
 
   const scopeValue = Form.useWatch("scope", form);
   const eventCodeValue = Form.useWatch("eventCode", form);
+  const policyIdValue = Form.useWatch("billableEventPolicyId", form);
+  const selectedEvent = eventCodeValue
+    ? eventByCode.get(eventCodeValue)
+    : undefined;
+  const policyVersionNo =
+    selectedEvent?.currentPolicy?.id === policyIdValue
+      ? selectedEvent?.currentPolicy?.versionNo
+      : createPrefill?.billableEventPolicyId === policyIdValue
+        ? createPrefill?.policyVersionNo
+        : undefined;
+
+  const policyOccurrenceLine = useMemo(() => {
+    if (
+      selectedEvent?.currentPolicy &&
+      selectedEvent.currentPolicy.id === policyIdValue
+    ) {
+      return getPolicyEmbedOccurrenceLine(selectedEvent.currentPolicy, labelMaps);
+    }
+    if (target?.policy && target.billableEventPolicyId === policyIdValue) {
+      return getPricingRulePolicyDisplay(target, labelMaps).occurrenceLine;
+    }
+    return null;
+  }, [selectedEvent, policyIdValue, target, labelMaps]);
 
   const isCreateFlow = !isEditMode;
   const showFullForm = !isLocked || retireReplaceMode;
@@ -228,7 +271,7 @@ export function PricingRuleFormModal({
           <Alert
             type="info"
             showIcon
-            message="Rule is locked"
+            title="Rule is locked"
             description={PRICING_RULE_UI_COPY.lockedHelp}
             style={{ marginBottom: 16 }}
             action={
@@ -245,7 +288,7 @@ export function PricingRuleFormModal({
           <Alert
             type="warning"
             showIcon
-            message={PRICING_RULE_UI_COPY.balanceWarning}
+            title={PRICING_RULE_UI_COPY.balanceWarning}
             style={{ marginBottom: 16 }}
           />
         ) : null}
@@ -254,7 +297,7 @@ export function PricingRuleFormModal({
           <Alert
             type="info"
             showIcon
-            message={PRICING_RULE_UI_COPY.retireReplaceTitle}
+            title={PRICING_RULE_UI_COPY.retireReplaceTitle}
             description={PRICING_RULE_UI_COPY.retireReplaceBody}
             style={{ marginBottom: 16 }}
           />
@@ -290,14 +333,57 @@ export function PricingRuleFormModal({
                 optionFilterProp="label"
                 disabled={isLocked && !retireReplaceMode}
                 style={{ width: "100%" }}
+                onChange={(code: string) => syncPolicyFromEvent(code)}
               />
             </Form.Item>
+
+            <Form.Item name="billableEventPolicyId" hidden rules={billableEventPolicyIdRules}>
+              <Input type="hidden" />
+            </Form.Item>
+
+            {eventCodeValue && !policyIdValue ? (
+              <Alert
+                type="warning"
+                showIcon
+                title={PRICING_RULE_UI_COPY.publishPolicyFirst}
+                description={PRICING_RULE_UI_COPY.noPolicyForEvent}
+                style={{ marginBottom: 16 }}
+              />
+            ) : null}
+
+            {policyIdValue ? (
+              <Typography.Text type="secondary" style={{ display: "block", marginBottom: 16 }}>
+                {PRICING_RULE_UI_COPY.policyBindingReadOnly}{" "}
+                {formatVersionNoLabel(policyVersionNo) ? (
+                  <Typography.Text strong>
+                    {formatVersionNoLabel(policyVersionNo)}
+                  </Typography.Text>
+                ) : (
+                  <Typography.Text type="secondary">
+                    {PRICING_RULE_UI_COPY.policyVersionUnknown}
+                  </Typography.Text>
+                )}
+                {policyOccurrenceLine && policyOccurrenceLine !== "—" ? (
+                  <>
+                    {" "}
+                    · {PRICING_RULE_UI_COPY.policyOccurrenceLabel}:{" "}
+                    <Typography.Text>{policyOccurrenceLine}</Typography.Text>
+                  </>
+                ) : null}
+                {selectedEvent?.currentPolicy?.isActive === false ? (
+                  <Typography.Text type="warning">
+                    {" "}
+                    (not the active policy)
+                  </Typography.Text>
+                ) : null}
+              </Typography.Text>
+            ) : null}
 
             {eventMissingFromBillables ? (
               <Alert
                 type="warning"
                 showIcon
-                message="This fee is not configured on the Fees tab."
+                title="This fee is not configured on the Fees tab."
                 style={{ marginBottom: 16 }}
               />
             ) : null}

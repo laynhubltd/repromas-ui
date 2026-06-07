@@ -1,6 +1,10 @@
+import { appPaths } from "@/app/routing/app-path";
+import { useBillingWorkflowDecision } from "@/features/billing/hooks/useBillingWorkflowDecision";
+import type { WorkflowPayNowPayload } from "@/features/billing/types/workflow-step-decision";
 import { RequestScreen } from "@/shared/types/error-ui";
 import { notification } from "antd";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   useGetCourseRegistrationPoolQuery,
   useSubmitCourseRegistrationMutation,
@@ -42,7 +46,10 @@ import {
 export function useRegistrationInterface(
   studentId: number | null,
   semesterTypeId: number | null,
+  skipBillingGuard = true,
 ) {
+  const navigate = useNavigate();
+
   // ─── Course Pool Query ────────────────────────────────────────────────────
   // Only fetch when both studentId and semesterTypeId are available.
   const shouldFetch = studentId !== null && semesterTypeId !== null;
@@ -300,10 +307,21 @@ export function useRegistrationInterface(
     ],
   );
 
+  // ─── Billing workflow guard ─────────────────────────────────────────────────
+  const {
+    flags: billingFlags,
+    state: billingState,
+    actions: billingActions,
+  } = useBillingWorkflowDecision("COURSE_REGISTRATION_SUBMIT", {
+    skip: skipBillingGuard || !shouldFetch,
+  });
+
   // ─── canSubmit flag ───────────────────────────────────────────────────────
   const canSubmit = useMemo(() => {
     if (!coursePool || !creditLimits) return false;
     if (isSubmitting) return false;
+    if (!skipBillingGuard && !billingFlags.allowed) return false;
+    if (!skipBillingGuard && billingState.isLoading) return false;
     const totalCredits =
       selectedCredits + (studentContext?.totalUnitsRegistered ?? 0);
     if (!isWithinCreditLimits(totalCredits, creditLimits)) return false;
@@ -320,7 +338,24 @@ export function useRegistrationInterface(
     mandatoryCourses,
     forceCarryoverFirstViolation,
     studentContext,
+    skipBillingGuard,
+    billingFlags.allowed,
+    billingState.isLoading,
   ]);
+
+  const handleBillingPayNow = useCallback(
+    (payload: WorkflowPayNowPayload) => {
+      const params = new URLSearchParams({
+        feeChargeId: String(payload.feeChargeId),
+      });
+      navigate(`${appPaths.StudentInvoices}?${params.toString()}`);
+    },
+    [navigate],
+  );
+
+  const handleBillingRetry = useCallback(() => {
+    void billingActions.refetch();
+  }, [billingActions]);
 
   // ─── Actions ──────────────────────────────────────────────────────────────
 
@@ -557,18 +592,27 @@ export function useRegistrationInterface(
       errorState: effectiveErrorState,
       /** True after the user has clicked Submit — gates validation error display. */
       submitAttempted,
+      billingBlockingUi: billingState.blockingUi,
     },
     actions: {
       handleCourseSelectionChange,
       handleSubmitRegistration,
       handleRetry,
       handleRetrySubmit,
+      handleBillingPayNow,
+      handleBillingRetry,
     },
     flags: {
       hasData: coursePool !== null,
       canSubmit,
       isEligible,
       shouldFetch,
+      billingBlocked: !skipBillingGuard && billingFlags.isBlocked,
+      isBillingLoading: !skipBillingGuard && billingState.isLoading,
+      showBillingBanner:
+        !skipBillingGuard &&
+        billingFlags.isBlocked &&
+        !billingState.isLoading,
       /** True when there is a failed submit attempt that can be retried. */
       hasFailedSubmit:
         lastSubmitAttempt !== null &&

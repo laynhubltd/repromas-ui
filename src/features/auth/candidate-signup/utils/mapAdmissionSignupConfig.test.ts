@@ -12,6 +12,8 @@ describe("mapAdmissionSignupConfig", () => {
         name: "2025/2026 Admission",
         status: "APPLICATION_OPEN",
         admission_identity_mode: "JAMB",
+        entry_mode: "UTME",
+        batch_no: 1,
         start_date: "2025-05-01T00:00:00+00:00",
         end_date: "2025-08-31T23:59:59+00:00",
       }),
@@ -20,8 +22,28 @@ describe("mapAdmissionSignupConfig", () => {
       name: "2025/2026 Admission",
       status: "APPLICATION_OPEN",
       admissionIdentityMode: "JAMB",
+      entryMode: "UTME",
+      batchNo: 1,
       startDate: "2025-05-01T00:00:00+00:00",
       endDate: "2025-08-31T23:59:59+00:00",
+    });
+  });
+
+  it("maps optional session_id", () => {
+    expect(
+      mapAdmissionSignupConfig({
+        cycle_id: 4,
+        name: "DE Admission",
+        status: "APPLICATION_OPEN",
+        admission_identity_mode: "OPEN",
+        entry_mode: "DIRECT_ENTRY",
+        batch_no: 2,
+        session_id: 16,
+      }),
+    ).toMatchObject({
+      entryMode: "DIRECT_ENTRY",
+      batchNo: 2,
+      sessionId: 16,
     });
   });
 });
@@ -64,7 +86,7 @@ describe("mapCandidateSignupResponse", () => {
 });
 
 describe("mapCandidateSignupToLoginResponse", () => {
-  it("defaults CANDIDATE role when API omits roles", () => {
+  it("defaults CANDIDATE role with candidate id when API omits roles", () => {
     const login = mapCandidateSignupToLoginResponse({
       candidateId: 1,
       user: { id: 1, email: "a@b.com" },
@@ -74,12 +96,11 @@ describe("mapCandidateSignupToLoginResponse", () => {
     });
 
     expect(login.roles).toEqual([
-      {
+      expect.objectContaining({
         name: "Candidate",
         scope: "CANDIDATE",
-        scopeReferenceId: null,
-        entity: null,
-      },
+        scopeReferenceId: 1,
+      }),
     ]);
     expect(login.token).toBe("t");
     expect(login.profile.email).toBe("a@b.com");

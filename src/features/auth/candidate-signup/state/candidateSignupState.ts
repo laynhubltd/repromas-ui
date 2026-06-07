@@ -1,4 +1,7 @@
-import type { CandidateLookupResponse } from "../types/candidate-signup";
+import type {
+  AdmissionEntryMode,
+  CandidateLookupResponse,
+} from "../types/candidate-signup";
 
 export type CandidateSignupStep =
   | "bootstrap"
@@ -7,13 +10,22 @@ export type CandidateSignupStep =
   | "open_form"
   | "blocked";
 
-export type CandidateSignupBlockedReason = "not_open" | "ambiguous" | "wrong_status";
+export type CandidateSignupBlockedReason =
+  | "not_open"
+  | "ambiguous"
+  | "wrong_status";
+
+export type CandidateSignupLaneContext = {
+  entryMode: AdmissionEntryMode;
+  batchNo: number;
+  sessionId?: number;
+};
 
 export const CandidateSignupActionType = {
   SetStep: "SET_STEP",
   SetLookupResult: "SET_LOOKUP_RESULT",
   SetJambRegNo: "SET_JAMB_REG_NO",
-  SetBlockedReason: "SET_BLOCKED_REASON",
+  SetLaneContext: "SET_LANE_CONTEXT",
   SetFormError: "SET_FORM_ERROR",
   Reset: "RESET",
 } as const;
@@ -22,7 +34,7 @@ export type CandidateSignupState = {
   step: CandidateSignupStep;
   jambRegNo: string;
   lookupResult: CandidateLookupResponse | null;
-  blockedReason: CandidateSignupBlockedReason | null;
+  laneContext: CandidateSignupLaneContext | null;
   formError: string | null;
 };
 
@@ -34,17 +46,21 @@ export type CandidateSignupAction =
     }
   | { type: typeof CandidateSignupActionType.SetJambRegNo; value: string }
   | {
-      type: typeof CandidateSignupActionType.SetBlockedReason;
-      reason: CandidateSignupBlockedReason;
+      type: typeof CandidateSignupActionType.SetLaneContext;
+      laneContext: CandidateSignupLaneContext;
+      step: "jamb_lookup" | "open_form";
     }
-  | { type: typeof CandidateSignupActionType.SetFormError; message: string | null }
+  | {
+      type: typeof CandidateSignupActionType.SetFormError;
+      message: string | null;
+    }
   | { type: typeof CandidateSignupActionType.Reset };
 
 export const initialCandidateSignupState: CandidateSignupState = {
   step: "bootstrap",
   jambRegNo: "",
   lookupResult: null,
-  blockedReason: null,
+  laneContext: null,
   formError: null,
 };
 
@@ -64,11 +80,11 @@ export function candidateSignupReducer(
       };
     case CandidateSignupActionType.SetJambRegNo:
       return { ...state, jambRegNo: action.value };
-    case CandidateSignupActionType.SetBlockedReason:
+    case CandidateSignupActionType.SetLaneContext:
       return {
         ...state,
-        blockedReason: action.reason,
-        step: "blocked",
+        laneContext: action.laneContext,
+        step: action.step,
         formError: null,
       };
     case CandidateSignupActionType.SetFormError:

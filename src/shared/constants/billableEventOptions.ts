@@ -1,7 +1,7 @@
 import type {
   MissingFeeChargePolicy,
   PaymentTiming,
-} from "@/features/billing/tabs/billables/types/billable-event";
+} from "@/features/billing/tabs/fee-events/types/billable-event";
 
 export const BILLABLE_EVENT_SORT_DEFAULT = "code:asc";
 export const BILLABLE_EVENT_ITEMS_PER_PAGE = 30;
@@ -37,7 +37,7 @@ export const ACTIVE_FILTER_OPTIONS = [
 export const BILLABLE_EVENT_UI_COPY = {
   explainerTitle: "Fees & payment rules",
   explainerBody:
-    "Define which fees students pay and when payment is required during admission or registration. Use the recommended setup to add common fee types quickly, then adjust timing and rules as needed. Fee amounts are set separately in Pricing Rules.",
+    "Define which fees students pay. Payment rules and versions are managed on the Fee Policy tab; fee amounts are set in Pricing Rules.",
   setupStandardFees: "Set up standard fees",
   addCustomFee: "Add custom fee",
   addFeeManually: "Add fee manually",

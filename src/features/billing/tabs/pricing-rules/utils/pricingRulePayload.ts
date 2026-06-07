@@ -16,6 +16,7 @@ export type PricingRuleFormLineValues = {
 
 export type PricingRuleFormValues = {
   eventCode: string;
+  billableEventPolicyId?: number;
   scope: PricingRuleScope;
   referenceId?: number | null;
   academicSessionId?: number | null;
@@ -44,8 +45,13 @@ export function buildCreatePayload(
   values: PricingRuleFormValues,
 ): CreatePricingRuleRequest {
   const scope = values.scope;
+  if (values.billableEventPolicyId == null || values.billableEventPolicyId <= 0) {
+    throw new Error("Active policy is required before creating a pricing rule.");
+  }
+
   return {
     eventCode: values.eventCode,
+    billableEventPolicyId: values.billableEventPolicyId,
     scope,
     referenceId: scope === "GLOBAL" ? null : (values.referenceId ?? null),
     academicSessionId: values.academicSessionId ?? null,
@@ -92,6 +98,7 @@ export function mapPricingRuleToFormValues(
 ): PricingRuleFormValues {
   return {
     eventCode: rule.eventCode,
+    billableEventPolicyId: rule.billableEventPolicyId,
     scope: rule.scope,
     referenceId: rule.referenceId,
     academicSessionId: rule.academicSessionId,
@@ -116,6 +123,7 @@ export function getFullPricingRuleFormFieldNames(
 ): string[] {
   const names = [
     "eventCode",
+    "billableEventPolicyId",
     "scope",
     "indigeneStatus",
     "effectiveFrom",

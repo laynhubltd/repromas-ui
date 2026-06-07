@@ -1,8 +1,34 @@
 import type { Rule } from "antd/es/form";
 
-export const jambRegNoRules: Rule[] = [
-  { required: true, message: "JAMB registration number is required" },
+export const jambRegNoOptionalRules: Rule[] = [
   { max: 20, message: "JAMB registration number must be 20 characters or fewer" },
+  {
+    validator: async (_, value: string | undefined) => {
+      if (!value || value.trim() === "") return;
+      if (value.trim().length === 0) {
+        throw new Error("JAMB registration number cannot be blank");
+      }
+    },
+  },
+];
+
+export const jambRegNoRequiredRules: Rule[] = [
+  { required: true, message: "JAMB registration number is required" },
+  ...jambRegNoOptionalRules,
+];
+
+/** @deprecated Use jambRegNoOptionalRules or jambRegNoRequiredRules */
+export const jambRegNoRules = jambRegNoRequiredRules;
+
+export const appliedProgramIdRules: Rule[] = [
+  { required: true, message: "Applied program is required" },
+  {
+    validator: async (_, value: number | undefined) => {
+      if (value == null || value <= 0) {
+        throw new Error("Select a valid program");
+      }
+    },
+  },
 ];
 
 export const firstNameRules: Rule[] = [

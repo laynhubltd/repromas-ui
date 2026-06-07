@@ -11,7 +11,7 @@ import {
     userLoggedOut,
 } from "@/features/auth/events";
 import { authReducer, type AuthState } from "@/features/auth/state/auth-slice";
-import type { ApiRole, AuthProfile } from "@/features/auth/types";
+import type { ApiRole, AuthProfile, AuthStudentEntity } from "@/features/auth/types";
 import { REHYDRATE } from "redux-persist";
 import { describe, expect, it } from "vitest";
 
@@ -37,18 +37,20 @@ const adminRole: ApiRole = {
   entity: null,
 };
 
-const tenantRole: ApiRole = {
-  name: "Tenant Manager",
-  scope: "TENANT",
+const departmentRole: ApiRole = {
+  name: "Department Head",
+  scope: "DEPARTMENT",
   scopeReferenceId: 123,
   entity: null,
 };
+
+const studentEntity = { id: 99, matricNumber: "2024/001" } as AuthStudentEntity;
 
 const studentRoleWithEntity: ApiRole = {
   name: "Student",
   scope: "STUDENT",
   scopeReferenceId: 99,
-  entity: { id: 99, type: "student" },
+  entity: studentEntity,
 };
 
 const samplePermissions = ["faculties:list", "roles:list", "students:read"];
@@ -84,9 +86,9 @@ describe("14.1 — userLoggedIn stores roles and permissions", () => {
   it("stores multiple roles", () => {
     const state = authReducer(
       undefined,
-      loginPayload({ roles: [adminRole, tenantRole] }),
+      loginPayload({ roles: [adminRole, departmentRole] }),
     );
-    expect(state.roles).toEqual([adminRole, tenantRole]);
+    expect(state.roles).toEqual([adminRole, departmentRole]);
   });
 
   it("defaults roles to [] when not in payload", () => {
@@ -117,7 +119,7 @@ describe("14.1 — userLoggedIn stores roles and permissions", () => {
   it("derives currentRole.name from roles[0] for backward compat", () => {
     const state = authReducer(
       undefined,
-      loginPayload({ roles: [adminRole, tenantRole] }),
+      loginPayload({ roles: [adminRole, departmentRole] }),
     );
     expect(state.currentRole?.name).toBe(adminRole.name);
   });
@@ -147,7 +149,7 @@ describe("14.1 — userLoggedIn stores roles and permissions", () => {
   it("clears entity when multiple roles require picker", () => {
     const state = authReducer(
       undefined,
-      loginPayload({ roles: [adminRole, tenantRole] }),
+      loginPayload({ roles: [adminRole, departmentRole] }),
     );
     expect(state.entity).toBeNull();
     expect(state.roleSwitcherOpen).toBe(true);
@@ -190,7 +192,7 @@ describe("14.2 — authCleared resets roles and permissions to []", () => {
   it("userLoggedOut resets roles to []", () => {
     const loggedIn = authReducer(
       undefined,
-      loginPayload({ roles: [tenantRole] }),
+      loginPayload({ roles: [departmentRole] }),
     );
     const loggedOut = authReducer(loggedIn, userLoggedOut());
     expect(loggedOut.roles).toEqual([]);

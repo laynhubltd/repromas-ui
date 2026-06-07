@@ -1,14 +1,14 @@
-import { useGetAdmissionSignupConfigQuery } from "@/features/auth/candidate-signup/api/candidateSignupApi";
 import { useLoginMutation } from "@/features/auth/api/auth-api";
-
+import { useGetAdmissionSignupConfigQuery } from "@/features/auth/candidate-signup/api/candidateSignupApi";
 export function useLogin() {
   const [login, loginState] = useLoginMutation();
   const signupConfigQuery = useGetAdmissionSignupConfigQuery();
+  const signupConfig = signupConfigQuery.data;
 
   const isCandidateSignupAvailable =
     !signupConfigQuery.isLoading &&
     !signupConfigQuery.isFetching &&
-    signupConfigQuery.data?.status === "APPLICATION_OPEN";
+    signupConfig?.status === "APPLICATION_OPEN";
 
   return {
     state: {
@@ -17,6 +17,7 @@ export function useLogin() {
       error: loginState.error,
       isSignupConfigLoading:
         signupConfigQuery.isLoading || signupConfigQuery.isFetching,
+      admissionCycleName: signupConfig?.name,
     },
     actions: {
       login: login,

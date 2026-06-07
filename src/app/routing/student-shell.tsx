@@ -8,7 +8,11 @@ import { LogoutOutlined, SwapOutlined, UserOutlined } from "@ant-design/icons";
 import type { ItemType } from "antd/es/menu/interface";
 import { useMemo } from "react";
 import { Link, Outlet } from "react-router-dom";
-import { useRestrictedStudentRouteMenuItems } from "./student-route-menu-config";
+import {
+  toAntdMenuItem,
+  useRestrictedStudentRouteMenuItems,
+  type StudentRouteMenuItem,
+} from "./student-route-menu-config";
 
 export default function StudentShell() {
   const routeMenuItems = useRestrictedStudentRouteMenuItems();
@@ -21,23 +25,24 @@ export default function StudentShell() {
     void logout();
   };
 
-  const wrapWithLink = (item: ItemType): ItemType => {
+  const wrapWithLink = (item: StudentRouteMenuItem): ItemType => {
+    const antdItem = toAntdMenuItem(item);
     if (
-      item &&
-      typeof item === "object" &&
-      "key" in item &&
-      "label" in item
+      antdItem &&
+      typeof antdItem === "object" &&
+      "key" in antdItem &&
+      "label" in antdItem
     ) {
       return {
-        ...item,
-        label: <Link to={String(item.key)}>{item.label}</Link>,
+        ...antdItem,
+        label: <Link to={String(antdItem.key)}>{antdItem.label}</Link>,
       };
     }
-    return item;
+    return antdItem;
   };
 
   const menuItems = useMemo<ItemType[]>(
-    () => routeMenuItems.map(wrapWithLink),
+    () => routeMenuItems.map((item) => wrapWithLink(item)),
     [routeMenuItems],
   );
 

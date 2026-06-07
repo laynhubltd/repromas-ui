@@ -14,6 +14,36 @@ const CourseRegistrationPage = lazy(() =>
   })),
 );
 
+const StudentInvoicesPage = lazy(() =>
+  import("@/features/student-invoices").then((m) => ({
+    default: m.StudentInvoicesPage,
+  })),
+);
+
+const StudentInvoicePayPage = lazy(() =>
+  import("@/features/student-invoices").then((m) => ({
+    default: m.StudentInvoicePayPage,
+  })),
+);
+
+const StudentPaymentsPage = lazy(() =>
+  import("@/features/student-payments").then((m) => ({
+    default: m.StudentPaymentsPage,
+  })),
+);
+
+const StudentPaymentReceiptPage = lazy(() =>
+  import("@/features/student-payments").then((m) => ({
+    default: m.StudentPaymentReceiptPage,
+  })),
+);
+
+const CandidateBioDataPage = lazy(() =>
+  import("@/features/candidate-profile").then((m) => ({
+    default: m.CandidateBioDataPage,
+  })),
+);
+
 const GuardedStudentShell = withAuthGuard({
   Component: StudentShell,
   fallback: null,
@@ -29,6 +59,14 @@ export function getStudentRouteEntries() {
             path="course-registration"
             element={<CourseRegistrationPage />}
           />
+          <Route path="invoices" element={<StudentInvoicesPage />} />
+          <Route path="invoices/:invoiceId" element={<StudentInvoicePayPage />} />
+          <Route path="payments" element={<StudentPaymentsPage />} />
+          <Route
+            path="payments/:paymentId"
+            element={<StudentPaymentReceiptPage />}
+          />
+          <Route path="bio-data" element={<CandidateBioDataPage />} />
         </Route>
       </Route>
     </>

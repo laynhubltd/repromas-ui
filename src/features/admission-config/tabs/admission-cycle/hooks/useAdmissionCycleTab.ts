@@ -16,6 +16,7 @@ import type {
   AcademicSessionOption,
   AdmissionCycle,
   AdmissionCycleListParams,
+  TransitionDirection,
 } from "../types/admission-cycle";
 
 const DEBOUNCE_MS = 300;
@@ -56,6 +57,12 @@ export function useAdmissionCycleTab() {
     if (state.sessionFilter !== undefined) {
       params["exact[sessionId]"] = state.sessionFilter;
     }
+    if (state.entryModeFilter !== undefined) {
+      params["exact[entryMode]"] = state.entryModeFilter;
+    }
+    if (state.batchNoFilter !== undefined) {
+      params["exact[batchNo]"] = state.batchNoFilter;
+    }
 
     return params;
   }, [
@@ -63,6 +70,8 @@ export function useAdmissionCycleTab() {
     state.debouncedSearch,
     state.statusFilter,
     state.sessionFilter,
+    state.entryModeFilter,
+    state.batchNoFilter,
   ]);
 
   const {
@@ -82,6 +91,7 @@ export function useAdmissionCycleTab() {
     useGetAcademicSessionsForCyclesQuery();
 
   const sessions: AcademicSessionOption[] = sessionsData?.member ?? [];
+  const existingCycles = metricsData?.member ?? [];
 
   const sessionsById = useMemo(() => {
     const map = new Map<number, AcademicSessionOption>();
@@ -90,14 +100,6 @@ export function useAdmissionCycleTab() {
     }
     return map;
   }, [sessions]);
-
-  const usedSessionIds = useMemo(() => {
-    const ids = new Set<number>();
-    for (const cycle of metricsData?.member ?? []) {
-      ids.add(cycle.sessionId);
-    }
-    return ids;
-  }, [metricsData?.member]);
 
   const enrichCycle = useCallback(
     (cycle: AdmissionCycle): AdmissionCycleRow => {
@@ -121,10 +123,14 @@ export function useAdmissionCycleTab() {
 
   const totalCyclesCount = metricsData?.totalItems ?? allCycles.length;
   const activeCyclesCount = allCycles.filter((c) => c.status !== "CLOSED").length;
-  const currentSessionCycle = useMemo(() => {
+  const openForApplicationsCount = allCycles.filter(
+    (c) => c.status === "APPLICATION_OPEN",
+  ).length;
+
+  const currentSessionCyclesCount = useMemo(() => {
     const currentSession = sessions.find((s) => s.isCurrent);
-    if (!currentSession) return null;
-    return allCycles.find((c) => c.sessionId === currentSession.id) ?? null;
+    if (!currentSession) return 0;
+    return allCycles.filter((c) => c.sessionId === currentSession.id).length;
   }, [allCycles, sessions]);
 
   const handleSearchChange = useCallback((value: string) => {
@@ -153,6 +159,23 @@ export function useAdmissionCycleTab() {
   const handleSessionFilterChange = useCallback((value: number | undefined) => {
     dispatch({
       type: AdmissionCycleTabActionType.SetSessionFilter,
+      value,
+    });
+  }, []);
+
+  const handleEntryModeFilterChange = useCallback(
+    (value: typeof state.entryModeFilter) => {
+      dispatch({
+        type: AdmissionCycleTabActionType.SetEntryModeFilter,
+        value,
+      });
+    },
+    [],
+  );
+
+  const handleBatchNoFilterChange = useCallback((value: number | undefined) => {
+    dispatch({
+      type: AdmissionCycleTabActionType.SetBatchNoFilter,
       value,
     });
   }, []);
@@ -190,12 +213,16 @@ export function useAdmissionCycleTab() {
     dispatch({ type: AdmissionCycleTabActionType.CloseDelete });
   }, []);
 
-  const handleOpenTransition = useCallback((target: AdmissionCycle) => {
-    dispatch({
-      type: AdmissionCycleTabActionType.OpenTransition,
-      target,
-    });
-  }, []);
+  const handleOpenTransition = useCallback(
+    (target: AdmissionCycle, direction: TransitionDirection) => {
+      dispatch({
+        type: AdmissionCycleTabActionType.OpenTransition,
+        target,
+        direction,
+      });
+    },
+    [],
+  );
 
   const handleCloseTransition = useCallback(() => {
     dispatch({ type: AdmissionCycleTabActionType.CloseTransition });
@@ -210,6 +237,14 @@ export function useAdmissionCycleTab() {
       type: AdmissionCycleTabActionType.SetSessionFilter,
       value: undefined,
     });
+    dispatch({
+      type: AdmissionCycleTabActionType.SetEntryModeFilter,
+      value: undefined,
+    });
+    dispatch({
+      type: AdmissionCycleTabActionType.SetBatchNoFilter,
+      value: undefined,
+    });
     dispatch({ type: AdmissionCycleTabActionType.SetSearch, value: "" });
     dispatch({
       type: AdmissionCycleTabActionType.SetDebouncedSearch,
@@ -222,10 +257,14 @@ export function useAdmissionCycleTab() {
   const isFilterActive =
     state.statusFilter !== undefined ||
     state.sessionFilter !== undefined ||
+    state.entryModeFilter !== undefined ||
+    state.batchNoFilter !== undefined ||
     state.search !== "";
   const activeFilterCount = [
     state.statusFilter,
     state.sessionFilter,
+    state.entryModeFilter,
+    state.batchNoFilter,
   ].filter((v) => v !== undefined).length;
 
   const isLoading = isCyclesLoading || isSessionsLoading;
@@ -240,24 +279,30 @@ export function useAdmissionCycleTab() {
       search: state.search,
       statusFilter: state.statusFilter,
       sessionFilter: state.sessionFilter,
+      entryModeFilter: state.entryModeFilter,
+      batchNoFilter: state.batchNoFilter,
       page: state.page,
       formTarget: state.formTarget,
       formOpen: state.formOpen,
       deleteTarget: state.deleteTarget,
       deleteOpen: state.deleteTarget !== null,
       transitionTarget: state.transitionTarget,
+      transitionDirection: state.transitionDirection,
       transitionOpen: state.transitionOpen,
       sessions,
-      usedSessionIds,
+      existingCycles,
       totalCyclesCount,
       activeCyclesCount,
-      currentSessionCycle,
+      openForApplicationsCount,
+      currentSessionCyclesCount,
       isMetricsRowLoading,
     },
     actions: {
       handleSearchChange,
       handleStatusFilterChange,
       handleSessionFilterChange,
+      handleEntryModeFilterChange,
+      handleBatchNoFilterChange,
       handlePageChange,
       handleOpenCreate,
       handleOpenEdit,

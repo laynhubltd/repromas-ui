@@ -56,6 +56,12 @@ export const studentRoutesMenuList: StudentRouteMenuItem[] = [
   },
 ];
 
+/** Strip portal-only fields before passing items to Ant Design Menu. */
+export function toAntdMenuItem(item: StudentRouteMenuItem): ItemType {
+  const { allowedScopes: _allowedScopes, ...menuItem } = item;
+  return menuItem;
+}
+
 export function useRestrictedStudentRouteMenuItems(): StudentRouteMenuItem[] {
   const { hasStudentPortalScope } = useAccessControl();
   return useMemo(() => {
@@ -70,5 +76,5 @@ export function useRestrictedStudentRouteMenuItems(): StudentRouteMenuItem[] {
 
 /** @deprecated Use useRestrictedStudentRouteMenuItems */
 export function useStudentRouteMenuItems(): ItemType[] {
-  return useRestrictedStudentRouteMenuItems();
+  return useRestrictedStudentRouteMenuItems().map(toAntdMenuItem);
 }
