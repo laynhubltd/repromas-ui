@@ -1,6 +1,5 @@
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Alert, Button, Modal, Typography } from "antd";
 import { useDeleteJambCombinationModal } from "../../hooks/useJambRuleModal";
 import type { JambSubjectCombination } from "../../types/jamb-rule";
@@ -24,7 +23,7 @@ export function DeleteCombinationModal({
     onClose,
     onDeleted,
   );
-  const { error, isDeleting } = state;
+  const { isDeleting } = state;
   const { handleConfirm, handleCancel } = actions;
 
   return (
@@ -45,8 +44,6 @@ export function DeleteCombinationModal({
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert error={error} />
-
         <Typography.Text>
           Delete{" "}
           <Typography.Text strong>{target?.name}</Typography.Text> (

@@ -1,4 +1,5 @@
-import { HttpStatusCode, parseApiError } from "@/shared/utils/error/parseApiError";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
 import { notification } from "antd";
 import type { FormInstance } from "antd/es/form";
 import Form from "antd/es/form";
@@ -35,6 +36,7 @@ const STEP1_FIELDS = ["name", "code", "slug", "email", "customDomain"] as const;
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
 export function useTenantSignup(): UseTenantSignupReturn {
+  const handleApiError = useApiError();
   const [form] = Form.useForm();
 
   const [currentStep, setCurrentStep] = useState(0);
@@ -129,39 +131,16 @@ export function useTenantSignup(): UseTenantSignupReturn {
       localStorage.setItem("tenant_slug", response.tenant.slug);
       window.location.assign(buildTenantLoginUrl(response.tenant.slug));
     } catch (err) {
-      // ─── Server-side error handling ─────────────────────────────────────────
-      const parsed = parseApiError(err);
+      const decision = handleApiError(err, {
+        context: { screen: RequestScreen.Form, method: "POST" },
+        form,
+        setFormError,
+      });
 
-      notification.error({ message: parsed.message });
-
-      if (parsed.status === HttpStatusCode.UnprocessableEntity) {
-        // 422 — map violations[].propertyPath → field errors
-        const fieldEntries = Object.entries(parsed.fieldErrors);
-        if (fieldEntries.length > 0) {
-          form.setFields(
-            fieldEntries.map(([name, message]) => ({ name, errors: [message] })),
-          );
-          const hasStep1Error = fieldEntries.some(([name]) =>
-            (STEP1_FIELDS as readonly string[]).includes(name),
-          );
-          if (hasStep1Error) setCurrentStep(0);
-        }
-      } else if (parsed.status === HttpStatusCode.Conflict) {
-        // 409 — map errors[].field → field errors
-        const fieldEntries = Object.entries(parsed.fieldErrors);
-        if (fieldEntries.length > 0) {
-          form.setFields(
-            fieldEntries.map(([name, message]) => ({ name, errors: [message] })),
-          );
-          const hasStep1Error = fieldEntries.some(([name]) =>
-            (STEP1_FIELDS as readonly string[]).includes(name),
-          );
-          if (hasStep1Error) setCurrentStep(0);
-        }
-      } else if (parsed.status === HttpStatusCode.BadRequest) {
-        // 400 — form-level banner error
-        setFormError(parsed.message);
-      }
+      const hasStep1Error = Object.keys(decision.fieldErrors).some((name) =>
+        (STEP1_FIELDS as readonly string[]).includes(name),
+      );
+      if (hasStep1Error) setCurrentStep(0);
     } finally {
       setIsSubmitting(false);
     }

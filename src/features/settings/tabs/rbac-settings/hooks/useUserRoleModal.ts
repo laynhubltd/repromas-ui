@@ -1,6 +1,6 @@
 // Feature: rbac-settings
-import { applyFormErrors } from "@/shared/utils/error/applyFormErrors";
-import { parseApiError } from "@/shared/utils/error/parseApiError";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
 import { Form, notification } from "antd";
 import { useEffect, useState } from "react";
 import {
@@ -9,6 +9,7 @@ import {
     useRevokeRoleFromUserMutation,
 } from "../api/rbacSettingsApi";
 import type { Role, RoleScope, UserRole } from "../types/rbac";
+import { roleScopeOmitsReference } from "../types/rbac";
 
 // ─── Assign Role to User ──────────────────────────────────────────────────────
 
@@ -24,8 +25,8 @@ export function useUserRoleFormModal(
   onSuccess?: () => void,
 ) {
   const [form] = Form.useForm<UserRoleFormValues>();
-  const [formError, setFormError] = useState<string | null>(null);
   const [selectedScope, setSelectedScope] = useState<RoleScope | null>(null);
+  const handleApiError = useApiError();
 
   const [assignRole, { isLoading: isSubmitting }] = useAssignRoleToUserMutation();
 
@@ -39,7 +40,6 @@ export function useUserRoleFormModal(
   useEffect(() => {
     if (!open) {
       form.resetFields();
-      setFormError(null);
       setSelectedScope(null);
     }
   }, [open, form]);
@@ -54,12 +54,14 @@ export function useUserRoleFormModal(
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
-      setFormError(null);
 
       await assignRole({
         userId,
         roleId: values.roleId,
-        scopeReferenceId: selectedScope === "GLOBAL" ? null : (values.scopeReferenceId ?? null),
+        scopeReferenceId:
+          selectedScope && roleScopeOmitsReference(selectedScope)
+            ? null
+            : (values.scopeReferenceId ?? null),
       }).unwrap();
 
       notification.success({ message: "Role assigned successfully." });
@@ -68,27 +70,21 @@ export function useUserRoleFormModal(
       onSuccess?.();
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-
-      if (parsed.status === 409) {
-        setFormError("This role assignment already exists for this user.");
-        return;
-      }
-
-      notification.error({ message: parsed.message });
-      applyFormErrors(parsed, form, setFormError);
+      handleApiError(err, {
+        context: { screen: RequestScreen.Modal, method: "POST" },
+        form,
+      });
     }
   };
 
   const handleCancel = () => {
     form.resetFields();
-    setFormError(null);
     setSelectedScope(null);
     onClose();
   };
 
   return {
-    state: { isSubmitting, formError, roles, selectedScope },
+    state: { isSubmitting, roles, selectedScope },
     actions: { handleSubmit, handleCancel, handleRoleChange },
     form,
   };
@@ -104,19 +100,13 @@ export function useRevokeUserRoleModal(
   onSuccess?: () => void,
 ) {
   const [revokeRole, { isLoading: isRevoking }] = useRevokeRoleFromUserMutation();
-  const [error, setError] = useState<string | null>(null);
+  const handleApiError = useApiError();
 
-  // Reset error when modal closes
-  useEffect(() => {
-    if (!open) {
-      setError(null);
-    }
-  }, [open]);
+  void open;
 
   const handleConfirm = async () => {
     if (!target) return;
     try {
-      setError(null);
       await revokeRole({
         userId,
         roleId: target.roleId,
@@ -128,23 +118,18 @@ export function useRevokeUserRoleModal(
       onSuccess?.();
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      if (parsed.status === 404) {
-        setError("This role assignment no longer exists.");
-      } else {
-        notification.error({ message: parsed.message });
-        setError(parsed.message);
-      }
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "DELETE" },
+      });
     }
   };
 
   const handleCancel = () => {
-    setError(null);
     onClose();
   };
 
   return {
-    state: { isRevoking, error },
+    state: { isRevoking },
     actions: { handleConfirm, handleCancel },
   };
 }

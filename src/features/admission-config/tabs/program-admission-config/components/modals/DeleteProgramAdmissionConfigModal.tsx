@@ -1,6 +1,5 @@
 import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Button, Modal, Space, Typography } from "antd";
 import { useDeleteProgramAdmissionConfigModal } from "../../hooks/useProgramAdmissionConfigModal";
 import type { ProgramAdmissionConfig } from "../../types/program-admission-config";
@@ -17,7 +16,7 @@ export function DeleteProgramAdmissionConfigModal({
   onClose,
 }: DeleteProgramAdmissionConfigModalProps) {
   const {
-    state: { isDeleting, error, blockedByAllocations, totalSeatsUsed },
+    state: { isDeleting, blockedByAllocations, totalSeatsUsed },
     actions: { handleConfirm, handleCancel },
   } = useDeleteProgramAdmissionConfigModal(target, onClose);
 
@@ -31,7 +30,6 @@ export function DeleteProgramAdmissionConfigModal({
       footer={null}
       destroyOnHidden
     >
-      <ErrorAlert error={error} />
       <Typography.Paragraph>
         Delete admission cut-offs/quota configuration for{" "}
         <Typography.Text strong>{programName}</Typography.Text>?

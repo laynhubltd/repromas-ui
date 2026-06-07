@@ -8,13 +8,14 @@ import { centeredBox, ConditionalRenderer } from "@/shared/ui/ConditionalRendere
 import { DataLoader } from "@/shared/ui/DataLoader";
 import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { SkeletonRows } from "@/shared/ui/SkeletonRows";
-import { DeleteOutlined, EditOutlined, PlusOutlined } from "@ant-design/icons";
+import { DeleteOutlined, EditOutlined, PlusOutlined, SyncOutlined } from "@ant-design/icons";
 import { Button, Flex, Input, Tag, Typography } from "antd";
 import { usePermissionsPanel } from "../../hooks/usePermissionsPanel";
 import type { Permission as PermissionType } from "../../types/rbac";
 import { groupPermissionsByResource } from "../../utils/groupPermissionsByResource";
 import { DeletePermissionModal } from "../modals/DeletePermissionModal";
 import { PermissionFormModal } from "../modals/PermissionFormModal";
+import { SyncFromCatalogModal } from "../modals/SyncFromCatalogModal";
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, {
@@ -100,12 +101,14 @@ export function PermissionsPanel() {
     createModalOpen,
     editTarget,
     deleteTarget,
+    syncModalOpen,
   } = state;
   const {
     handleSearchChange,
     setCreateModalOpen,
     setEditTarget,
     setDeleteTarget,
+    setSyncModalOpen,
     setPage,
     refetch,
   } = actions;
@@ -135,25 +138,34 @@ export function PermissionsPanel() {
     <PermissionGuard permission={Permission.PermissionsList}>
       <Flex vertical gap={24} style={{ width: "100%", backgroundColor: token.colorBgElevated, border: `1px solid ${token.colorBorderSecondary}` }}>
         {/* Toolbar */}
-        <Flex gap={12} align="center" wrap="wrap" style={{ padding: `${token.paddingSM}px ${token.paddingSM}px`}}>
-          <PermissionGuard permission={Permission.PermissionsCreate}>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={() => setCreateModalOpen(true)}
-              style={{ fontWeight: 600 }}
-              block
-            >
-              Activate Permission
-            </Button>
-          </PermissionGuard>
-          <Input
+        <Flex vertical gap={8} style={{ padding: `${token.paddingSM}px ${token.paddingSM}px` }}>
+          <Flex gap={12} align="center" wrap="wrap">
+            <PermissionGuard permission={Permission.PermissionsCreate}>
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={() => setCreateModalOpen(true)}
+                style={{ fontWeight: 600 }}
+              >
+                Activate Permission
+              </Button>
+            </PermissionGuard>
+            <PermissionGuard permission={Permission.PermissionsManage}>
+              <Button icon={<SyncOutlined />} onClick={() => setSyncModalOpen(true)}>
+                Sync from catalogue
+              </Button>
+            </PermissionGuard>
+            <Input
             placeholder="Search by name…"
             value={search}
             onChange={(e) => handleSearchChange(e.target.value)}
             allowClear
-            style={{ maxWidth: "100%" }}
+            style={{ flex: 1, minWidth: 160 }}
           />
+          </Flex>
+          <Typography.Text type="secondary" style={{ fontSize: token.fontSizeSM }}>
+            Run sync after deploy when new API modules add catalogue entries.
+          </Typography.Text>
         </Flex>
 
         {/* Content area */}
@@ -175,16 +187,23 @@ export function PermissionsPanel() {
             <Typography.Text type="secondary" style={{ display: "block", marginBottom: 16 }}>
               No permissions activated yet. Activate your first permission to get started.
             </Typography.Text>
-            <PermissionGuard permission={Permission.PermissionsCreate}>
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={() => setCreateModalOpen(true)}
-                style={{ fontWeight: 600 }}
-              >
-                Activate Permission
-              </Button>
-            </PermissionGuard>
+            <Flex gap={8} wrap="wrap" justify="center">
+              <PermissionGuard permission={Permission.PermissionsCreate}>
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={() => setCreateModalOpen(true)}
+                  style={{ fontWeight: 600 }}
+                >
+                  Activate Permission
+                </Button>
+              </PermissionGuard>
+              <PermissionGuard permission={Permission.PermissionsManage}>
+                <Button icon={<SyncOutlined />} onClick={() => setSyncModalOpen(true)}>
+                  Sync from catalogue
+                </Button>
+              </PermissionGuard>
+            </Flex>
           </ConditionalRenderer>
 
           {/* Empty — search active */}
@@ -241,6 +260,10 @@ export function PermissionsPanel() {
           open={deleteTarget !== null}
           target={deleteTarget}
           onClose={() => setDeleteTarget(null)}
+        />
+        <SyncFromCatalogModal
+          open={syncModalOpen}
+          onClose={() => setSyncModalOpen(false)}
         />
       </Flex>
     </PermissionGuard>

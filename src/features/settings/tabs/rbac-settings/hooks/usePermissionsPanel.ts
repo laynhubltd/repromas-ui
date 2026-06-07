@@ -14,6 +14,7 @@ export function usePermissionsPanel() {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Permission | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Permission | null>(null);
+  const [syncModalOpen, setSyncModalOpen] = useState(false);
 
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -66,6 +67,7 @@ export function usePermissionsPanel() {
       createModalOpen,
       editTarget,
       deleteTarget,
+      syncModalOpen,
     },
     actions: {
       handleSearchChange,
@@ -73,6 +75,7 @@ export function usePermissionsPanel() {
       setCreateModalOpen,
       setEditTarget,
       setDeleteTarget,
+      setSyncModalOpen,
       setPage,
       refetch,
     },

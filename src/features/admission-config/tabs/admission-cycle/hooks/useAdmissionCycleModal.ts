@@ -1,12 +1,19 @@
 import {
+  ADMISSION_CYCLE_ROLLBACKS,
+  ADMISSION_CYCLE_ROLLBACK_WARNINGS,
   ADMISSION_CYCLE_TRANSITIONS,
   ADMISSION_CYCLE_TRANSITION_WARNINGS,
+  statusLabelByValue,
 } from "@/shared/constants/admissionCycleOptions";
-import { applyFormErrors } from "@/shared/utils/error/applyFormErrors";
-import { parseApiError } from "@/shared/utils/error/parseApiError";
-import { Form, notification } from "antd";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
+import {
+  mutationSuccessMessage,
+  notifyMutationSuccess,
+} from "@/shared/utils/feedback/notifyMutationSuccess";
+import { Form } from "antd";
 import dayjs, { type Dayjs } from "dayjs";
-import { useCallback, useEffect, useReducer, useState } from "react";
+import { useCallback, useMemo, useReducer } from "react";
 import {
   useCreateAdmissionCycleMutation,
   useDeleteAdmissionCycleMutation,
@@ -23,11 +30,24 @@ import type {
   AcademicSessionOption,
   AdmissionCycle,
   AdmissionCycleStatus,
+  AdmissionEntryMode,
+  AdmissionIdentityMode,
+  TransitionDirection,
 } from "../types/admission-cycle";
+import {
+  buildDefaultCycleName,
+  getCyclesInLane,
+  isLaneSlotOccupied,
+  suggestNextBatchNo,
+} from "../utils/admissionCycleDisplay";
 
 type AdmissionCycleFormValues = {
   sessionId?: number;
+  entryMode: AdmissionEntryMode;
+  batchNo: number;
+  supersedesCycleId?: number | null;
   name: string;
+  admissionIdentityMode: AdmissionIdentityMode;
   startDate?: Dayjs | null;
   endDate?: Dayjs | null;
 };
@@ -37,118 +57,227 @@ function toIsoDateTime(value: Dayjs | null | undefined): string | null {
   return value.startOf("day").toISOString();
 }
 
-function getTransitionMeta(status: AdmissionCycleStatus) {
-  if (status === "CLOSED") return null;
-  return ADMISSION_CYCLE_TRANSITIONS[status];
+export function buildAdmissionCycleFormInitialValues(
+  target: AdmissionCycle | null,
+  sessions: AcademicSessionOption[],
+  existingCycles: AdmissionCycle[],
+): AdmissionCycleFormValues {
+  if (target) {
+    return {
+      sessionId: target.sessionId,
+      entryMode: target.entryMode,
+      batchNo: target.batchNo,
+      supersedesCycleId: target.supersedesCycleId,
+      name: target.name,
+      admissionIdentityMode: target.admissionIdentityMode ?? "JAMB",
+      startDate: target.startDate ? dayjs(target.startDate) : null,
+      endDate: target.endDate ? dayjs(target.endDate) : null,
+    };
+  }
+
+  const currentSession = sessions.find((s) => s.isCurrent) ?? sessions[0];
+  const sessionId = currentSession?.id;
+  const entryMode: AdmissionEntryMode = "UTME";
+  const batchNo =
+    sessionId !== undefined
+      ? suggestNextBatchNo(existingCycles, sessionId, entryMode)
+      : 1;
+
+  return {
+    sessionId,
+    entryMode,
+    batchNo,
+    supersedesCycleId: undefined,
+    name:
+      currentSession !== undefined
+        ? buildDefaultCycleName(currentSession.name, entryMode, batchNo)
+        : "",
+    admissionIdentityMode: "JAMB",
+    startDate: null,
+    endDate: null,
+  };
 }
 
 // ─── Upsert (Create / Edit) ───────────────────────────────────────────────────
 
 export function useAdmissionCycleFormModal(
   target: AdmissionCycle | null,
-  open: boolean,
   onClose: () => void,
   sessions: AcademicSessionOption[],
-  usedSessionIds: Set<number>,
+  existingCycles: AdmissionCycle[],
 ) {
   const isEditMode = target !== null;
+  const initialValues = useMemo(
+    () => buildAdmissionCycleFormInitialValues(target, sessions, existingCycles),
+    [target, sessions, existingCycles],
+  );
   const [form] = Form.useForm<AdmissionCycleFormValues>();
-  const [modalState, dispatch] = useReducer(
+  const [_, dispatch] = useReducer(
     admissionCycleFormReducer,
     initialAdmissionCycleFormState,
   );
-  const { formError } = modalState;
 
   const [createAdmissionCycle, { isLoading: isCreating }] =
     useCreateAdmissionCycleMutation();
   const [updateAdmissionCycle, { isLoading: isUpdating }] =
     useUpdateAdmissionCycleMutation();
+  const handleApiError = useApiError();
 
   const isSubmitting = isCreating || isUpdating;
 
   const sessionOptions = sessions.map((session) => ({
     value: session.id,
     label: session.isCurrent ? `${session.name} (Current)` : session.name,
-    disabled: !isEditMode && usedSessionIds.has(session.id),
   }));
 
-  useEffect(() => {
-    if (!open) return;
+  const watchedSessionId = Form.useWatch("sessionId", form);
+  const watchedEntryMode = Form.useWatch("entryMode", form);
+  const watchedBatchNo = Form.useWatch("batchNo", form);
 
-    if (isEditMode && target) {
-      form.setFieldsValue({
-        sessionId: target.sessionId,
-        name: target.name,
-        startDate: target.startDate ? dayjs(target.startDate) : null,
-        endDate: target.endDate ? dayjs(target.endDate) : null,
-      });
-    } else {
-      form.resetFields();
+  const isSlotOccupied = useMemo(() => {
+    if (isEditMode) return false;
+    if (
+      watchedSessionId === undefined ||
+      watchedEntryMode === undefined ||
+      watchedBatchNo === undefined
+    ) {
+      return false;
     }
-  }, [open, isEditMode, target, form]);
+    return isLaneSlotOccupied(
+      existingCycles,
+      watchedSessionId,
+      watchedEntryMode,
+      watchedBatchNo,
+    );
+  }, [
+    isEditMode,
+    existingCycles,
+    watchedSessionId,
+    watchedEntryMode,
+    watchedBatchNo,
+  ]);
+
+  const supersedesOptions = useMemo(() => {
+    if (isEditMode || watchedSessionId === undefined || !watchedEntryMode) {
+      return [];
+    }
+    return getCyclesInLane(
+      existingCycles,
+      watchedSessionId,
+      watchedEntryMode,
+    ).map((cycle) => ({
+      value: cycle.id,
+      label: `Batch ${cycle.batchNo} — ${cycle.name}`,
+    }));
+  }, [isEditMode, existingCycles, watchedSessionId, watchedEntryMode]);
 
   const reset = useCallback(() => {
     form.resetFields();
     dispatch({ type: AdmissionCycleFormActionType.Reset });
   }, [form]);
 
-  const handleSessionChange = useCallback(
-    (sessionId: number) => {
+  const prefillNameIfEmpty = useCallback(
+    (sessionId: number, entryMode: AdmissionEntryMode, batchNo: number) => {
       const session = sessions.find((s) => s.id === sessionId);
       if (!session) return;
       const currentName = form.getFieldValue("name");
-      if (!currentName) {
-        form.setFieldValue("name", `${session.name} UTME Admission`);
+      if (!currentName || String(currentName).trim() === "") {
+        form.setFieldValue(
+          "name",
+          buildDefaultCycleName(session.name, entryMode, batchNo),
+        );
       }
     },
     [form, sessions],
   );
 
+  const handleSessionChange = useCallback(
+    (sessionId: number) => {
+      const entryMode =
+        (form.getFieldValue("entryMode") as AdmissionEntryMode) ?? "UTME";
+      const batchNo = suggestNextBatchNo(existingCycles, sessionId, entryMode);
+      form.setFieldValue("batchNo", batchNo);
+      form.setFieldValue("supersedesCycleId", undefined);
+      prefillNameIfEmpty(sessionId, entryMode, batchNo);
+    },
+    [form, existingCycles, prefillNameIfEmpty],
+  );
+
+  const handleEntryModeChange = useCallback(
+    (entryMode: AdmissionEntryMode) => {
+      const sessionId = form.getFieldValue("sessionId") as number | undefined;
+      if (sessionId === undefined) return;
+      const batchNo = suggestNextBatchNo(existingCycles, sessionId, entryMode);
+      form.setFieldValue("batchNo", batchNo);
+      form.setFieldValue("supersedesCycleId", undefined);
+      prefillNameIfEmpty(sessionId, entryMode, batchNo);
+    },
+    [form, existingCycles, prefillNameIfEmpty],
+  );
+
+  const handleBatchNoChange = useCallback(
+    (batchNo: number | null) => {
+      const sessionId = form.getFieldValue("sessionId") as number | undefined;
+      const entryMode = form.getFieldValue("entryMode") as
+        | AdmissionEntryMode
+        | undefined;
+      if (sessionId === undefined || !entryMode || batchNo === null) return;
+      prefillNameIfEmpty(sessionId, entryMode, batchNo);
+    },
+    [form, prefillNameIfEmpty],
+  );
+
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
-      dispatch({
-        type: AdmissionCycleFormActionType.SetFormError,
-        message: null,
-      });
+
+      if (!isEditMode && isSlotOccupied) {
+        return;
+      }
 
       const name = values.name.trim();
       const startDate = toIsoDateTime(values.startDate);
       const endDate = toIsoDateTime(values.endDate);
+      const admissionIdentityMode =
+        values.admissionIdentityMode ?? target?.admissionIdentityMode ?? "JAMB";
 
       if (isEditMode && target) {
         await updateAdmissionCycle({
           id: target.id,
           name,
+          admissionIdentityMode,
           startDate,
           endDate,
         }).unwrap();
-        notification.success({
-          message: "Admission cycle updated successfully.",
-        });
+        notifyMutationSuccess(
+          mutationSuccessMessage("Admission cycle", "updated"),
+        );
       } else {
         await createAdmissionCycle({
           sessionId: values.sessionId!,
           name,
+          admissionIdentityMode,
+          entryMode: values.entryMode,
+          batchNo: values.batchNo,
+          supersedesCycleId: values.supersedesCycleId ?? undefined,
           startDate,
           endDate,
         }).unwrap();
-        notification.success({
-          message: "Admission cycle created successfully.",
-        });
+        notifyMutationSuccess(
+          mutationSuccessMessage("Admission cycle", "created"),
+        );
       }
 
       reset();
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-      applyFormErrors(parsed, form, (msg) =>
-        dispatch({
-          type: AdmissionCycleFormActionType.SetFormError,
-          message: msg,
-        }),
-      );
+      handleApiError(err, {
+        context: {
+          screen: RequestScreen.Modal,
+          method: isEditMode ? "PATCH" : "POST",
+        },
+        form,
+      });
     }
   };
 
@@ -157,14 +286,38 @@ export function useAdmissionCycleFormModal(
     onClose();
   };
 
+  const canEditIdentityMode =
+    !isEditMode || target?.status === "PRE_PROCESSING";
+
+  const supersededCycleName = useMemo(() => {
+    if (!target?.supersedesCycleId) return null;
+    const superseded = existingCycles.find(
+      (c) => c.id === target.supersedesCycleId,
+    );
+    return superseded
+      ? `Batch ${superseded.batchNo} — ${superseded.name}`
+      : `Cycle #${target.supersedesCycleId}`;
+  }, [target, existingCycles]);
+
   return {
     state: {
       isEditMode,
-      formError,
       isSubmitting,
       sessionOptions,
+      supersedesOptions,
+      canEditIdentityMode,
+      identityMode: target?.admissionIdentityMode ?? "JAMB",
+      isSlotOccupied,
+      initialValues,
+      supersededCycleName,
     },
-    actions: { handleSubmit, handleCancel, handleSessionChange },
+    actions: {
+      handleSubmit,
+      handleCancel,
+      handleSessionChange,
+      handleEntryModeChange,
+      handleBatchNoChange,
+    },
     form,
   };
 }
@@ -178,7 +331,7 @@ export function useDeleteAdmissionCycleModal(
 ) {
   const [deleteAdmissionCycle, { isLoading: isDeleting }] =
     useDeleteAdmissionCycleMutation();
-  const [error, setError] = useState<string | null>(null);
+  const handleApiError = useApiError();
 
   const { data: candidateData, isLoading: isCheckingCandidates } =
     useGetAdmissionCandidateCountQuery(
@@ -192,27 +345,24 @@ export function useDeleteAdmissionCycleModal(
   const handleConfirm = async () => {
     if (!target || !canDelete) return;
     try {
-      setError(null);
       await deleteAdmissionCycle(target.id).unwrap();
-      notification.success({
-        message: "Admission cycle deleted successfully.",
-      });
+      notifyMutationSuccess(
+        mutationSuccessMessage("Admission cycle", "deleted"),
+      );
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-      setError(parsed.message);
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "DELETE" },
+      });
     }
   };
 
   const handleCancel = () => {
-    setError(null);
     onClose();
   };
 
   return {
     state: {
-      error,
       isDeleting,
       isCheckingCandidates,
       candidateCount,
@@ -226,53 +376,84 @@ export function useDeleteAdmissionCycleModal(
 
 export function useTransitionAdmissionCycleModal(
   target: AdmissionCycle | null,
-  _open: boolean,
+  direction: TransitionDirection,
   onClose: () => void,
 ) {
+  const [form] = Form.useForm<{ reason?: string }>();
   const [transitionAdmissionCycle, { isLoading: isTransitioning }] =
     useTransitionAdmissionCycleMutation();
-  const [error, setError] = useState<string | null>(null);
+  const handleApiError = useApiError();
 
-  const transitionMeta = target ? getTransitionMeta(target.status) : null;
-  const nextStatus = transitionMeta?.nextStatus ?? null;
-  const buttonLabel = transitionMeta?.buttonLabel ?? "Advance Status";
+  const isRollback = direction === "rollback";
+
+  const forwardMeta =
+    target && target.status !== "CLOSED"
+      ? ADMISSION_CYCLE_TRANSITIONS[target.status]
+      : null;
+  const rollbackMeta =
+    target && target.status !== "PRE_PROCESSING"
+      ? ADMISSION_CYCLE_ROLLBACKS[target.status]
+      : null;
+
+  const targetStatus: AdmissionCycleStatus | null = isRollback
+    ? (rollbackMeta?.prevStatus ?? null)
+    : (forwardMeta?.nextStatus ?? null);
+
+  const buttonLabel = isRollback
+    ? (rollbackMeta?.buttonLabel ?? "Roll Back")
+    : (forwardMeta?.buttonLabel ?? "Advance Status");
+
   const warningMessage =
-    nextStatus !== null
-      ? ADMISSION_CYCLE_TRANSITION_WARNINGS[nextStatus] ?? null
+    targetStatus !== null
+      ? isRollback
+        ? (ADMISSION_CYCLE_ROLLBACK_WARNINGS[targetStatus] ?? null)
+        : (ADMISSION_CYCLE_TRANSITION_WARNINGS[targetStatus] ?? null)
       : null;
 
   const handleConfirm = async () => {
-    if (!target || !nextStatus) return;
+    if (!target || !targetStatus) return;
     try {
-      setError(null);
+      const values = isRollback
+        ? await form.validateFields()
+        : { reason: undefined };
+
       await transitionAdmissionCycle({
         id: target.id,
-        status: nextStatus,
+        status: targetStatus,
+        reason: values.reason?.trim(),
       }).unwrap();
-      notification.success({
-        message: `Cycle advanced to ${nextStatus.replace(/_/g, " ").toLowerCase()}.`,
-      });
+
+      const statusLabel =
+        statusLabelByValue[targetStatus] ?? targetStatus.replace(/_/g, " ");
+      notifyMutationSuccess(
+        isRollback
+          ? `Cycle rolled back to ${statusLabel}.`
+          : `Cycle advanced to ${statusLabel}.`,
+      );
+      form.resetFields();
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-      setError(parsed.message);
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "PATCH" },
+        form: isRollback ? form : undefined,
+      });
     }
   };
 
   const handleCancel = () => {
-    setError(null);
+    form.resetFields();
     onClose();
   };
 
   return {
     state: {
-      error,
       isTransitioning,
-      nextStatus,
+      isRollback,
+      targetStatus,
       buttonLabel,
       warningMessage,
     },
     actions: { handleConfirm, handleCancel },
+    form,
   };
 }

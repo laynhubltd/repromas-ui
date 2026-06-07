@@ -1,5 +1,4 @@
 import { useToken } from "@/shared/hooks/useToken";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Button, DatePicker, Form, Input, Modal, Switch } from "antd";
 import { useSessionFormModal } from "../../hooks/useSessionModal";
 import type { AcademicSession } from "../../types/academic-calendar";
@@ -14,7 +13,7 @@ export type SessionFormModalProps = {
 export function SessionFormModal({ open, target, onClose }: SessionFormModalProps) {
   const token = useToken();
   const { state, actions, form } = useSessionFormModal(target, open, onClose);
-  const { formError, isLoading, isEditMode } = state;
+  const { isLoading, isEditMode } = state;
   const { handleSubmit, handleCancel } = actions;
 
   return (
@@ -37,8 +36,6 @@ export function SessionFormModal({ open, target, onClose }: SessionFormModalProp
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert variant="form" error={formError} />
-
         <Form form={form} layout="vertical" requiredMark={false} onFinish={handleSubmit}>
           <Form.Item name="name" label="Name" rules={sessionNameRules}>
             <Input placeholder="e.g. 2025/2026" style={{ height: 40 }} />

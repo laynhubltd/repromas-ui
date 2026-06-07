@@ -31,7 +31,7 @@ export function AdmissionConfigTab() {
 
   return (
     <Tabs
-      tabPosition={isMobile ? "top" : "left"}
+      tabPlacement={isMobile ? "top" : "left"}
       size="sm"
       density="compact"
       variant="default"

@@ -18,6 +18,7 @@ import type {
   AdmissionCandidate,
   CandidateEntryMode,
   CandidateGender,
+  CreateAdmissionCandidateResponse,
 } from "../types/admission-candidate";
 import { useAdmissionCandidateBulkUpload } from "./useAdmissionCandidateBulkUpload";
 
@@ -236,6 +237,20 @@ export function useAdmissionCandidatePage() {
     });
   }, []);
 
+  const handleCandidateCreated = useCallback(
+    (result: CreateAdmissionCandidateResponse) => {
+      dispatch({
+        type: AdmissionCandidatePageActionType.SetFormModalOpen,
+        open: false,
+      });
+      dispatch({
+        type: AdmissionCandidatePageActionType.SetDrawerCandidateId,
+        id: result.candidate.id,
+      });
+    },
+    [],
+  );
+
   const handleOpenDrawer = useCallback((id: number) => {
     dispatch({
       type: AdmissionCandidatePageActionType.SetDrawerCandidateId,
@@ -381,6 +396,7 @@ export function useAdmissionCandidatePage() {
       handlePageChange,
       handleOpenCreate,
       handleCloseForm,
+      handleCandidateCreated,
       handleOpenDrawer,
       handleCloseDrawer,
       handleOpenMetadata,

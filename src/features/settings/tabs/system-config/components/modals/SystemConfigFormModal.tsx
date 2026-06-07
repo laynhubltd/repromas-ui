@@ -3,7 +3,6 @@ import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Button, Form, Input, InputNumber, Modal, Select, Spin, Switch } from "antd";
 import { useSystemConfigModal } from "../../hooks/useSystemConfigModal";
 import type { ConfigKey, ConfigScope, ProgramOption, SystemConfig } from "../../types/system-config";
@@ -48,7 +47,7 @@ export function SystemConfigFormModal({
     programs,
     programsLoading,
   );
-  const { formError, isLoading, isEditMode } = state;
+  const { isLoading, isEditMode } = state;
   const { handleSubmit, handleCancel, handleConfigKeyChange, handleScopeChange } = actions;
   const { showReferenceId, showCreditFields, showCarryoverToggle, isConfigKeyReadOnly } = flags;
 
@@ -70,8 +69,6 @@ export function SystemConfigFormModal({
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert variant="form" error={formError} />
-
         <Form form={form} layout="vertical" requiredMark={false} onFinish={handleSubmit}>
           {/* configKey — read-only in edit mode */}
           <Form.Item

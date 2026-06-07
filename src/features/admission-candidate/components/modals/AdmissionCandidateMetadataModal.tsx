@@ -1,5 +1,4 @@
 import { useToken } from "@/shared/hooks/useToken";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Form, Input, Modal } from "antd";
 import { useEffect } from "react";
 import { useAdmissionCandidateMetadataModal } from "../../hooks/useAdmissionCandidateModal";
@@ -39,7 +38,6 @@ export function AdmissionCandidateMetadataModal({
       destroyOnHidden
     >
       <Form form={form} layout="vertical" style={{ marginTop: token.paddingMD }}>
-        <ErrorAlert error={state.formError} />
         <Form.Item
           name="metadataJson"
           label="Metadata (JSON)"

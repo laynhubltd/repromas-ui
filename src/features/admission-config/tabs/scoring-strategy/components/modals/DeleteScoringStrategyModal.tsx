@@ -6,7 +6,6 @@ import { Permission } from "@/features/access-control/permissions";
 import { getScopeLabel } from "@/shared/constants/scoringStrategyOptions";
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Alert, Button, Modal, Typography } from "antd";
 import { useDeleteScoringStrategyModal } from "../../hooks/useScoringStrategyModal";
 import type { AdmissionScoringStrategy } from "../../types/scoring-strategy";
@@ -42,7 +41,7 @@ export function DeleteScoringStrategyModal({
 }: DeleteScoringStrategyModalProps) {
   const token = useToken();
   const { state, actions } = useDeleteScoringStrategyModal(target, onClose);
-  const { error, isDeleting, isOnlyGlobal } = state;
+  const { isDeleting, isOnlyGlobal } = state;
   const { handleConfirm, handleCancel } = actions;
 
   const scopeDisplay = target ? getScopeLabel(target.scope) : "Unknown";
@@ -66,9 +65,6 @@ export function DeleteScoringStrategyModal({
       }}
     >
       <div style={{ padding: 24 }}>
-        {/* Error alert (Req 10.6) */}
-        <ErrorAlert error={error} />
-
         {/* Confirmation text (Req 10.1) */}
         <Typography.Text>
           Are you sure you want to delete the{" "}

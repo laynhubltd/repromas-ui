@@ -1,5 +1,4 @@
 import { useToken } from "@/shared/hooks/useToken";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Button, Modal, Typography } from "antd";
 import { useDeleteSemesterTypeModal } from "../../hooks/useSemesterTypeModal";
 import type { SemesterType } from "../../types/academic-calendar";
@@ -13,7 +12,7 @@ export type DeleteSemesterTypeModalProps = {
 export function DeleteSemesterTypeModal({ open, target, onClose }: DeleteSemesterTypeModalProps) {
   const token = useToken();
   const { state, actions } = useDeleteSemesterTypeModal(target, onClose);
-  const { error, isLoading } = state;
+  const { isLoading } = state;
   const { handleConfirm, handleCancel } = actions;
 
   return (
@@ -36,8 +35,6 @@ export function DeleteSemesterTypeModal({ open, target, onClose }: DeleteSemeste
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert variant="form" error={error} />
-
         <Typography.Text>
           Deleting this semester type will not remove existing semesters, but they will lose their
           type reference display.

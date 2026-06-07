@@ -1,7 +1,11 @@
-import { applyFormErrors } from "@/shared/utils/error/applyFormErrors";
-import { parseApiError } from "@/shared/utils/error/parseApiError";
-import { Form, notification } from "antd";
-import { useEffect, useState } from "react";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
+import {
+  mutationSuccessMessage,
+  notifyMutationSuccess,
+} from "@/shared/utils/feedback/notifyMutationSuccess";
+import { Form } from "antd";
+import { useEffect } from "react";
 import {
     useCreateLevelMutation,
     useDeleteLevelMutation,
@@ -20,7 +24,7 @@ export function useLevelFormModal(
   const [form] = Form.useForm<{ name: string; rankOrder: number; description?: string }>();
   const [createLevel, { isLoading: isCreating }] = useCreateLevelMutation();
   const [updateLevel, { isLoading: isUpdating }] = useUpdateLevelMutation();
-  const [formError, setFormError] = useState<string | null>(null);
+  const handleApiError = useApiError();
 
   const isLoading = isCreating || isUpdating;
 
@@ -38,7 +42,6 @@ export function useLevelFormModal(
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
-      setFormError(null);
 
       if (isEditMode) {
         await updateLevel({
@@ -55,43 +58,32 @@ export function useLevelFormModal(
         }).unwrap();
       }
 
+      notifyMutationSuccess(
+        mutationSuccessMessage("Level", isEditMode ? "updated" : "created"),
+      );
       form.resetFields();
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-
-      if (parsed.status === 409) {
-        notification.error({ message: parsed.message });
-        const detail = (parsed.raw as { detail?: string }).detail ?? parsed.message;
-        if (detail.toLowerCase().includes("name")) {
-          form.setFields([{ name: "name", errors: [parsed.message] }]);
-        } else if (detail.toLowerCase().includes("rank order")) {
-          form.setFields([{ name: "rankOrder", errors: [parsed.message] }]);
-        } else {
-          setFormError(parsed.message);
-        }
-        return;
-      }
-
-      if (isEditMode && parsed.status === 404) {
-        notification.error({ message: parsed.message });
+      const decision = handleApiError(err, {
+        context: {
+          screen: RequestScreen.Modal,
+          method: isEditMode ? "PATCH" : "POST",
+        },
+        form,
+      });
+      if (isEditMode && decision.disableForm) {
         onClose();
-        return;
       }
-
-      notification.error({ message: parsed.message });
-      applyFormErrors(parsed, form, setFormError);
     }
   };
 
   const handleCancel = () => {
     form.resetFields();
-    setFormError(null);
     onClose();
   };
 
   return {
-    state: { formError, isLoading, isEditMode },
+    state: { isLoading, isEditMode },
     actions: { handleSubmit, handleCancel },
     form,
   };
@@ -101,28 +93,27 @@ export function useLevelFormModal(
 
 export function useDeleteLevelModal(target: Level | null, onClose: () => void) {
   const [deleteLevel, { isLoading }] = useDeleteLevelMutation();
-  const [error, setError] = useState<string | null>(null);
+  const handleApiError = useApiError();
 
   const handleConfirm = async () => {
     if (!target) return;
     try {
-      setError(null);
       await deleteLevel(target.id).unwrap();
+      notifyMutationSuccess(mutationSuccessMessage("Level", "deleted"));
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-      setError(parsed.message);
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "DELETE" },
+      });
     }
   };
 
   const handleCancel = () => {
-    setError(null);
     onClose();
   };
 
   return {
-    state: { error, isLoading },
+    state: { isLoading },
     actions: { handleConfirm, handleCancel },
   };
 }

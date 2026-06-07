@@ -1,4 +1,9 @@
-export type RoleScope = 'GLOBAL' | 'FACULTY' | 'DEPARTMENT' | 'PROGRAM';
+export type RoleScope =
+  | "GLOBAL"
+  | "FACULTY"
+  | "DEPARTMENT"
+  | "PROGRAM"
+  | "CANDIDATE";
 
 export type Role = {
   id: number;

@@ -10,6 +10,7 @@ const SCOPE_COLOUR: Record<RoleScope, string> = {
   FACULTY: "purple",
   DEPARTMENT: "orange",
   PROGRAM: "green",
+  CANDIDATE: "cyan",
 };
 
 export function ScopeBadge({ scope }: ScopeBadgeProps) {

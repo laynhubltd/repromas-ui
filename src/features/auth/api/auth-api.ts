@@ -13,6 +13,7 @@ import type {
   SignUpResponse,
   UserProfile,
 } from "../types";
+import { mapLoginResponse } from "../utils/mapLoginResponse";
 
 const AUTH_BASE = "/auth";
 
@@ -34,7 +35,7 @@ export const authApi = createApi({
           data: credentials,
         });
         if (result.error) return { error: result.error as ApiErrorResponse };
-        return { data: result.data as LoginResponse };
+        return { data: mapLoginResponse(result.data) };
       },
       async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
         try {

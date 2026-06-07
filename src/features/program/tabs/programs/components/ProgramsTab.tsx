@@ -160,6 +160,7 @@ export function ProgramsTab() {
     totalItems,
     isLoading,
     isError,
+    sectionError,
     page,
     itemsPerPage,
     nameSearch,
@@ -338,7 +339,7 @@ export function ProgramsTab() {
 
       <DataLoader loading={isLoading} loader={<SkeletonRows count={5} variant="card" />}>
         <ConditionalRenderer when={isError}>
-          <ErrorAlert variant="section" error="Failed to load programs" onRetry={refetch} />
+          <ErrorAlert variant="section" error={sectionError ?? "Failed to load programs"} onRetry={refetch} />
         </ConditionalRenderer>
 
         <ConditionalRenderer

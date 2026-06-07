@@ -69,10 +69,10 @@ const admissionCycleApi = baseApi.injectEndpoints({
       AdmissionCycle,
       TransitionAdmissionCycleRequest
     >({
-      query: ({ id, status }) => ({
+      query: ({ id, status, reason }) => ({
         url: `/admission-cycles/${id}/transition`,
         method: "PATCH",
-        data: { status },
+        data: reason ? { status, reason } : { status },
         headers: { "Content-Type": "application/merge-patch+json" },
       }),
       invalidatesTags: [ApiTagTypes.AdmissionCycle],

@@ -1,8 +1,8 @@
 // Feature: rbac-settings
-import { applyFormErrors } from "@/shared/utils/error/applyFormErrors";
-import { parseApiError } from "@/shared/utils/error/parseApiError";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
 import { Form, notification } from "antd";
-import { useCallback, useEffect, useReducer, useRef, useState } from "react";
+import { useCallback, useEffect, useReducer, useRef } from "react";
 import {
   useCreatePermissionMutation,
   useDeletePermissionMutation,
@@ -35,6 +35,7 @@ export function usePermissionFormModal(
     catalogueSearch,
     debouncedCatalogueSearch,
   } = modalState;
+  const handleApiError = useApiError();
 
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -131,21 +132,16 @@ export function usePermissionFormModal(
       reset();
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-
-      if (parsed.status === 409) {
-        notification.error({ message: parsed.message });
-        dispatch({
-          type: PermissionFormActionType.SetFormError,
-          message: "This permission is already activated.",
-        });
-        return;
+      const decision = handleApiError(err, {
+        context: {
+          screen: RequestScreen.Modal,
+          method: isEditMode ? "PATCH" : "POST",
+        },
+        form,
+      });
+      if (isEditMode && decision.disableForm) {
+        onClose();
       }
-
-      notification.error({ message: parsed.message });
-      applyFormErrors(parsed, form, (msg) =>
-        dispatch({ type: PermissionFormActionType.SetFormError, message: msg }),
-      );
     }
   };
 
@@ -182,33 +178,27 @@ export function useDeletePermissionModal(
 ) {
   const [deletePermission, { isLoading: isDeleting }] =
     useDeletePermissionMutation();
-  const [error, setError] = useState<string | null>(null);
+  const handleApiError = useApiError();
 
   const handleConfirm = async () => {
     if (!target) return;
     try {
-      setError(null);
       await deletePermission(target.id).unwrap();
       notification.success({ message: "Permission deleted successfully." });
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-      if (parsed.status === 409) {
-        setError("Remove this permission from all roles before deleting it.");
-      } else {
-        setError(parsed.message);
-      }
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "DELETE" },
+      });
     }
   };
 
   const handleCancel = () => {
-    setError(null);
     onClose();
   };
 
   return {
-    state: { isDeleting, error },
+    state: { isDeleting },
     actions: { handleConfirm, handleCancel },
   };
 }

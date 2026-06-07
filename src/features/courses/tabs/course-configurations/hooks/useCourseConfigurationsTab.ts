@@ -1,4 +1,6 @@
 import type { Level } from "@/features/settings/tabs/level-config/types/level";
+import { RequestScreen } from "@/shared/types/error-ui";
+import { deriveSectionErrorMessage } from "@/shared/utils/error/deriveSectionErrorMessage";
 import { useCallback, useMemo, useState } from "react";
 import { useGetCourseConfigurationsQuery } from "../api/courseConfigurationsApi";
 import type { CourseConfiguration, CurriculumGridRow } from "../types/course-configuration";
@@ -47,9 +49,18 @@ export function useCourseConfigurationsTab() {
       }
     : undefined;
 
-  const { data, isLoading, isError, refetch } = useGetCourseConfigurationsQuery(
+  const { data, isLoading, isError, error: queryError, refetch } = useGetCourseConfigurationsQuery(
     queryParams!,
     { skip: !bothSelected },
+  );
+
+  const sectionError = useMemo(
+    () =>
+      deriveSectionErrorMessage(isError, queryError, {
+        screen: RequestScreen.List,
+        method: "GET",
+      }),
+    [isError, queryError],
   );
 
   const configs = data?.member ?? [];
@@ -163,6 +174,7 @@ export function useCourseConfigurationsTab() {
       totalItems,
       isLoading,
       isError,
+      sectionError,
       selectedProgramId,
       selectedVersionId,
       filterLevelId,

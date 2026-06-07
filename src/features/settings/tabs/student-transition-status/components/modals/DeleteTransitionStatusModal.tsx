@@ -3,7 +3,6 @@ import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Button, Modal, Typography } from "antd";
 import { useDeleteTransitionStatusModal } from "../../hooks/useTransitionStatusModal";
 import type { StudentTransitionStatus } from "../../types/student-transition-status";
@@ -23,7 +22,7 @@ export function DeleteTransitionStatusModal({
 }: DeleteTransitionStatusModalProps) {
   const token = useToken();
   const { state, actions } = useDeleteTransitionStatusModal(target, usageCount, open, onClose);
-  const { error, isLoading, isBlocked } = state;
+  const { isLoading, isBlocked } = state;
   const { handleConfirm, handleCancel } = actions;
 
   return (
@@ -45,8 +44,6 @@ export function DeleteTransitionStatusModal({
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert variant="form" error={error} />
-
         {/* Blocking message — status is in use */}
         <ConditionalRenderer when={isBlocked}>
           <Typography.Text>

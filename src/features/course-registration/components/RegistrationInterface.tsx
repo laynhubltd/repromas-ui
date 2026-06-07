@@ -1,3 +1,7 @@
+import {
+  BillingWorkflowBlockingBanner,
+  BillingWorkflowDecisionGuard,
+} from "@/features/billing";
 import { useToken } from "@/shared/hooks/useToken";
 import {
   ConditionalRenderer,
@@ -29,6 +33,10 @@ export type RegistrationInterfaceProps = {
    * Requirements: 1.5, 1.6
    */
   useMobileLayout?: boolean;
+  /**
+   * When true, billing workflow guard is skipped (admin/staff flows).
+   */
+  skipBillingGuard?: boolean;
 };
 
 /**
@@ -56,12 +64,14 @@ export function RegistrationInterface({
   onSemesterTypeChange,
   studentInfo,
   useMobileLayout = false,
+  skipBillingGuard = true,
 }: RegistrationInterfaceProps) {
   const token = useToken();
 
   const { state, actions, flags } = useRegistrationInterface(
     studentId,
     semesterTypeId,
+    skipBillingGuard,
   );
 
   console.log({ student: state.studentContext });
@@ -488,6 +498,15 @@ export function RegistrationInterface({
                 />
               </ConditionalRenderer>
 
+              {/* Payment required — shown before course selection when billing blocks submit */}
+              <ConditionalRenderer when={flags.showBillingBanner}>
+                <BillingWorkflowBlockingBanner
+                  blockingUi={state.billingBlockingUi}
+                  onPayNow={actions.handleBillingPayNow}
+                  onRetry={actions.handleBillingRetry}
+                />
+              </ConditionalRenderer>
+
               {/* Course pool display (Requirements 4.2, 5.1–5.3, 7.4) */}
               <div style={{ marginBottom: 16 }}>
                 <CoursePoolDisplay
@@ -502,7 +521,12 @@ export function RegistrationInterface({
               </div>
 
               {/* Submit button */}
-              <Flex justify="flex-end">
+              <BillingWorkflowDecisionGuard
+                workflowStep="COURSE_REGISTRATION_SUBMIT"
+                skip={skipBillingGuard}
+                onPayNow={actions.handleBillingPayNow}
+                showBanner={false}
+              >
                 <Button
                   type="primary"
                   disabled={!flags.canSubmit}
@@ -512,7 +536,7 @@ export function RegistrationInterface({
                 >
                   Submit Registration
                 </Button>
-              </Flex>
+              </BillingWorkflowDecisionGuard>
             </ConditionalRenderer>
           </DataLoader>
         </ConditionalRenderer>

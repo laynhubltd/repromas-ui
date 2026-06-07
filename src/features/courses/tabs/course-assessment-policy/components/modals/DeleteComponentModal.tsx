@@ -1,6 +1,5 @@
 // Feature: course-assessment-policy
 import { useToken } from "@/shared/hooks/useToken";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Alert, Button, Modal, Typography } from "antd";
 import { useDeleteComponentModal } from "../../hooks/useComponentModal";
 import type { CourseAssessmentComponent } from "../../types/course-assessment-policy";
@@ -37,7 +36,7 @@ export function DeleteComponentModal({
     open,
     onClose,
   );
-  const { isDeleting, error } = state;
+  const { isDeleting } = state;
   const { handleConfirm, handleClose } = actions;
 
   return (
@@ -58,7 +57,6 @@ export function DeleteComponentModal({
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert error={error} />
 
         {/* Confirmation message */}
         <Typography.Text>

@@ -1,6 +1,7 @@
 import { DashCard, ExplainerCallout, Table } from "@/components/ui-kit";
 import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
+import { formatCycleOptionLabel } from "@/features/admission-config/tabs/admission-cycle/utils/admissionCycleDisplay";
 import { useGetStatesQuery } from "@/features/admission-config/tabs/geography-rule/api/statesApi";
 import {
   CANDIDATE_ENTRY_MODE_OPTIONS,
@@ -111,6 +112,7 @@ export function AdmissionCandidatePage() {
     handlePageChange,
     handleOpenCreate,
     handleCloseForm,
+    handleCandidateCreated,
     handleOpenDrawer,
     handleCloseDrawer,
     handleOpenMetadata,
@@ -388,7 +390,7 @@ export function AdmissionCandidatePage() {
           onChange={handleCycleChange}
           options={cycles.map((c) => ({
             value: c.id,
-            label: `${c.name} (${c.status})`,
+            label: formatCycleOptionLabel(c),
           }))}
           allowClear
           onClear={() => handleCycleChange(undefined)}
@@ -599,6 +601,7 @@ export function AdmissionCandidatePage() {
         defaultCycleId={cycleId}
         canIngest={canIngest}
         onClose={handleCloseForm}
+        onCreated={handleCandidateCreated}
       />
       <AdmissionCandidateMetadataModal
         open={metadataModalOpen}
@@ -630,7 +633,6 @@ export function AdmissionCandidatePage() {
         onClose={handleCloseBulkUploadModal}
         selectedFile={bulkState.selectedFile}
         isUploading={bulkState.isUploading}
-        uploadError={bulkState.uploadError}
         hasFile={bulkFlags.hasFile}
         canUpload={bulkFlags.canUpload}
         cycleSelected={cycleId !== undefined}

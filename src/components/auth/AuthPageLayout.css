@@ -9,6 +9,12 @@
   overflow-x: hidden;
 }
 
+.auth-page--fill {
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+}
+
 /* ── Form Panel (left, ~45%) ── */
 .auth-form-panel {
   flex: 0 0 45%;
@@ -18,6 +24,28 @@
   align-items: center;
   padding: 2rem;
   overflow-y: auto;
+}
+
+.auth-form-panel__back {
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  color: #595959;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  line-height: 1;
+  background: #ffffff;
+  padding-bottom: 0.25rem;
+}
+
+.auth-form-panel__back:hover {
+  color: #111111;
 }
 
 /* Inner content column — constrained width so the form doesn't stretch */
@@ -67,6 +95,24 @@
   flex-direction: column;
   justify-content: center;
   padding-bottom: 2rem;
+}
+
+/* Fill-viewport variant — form column fixed to viewport; parent panel scrolls */
+.auth-form-panel--fill {
+  height: 100vh;
+  max-height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+.auth-form-panel__inner--fill {
+  min-height: auto;
+}
+
+.auth-form-panel__body--fill {
+  flex: none;
+  justify-content: flex-start;
 }
 
 /* ── Illustration Panel (right, ~55%) ── */

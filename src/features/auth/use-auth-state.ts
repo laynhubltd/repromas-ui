@@ -14,6 +14,8 @@ export default function useAuthState() {
     permissions,
     activeRole,
     roleSwitcherOpen,
+    tenantId,
+    entity,
   } = useAppSelector((state) => state.auth);
 
   return {
@@ -29,5 +31,7 @@ export default function useAuthState() {
     permissions,
     activeRole,
     roleSwitcherOpen,
+    tenantId,
+    entity,
   };
 }

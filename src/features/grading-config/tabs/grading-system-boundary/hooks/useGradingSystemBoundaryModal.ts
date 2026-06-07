@@ -1,8 +1,8 @@
 // Feature: grading-config — Grading System Boundary modal hooks
-import { applyFormErrors } from "@/shared/utils/error/applyFormErrors";
-import { parseApiError } from "@/shared/utils/error/parseApiError";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
 import { Form, notification } from "antd";
-import { useCallback, useEffect, useReducer, useState } from "react";
+import { useCallback, useEffect, useReducer } from "react";
 import {
     useCreateGradingSystemBoundaryMutation,
     useDeleteGradingSystemBoundaryMutation,
@@ -41,7 +41,8 @@ export function useGradingSystemBoundaryFormModal(
     gradingSystemBoundaryFormReducer,
     initialGradingSystemBoundaryFormState,
   );
-  const { formError, overlapError } = modalState;
+  const { overlapError } = modalState;
+  const handleApiError = useApiError();
 
   const [createGradingSystemBoundary, { isLoading: isCreating }] =
     useCreateGradingSystemBoundaryMutation();
@@ -131,24 +132,13 @@ export function useGradingSystemBoundaryFormModal(
       reset();
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-
-      if (parsed.status === 409) {
-        notification.error({ message: parsed.message });
-        dispatch({
-          type: GradingSystemBoundaryFormActionType.SetFormError,
-          message: parsed.message,
-        });
-        return;
-      }
-
-      notification.error({ message: parsed.message });
-      applyFormErrors(parsed, form, (msg) =>
-        dispatch({
-          type: GradingSystemBoundaryFormActionType.SetFormError,
-          message: msg,
-        }),
-      );
+      handleApiError(err, {
+        context: {
+          screen: RequestScreen.Modal,
+          method: isEditMode ? "PATCH" : "POST",
+        },
+        form,
+      });
     }
   };
 
@@ -161,7 +151,6 @@ export function useGradingSystemBoundaryFormModal(
     state: {
       isEditMode,
       isSubmitting,
-      formError,
       overlapError,
     },
     actions: {
@@ -181,31 +170,29 @@ export function useDeleteGradingSystemBoundaryModal(
 ) {
   const [deleteGradingSystemBoundary, { isLoading: isDeleting }] =
     useDeleteGradingSystemBoundaryMutation();
-  const [error, setError] = useState<string | null>(null);
+  const handleApiError = useApiError();
 
   const handleConfirm = async () => {
     if (!target) return;
     try {
-      setError(null);
       await deleteGradingSystemBoundary(target.id).unwrap();
       notification.success({
         message: "Grade boundary deleted successfully.",
       });
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-      setError(parsed.message);
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "DELETE" },
+      });
     }
   };
 
   const handleCancel = () => {
-    setError(null);
     onClose();
   };
 
   return {
-    state: { isDeleting, error },
+    state: { isDeleting },
     actions: { handleConfirm, handleCancel },
   };
 }

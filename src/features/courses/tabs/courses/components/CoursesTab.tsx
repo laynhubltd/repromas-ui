@@ -159,6 +159,7 @@ export function CoursesTab() {
     totalItems,
     isLoading,
     isError,
+    sectionError,
     page,
     itemsPerPage,
     codeSearch,
@@ -417,7 +418,7 @@ export function CoursesTab() {
 
       <DataLoader loading={isLoading} loader={<SkeletonRows count={5} variant="card" />}>
         <ConditionalRenderer when={isError}>
-          <ErrorAlert variant="section" error="Failed to load courses" onRetry={refetch} />
+          <ErrorAlert variant="section" error={sectionError ?? "Failed to load courses"} onRetry={refetch} />
         </ConditionalRenderer>
 
         <ConditionalRenderer
@@ -514,7 +515,6 @@ export function CoursesTab() {
         onClose={handleCloseBulkUpload}
         selectedFile={bulkState.selectedFile}
         isUploading={bulkState.isUploading}
-        uploadError={bulkState.uploadError}
         hasFile={bulkFlags.hasFile}
         onFileChange={bulkActions.handleFileChange}
         onUpload={bulkActions.handleUpload}

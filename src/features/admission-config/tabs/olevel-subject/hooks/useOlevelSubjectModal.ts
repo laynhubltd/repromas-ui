@@ -1,17 +1,12 @@
-import { applyFormErrors } from "@/shared/utils/error/applyFormErrors";
-import { parseApiError } from "@/shared/utils/error/parseApiError";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
 import { Form, notification } from "antd";
-import { useCallback, useEffect, useReducer, useState } from "react";
+import { useCallback, useEffect } from "react";
 import {
   useCreateOlevelSubjectMutation,
   useDeleteOlevelSubjectMutation,
   useUpdateOlevelSubjectMutation,
 } from "../api/olevelSubjectApi";
-import {
-  initialOlevelSubjectFormState,
-  olevelSubjectFormReducer,
-  OlevelSubjectFormActionType,
-} from "../state/olevelSubjectFormState";
 import type { OlevelSubject } from "../types/olevel-subject";
 
 type OlevelSubjectFormValues = {
@@ -26,16 +21,12 @@ export function useOlevelSubjectFormModal(
 ) {
   const isEditMode = target !== null;
   const [form] = Form.useForm<OlevelSubjectFormValues>();
-  const [modalState, dispatch] = useReducer(
-    olevelSubjectFormReducer,
-    initialOlevelSubjectFormState,
-  );
-  const { formError } = modalState;
 
   const [createOlevelSubject, { isLoading: isCreating }] =
     useCreateOlevelSubjectMutation();
   const [updateOlevelSubject, { isLoading: isUpdating }] =
     useUpdateOlevelSubjectMutation();
+  const handleApiError = useApiError();
 
   const isSubmitting = isCreating || isUpdating;
 
@@ -52,16 +43,11 @@ export function useOlevelSubjectFormModal(
 
   const reset = useCallback(() => {
     form.resetFields();
-    dispatch({ type: OlevelSubjectFormActionType.Reset });
   }, [form]);
 
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
-      dispatch({
-        type: OlevelSubjectFormActionType.SetFormError,
-        message: null,
-      });
 
       const name = values.name.trim();
       const code =
@@ -88,14 +74,13 @@ export function useOlevelSubjectFormModal(
       reset();
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-      applyFormErrors(parsed, form, (msg) =>
-        dispatch({
-          type: OlevelSubjectFormActionType.SetFormError,
-          message: msg,
-        }),
-      );
+      handleApiError(err, {
+        context: {
+          screen: RequestScreen.Modal,
+          method: isEditMode ? "PATCH" : "POST",
+        },
+        form,
+      });
     }
   };
 
@@ -105,7 +90,7 @@ export function useOlevelSubjectFormModal(
   };
 
   return {
-    state: { isEditMode, formError, isSubmitting },
+    state: { isEditMode, isSubmitting },
     actions: { handleSubmit, handleCancel },
     form,
   };
@@ -118,31 +103,29 @@ export function useDeleteOlevelSubjectModal(
 ) {
   const [deleteOlevelSubject, { isLoading: isDeleting }] =
     useDeleteOlevelSubjectMutation();
-  const [error, setError] = useState<string | null>(null);
+  const handleApiError = useApiError();
 
   const handleConfirm = async () => {
     if (!target) return;
     try {
-      setError(null);
       await deleteOlevelSubject(target.id).unwrap();
       notification.success({
         message: "O'Level subject deleted successfully.",
       });
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-      setError(parsed.message);
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "DELETE" },
+      });
     }
   };
 
   const handleCancel = () => {
-    setError(null);
     onClose();
   };
 
   return {
-    state: { error, isDeleting },
+    state: { isDeleting },
     actions: { handleConfirm, handleCancel },
   };
 }

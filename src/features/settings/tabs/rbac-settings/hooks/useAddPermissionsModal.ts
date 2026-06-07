@@ -1,5 +1,6 @@
 // Feature: role-permission-assign
-import { parseApiError } from "@/shared/utils/error/parseApiError";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
 import { notification } from "antd";
 import { useEffect, useState } from "react";
 import {
@@ -32,6 +33,7 @@ export function useAddPermissionsModal(
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const handleApiError = useApiError();
 
   const [assignPermissionsToRole, { isLoading: isSubmitting }] =
     useAssignPermissionsToRoleMutation();
@@ -88,8 +90,9 @@ export function useAddPermissionsModal(
       reset();
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "POST" },
+      });
     }
   };
 

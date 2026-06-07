@@ -22,7 +22,9 @@ export interface TabsProps
   activeKey?: string;
   defaultActiveKey?: string;
   onChange?: (key: string) => void;
+  /** @deprecated Use `tabPlacement` instead. */
   tabPosition?: "top" | "bottom" | "left" | "right";
+  tabPlacement?: "top" | "bottom" | "left" | "right";
   extra?: ReactNode | { left?: ReactNode; right?: ReactNode };
   addable?: boolean;
   onAdd?: () => void;
@@ -68,6 +70,7 @@ export function Tabs({
   defaultActiveKey,
   onChange,
   tabPosition,
+  tabPlacement,
   extra,
   addable = false,
   onAdd,
@@ -142,7 +145,7 @@ export function Tabs({
       items={resolvedItems}
       size={toAntdSize(size ?? "md")}
       tabBarGutter={toSpacingUnit(density ?? "comfortable")}
-      tabPosition={tabPosition}
+      tabPlacement={(tabPlacement ?? tabPosition) as AntTabsProps["tabPlacement"]}
       activeKey={activeKey}
       defaultActiveKey={resolvedDefaultActiveKey}
       onChange={onChange}

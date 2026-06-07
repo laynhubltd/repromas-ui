@@ -1,5 +1,5 @@
 import { useToken } from "@/shared/hooks/useToken";
-import { Alert, Button, Form, Input, Modal } from "antd";
+import { Button, Form, Input, Modal } from "antd";
 import { useEditVersionModal } from "../hooks/useEditVersionModal";
 import type { CurriculumVersion } from "../types/curriculum-version";
 
@@ -12,7 +12,7 @@ interface EditVersionModalProps {
 export function EditVersionModal({ open, target, onClose }: EditVersionModalProps) {
   const token = useToken();
   const { state, actions, form } = useEditVersionModal(target, open, onClose);
-  const { formError, isLoading } = state;
+  const { isLoading } = state;
   const { handleSubmit, handleCancel } = actions;
 
   return (
@@ -34,9 +34,6 @@ export function EditVersionModal({ open, target, onClose }: EditVersionModalProp
       }}
     >
       <div style={{ padding: 24 }}>
-        {formError && (
-          <Alert type="error" message={formError} style={{ marginBottom: 16 }} showIcon />
-        )}
         <Form form={form} layout="vertical" requiredMark={false} onFinish={handleSubmit}>
           <Form.Item
             name="name"

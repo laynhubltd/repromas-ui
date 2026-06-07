@@ -1,12 +1,12 @@
-import { applyFormErrors } from "@/shared/utils/error/applyFormErrors";
-import { parseApiError } from "@/shared/utils/error/parseApiError";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
 import {
   flagsToQuotaTypeFormValue,
   QUOTA_TYPE_FORM_OPTIONS,
   type QuotaTypeFormValue,
 } from "@/shared/constants/geographyRuleOptions";
 import { Form, notification } from "antd";
-import { useCallback, useEffect, useReducer, useState } from "react";
+import { useCallback, useEffect, useReducer } from "react";
 import {
   useCreateGeographyRuleMutation,
   useDeleteGeographyRuleMutation,
@@ -49,6 +49,7 @@ export function useGeographyRuleFormModal({
     useCreateGeographyRuleMutation();
   const [updateGeographyRule, { isLoading: isUpdating }] =
     useUpdateGeographyRuleMutation();
+  const handleApiError = useApiError();
 
   const isSubmitting = isCreating || isUpdating;
 
@@ -140,14 +141,13 @@ export function useGeographyRuleFormModal({
       reset();
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-      applyFormErrors(parsed, form, (msg) =>
-        dispatch({
-          type: GeographyRuleFormActionType.SetFormError,
-          message: msg,
-        }),
-      );
+      handleApiError(err, {
+        context: {
+          screen: RequestScreen.Modal,
+          method: isEditMode ? "PATCH" : "POST",
+        },
+        form,
+      });
     }
   };
 
@@ -178,31 +178,29 @@ export function useDeleteGeographyRuleModal(
 ) {
   const [deleteGeographyRule, { isLoading: isDeleting }] =
     useDeleteGeographyRuleMutation();
-  const [error, setError] = useState<string | null>(null);
+  const handleApiError = useApiError();
 
   const handleConfirm = async () => {
     if (!target) return;
     try {
-      setError(null);
       await deleteGeographyRule(target.id).unwrap();
       notification.success({
         message: "Geography rule deleted successfully.",
       });
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-      setError(parsed.message);
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "DELETE" },
+      });
     }
   };
 
   const handleCancel = () => {
-    setError(null);
     onClose();
   };
 
   return {
-    state: { error, isDeleting },
+    state: { isDeleting },
     actions: { handleConfirm, handleCancel },
   };
 }

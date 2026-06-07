@@ -2,7 +2,6 @@
 import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import { useToken } from "@/shared/hooks/useToken";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Button, Flex, Modal, Typography } from "antd";
 import { useRevokeUserRoleModal } from "../../hooks/useUserRoleModal";
 import type { UserRole } from "../../types/rbac";
@@ -25,7 +24,7 @@ export function RevokeUserRoleModal({
 }: RevokeUserRoleModalProps) {
   const token = useToken();
   const { state, actions } = useRevokeUserRoleModal(target, userId, open, onClose, onSuccess);
-  const { isRevoking, error } = state;
+  const { isRevoking } = state;
   const { handleConfirm, handleCancel } = actions;
 
   return (
@@ -46,7 +45,6 @@ export function RevokeUserRoleModal({
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert error={error} />
         <Typography.Text>
           Revoke role{" "}
           <Typography.Text strong>'{target?.roleName}'</Typography.Text>

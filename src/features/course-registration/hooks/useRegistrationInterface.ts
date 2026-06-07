@@ -1,5 +1,10 @@
+import { appPaths } from "@/app/routing/app-path";
+import { useBillingWorkflowDecision } from "@/features/billing/hooks/useBillingWorkflowDecision";
+import type { WorkflowPayNowPayload } from "@/features/billing/types/workflow-step-decision";
+import { RequestScreen } from "@/shared/types/error-ui";
 import { notification } from "antd";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   useGetCourseRegistrationPoolQuery,
   useSubmitCourseRegistrationMutation,
@@ -11,9 +16,9 @@ import type {
 } from "../types/course-registration";
 import {
   MAX_RETRY_ATTEMPTS,
+  applyRegistrationError,
   getRetryDelay,
   isRetryableNetworkError,
-  parseCourseRegistrationError,
 } from "../utils/courseRegistrationErrors";
 import {
   allMandatoryCoursesSelected,
@@ -41,7 +46,10 @@ import {
 export function useRegistrationInterface(
   studentId: number | null,
   semesterTypeId: number | null,
+  skipBillingGuard = true,
 ) {
+  const navigate = useNavigate();
+
   // ─── Course Pool Query ────────────────────────────────────────────────────
   // Only fetch when both studentId and semesterTypeId are available.
   const shouldFetch = studentId !== null && semesterTypeId !== null;
@@ -160,11 +168,9 @@ export function useRegistrationInterface(
   // but the user still needs a popup to understand why the pool didn't load.
   useEffect(() => {
     if (isQueryError && queryError) {
-      const parsed = parseCourseRegistrationError(queryError);
-      notification.error({
-        message: "Course Registration Unavailable",
-        description: parsed.message,
-        duration: 6,
+      applyRegistrationError(queryError, {
+        screen: RequestScreen.List,
+        method: "GET",
       });
     }
   }, [isQueryError, queryError]);
@@ -301,10 +307,21 @@ export function useRegistrationInterface(
     ],
   );
 
+  // ─── Billing workflow guard ─────────────────────────────────────────────────
+  const {
+    flags: billingFlags,
+    state: billingState,
+    actions: billingActions,
+  } = useBillingWorkflowDecision("COURSE_REGISTRATION_SUBMIT", {
+    skip: skipBillingGuard || !shouldFetch,
+  });
+
   // ─── canSubmit flag ───────────────────────────────────────────────────────
   const canSubmit = useMemo(() => {
     if (!coursePool || !creditLimits) return false;
     if (isSubmitting) return false;
+    if (!skipBillingGuard && !billingFlags.allowed) return false;
+    if (!skipBillingGuard && billingState.isLoading) return false;
     const totalCredits =
       selectedCredits + (studentContext?.totalUnitsRegistered ?? 0);
     if (!isWithinCreditLimits(totalCredits, creditLimits)) return false;
@@ -321,7 +338,24 @@ export function useRegistrationInterface(
     mandatoryCourses,
     forceCarryoverFirstViolation,
     studentContext,
+    skipBillingGuard,
+    billingFlags.allowed,
+    billingState.isLoading,
   ]);
+
+  const handleBillingPayNow = useCallback(
+    (payload: WorkflowPayNowPayload) => {
+      const params = new URLSearchParams({
+        feeChargeId: String(payload.feeChargeId),
+      });
+      navigate(`${appPaths.StudentInvoices}?${params.toString()}`);
+    },
+    [navigate],
+  );
+
+  const handleBillingRetry = useCallback(() => {
+    void billingActions.refetch();
+  }, [billingActions]);
 
   // ─── Actions ──────────────────────────────────────────────────────────────
 
@@ -369,7 +403,10 @@ export function useRegistrationInterface(
    */
   const handleSubmitError = useCallback(
     (err: unknown, retryFn?: () => void) => {
-      const parsed = parseCourseRegistrationError(err);
+      const parsed = applyRegistrationError(err, {
+        screen: RequestScreen.Action,
+        method: "POST",
+      });
 
       setErrorState({
         message: parsed.message,
@@ -384,16 +421,10 @@ export function useRegistrationInterface(
         setServerMissingConfigIds(parsed.serverMissingConfigIds);
       }
 
-      notification.error({ message: parsed.message });
-
       // Automatic retry for network failures (Requirement 7.1)
       if (isRetryableNetworkError(parsed) && retryFn) {
         scheduleNetworkRetry(retryFn);
-        return;
       }
-
-      // Stale data: show the error with a refresh button — don't auto-refetch
-      // as that would discard the user's current selection unexpectedly.
     },
     [scheduleNetworkRetry],
   );
@@ -561,18 +592,27 @@ export function useRegistrationInterface(
       errorState: effectiveErrorState,
       /** True after the user has clicked Submit — gates validation error display. */
       submitAttempted,
+      billingBlockingUi: billingState.blockingUi,
     },
     actions: {
       handleCourseSelectionChange,
       handleSubmitRegistration,
       handleRetry,
       handleRetrySubmit,
+      handleBillingPayNow,
+      handleBillingRetry,
     },
     flags: {
       hasData: coursePool !== null,
       canSubmit,
       isEligible,
       shouldFetch,
+      billingBlocked: !skipBillingGuard && billingFlags.isBlocked,
+      isBillingLoading: !skipBillingGuard && billingState.isLoading,
+      showBillingBanner:
+        !skipBillingGuard &&
+        billingFlags.isBlocked &&
+        !billingState.isLoading,
       /** True when there is a failed submit attempt that can be retried. */
       hasFailedSubmit:
         lastSubmitAttempt !== null &&

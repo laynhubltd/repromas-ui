@@ -1,7 +1,11 @@
 // Feature: system-config
-import { applyFormErrors } from "@/shared/utils/error/applyFormErrors";
-import { HttpStatusCode, parseApiError } from "@/shared/utils/error/parseApiError";
-import { Form, notification } from "antd";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
+import {
+  mutationSuccessMessage,
+  notifyMutationSuccess,
+} from "@/shared/utils/feedback/notifyMutationSuccess";
+import { Form } from "antd";
 import { useEffect, useState } from "react";
 import {
     useCreateSystemConfigMutation,
@@ -50,7 +54,7 @@ export function useSystemConfigModal(
   const [form] = Form.useForm<SystemConfigFormValues>();
   const [createSystemConfig, { isLoading: isCreating }] = useCreateSystemConfigMutation();
   const [updateSystemConfig, { isLoading: isUpdating }] = useUpdateSystemConfigMutation();
-  const [formError, setFormError] = useState<string | null>(null);
+  const handleApiError = useApiError();
 
   // ── Conditional field visibility flags ────────────────────────────────────
 
@@ -88,7 +92,6 @@ export function useSystemConfigModal(
 
     if (!open) {
       form.resetFields();
-      setFormError(null);
       setShowReferenceId(false);
       setShowCreditFields(false);
       setShowCarryoverToggle(false);
@@ -117,7 +120,6 @@ export function useSystemConfigModal(
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
-      setFormError(null);
 
       const dataType = deriveDataType(values.configKey);
       const configValue: CreditLoadLimitsValue | boolean =
@@ -144,19 +146,25 @@ export function useSystemConfigModal(
         }).unwrap();
       }
 
+      notifyMutationSuccess(
+        mutationSuccessMessage(
+          "System configuration",
+          isEditMode ? "updated" : "created",
+        ),
+      );
       form.resetFields();
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-
-      if (isEditMode && parsed.status === HttpStatusCode.NotFound) {
-        notification.error({ message: "This configuration no longer exists." });
+      const decision = handleApiError(err, {
+        context: {
+          screen: RequestScreen.Modal,
+          method: isEditMode ? "PATCH" : "POST",
+        },
+        form,
+      });
+      if (isEditMode && decision.disableForm) {
         onClose();
-        return;
       }
-
-      notification.error({ message: parsed.message });
-      applyFormErrors(parsed, form, setFormError);
     }
   };
 
@@ -164,13 +172,11 @@ export function useSystemConfigModal(
 
   const handleCancel = () => {
     form.resetFields();
-    setFormError(null);
     onClose();
   };
 
   return {
     state: {
-      formError,
       isLoading,
       isEditMode,
       programs,
@@ -204,41 +210,34 @@ export function useDeleteSystemConfigModal(
   onClose: () => void,
 ) {
   const [deleteSystemConfig, { isLoading }] = useDeleteSystemConfigMutation();
-  const [error, setError] = useState<string | null>(null);
+  const handleApiError = useApiError();
 
-  useEffect(() => {
-    if (!open) {
-      setError(null);
-    }
-  }, [open]);
+  void open;
 
   const handleConfirm = async () => {
     if (!target) return;
     try {
-      setError(null);
       await deleteSystemConfig({ id: target.id }).unwrap();
+      notifyMutationSuccess(
+        mutationSuccessMessage("System configuration", "deleted"),
+      );
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-
-      if (parsed.status === HttpStatusCode.NotFound) {
-        // 404 — close silently; list refetches via cache invalidation
+      const decision = handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "DELETE" },
+      });
+      if (decision.parsed.status === 404) {
         onClose();
-        return;
       }
-
-      notification.error({ message: parsed.message });
-      setError(parsed.message);
     }
   };
 
   const handleCancel = () => {
-    setError(null);
     onClose();
   };
 
   return {
-    state: { error, isLoading },
+    state: { isLoading },
     actions: { handleConfirm, handleCancel },
   };
 }

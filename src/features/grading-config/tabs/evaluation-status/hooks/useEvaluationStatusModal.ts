@@ -1,8 +1,8 @@
 // Feature: grading-config — Evaluation Status modal hooks
-import { applyFormErrors } from "@/shared/utils/error/applyFormErrors";
-import { parseApiError } from "@/shared/utils/error/parseApiError";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
 import { Form, notification } from "antd";
-import { useCallback, useEffect, useReducer, useState } from "react";
+import { useCallback, useEffect, useReducer } from "react";
 import {
     useCreateScoreEvaluationStatusMutation,
     useDeleteScoreEvaluationStatusMutation,
@@ -40,12 +40,13 @@ export function useEvaluationStatusFormModal(
     evaluationStatusFormReducer,
     initialEvaluationStatusFormState,
   );
-  const { formError, isDefault, requiresRetake, earnsCredit } = state;
+  const { isDefault, requiresRetake, earnsCredit } = state;
 
   const [createScoreEvaluationStatus, { isLoading: isCreating }] =
     useCreateScoreEvaluationStatusMutation();
   const [updateScoreEvaluationStatus, { isLoading: isUpdating }] =
     useUpdateScoreEvaluationStatusMutation();
+  const handleApiError = useApiError();
 
   const isSubmitting = isCreating || isUpdating;
 
@@ -159,30 +160,12 @@ export function useEvaluationStatusFormModal(
       reset();
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-
-      if (parsed.status === 422) {
-        notification.error({ message: parsed.message });
-        dispatch({
-          type: EvaluationStatusFormActionType.SetFormError,
-          message: parsed.message,
-        });
-        return;
-      }
-
-      if (parsed.status === 400) {
-        notification.error({ message: parsed.message });
-        applyFormErrors(parsed, form, (msg) =>
-          dispatch({
-            type: EvaluationStatusFormActionType.SetFormError,
-            message: msg,
-          }),
-        );
-        return;
-      }
-
-      notification.error({
-        message: parsed.message || "Something went wrong. Please try again.",
+      handleApiError(err, {
+        context: {
+          screen: RequestScreen.Modal,
+          method: isEditMode ? "PATCH" : "POST",
+        },
+        form,
       });
     }
   };
@@ -196,7 +179,6 @@ export function useEvaluationStatusFormModal(
     state: {
       isEditMode,
       isSubmitting,
-      formError,
       isDefault,
       requiresRetake,
       earnsCredit,
@@ -222,31 +204,29 @@ export function useDeleteEvaluationStatusModal(
 ) {
   const [deleteScoreEvaluationStatus, { isLoading: isDeleting }] =
     useDeleteScoreEvaluationStatusMutation();
-  const [error, setError] = useState<string | null>(null);
+  const handleApiError = useApiError();
 
   const handleConfirm = async () => {
     if (!target) return;
     try {
-      setError(null);
       await deleteScoreEvaluationStatus(target.id).unwrap();
       notification.success({
         message: "Evaluation status deleted successfully.",
       });
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-      setError(parsed.message);
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "DELETE" },
+      });
     }
   };
 
   const handleCancel = () => {
-    setError(null);
     onClose();
   };
 
   return {
-    state: { isDeleting, error },
+    state: { isDeleting },
     actions: { handleConfirm, handleCancel },
   };
 }

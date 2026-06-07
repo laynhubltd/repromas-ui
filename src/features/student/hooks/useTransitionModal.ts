@@ -6,9 +6,13 @@ import {
 import { useGetLevelsQuery } from "@/features/settings/tabs/level-config/api/levelApi";
 import { useGetTransitionStatusesQuery } from "@/features/settings/tabs/student-transition-status/api/studentTransitionStatusApi";
 import { useGetSemestersQuery } from "@/features/settings/tabs/system-timeframes/api/systemTimeFramesApi";
-import { applyFormErrors } from "@/shared/utils/error/applyFormErrors";
-import { HttpStatusCode, parseApiError } from "@/shared/utils/error/parseApiError";
-import { Form, notification } from "antd";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
+import {
+  mutationSuccessMessage,
+  notifyMutationSuccess,
+} from "@/shared/utils/feedback/notifyMutationSuccess";
+import { Form } from "antd";
 import dayjs from "dayjs";
 import { useEffect, useState } from "react";
 import {
@@ -47,10 +51,10 @@ export function useTransitionFormModal(
   const [form] = Form.useForm<TransitionFormValues>();
   const [createTransition, { isLoading: isCreating }] = useCreateTransitionMutation();
   const [updateTransition, { isLoading: isUpdating }] = useUpdateTransitionMutation();
-  const [formError, setFormError] = useState<string | null>(null);
   const [selectedSessionId, setSelectedSessionId] = useState<number | undefined>(
     target?.sessionId ?? undefined,
   );
+  const handleApiError = useApiError();
 
   const isLoading = isCreating || isUpdating;
 
@@ -111,7 +115,6 @@ export function useTransitionFormModal(
     }
     if (!open) {
       form.resetFields();
-      setFormError(null);
       setSelectedSessionId(undefined);
     }
   }, [open, target, form]);
@@ -135,7 +138,6 @@ export function useTransitionFormModal(
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
-      setFormError(null);
 
       if (isEditMode) {
         await updateTransition({
@@ -160,27 +162,22 @@ export function useTransitionFormModal(
         }).unwrap();
       }
 
+      notifyMutationSuccess(
+        mutationSuccessMessage(
+          "Enrollment transition",
+          isEditMode ? "updated" : "created",
+        ),
+      );
       form.resetFields();
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-
-      if (!isEditMode && parsed.status === HttpStatusCode.Conflict) {
-        // 409 on POST — duplicate student + semester
-        notification.error({ message: parsed.message });
-        setFormError("A transition for this student and semester already exists.");
-        return;
-      }
-
-      if (isEditMode && parsed.status === HttpStatusCode.NotFound) {
-        // 404 on PUT — record was deleted
-        notification.error({ message: "This transition no longer exists." });
-        onClose();
-        return;
-      }
-
-      notification.error({ message: parsed.message });
-      applyFormErrors(parsed, form, setFormError);
+      handleApiError(err, {
+        context: {
+          screen: RequestScreen.Modal,
+          method: isEditMode ? "PATCH" : "POST",
+        },
+        form,
+      });
     }
   };
 
@@ -188,13 +185,12 @@ export function useTransitionFormModal(
 
   const handleCancel = () => {
     form.resetFields();
-    setFormError(null);
     setSelectedSessionId(undefined);
     onClose();
   };
 
   return {
-    state: { formError, isLoading, isEditMode },
+    state: { isLoading, isEditMode },
     actions: { handleSubmit, handleCancel, handleSessionChange },
     form,
     refs: {
@@ -212,52 +208,36 @@ export function useTransitionFormModal(
 
 // ─── Delete ───────────────────────────────────────────────────────────────────
 
-/**
- * Delete hook for DeleteTransitionModal.
- * - 404 on DELETE → close silently (list refetches via cache invalidation)
- */
 export function useDeleteTransitionModal(
   target: StudentEnrollmentTransition | null,
-  open: boolean,
+  _open: boolean,
   onClose: () => void,
   studentId: number,
 ) {
   const [deleteTransition, { isLoading }] = useDeleteTransitionMutation();
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!open) {
-      setError(null);
-    }
-  }, [open]);
+  const handleApiError = useApiError();
 
   const handleConfirm = async () => {
     if (!target) return;
     try {
-      setError(null);
       await deleteTransition({ id: target.id, studentId }).unwrap();
+      notifyMutationSuccess(
+        mutationSuccessMessage("Enrollment transition", "deleted"),
+      );
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-
-      if (parsed.status === HttpStatusCode.NotFound) {
-        // 404 — close silently; list refetches via cache invalidation
-        onClose();
-        return;
-      }
-
-      notification.error({ message: parsed.message });
-      setError(parsed.message);
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "DELETE" },
+      });
     }
   };
 
   const handleCancel = () => {
-    setError(null);
     onClose();
   };
 
   return {
-    state: { error, isLoading },
+    state: { isLoading },
     actions: { handleConfirm, handleCancel },
   };
 }

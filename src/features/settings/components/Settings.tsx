@@ -1,7 +1,14 @@
 import { Tabs } from "@/components/ui-kit";
 import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
-import { BookOutlined, CalendarOutlined, PartitionOutlined, SafetyOutlined, SettingOutlined, SwapOutlined } from "@ant-design/icons";
+import {
+  BookOutlined,
+  CalendarOutlined,
+  PartitionOutlined,
+  SafetyOutlined,
+  SettingOutlined,
+  SwapOutlined,
+} from "@ant-design/icons";
 import { Typography } from "antd";
 import { AcademicCalendarTab } from "../tabs/academic-calendar";
 import { CurriculumVersionTab } from "../tabs/curriculum-version";
@@ -14,25 +21,42 @@ import { SystemTimeFramesTab } from "../tabs/system-timeframes";
 export default function Settings() {
   const tabItems = [
     {
-      key: "curriculum-versions",
-      label: <span><BookOutlined />Curriculum Versions</span>,
-      children: <CurriculumVersionTab />,
+      key: "academic-calendar",
+      label: (
+        <span>
+          <CalendarOutlined /> Academic Calendar
+        </span>
+      ),
+      children: <AcademicCalendarTab />,
     },
     {
       key: "level-config",
-      label: <span><PartitionOutlined /> Levels</span>,
+      label: (
+        <span>
+          <PartitionOutlined /> Levels
+        </span>
+      ),
       children: <LevelConfigTab />,
     },
     {
-      key: "academic-calendar",
-      label: <span><CalendarOutlined /> Academic Calendar</span>,
-      children: <AcademicCalendarTab />,
+      key: "curriculum-versions",
+      label: (
+        <span>
+          <BookOutlined />
+          Curriculum Versions
+        </span>
+      ),
+      children: <CurriculumVersionTab />,
     },
     {
       key: "roles-permissions",
       label: (
-        <PermissionGuard permission={[Permission.RolesList, Permission.PermissionsList]}>
-          <span><SafetyOutlined /> Roles & Permissions</span>
+        <PermissionGuard
+          permission={[Permission.RolesList, Permission.PermissionsList]}
+        >
+          <span>
+            <SafetyOutlined /> Roles & Permissions
+          </span>
         </PermissionGuard>
       ),
       children: <RbacSettingsTab />,
@@ -41,7 +65,9 @@ export default function Settings() {
       key: "system-timeframe",
       label: (
         <PermissionGuard permission={[Permission.SystemTimeFramesList]}>
-          <span><CalendarOutlined /> System Time Frame</span>
+          <span>
+            <CalendarOutlined /> System Time Frame
+          </span>
         </PermissionGuard>
       ),
       children: <SystemTimeFramesTab />,
@@ -50,19 +76,29 @@ export default function Settings() {
       key: "system-config",
       label: (
         <PermissionGuard permission={[Permission.SystemConfigsList]}>
-          <span><SettingOutlined /> System Config</span>
+          <span>
+            <SettingOutlined /> System Config
+          </span>
         </PermissionGuard>
       ),
       children: <SystemConfigTab />,
     },
     {
       key: "student-transition-status",
-      label: <span><SwapOutlined /> Transition Statuses</span>,
+      label: (
+        <span>
+          <SwapOutlined /> Transition Statuses
+        </span>
+      ),
       children: <TransitionStatusTab />,
     },
     {
       key: "general",
-      label: <span><SettingOutlined /> General</span>,
+      label: (
+        <span>
+          <SettingOutlined /> General
+        </span>
+      ),
       children: (
         <div style={{ padding: 24 }}>
           <Typography.Text type="secondary">

@@ -3,7 +3,6 @@ import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Button, Modal, Typography } from "antd";
 import { useDeleteGradingSystemBoundaryModal } from "../hooks/useGradingSystemBoundaryModal";
 import type { GradingSystemBoundary } from "../types/grading-system-boundary";
@@ -25,7 +24,7 @@ export function DeleteGradingSystemBoundaryModal({
     open,
     onClose,
   );
-  const { isDeleting, error } = state;
+  const { isDeleting } = state;
   const { handleConfirm, handleCancel } = actions;
 
   return (
@@ -47,8 +46,6 @@ export function DeleteGradingSystemBoundaryModal({
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert variant="form" error={error} />
-
         <ConditionalRenderer when={target !== null}>
           <Typography.Text>
             Delete grade boundary{" "}

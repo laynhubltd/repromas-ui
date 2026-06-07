@@ -3,7 +3,16 @@ import {
   MenuUnfoldOutlined,
   UserOutlined,
 } from "@ant-design/icons";
-import { Avatar, Button, Drawer, Dropdown, Layout, Menu, theme } from "antd";
+import {
+  Avatar,
+  Button,
+  Drawer,
+  Dropdown,
+  Layout,
+  Menu,
+  Tag,
+  theme,
+} from "antd";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { RepromasLogo } from "./RepromasLogo";
@@ -16,10 +25,14 @@ export default function MainLayout({
   children,
   menuItems,
   bottomMenuItems,
+  sidebarBackground,
+  bottomSectionLabel = "CONFIGURATION",
   userMenuItems,
   userDisplayName,
+  userRoleLabel,
 }: MainLayoutProps) {
   const { token } = theme.useToken();
+  const siderBg = sidebarBackground ?? token.colorPrimary;
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenuVisible, setMobileMenuVisible] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -121,7 +134,7 @@ export default function MainLayout({
               textAlign: collapsed && !isMobile ? "center" : "left",
             }}
           >
-            {collapsed && !isMobile ? "" : "CONFIGURATION"}
+            {collapsed && !isMobile ? "" : bottomSectionLabel}
           </div>
           <Menu
             mode="inline"
@@ -155,7 +168,7 @@ export default function MainLayout({
             left: 0,
             top: 0,
             bottom: 0,
-            background: token.colorPrimary,
+            background: siderBg,
             borderRight: "1px solid rgba(255,255,255,0.15)",
           }}
         >
@@ -181,7 +194,7 @@ export default function MainLayout({
           open={mobileMenuVisible}
           bodyStyle={{
             padding: 0,
-            background: token.colorPrimary,
+            background: siderBg,
             position: "relative",
           }}
           headerStyle={{
@@ -252,7 +265,7 @@ export default function MainLayout({
                 cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
-                gap: 8,
+                gap: 16,
                 padding: "8px 12px",
                 borderRadius: token.borderRadius,
                 transition: "background 0.2s",
@@ -269,14 +282,37 @@ export default function MainLayout({
                 style={{ background: token.colorPrimary }}
               />
               {!isMobile && (
-                <span
+                <div
                   style={{
-                    color: token.colorText,
-                    fontWeight: 500,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "flex-start",
+                    gap: 4,
+                    lineHeight: 1.2,
                   }}
                 >
-                  {userDisplayName}
-                </span>
+                  {userRoleLabel ? (
+                    <Tag
+                      color="blue"
+                      style={{
+                        margin: 0,
+                        fontSize: token.fontSizeSM,
+                        lineHeight: "18px",
+                      }}
+                    >
+                      {userRoleLabel}
+                    </Tag>
+                  ) : null}
+
+                  <span
+                    style={{
+                      color: token.colorText,
+                      fontWeight: 500,
+                    }}
+                  >
+                    {userDisplayName}
+                  </span>
+                </div>
               )}
             </div>
           </Dropdown>

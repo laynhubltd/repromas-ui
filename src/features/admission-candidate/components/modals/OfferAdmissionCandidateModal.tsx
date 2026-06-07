@@ -1,4 +1,3 @@
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Modal, Typography } from "antd";
 import { useOfferAdmissionCandidateModal } from "../../hooks/useAdmissionCandidateModal";
 import type { AdmissionCandidate } from "../../types/admission-candidate";
@@ -30,7 +29,6 @@ export function OfferAdmissionCandidateModal({
       confirmLoading={state.isLoading}
       destroyOnHidden
     >
-      <ErrorAlert error={state.error} />
       <Typography.Paragraph>
         Run the offer process for{" "}
         <strong>

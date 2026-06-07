@@ -3,7 +3,6 @@ import { useGetProgramsQuery } from "@/features/program/tabs/programs/api/progra
 import { useGetCurriculumVersionsQuery } from "@/features/settings/tabs/curriculum-version/api/curriculumVersionApi";
 import { ENTRY_MODE_OPTIONS } from "@/shared/constants/studentOptions";
 import { useToken } from "@/shared/hooks/useToken";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Button, Form, InputNumber, Modal, Select, Typography } from "antd";
 import { useGraduationRequirementFormModal } from "../../hooks/useGraduationRequirementModal";
 import type { ProgramGraduationRequirement } from "../../types/graduation-requirement";
@@ -31,7 +30,7 @@ export function GraduationRequirementFormModal({
     open,
     onClose,
   );
-  const { formError, isLoading, isEditMode } = state;
+  const { isLoading, isEditMode } = state;
   const { handleSubmit, handleCancel } = actions;
 
   const { data: programsData, isLoading: isProgramsLoading } =
@@ -89,7 +88,6 @@ export function GraduationRequirementFormModal({
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert error={formError} />
         <Form
           form={form}
           layout="vertical"

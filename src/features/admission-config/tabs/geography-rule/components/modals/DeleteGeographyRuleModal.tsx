@@ -2,7 +2,6 @@ import { PermissionGuard } from "@/features/access-control/PermissionGuard";
 import { Permission } from "@/features/access-control/permissions";
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Button, Modal, Typography } from "antd";
 import { useDeleteGeographyRuleModal } from "../../hooks/useGeographyRuleModal";
 import type { GeographyRuleRow } from "../../hooks/useGeographyRuleTab";
@@ -20,7 +19,7 @@ export function DeleteGeographyRuleModal({
 }: DeleteGeographyRuleModalProps) {
   const token = useToken();
   const { state, actions } = useDeleteGeographyRuleModal(target, open, onClose);
-  const { isDeleting, error } = state;
+  const { isDeleting } = state;
   const { handleConfirm, handleCancel } = actions;
 
   return (
@@ -42,8 +41,6 @@ export function DeleteGeographyRuleModal({
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert variant="form" error={error} />
-
         <ConditionalRenderer when={target !== null}>
           <Typography.Text>
             Remove the geography rule for{" "}

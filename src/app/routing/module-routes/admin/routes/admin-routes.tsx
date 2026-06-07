@@ -65,6 +65,12 @@ const AssessmentPage = lazy(() =>
   })),
 );
 
+const BillingPage = lazy(() =>
+  import("@/features/billing").then((m) => ({
+    default: m.BillingPage,
+  })),
+);
+
 const GuardedDashboardShell = withAuthGuard({
   Component: DashboardShell,
   fallback: null,
@@ -93,6 +99,7 @@ export function getAdminRouteEntries() {
             element={<AdmissionCandidatePage />}
           />
           <Route path="assessment" element={<AssessmentPage />} />
+          <Route path="billing" element={<BillingPage />} />
         </Route>
       </Route>
     </>

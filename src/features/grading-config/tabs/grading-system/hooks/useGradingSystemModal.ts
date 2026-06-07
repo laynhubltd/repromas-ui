@@ -1,8 +1,8 @@
 // Feature: grading-config — Grading System modal hooks
-import { applyFormErrors } from "@/shared/utils/error/applyFormErrors";
-import { parseApiError } from "@/shared/utils/error/parseApiError";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
 import { Form, notification } from "antd";
-import { useCallback, useEffect, useReducer, useState } from "react";
+import { useCallback, useEffect, useReducer } from "react";
 import {
     useCreateGradingSystemMutation,
     useDeleteGradingSystemMutation,
@@ -34,8 +34,8 @@ type GradingSystemFormValues = {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 /**
- * Strips immutable fields (scope, referenceId, curriculumVersionId) from a
- * GradingSystem to produce the PUT payload shape.
+ * Strips immutable fields (scope, referenceId) from a GradingSystem to produce
+ * the PUT payload shape.
  *
  * Exported as a named export so it can be tested independently (task 12.4 PBT).
  */
@@ -48,6 +48,7 @@ export function buildUpdatePayload(
     isGpaBased: system.isGpaBased,
     maxCgpa: system.maxCgpa,
     levelId: system.levelId,
+    curriculumVersionId: system.curriculumVersionId,
   };
 }
 
@@ -64,7 +65,8 @@ export function useGradingSystemFormModal(
     gradingSystemFormReducer,
     initialGradingSystemFormState,
   );
-  const { formError, scope, isGpaBased } = modalState;
+  const { scope, isGpaBased } = modalState;
+  const handleApiError = useApiError();
 
   const [createGradingSystem, { isLoading: isCreating }] =
     useCreateGradingSystemMutation();
@@ -129,13 +131,14 @@ export function useGradingSystemFormModal(
       });
 
       if (isEditMode) {
-        // PUT: only mutable fields — strip scope, referenceId, curriculumVersionId
+        // PUT: mutable fields — scope and referenceId remain immutable
         await updateGradingSystem({
           id: target.id,
           name: values.name,
           isGpaBased: values.isGpaBased,
           maxCgpa: values.maxCgpa,
           levelId: values.levelId,
+          curriculumVersionId: values.curriculumVersionId,
         }).unwrap();
         notification.success({
           message: "Grading system updated successfully.",
@@ -149,7 +152,7 @@ export function useGradingSystemFormModal(
           scope: values.scope,
           referenceId: values.referenceId,
           levelId: values.levelId,
-          curriculumVersionId: values.curriculumVersionId,
+          curriculumVersionId: values.curriculumVersionId!,
         }).unwrap();
         notification.success({
           message: "Grading system created successfully.",
@@ -159,24 +162,13 @@ export function useGradingSystemFormModal(
       reset();
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-
-      if (parsed.status === 409) {
-        notification.error({ message: parsed.message });
-        dispatch({
-          type: GradingSystemFormActionType.SetFormError,
-          message: parsed.message,
-        });
-        return;
-      }
-
-      notification.error({ message: parsed.message });
-      applyFormErrors(parsed, form, (msg) =>
-        dispatch({
-          type: GradingSystemFormActionType.SetFormError,
-          message: msg,
-        }),
-      );
+      handleApiError(err, {
+        context: {
+          screen: RequestScreen.Modal,
+          method: isEditMode ? "PATCH" : "POST",
+        },
+        form,
+      });
     }
   };
 
@@ -189,7 +181,6 @@ export function useGradingSystemFormModal(
     state: {
       isEditMode,
       isSubmitting,
-      formError,
       scope,
       isGpaBased,
     },
@@ -218,31 +209,29 @@ export function useDeleteGradingSystemModal(
 ) {
   const [deleteGradingSystem, { isLoading: isDeleting }] =
     useDeleteGradingSystemMutation();
-  const [error, setError] = useState<string | null>(null);
+  const handleApiError = useApiError();
 
   const handleConfirm = async () => {
     if (!target) return;
     try {
-      setError(null);
       await deleteGradingSystem(target.id).unwrap();
       notification.success({
         message: "Grading system deleted successfully.",
       });
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-      setError(parsed.message);
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "DELETE" },
+      });
     }
   };
 
   const handleCancel = () => {
-    setError(null);
     onClose();
   };
 
   return {
-    state: { isDeleting, error, boundaryCount },
+    state: { isDeleting, boundaryCount },
     actions: { handleConfirm, handleCancel },
   };
 }

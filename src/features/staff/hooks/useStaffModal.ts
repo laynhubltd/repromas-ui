@@ -1,7 +1,11 @@
-import { applyFormErrors } from "@/shared/utils/error/applyFormErrors";
-import { parseApiError } from "@/shared/utils/error/parseApiError";
-import { Form, notification } from "antd";
-import { useEffect, useState } from "react";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
+import {
+  mutationSuccessMessage,
+  notifyMutationSuccess,
+} from "@/shared/utils/feedback/notifyMutationSuccess";
+import { Form } from "antd";
+import { useEffect } from "react";
 import {
     useCreateStaffMutation,
     useDeleteStaffMutation,
@@ -38,7 +42,7 @@ export function useStaffFormModal(
   const [form] = Form.useForm<StaffFormValues>();
   const [createStaff, { isLoading: isCreating }] = useCreateStaffMutation();
   const [updateStaff, { isLoading: isUpdating }] = useUpdateStaffMutation();
-  const [formError, setFormError] = useState<string | null>(null);
+  const handleApiError = useApiError();
 
   const isLoading = isCreating || isUpdating;
 
@@ -57,14 +61,12 @@ export function useStaffFormModal(
   useEffect(() => {
     if (!open) {
       form.resetFields();
-      setFormError(null);
     }
   }, [open, form]);
 
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
-      setFormError(null);
 
       if (isEditMode) {
         await updateStaff({
@@ -89,46 +91,29 @@ export function useStaffFormModal(
         await createStaff(body).unwrap();
       }
 
+      notifyMutationSuccess(
+        mutationSuccessMessage("Staff record", isEditMode ? "updated" : "created"),
+      );
       form.resetFields();
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-
-      // 409 conflict on create — map to inline field errors by message content
-      if (!isEditMode && parsed.status === 409) {
-        const msg = parsed.message.toLowerCase();
-        if (msg.includes("email")) {
-          form.setFields([{ name: "email", errors: [parsed.message] }]);
-          return;
-        }
-        if (msg.includes("filenumber") || msg.includes("file number") || msg.includes("file_number")) {
-          form.setFields([{ name: "fileNumber", errors: [parsed.message] }]);
-          return;
-        }
-      }
-
-      // 409 conflict on edit — map fileNumber inline error
-      if (isEditMode && parsed.status === 409) {
-        const msg = parsed.message.toLowerCase();
-        if (msg.includes("filenumber") || msg.includes("file number") || msg.includes("file_number")) {
-          form.setFields([{ name: "fileNumber", errors: [parsed.message] }]);
-          return;
-        }
-      }
-
-      applyFormErrors(parsed, form, setFormError);
+      handleApiError(err, {
+        context: {
+          screen: RequestScreen.Modal,
+          method: isEditMode ? "PATCH" : "POST",
+        },
+        form,
+      });
     }
   };
 
   const handleCancel = () => {
     form.resetFields();
-    setFormError(null);
     onClose();
   };
 
   return {
-    state: { formError, isLoading, isEditMode },
+    state: { isLoading, isEditMode },
     actions: { handleSubmit, handleCancel },
     form,
   };
@@ -138,35 +123,27 @@ export function useStaffFormModal(
 
 export function useDeleteStaffModal(target: Staff | null, onClose: () => void) {
   const [deleteStaff, { isLoading }] = useDeleteStaffMutation();
-  const [error, setError] = useState<string | null>(null);
+  const handleApiError = useApiError();
 
   const handleConfirm = async () => {
     if (!target) return;
     try {
-      setError(null);
       await deleteStaff({ id: target.id }).unwrap();
+      notifyMutationSuccess(mutationSuccessMessage("Staff record", "deleted"));
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-
-      if (parsed.status === 404) {
-        notification.success({ message: "Staff record already removed" });
-        onClose();
-        return;
-      }
-
-      notification.error({ message: parsed.message });
-      setError(parsed.message);
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "DELETE" },
+      });
     }
   };
 
   const handleCancel = () => {
-    setError(null);
     onClose();
   };
 
   return {
-    state: { error, isLoading },
+    state: { isLoading },
     actions: { handleConfirm, handleCancel },
   };
 }

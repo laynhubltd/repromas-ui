@@ -560,7 +560,6 @@ export function StudentPage() {
         onClose={handleCloseBulkUpload}
         selectedFile={bulkState.selectedFile}
         isUploading={bulkState.isUploading}
-        uploadError={bulkState.uploadError}
         hasFile={bulkFlags.hasFile}
         onFileChange={bulkActions.handleFileChange}
         onUpload={bulkActions.handleUpload}

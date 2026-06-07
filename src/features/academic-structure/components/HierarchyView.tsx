@@ -23,6 +23,7 @@ export function HierarchyView() {
     totalItems,
     isLoading,
     isError,
+    sectionError,
     page,
     itemsPerPage,
     nameSearch,
@@ -100,7 +101,7 @@ export function HierarchyView() {
           <ConditionalRenderer when={isError}>
             <ErrorAlert
               variant="section"
-              error="Failed to load faculties"
+              error={sectionError ?? "Failed to load faculties"}
               onRetry={refetch}
             />
           </ConditionalRenderer>

@@ -1,7 +1,8 @@
 import type { AppStore } from "@/app/store";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
+import { notifyMutationSuccess } from "@/shared/utils/feedback/notifyMutationSuccess";
 import { downloadBlob } from "@/shared/utils/download/downloadFile";
-import { parseApiError } from "@/shared/utils/error/parseApiError";
-import { notification } from "antd";
 import { useCallback, useState } from "react";
 import { useStore } from "react-redux";
 import { downloadStudentTemplate, useBulkUploadMutation } from "../api/studentsApi";
@@ -35,45 +36,49 @@ type UseStudentBulkUploadArgs = {
 export function useStudentBulkUpload({ onClose }: UseStudentBulkUploadArgs) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
   const [summary, setSummary] = useState<UploadSummary | null>(null);
   const [summaryModalOpen, setSummaryModalOpen] = useState(false);
 
   const [bulkUpload] = useBulkUploadMutation();
   const store = useStore() as AppStore;
+  const handleApiError = useApiError();
 
   const handleFileChange = useCallback((file: File | null) => {
     setSelectedFile(file);
-    setUploadError(null);
   }, []);
 
   const handleUpload = useCallback(async () => {
     if (!selectedFile) return;
     setIsUploading(true);
-    setUploadError(null);
     try {
       const formData = new FormData();
       formData.append("file", selectedFile);
       const result = await bulkUpload(formData).unwrap();
+      if (deriveSummaryState(result) === "success") {
+        notifyMutationSuccess(
+          `${result.processedCount} student${result.processedCount === 1 ? "" : "s"} imported successfully.`,
+        );
+      }
       setSummary(result);
       setSummaryModalOpen(true);
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-      setUploadError(parsed.message);
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "POST" },
+      });
     } finally {
       setIsUploading(false);
     }
-  }, [selectedFile, bulkUpload]);
+  }, [selectedFile, bulkUpload, handleApiError]);
 
   const handleDownloadTemplate = useCallback(async () => {
     try {
       await downloadStudentTemplate(store);
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "GET" },
+      });
     }
-  }, [store]);
+  }, [store, handleApiError]);
 
   const handleDownloadErrorReport = useCallback(() => {
     if (!summary) return;
@@ -83,7 +88,6 @@ export function useStudentBulkUpload({ onClose }: UseStudentBulkUploadArgs) {
 
   const handleCloseSummary = useCallback(() => {
     setSelectedFile(null);
-    setUploadError(null);
     setSummary(null);
     setSummaryModalOpen(false);
     onClose();
@@ -95,7 +99,6 @@ export function useStudentBulkUpload({ onClose }: UseStudentBulkUploadArgs) {
     state: {
       selectedFile,
       isUploading,
-      uploadError,
       summary,
       summaryModalOpen,
     },

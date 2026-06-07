@@ -1,6 +1,8 @@
 // Feature: faculty-department-management
 import { useAccessControl } from "@/features/access-control";
-import { useEffect, useState } from "react";
+import { RequestScreen } from "@/shared/types/error-ui";
+import { deriveSectionErrorMessage } from "@/shared/utils/error/deriveSectionErrorMessage";
+import { useEffect, useMemo, useState } from "react";
 import { useGetFacultiesQuery } from "../api/facultiesApi";
 import type { Faculty } from "../types/faculty";
 
@@ -10,6 +12,7 @@ export function useHierarchyView(): {
     totalItems: number;
     isLoading: boolean;
     isError: boolean;
+    sectionError: string | null;
     page: number;
     itemsPerPage: number;
     nameSearch: string;
@@ -97,7 +100,17 @@ export function useHierarchyView(): {
     ...(sort ? { sort } : {}),
   };
 
-  const { data, isLoading, isError, refetch } = useGetFacultiesQuery(queryParams);
+  const { data, isLoading, isError, error: queryError, refetch } =
+    useGetFacultiesQuery(queryParams);
+
+  const sectionError = useMemo(
+    () =>
+      deriveSectionErrorMessage(isError, queryError, {
+        screen: RequestScreen.List,
+        method: "GET",
+      }),
+    [isError, queryError],
+  );
 
   const faculties = data?.member ?? [];
   const totalItems = data?.totalItems ?? 0;
@@ -132,6 +145,7 @@ export function useHierarchyView(): {
       totalItems,
       isLoading,
       isError,
+      sectionError,
       page,
       itemsPerPage,
       nameSearch,

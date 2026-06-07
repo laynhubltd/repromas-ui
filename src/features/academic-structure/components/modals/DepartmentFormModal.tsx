@@ -1,6 +1,5 @@
 // Feature: faculty-department-management
 import { useToken } from "@/shared/hooks/useToken";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Button, Form, Input, Modal, Select } from "antd";
 import { useDepartmentFormModal } from "../../hooks/useDepartmentModal";
 import type { Department } from "../../types/faculty";
@@ -25,7 +24,7 @@ export function DepartmentFormModal({
 }: DepartmentFormModalProps) {
   const token = useToken();
   const { state, actions, form } = useDepartmentFormModal(target, open, onClose, { facultyId });
-  const { formError, isLoading, isEditMode, faculties, facultiesLoading, showFacultySelector } =
+  const { isLoading, isEditMode, faculties, facultiesLoading, showFacultySelector } =
     state;
   const { handleSubmit, handleCancel } = actions;
 
@@ -52,7 +51,6 @@ export function DepartmentFormModal({
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert error={formError} />
         <Form form={form} layout="vertical" requiredMark={false} onFinish={handleSubmit}>
           {showFacultySelector && (
             <Form.Item

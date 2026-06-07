@@ -1,10 +1,14 @@
 import { useGetProgramsQuery } from "@/features/program/tabs/programs/api/programsApi";
 import { useGetCurriculumVersionsQuery } from "@/features/settings/tabs/curriculum-version/api/curriculumVersionApi";
 import { useGetLevelsQuery } from "@/features/settings/tabs/level-config/api/levelApi";
-import { applyFormErrors } from "@/shared/utils/error/applyFormErrors";
-import { parseApiError } from "@/shared/utils/error/parseApiError";
-import { Form, notification } from "antd";
-import { useEffect, useMemo, useState } from "react";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
+import {
+  mutationSuccessMessage,
+  notifyMutationSuccess,
+} from "@/shared/utils/feedback/notifyMutationSuccess";
+import { Form } from "antd";
+import { useEffect, useMemo } from "react";
 import {
   useCreateStudentMutation,
   useDeleteStudentMutation,
@@ -42,7 +46,7 @@ export function useStudentFormModal(
   const [form] = Form.useForm<StudentFormValues>();
   const [createStudent, { isLoading: isCreating }] = useCreateStudentMutation();
   const [updateStudent, { isLoading: isUpdating }] = useUpdateStudentMutation();
-  const [formError, setFormError] = useState<string | null>(null);
+  const handleApiError = useApiError();
 
   const isLoading = isCreating || isUpdating;
 
@@ -93,7 +97,6 @@ export function useStudentFormModal(
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
-      setFormError(null);
 
       if (isEditMode) {
         await updateStudent({
@@ -126,31 +129,29 @@ export function useStudentFormModal(
         }).unwrap();
       }
 
+      notifyMutationSuccess(
+        mutationSuccessMessage("Student", isEditMode ? "updated" : "created"),
+      );
       form.resetFields();
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-
-      // 409 conflict on create → inline error on matricNumber field
-      if (!isEditMode && parsed.status === 409) {
-        notification.error({ message: parsed.message });
-        form.setFields([{ name: "matricNumber", errors: [parsed.message] }]);
-        return;
-      }
-
-      notification.error({ message: parsed.message });
-      applyFormErrors(parsed, form, setFormError);
+      handleApiError(err, {
+        context: {
+          screen: RequestScreen.Modal,
+          method: isEditMode ? "PATCH" : "POST",
+        },
+        form,
+      });
     }
   };
 
   const handleCancel = () => {
     form.resetFields();
-    setFormError(null);
     onClose();
   };
 
   return {
-    state: { formError, isLoading, isEditMode },
+    state: { isLoading, isEditMode },
     actions: { handleSubmit, handleCancel },
     form,
     data: {
@@ -172,35 +173,27 @@ export function useDeleteStudentModal(
   onClose: () => void,
 ) {
   const [deleteStudent, { isLoading }] = useDeleteStudentMutation();
-  const [error, setError] = useState<string | null>(null);
+  const handleApiError = useApiError();
 
   const handleConfirm = async () => {
     if (!target) return;
     try {
-      setError(null);
       await deleteStudent({ id: target.id }).unwrap();
+      notifyMutationSuccess(mutationSuccessMessage("Student", "deleted"));
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-
-      if (parsed.status === 404) {
-        notification.success({ message: "Student already removed" });
-        onClose();
-        return;
-      }
-
-      notification.error({ message: parsed.message });
-      setError(parsed.message);
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "DELETE" },
+      });
     }
   };
 
   const handleCancel = () => {
-    setError(null);
     onClose();
   };
 
   return {
-    state: { error, isLoading },
+    state: { isLoading },
     actions: { handleConfirm, handleCancel },
   };
 }

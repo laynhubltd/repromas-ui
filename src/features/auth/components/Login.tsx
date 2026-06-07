@@ -1,18 +1,29 @@
 import { appPaths } from "@/app/routing/app-path";
 import { AuthPageLayout } from "@/components/auth/AuthPageLayout";
-import { useLoginMutation } from "@/features/auth/api/auth-api";
+import { AdmissionApplicationOpenNotice } from "@/features/auth/candidate-signup/components/AdmissionApplicationOpenNotice";
+import { useLogin } from "@/features/auth/hooks/useLogin";
 import { useToken } from "@/shared/hooks/useToken";
 import { validators } from "@/shared/utils/validators";
 import { LockOutlined, UserOutlined } from "@ant-design/icons";
 import { Alert, Button, Form, Input, Typography } from "antd";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const { Title, Text } = Typography;
 
 export default function Login() {
   const [form] = Form.useForm();
   const t = useToken();
-  const [login, { isLoading, isError, error }] = useLoginMutation();
+  const navigate = useNavigate();
+  const { state, actions, flags } = useLogin();
+  const {
+    isLoading,
+    isError,
+    error,
+    isSignupConfigLoading,
+    admissionCycleName,
+  } = state;
+  const { login } = actions;
+  const { isCandidateSignupAvailable } = flags;
 
   const onFinish = async (values: { email: string; password: string }) => {
     await login({ email: values.email, password: values.password }).unwrap();
@@ -140,31 +151,30 @@ export default function Login() {
         </Form.Item>
       </Form>
 
-      <div
-        style={{
-          textAlign: "center",
-          paddingTop: t.sizeLG,
-          borderTop: `1px solid ${t.colorBorderSecondary}`,
-        }}
-      >
-        <Text
-          type="secondary"
-          style={{ fontSize: t.fontSizeSM, color: t.colorTextSecondary }}
+      {!isSignupConfigLoading && isCandidateSignupAvailable && (
+        <div
+          style={{
+            paddingTop: t.sizeLG,
+            borderTop: `1px solid ${t.colorBorderSecondary}`,
+          }}
         >
-          Don't have an account?{" "}
-          <Link
-            to={appPaths.signUp}
-            className="auth-link"
+          <AdmissionApplicationOpenNotice cycleName={admissionCycleName} />
+          <Button
+            block
+            onClick={() => navigate(appPaths.candidateSignUp)}
             style={{
+              height: t.controlHeightLG,
+              fontSize: t.fontSize,
+              fontWeight: t.fontWeightStrong,
+              background: t.colorBgContainer,
+              borderColor: t.colorPrimary,
               color: t.colorPrimary,
-              textDecoration: "none",
-              fontWeight: 500,
             }}
           >
-            Sign up
-          </Link>
-        </Text>
-      </div>
+            Candidate sign-up
+          </Button>
+        </div>
+      )}
     </AuthPageLayout>
   );
 }

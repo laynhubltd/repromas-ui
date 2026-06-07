@@ -36,10 +36,8 @@ export function GradingSystemBoundaryFormModal({
     onClose,
     existingBoundaries,
   );
-  const { isEditMode, isSubmitting, formError, overlapError } = state;
+  const { isEditMode, isSubmitting, overlapError } = state;
   const { handleSubmit, handleCancel } = actions;
-
-  const combinedError = overlapError ?? formError;
 
   return (
     <Modal
@@ -60,7 +58,7 @@ export function GradingSystemBoundaryFormModal({
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert variant="form" error={combinedError} />
+        <ErrorAlert variant="form" error={overlapError} />
 
         <Form
           form={form}

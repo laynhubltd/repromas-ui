@@ -1,6 +1,5 @@
 // Feature: course-management
 import { useToken } from "@/shared/hooks/useToken";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Alert, Button, Modal, Typography } from "antd";
 import { useDeleteCourseModal } from "../../hooks/useCourseModal";
 import type { Course } from "../../types/course";
@@ -14,7 +13,7 @@ export type DeleteCourseModalProps = {
 export function DeleteCourseModal({ open, target, onClose }: DeleteCourseModalProps) {
   const token = useToken();
   const { state, actions } = useDeleteCourseModal(target, open, onClose);
-  const { error, isLoading } = state;
+  const { isLoading } = state;
   const { handleConfirm, handleCancel } = actions;
 
   return (
@@ -35,7 +34,6 @@ export function DeleteCourseModal({ open, target, onClose }: DeleteCourseModalPr
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert error={error} />
         <Typography.Text>
           Are you sure you want to delete{" "}
           <Typography.Text strong>

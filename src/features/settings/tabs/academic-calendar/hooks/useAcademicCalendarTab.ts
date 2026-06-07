@@ -1,7 +1,9 @@
 // Feature: academic-calendar
-import { parseApiError } from "@/shared/utils/error/parseApiError";
-import { notification } from "antd";
-import { useState } from "react";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
+import { deriveSectionErrorMessage } from "@/shared/utils/error/deriveSectionErrorMessage";
+import { notifyMutationSuccess } from "@/shared/utils/feedback/notifyMutationSuccess";
+import { useMemo, useState } from "react";
 import {
     useAdvanceSemesterStatusMutation,
     useGetAcademicSessionsQuery,
@@ -13,11 +15,14 @@ import type { AcademicSession, Semester, SemesterType } from "../types/academic-
 import { STATUS_NEXT } from "../utils/validators";
 
 export function useAcademicCalendarTab() {
+  const handleApiError = useApiError();
+
   // ── Queries ────────────────────────────────────────────────────────────────
   const {
     data: semesterTypesData,
     isLoading: semesterTypesLoading,
     isError: semesterTypesError,
+    error: semesterTypesQueryError,
     refetch: refetchSemesterTypes,
   } = useGetSemesterTypesQuery({ sort: "sortOrder:asc", itemsPerPage: 100 });
 
@@ -25,8 +30,27 @@ export function useAcademicCalendarTab() {
     data: sessionsData,
     isLoading: sessionsLoading,
     isError: sessionsError,
+    error: sessionsQueryError,
     refetch: refetchSessions,
   } = useGetAcademicSessionsQuery({ sort: "name:desc", include: "semesters", itemsPerPage: 100 });
+
+  const semesterTypesSectionError = useMemo(
+    () =>
+      deriveSectionErrorMessage(semesterTypesError, semesterTypesQueryError, {
+        screen: RequestScreen.List,
+        method: "GET",
+      }),
+    [semesterTypesError, semesterTypesQueryError],
+  );
+
+  const sessionsSectionError = useMemo(
+    () =>
+      deriveSectionErrorMessage(sessionsError, sessionsQueryError, {
+        screen: RequestScreen.List,
+        method: "GET",
+      }),
+    [sessionsError, sessionsQueryError],
+  );
 
   const semesterTypes: SemesterType[] = semesterTypesData?.member ?? [];
   const sessions: AcademicSession[] = sessionsData?.member ?? [];
@@ -103,9 +127,11 @@ export function useAcademicCalendarTab() {
   const handleSetCurrentSession = async (id: number) => {
     try {
       await setCurrentAcademicSession(id).unwrap();
+      notifyMutationSuccess("Current academic session updated successfully.");
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "POST" },
+      });
     }
   };
 
@@ -141,24 +167,22 @@ export function useAcademicCalendarTab() {
     if (!nextStatus) return;
     try {
       await advanceSemesterStatus({ id: sem.id, status: nextStatus }).unwrap();
+      notifyMutationSuccess("Semester status advanced successfully.");
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      if (parsed.status === 422) {
-        notification.error({
-          message: "Invalid status transition — the semester cannot be moved to that status.",
-        });
-        return;
-      }
-      notification.error({ message: parsed.message });
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "POST" },
+      });
     }
   };
 
   const handleSetCurrentSemester = async (id: number) => {
     try {
       await setCurrentSemester(id).unwrap();
+      notifyMutationSuccess("Current semester updated successfully.");
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "POST" },
+      });
     }
   };
 
@@ -168,6 +192,7 @@ export function useAcademicCalendarTab() {
       semesterTypes,
       semesterTypesLoading,
       semesterTypesError,
+      semesterTypesSectionError,
       semesterTypeFormTarget,
       semesterTypeFormOpen,
       deleteTypeTarget,
@@ -175,6 +200,7 @@ export function useAcademicCalendarTab() {
       sessions,
       sessionsLoading,
       sessionsError,
+      sessionsSectionError,
       sessionFormTarget,
       sessionFormOpen,
       deleteSessionTarget,

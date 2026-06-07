@@ -1,6 +1,7 @@
 export const appPaths = {
   login: "/auth/login",
   signUp: "/auth/signup",
+  candidateSignUp: "/auth/candidate-signup",
   forgotPassword: "/auth/forgot-password",
   unauthorized: "/unauthorized",
   dashboard: "/dashboard",
@@ -16,5 +17,16 @@ export const appPaths = {
   admissionConfig: "/admission-config",
   admissionCandidates: "/admission-candidates",
   assessment: "/assessment",
+  billing: "/billing",
+
+  // Student Module Paths
+  studentHome: "/student",
+  StudentInvoices: "/invoices",
+  studentInvoicePay: "/invoices/:invoiceId",
+  StudentPayments: "/payments",
+  studentPaymentReceipt: "/payments/:paymentId",
+  StudentResults: "/results",
+  StudentBioData: "/bio-data",
+
   // Add other app paths here
 };

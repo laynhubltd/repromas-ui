@@ -2,10 +2,9 @@
 import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import { useToken } from "@/shared/hooks/useToken";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Button, Flex, Form, InputNumber, Modal, Select } from "antd";
 import { useUserRoleFormModal } from "../../hooks/useUserRoleModal";
-import { deriveScopeLabel } from "../../types/rbac";
+import { deriveScopeLabel, roleScopeOmitsReference } from "../../types/rbac";
 import { ScopeBadge } from "../ScopeBadge";
 
 export type UserRoleFormModalProps = {
@@ -18,7 +17,7 @@ export type UserRoleFormModalProps = {
 export function UserRoleFormModal({ open, userId, onClose, onSuccess }: UserRoleFormModalProps) {
   const token = useToken();
   const { state, actions, form } = useUserRoleFormModal(userId, open, onClose, onSuccess);
-  const { isSubmitting, formError, roles, selectedScope } = state;
+  const { isSubmitting, roles, selectedScope } = state;
   const { handleSubmit, handleCancel, handleRoleChange } = actions;
 
   const roleOptions = roles.map((role) => ({
@@ -31,9 +30,10 @@ export function UserRoleFormModal({ open, userId, onClose, onSuccess }: UserRole
     ),
   }));
 
-  const scopeLabel = selectedScope && selectedScope !== "GLOBAL"
-    ? deriveScopeLabel(selectedScope)
-    : null;
+  const scopeLabel =
+    selectedScope && !roleScopeOmitsReference(selectedScope)
+      ? deriveScopeLabel(selectedScope)
+      : null;
 
   return (
     <Modal
@@ -54,8 +54,6 @@ export function UserRoleFormModal({ open, userId, onClose, onSuccess }: UserRole
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert error={formError} />
-
         <Form form={form} layout="vertical" requiredMark={false} onFinish={handleSubmit}>
           {/* Role selector */}
           <Form.Item

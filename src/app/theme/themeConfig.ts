@@ -71,6 +71,7 @@ const staticColors = {
 
 export interface Colors {
   primary: string;
+  primarySecondary: string;
   primaryDark: string;
   primaryDarker: string;
   primaryLight: string;
@@ -94,9 +95,11 @@ export interface Colors {
 
 /** Compute all color variants from a primaryColor. */
 export function buildColors(primaryColor: string): Colors {
+  const primarySecondary = darkenHex(primaryColor, 0.18);
   return {
     primary: primaryColor,
-    primaryDark: darkenHex(primaryColor, 0.18),
+    primarySecondary,
+    primaryDark: primarySecondary,
     primaryDarker: darkenHex(primaryColor, 0.32),
     primaryLight: lightenHex(primaryColor, 0.28),
     primaryLighter: lightenHex(primaryColor, 0.5),

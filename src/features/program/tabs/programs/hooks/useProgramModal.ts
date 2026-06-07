@@ -1,7 +1,11 @@
-import { applyFormErrors } from "@/shared/utils/error/applyFormErrors";
-import { parseApiError } from "@/shared/utils/error/parseApiError";
-import { Form, notification } from "antd";
-import { useEffect, useState } from "react";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
+import {
+  mutationSuccessMessage,
+  notifyMutationSuccess,
+} from "@/shared/utils/feedback/notifyMutationSuccess";
+import { Form } from "antd";
+import { useEffect } from "react";
 import {
     useCreateProgramMutation,
     useDeleteProgramMutation,
@@ -25,7 +29,7 @@ export function useProgramFormModal(
   const [form] = Form.useForm();
   const [createProgram, { isLoading: isCreating }] = useCreateProgramMutation();
   const [updateProgram, { isLoading: isUpdating }] = useUpdateProgramMutation();
-  const [formError, setFormError] = useState<string | null>(null);
+  const handleApiError = useApiError();
 
   const isLoading = isCreating || isUpdating;
 
@@ -40,15 +44,11 @@ export function useProgramFormModal(
         maxResidencyYears: target.maxResidencyYears,
       });
     }
-    if (!open) {
-      setFormError(null);
-    }
   }, [open, target, form]);
 
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
-      setFormError(null);
       if (isEditMode) {
         await updateProgram({
           id: target.id,
@@ -67,23 +67,32 @@ export function useProgramFormModal(
           maxResidencyYears: values.maxResidencyYears,
         }).unwrap();
       }
+      notifyMutationSuccess(
+        mutationSuccessMessage("Program", isEditMode ? "updated" : "created"),
+      );
       form.resetFields();
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-      applyFormErrors(parsed, form, setFormError);
+      const decision = handleApiError(err, {
+        context: {
+          screen: RequestScreen.Modal,
+          method: isEditMode ? "PATCH" : "POST",
+        },
+        form,
+      });
+      if (isEditMode && decision.disableForm) {
+        onClose();
+      }
     }
   };
 
   const handleCancel = () => {
     form.resetFields();
-    setFormError(null);
     onClose();
   };
 
   return {
-    state: { formError, isLoading, isEditMode },
+    state: { isLoading, isEditMode },
     actions: { handleSubmit, handleCancel },
     form,
   };
@@ -93,28 +102,27 @@ export function useProgramFormModal(
 
 export function useDeleteProgramModal(target: Program | null, onClose: () => void) {
   const [deleteProgram, { isLoading }] = useDeleteProgramMutation();
-  const [error, setError] = useState<string | null>(null);
+  const handleApiError = useApiError();
 
   const handleConfirm = async () => {
     if (!target) return;
     try {
-      setError(null);
       await deleteProgram(target.id).unwrap();
+      notifyMutationSuccess(mutationSuccessMessage("Program", "deleted"));
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-      setError(parsed.message);
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "DELETE" },
+      });
     }
   };
 
   const handleCancel = () => {
-    setError(null);
     onClose();
   };
 
   return {
-    state: { error, isLoading },
+    state: { isLoading },
     actions: { handleConfirm, handleCancel },
   };
 }

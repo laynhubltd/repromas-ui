@@ -1,6 +1,9 @@
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
+import { deriveSectionErrorMessage } from "@/shared/utils/error/deriveSectionErrorMessage";
 import { notification } from "antd";
 import type { SorterResult } from "antd/es/table/interface";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
     useActivateCurriculumVersionMutation,
     useGetCurriculumVersionsQuery,
@@ -50,6 +53,7 @@ export function resetPageOnFilterChange(
 }
 
 export function useCurriculumVersionTab() {
+  const handleApiError = useApiError();
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
@@ -88,8 +92,17 @@ export function useCurriculumVersionTab() {
     ...(isActiveParam !== undefined ? { "boolean[isActiveForAdmission]": isActiveParam } : {}),
   };
 
-  const { data, isLoading, isError, refetch } = useGetCurriculumVersionsQuery(queryParams);
+  const { data, isLoading, isError, error: queryError, refetch } = useGetCurriculumVersionsQuery(queryParams);
   const [activateCurriculumVersion] = useActivateCurriculumVersionMutation();
+
+  const sectionError = useMemo(
+    () =>
+      deriveSectionErrorMessage(isError, queryError, {
+        screen: RequestScreen.List,
+        method: "GET",
+      }),
+    [isError, queryError],
+  );
 
   const versions = data?.member ?? [];
   const totalItems = data?.totalItems ?? 0;
@@ -99,10 +112,9 @@ export function useCurriculumVersionTab() {
       await activateCurriculumVersion({ id: record.id }).unwrap();
       notification.success({ message: "Version activated successfully" });
       window.dispatchEvent(new CustomEvent("curriculumVersionActivated"));
-    } catch {
-      notification.error({
-        message: "Activation failed",
-        description: `Could not activate "${record.name}". Please try again.`,
+    } catch (err: unknown) {
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "POST" },
       });
     }
   };
@@ -133,6 +145,7 @@ export function useCurriculumVersionTab() {
       totalItems,
       isLoading,
       isError,
+      sectionError,
       debounceTimer,
     },
     actions: {

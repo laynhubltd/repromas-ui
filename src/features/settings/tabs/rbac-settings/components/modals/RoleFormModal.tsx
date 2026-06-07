@@ -2,18 +2,10 @@
 import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import { useToken } from "@/shared/hooks/useToken";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Button, Form, Input, Modal, Select } from "antd";
 import { useRoleFormModal } from "../../hooks/useRoleModal";
-import type { Role } from "../../types/rbac";
+import { ROLE_SCOPE_OPTIONS, type Role } from "../../types/rbac";
 import { roleDescriptionRules, roleNameRules } from "../../utils/validators";
-
-const SCOPE_OPTIONS = [
-  { value: "GLOBAL", label: "Global" },
-  { value: "FACULTY", label: "Faculty" },
-  { value: "DEPARTMENT", label: "Department" },
-  { value: "PROGRAM", label: "Program" },
-];
 
 export type RoleFormModalProps = {
   open: boolean;
@@ -24,7 +16,7 @@ export type RoleFormModalProps = {
 export function RoleFormModal({ open, target, onClose }: RoleFormModalProps) {
   const token = useToken();
   const { state, actions, form } = useRoleFormModal(target, open, onClose);
-  const { isEditMode, isSubmitting, formError } = state;
+  const { isEditMode, isSubmitting } = state;
   const { handleSubmit, handleCancel } = actions;
 
   return (
@@ -46,8 +38,6 @@ export function RoleFormModal({ open, target, onClose }: RoleFormModalProps) {
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert error={formError} />
-
         <Form form={form} layout="vertical" requiredMark={false} onFinish={handleSubmit}>
           {/* Name field */}
           <Form.Item
@@ -72,7 +62,7 @@ export function RoleFormModal({ open, target, onClose }: RoleFormModalProps) {
             }
             initialValue="GLOBAL"
           >
-            <Select options={SCOPE_OPTIONS} style={{ width: "100%" }} />
+            <Select options={ROLE_SCOPE_OPTIONS} style={{ width: "100%" }} />
           </Form.Item>
 
           {/* Description field */}

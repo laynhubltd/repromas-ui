@@ -1,6 +1,7 @@
-import { parseApiError } from "@/shared/utils/error/parseApiError";
-import { notification } from "antd";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
+import { deriveSectionErrorMessage } from "@/shared/utils/error/deriveSectionErrorMessage";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
     useGetTransitionStatusesQuery,
     useLazyGetEnrollmentTransitionsQuery,
@@ -12,6 +13,7 @@ import type {
 } from "../types/student-transition-status";
 
 export function useTransitionStatusTab() {
+  const handleApiError = useApiError();
   const [page, setPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [search, setSearch] = useState("");
@@ -48,7 +50,16 @@ export function useTransitionStatusTab() {
     ...(categoryFilter ? { "exact[stateCategory]": categoryFilter } : {}),
   };
 
-  const { data, isLoading, isError, refetch } = useGetTransitionStatusesQuery(queryParams);
+  const { data, isLoading, isError, error: queryError, refetch } = useGetTransitionStatusesQuery(queryParams);
+
+  const sectionError = useMemo(
+    () =>
+      deriveSectionErrorMessage(isError, queryError, {
+        screen: RequestScreen.List,
+        method: "GET",
+      }),
+    [isError, queryError],
+  );
 
   const statuses = data?.member ?? [];
   const totalItems = data?.totalItems ?? 0;
@@ -92,13 +103,14 @@ export function useTransitionStatusTab() {
         setFormTarget(status);
         setFormModalOpen(true);
       } catch (err: unknown) {
-        const parsed = parseApiError(err);
-        notification.error({ message: parsed.message });
+        handleApiError(err, {
+          context: { screen: RequestScreen.Action, method: "GET" },
+        });
       } finally {
         setUsageCheckLoading(false);
       }
     },
-    [triggerUsageCheck]
+    [triggerUsageCheck, handleApiError]
   );
 
   const handleOpenDelete = useCallback(
@@ -113,13 +125,14 @@ export function useTransitionStatusTab() {
         setDeleteTarget(status);
         setDeleteModalOpen(true);
       } catch (err: unknown) {
-        const parsed = parseApiError(err);
-        notification.error({ message: parsed.message });
+        handleApiError(err, {
+          context: { screen: RequestScreen.Action, method: "GET" },
+        });
       } finally {
         setUsageCheckLoading(false);
       }
     },
-    [triggerUsageCheck]
+    [triggerUsageCheck, handleApiError]
   );
 
   const handleCloseForm = useCallback(() => {
@@ -140,6 +153,7 @@ export function useTransitionStatusTab() {
       totalItems,
       isLoading,
       isError,
+      sectionError,
       page,
       itemsPerPage,
       search,

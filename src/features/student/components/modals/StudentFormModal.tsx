@@ -8,7 +8,6 @@ import {
 } from "@/shared/constants/studentOptions";
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import {
   Alert,
   Button,
@@ -55,7 +54,7 @@ export function StudentFormModal({
     open,
     onClose,
   );
-  const { formError, isLoading, isEditMode } = state;
+  const { isLoading, isEditMode } = state;
   const { handleSubmit, handleCancel } = actions;
   const {
     programs,
@@ -86,8 +85,6 @@ export function StudentFormModal({
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert variant="form" error={formError} />
-
         {/* Create mode: warning callout */}
         <ConditionalRenderer when={!isEditMode}>
           <div style={{ marginBottom: 16 }}>

@@ -1,6 +1,5 @@
 // Feature: program-graduation-config
 import { useToken } from "@/shared/hooks/useToken";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Button, Modal, Typography } from "antd";
 import { useDeleteGraduationRequirementModal } from "../../hooks/useGraduationRequirementModal";
 import type { ProgramGraduationRequirement } from "../../types/graduation-requirement";
@@ -18,7 +17,7 @@ export function DeleteGraduationRequirementModal({
 }: DeleteGraduationRequirementModalProps) {
   const token = useToken();
   const { state, actions } = useDeleteGraduationRequirementModal(target, onClose);
-  const { error, isLoading } = state;
+  const { isLoading } = state;
   const { handleConfirm, handleCancel } = actions;
 
   return (
@@ -39,7 +38,6 @@ export function DeleteGraduationRequirementModal({
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert error={error} />
         <Typography.Text>
           Delete graduation requirement for{" "}
           <Typography.Text strong>{target?.entryMode}</Typography.Text>? This cannot be undone.

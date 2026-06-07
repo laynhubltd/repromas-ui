@@ -1,6 +1,5 @@
 // Feature: faculty-department-management
 import { useToken } from "@/shared/hooks/useToken";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Alert, Button, Modal, Typography } from "antd";
 import { useDeleteFacultyModal } from "../../hooks/useFacultyModal";
 import type { Faculty } from "../../types/faculty";
@@ -14,7 +13,7 @@ export type DeleteFacultyModalProps = {
 export function DeleteFacultyModal({ open, target, onClose }: DeleteFacultyModalProps) {
   const token = useToken();
   const { state, actions } = useDeleteFacultyModal(target, onClose);
-  const { error, isLoading } = state;
+  const { isLoading } = state;
   const { handleConfirm, handleCancel } = actions;
 
   return (
@@ -35,7 +34,6 @@ export function DeleteFacultyModal({ open, target, onClose }: DeleteFacultyModal
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert error={error} />
         <Typography.Text>
           Are you sure you want to delete{" "}
           <Typography.Text strong>{target?.name}</Typography.Text>?

@@ -1,7 +1,12 @@
 import { baseApi } from "@/app/api/baseApi";
 import { ApiTagTypes } from "@/shared/types/apiTagTypes";
 
-type RoleScope = "GLOBAL" | "FACULTY" | "DEPARTMENT" | "PROGRAM";
+type RoleScope =
+  | "GLOBAL"
+  | "FACULTY"
+  | "DEPARTMENT"
+  | "PROGRAM"
+  | "CANDIDATE";
 
 type Role = {
   id: number;

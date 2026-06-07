@@ -1,6 +1,5 @@
 // Feature: student
 import { useToken } from "@/shared/hooks/useToken";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Button, Modal } from "antd";
 import { useDeleteStudentModal } from "../../hooks/useStudentModal";
 import type { Student } from "../../types/student";
@@ -14,7 +13,7 @@ export type DeleteStudentModalProps = {
 export function DeleteStudentModal({ open, target, onClose }: DeleteStudentModalProps) {
   const token = useToken();
   const { state, actions } = useDeleteStudentModal(target, onClose);
-  const { error, isLoading } = state;
+  const { isLoading } = state;
   const { handleConfirm, handleCancel } = actions;
 
   const studentLabel = target
@@ -39,7 +38,6 @@ export function DeleteStudentModal({ open, target, onClose }: DeleteStudentModal
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert variant="form" error={error} />
         <p style={{ margin: 0, color: token.colorText }}>
           Delete student &apos;{studentLabel}&apos;? This cannot be undone.
         </p>

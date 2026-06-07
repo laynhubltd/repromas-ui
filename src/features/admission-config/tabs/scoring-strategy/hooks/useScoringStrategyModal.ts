@@ -1,10 +1,10 @@
 // Feature: admission-config — Scoring Strategy modal hooks
 // Requirements: 8.1–8.14, 9.1–9.10, 10.1–10.8, 16.2, 16.3
 
-import { applyFormErrors } from "@/shared/utils/error/applyFormErrors";
-import { parseApiError } from "@/shared/utils/error/parseApiError";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
 import { Form, notification } from "antd";
-import { useCallback, useEffect, useReducer, useState } from "react";
+import { useCallback, useEffect, useReducer } from "react";
 import {
   useCreateScoringStrategyMutation,
   useDeleteScoringStrategyMutation,
@@ -91,6 +91,7 @@ export function useScoringStrategyFormModal(
     useCreateScoringStrategyMutation();
   const [updateScoringStrategy, { isLoading: isUpdating }] =
     useUpdateScoringStrategyMutation();
+  const handleApiError = useApiError();
 
   const isSubmitting = isCreating || isUpdating;
   const screeningMethod = Form.useWatch("screening_method", form);
@@ -259,15 +260,13 @@ export function useScoringStrategyFormModal(
       reset();
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-
-      notification.error({ message: parsed.message });
-      applyFormErrors(parsed, form, (msg) =>
-        dispatch({
-          type: ScoringStrategyFormActionType.SetFormError,
-          message: msg,
-        }),
-      );
+      handleApiError(err, {
+        context: {
+          screen: RequestScreen.Modal,
+          method: isEditMode ? "PATCH" : "POST",
+        },
+        form,
+      });
     }
   };
 
@@ -314,7 +313,7 @@ export function useDeleteScoringStrategyModal(
 ) {
   const [deleteStrategy, { isLoading: isDeleting }] =
     useDeleteScoringStrategyMutation();
-  const [error, setError] = useState<string | null>(null);
+  const handleApiError = useApiError();
 
   // Check if this is the only GLOBAL strategy (Req 10.2)
   const { data: globalData } = useGetScoringStrategiesQuery(
@@ -332,16 +331,15 @@ export function useDeleteScoringStrategyModal(
   const handleConfirm = async () => {
     if (!target) return;
     try {
-      setError(null);
       await deleteStrategy(target.id).unwrap();
       notification.success({
         message: "Scoring strategy deleted successfully.",
       });
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-      setError(parsed.message);
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "DELETE" },
+      });
     }
   };
 
@@ -350,12 +348,11 @@ export function useDeleteScoringStrategyModal(
    * Close modal without deleting
    */
   const handleCancel = () => {
-    setError(null);
     onClose();
   };
 
   return {
-    state: { error, isDeleting, isOnlyGlobal },
+    state: { isDeleting, isOnlyGlobal },
     actions: { handleConfirm, handleCancel },
   };
 }

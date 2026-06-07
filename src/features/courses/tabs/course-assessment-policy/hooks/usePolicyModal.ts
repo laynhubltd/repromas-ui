@@ -2,12 +2,13 @@ import { useGetCourseConfigurationsQuery } from "@/features/courses/tabs/course-
 import type { CourseConfiguration } from "@/features/courses/tabs/course-configurations/types/course-configuration";
 import { useGetProgramsQuery } from "@/features/program/tabs/programs/api/programsApi";
 import { useGetCurriculumVersionsQuery } from "@/features/settings/tabs/curriculum-version/api/curriculumVersionApi";
-import { applyFormErrors } from "@/shared/utils/error/applyFormErrors";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
 import {
-    HttpStatusCode,
-    parseApiError,
-} from "@/shared/utils/error/parseApiError";
-import { Form, notification } from "antd";
+  mutationSuccessMessage,
+  notifyMutationSuccess,
+} from "@/shared/utils/feedback/notifyMutationSuccess";
+import { Form } from "antd";
 import { useCallback, useEffect, useState } from "react";
 import {
     useCreateCourseAssessmentPolicyMutation,
@@ -49,7 +50,7 @@ export function usePolicyFormModal(
     useCreateCourseAssessmentPolicyMutation();
   const [updatePolicy, { isLoading: isUpdating }] =
     useUpdateCourseAssessmentPolicyMutation();
-  const [formError, setFormError] = useState<string | null>(null);
+  const handleApiError = useApiError();
 
   // Conditional field state — watched to drive disabled/required logic in the form
   const [scopeValue, setScopeValue] = useState<PolicyScope>("COURSE");
@@ -156,7 +157,6 @@ export function usePolicyFormModal(
       setApplyScoreCapOnVetoValue(true);
     }
     if (!open) {
-      setFormError(null);
       setSelectedProgramId(undefined);
       setSelectedVersionId(undefined);
       setConfigSearch("");
@@ -202,7 +202,6 @@ export function usePolicyFormModal(
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
-      setFormError(null);
 
       // Enforce conditional field nullification before submission
       const configId = values.scope === "GLOBAL" ? null : values.configId;
@@ -233,26 +232,30 @@ export function usePolicyFormModal(
         }).unwrap();
       }
 
+      notifyMutationSuccess(
+        mutationSuccessMessage(
+          "Assessment policy",
+          isEditMode ? "updated" : "created",
+        ),
+      );
       form.resetFields();
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-
-      if (parsed.status === HttpStatusCode.Conflict) {
-        // 409 duplicate policy for scope/configId → form-level error
-        setFormError(parsed.message);
-      } else if (parsed.status === HttpStatusCode.UnprocessableEntity) {
-        // 422 field-level errors
-        applyFormErrors(parsed, form, setFormError);
-      } else {
-        applyFormErrors(parsed, form, setFormError);
+      const decision = handleApiError(err, {
+        context: {
+          screen: RequestScreen.Modal,
+          method: isEditMode ? "PATCH" : "POST",
+        },
+        form,
+      });
+      if (isEditMode && decision.disableForm) {
+        onClose();
       }
     }
   };
 
   const handleClose = () => {
     form.resetFields();
-    setFormError(null);
     onClose();
   };
 
@@ -260,7 +263,6 @@ export function usePolicyFormModal(
     state: {
       isEditMode,
       isSubmitting,
-      formError,
       scopeValue,
       applyScoreCapOnVetoValue,
       selectedProgramId,
@@ -299,35 +301,29 @@ export function usePolicyFormModal(
 export function useDeletePolicyModal(
   target: CourseAssessmentPolicy | null,
   componentCount: number,
-  open: boolean,
+  _open: boolean,
   onClose: () => void,
 ) {
   const [deletePolicy, { isLoading: isDeleting }] =
     useDeleteCourseAssessmentPolicyMutation();
-  const [error, setError] = useState<string | null>(null);
-
-  // Reset error when modal opens/closes
-  useEffect(() => {
-    if (!open) {
-      setError(null);
-    }
-  }, [open]);
+  const handleApiError = useApiError();
 
   const handleConfirm = async () => {
     if (!target) return;
     try {
-      setError(null);
       await deletePolicy(target.id).unwrap();
+      notifyMutationSuccess(
+        mutationSuccessMessage("Assessment policy", "deleted"),
+      );
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
-      setError(parsed.message);
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "DELETE" },
+      });
     }
   };
 
   const handleClose = () => {
-    setError(null);
     onClose();
   };
 
@@ -338,7 +334,6 @@ export function useDeletePolicyModal(
   return {
     state: {
       isDeleting,
-      error,
     },
     actions: {
       handleConfirm,

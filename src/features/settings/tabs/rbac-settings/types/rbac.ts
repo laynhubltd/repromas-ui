@@ -1,6 +1,11 @@
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
-export type RoleScope = "GLOBAL" | "FACULTY" | "DEPARTMENT" | "PROGRAM";
+export type RoleScope =
+  | "GLOBAL"
+  | "FACULTY"
+  | "DEPARTMENT"
+  | "PROGRAM"
+  | "CANDIDATE";
 
 // ─── Domain Types ─────────────────────────────────────────────────────────────
 
@@ -144,17 +149,50 @@ export type RevokeRoleFromUserRequest = {
   scopeReferenceId?: number;
 };
 
+export type SyncFromCatalogRequest = {
+  skipExistingTenantPermissions?: boolean;
+  assignToSystemAdministrator?: boolean;
+};
+
+export type SyncFromCatalogCreatedTenantPermission = {
+  slug: string;
+  id: number;
+};
+
+export type SyncFromCatalogSkippedEntry = {
+  slug: string;
+  reason: string;
+};
+
+export type SyncFromCatalogResponse = {
+  catalogueCreatedCount: number;
+  catalogueUpdatedCount: number;
+  catalogueTotal: number;
+  tenantPermissionsCreatedCount: number;
+  tenantPermissionsSkippedCount: number;
+  assignedToSystemAdministratorCount: number;
+  createdCatalogueSlugs: string[];
+  createdTenantPermissions: SyncFromCatalogCreatedTenantPermission[];
+  skipped: SyncFromCatalogSkippedEntry[];
+  warnings: string[];
+};
+
 // ─── Pure Utilities ───────────────────────────────────────────────────────────
 
+export const ROLE_SCOPE_OPTIONS: { value: RoleScope; label: string }[] = [
+  { value: "GLOBAL", label: "Global" },
+  { value: "FACULTY", label: "Faculty" },
+  { value: "DEPARTMENT", label: "Department" },
+  { value: "PROGRAM", label: "Program" },
+  { value: "CANDIDATE", label: "Candidate" },
+];
+
+/** Scopes that do not require a scopeReferenceId when assigning a role to a user. */
+export function roleScopeOmitsReference(scope: RoleScope): boolean {
+  return scope === "GLOBAL" || scope === "CANDIDATE";
+}
+
 export function deriveScopeLabel(scope: RoleScope): string {
-  switch (scope) {
-    case "GLOBAL":
-      return "Global";
-    case "FACULTY":
-      return "Faculty";
-    case "DEPARTMENT":
-      return "Department";
-    case "PROGRAM":
-      return "Program";
-  }
+  const match = ROLE_SCOPE_OPTIONS.find((opt) => opt.value === scope);
+  return match?.label ?? scope;
 }

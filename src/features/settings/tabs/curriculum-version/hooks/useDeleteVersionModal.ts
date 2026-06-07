@@ -1,34 +1,33 @@
-import { parseApiError } from "@/shared/utils/error/parseApiError";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
 import { notification } from "antd";
-import { useState } from "react";
 import { useDeleteCurriculumVersionMutation } from "../api/curriculumVersionApi";
 import type { CurriculumVersion } from "../types/curriculum-version";
 
 export function useDeleteVersionModal(target: CurriculumVersion | null, onClose: () => void) {
   const [deleteCurriculumVersion, { isLoading }] = useDeleteCurriculumVersionMutation();
-  const [error, setError] = useState<string | null>(null);
+  const handleApiError = useApiError();
 
   const handleConfirm = async () => {
     if (!target) return;
     try {
-      setError(null);
       await deleteCurriculumVersion(target.id).unwrap();
       notification.success({ message: "Version deleted successfully" });
       window.dispatchEvent(new CustomEvent("curriculumVersionDeleted"));
       onClose();
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      setError(parsed.message);
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "DELETE" },
+      });
     }
   };
 
   const handleCancel = () => {
-    setError(null);
     onClose();
   };
 
   return {
-    state: { error, isLoading },
+    state: { isLoading },
     actions: { handleConfirm, handleCancel },
   };
 }

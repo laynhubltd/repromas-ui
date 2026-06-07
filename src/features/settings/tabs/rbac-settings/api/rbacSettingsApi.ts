@@ -14,11 +14,14 @@ import type {
   RevokeRoleFromUserRequest,
   Role,
   RoleListParams,
+  SyncFromCatalogRequest,
+  SyncFromCatalogResponse,
   UpdatePermissionRequest,
   UpdateRoleRequest,
   UserRole,
   UserRoleListParams,
 } from "../types/rbac";
+import { mapSyncFromCatalogResponse } from "../utils/mapSyncFromCatalogResponse";
 
 const rbacSettingsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -50,6 +53,22 @@ const rbacSettingsApi = baseApi.injectEndpoints({
     deletePermission: builder.mutation<void, number>({
       query: (id) => ({ url: `/permissions/${id}`, method: "DELETE" }),
       invalidatesTags: [ApiTagTypes.Permission],
+    }),
+
+    syncPermissionsFromCatalog: builder.mutation<
+      SyncFromCatalogResponse,
+      SyncFromCatalogRequest | void
+    >({
+      query: (body) => ({
+        url: "/permissions/sync-from-catalog",
+        method: "POST",
+        data: {
+          skipExistingTenantPermissions: body?.skipExistingTenantPermissions ?? true,
+          assignToSystemAdministrator: body?.assignToSystemAdministrator ?? true,
+        },
+      }),
+      transformResponse: (raw) => mapSyncFromCatalogResponse(raw),
+      invalidatesTags: [ApiTagTypes.Permission, ApiTagTypes.Role],
     }),
 
     // ── Roles ─────────────────────────────────────────────────────────────────
@@ -129,6 +148,7 @@ export const {
   useCreatePermissionMutation,
   useUpdatePermissionMutation,
   useDeletePermissionMutation,
+  useSyncPermissionsFromCatalogMutation,
   useGetRolesQuery,
   useGetRoleQuery,
   useCreateRoleMutation,

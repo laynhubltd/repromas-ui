@@ -1,6 +1,7 @@
 import type { AppStore } from "@/app/store";
-import { parseApiError } from "@/shared/utils/error/parseApiError";
-import { notification } from "antd";
+import { useApiError } from "@/shared/hooks/useApiError";
+import { RequestScreen } from "@/shared/types/error-ui";
+import { notifyMutationSuccess } from "@/shared/utils/feedback/notifyMutationSuccess";
 import { useReducer, useState } from "react";
 import { useStore } from "react-redux";
 import {
@@ -52,6 +53,8 @@ export function useScoreSheetBulkOperations({
   courseCode: string | null;
   courseTitle: string | null;
 }) {
+  const handleApiError = useApiError();
+
   const [reducerState, dispatch] = useReducer(
     scoreSheetUploadReducer,
     initialScoreSheetUploadState,
@@ -80,8 +83,9 @@ export function useScoreSheetBulkOperations({
         store,
       });
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
-      notification.error({ message: parsed.message });
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "GET" },
+      });
     } finally {
       setIsDownloading(false);
     }
@@ -119,6 +123,12 @@ export function useScoreSheetBulkOperations({
         file: selectedFile,
       }).unwrap();
 
+      if (deriveScoreSheetSummaryState(result) === "success") {
+        notifyMutationSuccess(
+          `${result.processedCount} score sheet${result.processedCount === 1 ? "" : "s"} uploaded successfully.`,
+        );
+      }
+
       dispatch({
         type: ScoreSheetUploadActionType.SetSummary,
         summary: result,
@@ -128,12 +138,13 @@ export function useScoreSheetBulkOperations({
         open: true,
       });
     } catch (err: unknown) {
-      const parsed = parseApiError(err);
+      const decision = handleApiError(err, {
+        context: { screen: RequestScreen.Modal, method: "POST" },
+      });
       dispatch({
         type: ScoreSheetUploadActionType.SetUploadError,
-        error: parsed.message,
+        error: decision.message,
       });
-      notification.error({ message: parsed.message });
     } finally {
       dispatch({
         type: ScoreSheetUploadActionType.SetIsUploading,

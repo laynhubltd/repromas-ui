@@ -410,6 +410,17 @@ describe('parseApiError — ApiErrorResponse with absent error field', () => {
     expect(result.type).toBe(ApiErrorType.Conflict);
   });
 
+  it('surfaces Symfony-style top-level message (code/message/details shape)', () => {
+    const apiErrorResponse = {
+      status: 409,
+      message: 'Course code "CSC103" already exists',
+    };
+    const result = parseApiError(apiErrorResponse);
+    expect(result.message).toBe('Course code "CSC103" already exists');
+    expect(result.status).toBe(409);
+    expect(result.type).toBe(ApiErrorType.Conflict);
+  });
+
   it('uses empty object for fieldErrors when errorFields is absent', () => {
     const apiErrorResponse = {
       status: 404,
@@ -455,7 +466,7 @@ describe('parseApiError — output shape always complete', () => {
   ];
 
   inputs.forEach((input, i) => {
-    it(`always returns all five fields for input[${i}]`, () => {
+    it(`always returns all required fields for input[${i}]`, () => {
       const result = parseApiError(input);
       expect(typeof result.type).toBe('string');
       expect(typeof result.status).toBe('number');
@@ -465,6 +476,110 @@ describe('parseApiError — output shape always complete', () => {
       expect(result.fieldErrors).not.toBeNull();
       expect(typeof result.raw).toBe('object');
       expect(result.raw).not.toBeNull();
+      expect(typeof result.isSetupError).toBe('boolean');
+      expect(typeof result.isPayloadShapeError).toBe('boolean');
     });
+  });
+});
+
+// ─── isPayloadShapeError flag ────────────────────────────────────────────────
+
+describe('parseApiError — isPayloadShapeError', () => {
+  const INVALID_PAYLOAD_DETAIL =
+    'Invalid request payload. Please check that all required fields are present and have the correct types.';
+
+  it('sets isPayloadShapeError for the canonical 400 payload detail string', () => {
+    const body: GenericApiError = {
+      type: ApiErrorType.BadRequest,
+      title: 'Bad Request',
+      status: 400,
+      detail: INVALID_PAYLOAD_DETAIL,
+    };
+    const result = parseApiError({ message: 'error', error: JSON.stringify(body) });
+    expect(result.isPayloadShapeError).toBe(true);
+  });
+
+  it('does not set isPayloadShapeError for other 400 bodies', () => {
+    const body: GenericApiError = {
+      type: ApiErrorType.BadRequest,
+      title: 'Bad Request',
+      status: 400,
+      detail: 'Some other detail',
+    };
+    const result = parseApiError({ message: 'error', error: JSON.stringify(body) });
+    expect(result.isPayloadShapeError).toBe(false);
+  });
+
+  it('never sets isPayloadShapeError for non-400 statuses', () => {
+    const body: GenericApiError = {
+      type: ApiErrorType.NotFound,
+      title: 'Not Found',
+      status: 404,
+      detail: INVALID_PAYLOAD_DETAIL,
+    };
+    const result = parseApiError({ message: 'error', error: JSON.stringify(body) });
+    expect(result.isPayloadShapeError).toBe(false);
+  });
+});
+
+// ─── isSetupError flag and message rewriting ────────────────────────────────
+
+describe('parseApiError — isSetupError', () => {
+  it('flags 422 grading-system setup errors and rewrites the message', () => {
+    const body: GenericApiError = {
+      type: ApiErrorType.UnprocessableEntity,
+      title: 'Unprocessable Entity',
+      status: 422,
+      detail: 'No grading system found for course configuration ID 61.',
+    };
+    const result = parseApiError({ message: 'error', error: JSON.stringify(body) });
+    expect(result.isSetupError).toBe(true);
+    expect(result.message).toMatch(/grading system/i);
+    expect(result.message).toMatch(/administrator/i);
+    expect(result.message).not.toMatch(/course configuration ID 61/);
+  });
+
+  it('flags 422 missing-semester errors and rewrites the message', () => {
+    const body: GenericApiError = {
+      type: ApiErrorType.UnprocessableEntity,
+      title: 'Unprocessable Entity',
+      status: 422,
+      detail: 'No current semester found for this course.',
+    };
+    const result = parseApiError({ message: 'error', error: JSON.stringify(body) });
+    expect(result.isSetupError).toBe(true);
+    expect(result.message).toMatch(/active semester/i);
+  });
+
+  it('does not flag 422 transition errors as setup errors', () => {
+    const body: GenericApiError = {
+      type: ApiErrorType.UnprocessableEntity,
+      title: 'Unprocessable Entity',
+      status: 422,
+      detail: 'Cannot transition score sheet from PUBLISHED to DRAFT.',
+    };
+    const result = parseApiError({ message: 'error', error: JSON.stringify(body) });
+    expect(result.isSetupError).toBe(false);
+    expect(result.message).toBe('Cannot transition score sheet from PUBLISHED to DRAFT.');
+  });
+
+  it('flags setup errors from the bare ApiErrorResponse fallback (no JSON body)', () => {
+    const apiErrorResponse = {
+      status: 422,
+      message: 'No assessment policy found for this course.',
+    };
+    const result = parseApiError(apiErrorResponse);
+    expect(result.isSetupError).toBe(true);
+    expect(result.message).toMatch(/assessment policy/i);
+    expect(result.message).toMatch(/administrator/i);
+  });
+
+  it('never flags non-422 statuses as setup errors', () => {
+    const apiErrorResponse = {
+      status: 500,
+      message: 'No grading system found.',
+    };
+    const result = parseApiError(apiErrorResponse);
+    expect(result.isSetupError).toBe(false);
   });
 });

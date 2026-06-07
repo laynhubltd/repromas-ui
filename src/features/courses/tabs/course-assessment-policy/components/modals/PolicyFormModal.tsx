@@ -1,6 +1,5 @@
 // Feature: course-assessment-policy
 import { useToken } from "@/shared/hooks/useToken";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import {
   Button,
   Checkbox,
@@ -68,7 +67,6 @@ export function PolicyFormModal({
   const {
     isEditMode,
     isSubmitting,
-    formError,
     scopeValue,
     applyScoreCapOnVetoValue,
     selectedProgramId,
@@ -105,8 +103,6 @@ export function PolicyFormModal({
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert error={formError} />
-
         <Form
           form={form}
           layout="vertical"

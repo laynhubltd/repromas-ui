@@ -5,7 +5,8 @@
 
 /**
  * The five lifecycle statuses for an admission cycle.
- * Forward-only: PRE_PROCESSING → APPLICATION_OPEN → SCREENING → LIST_RELEASED → CLOSED
+ * Forward: PRE_PROCESSING → APPLICATION_OPEN → SCREENING → LIST_RELEASED → CLOSED
+ * Rollback: one step back with required reason.
  */
 export type AdmissionCycleStatus =
   | "PRE_PROCESSING"
@@ -14,15 +15,27 @@ export type AdmissionCycleStatus =
   | "LIST_RELEASED"
   | "CLOSED";
 
+/** Lane within a session: UTME, DIRECT_ENTRY, or TRANSFER. */
+export type AdmissionEntryMode = "UTME" | "DIRECT_ENTRY" | "TRANSFER";
+
+/** Controls public candidate self-registration UX for the cycle. */
+export type AdmissionIdentityMode = "JAMB" | "OPEN";
+
+export type TransitionDirection = "forward" | "rollback";
+
 /**
  * Admission Cycle resource — top-level container for one admission exercise.
- * All fields use camelCase matching the API response.
+ * Identity is sessionId + entryMode + batchNo (lane slot).
  */
 export type AdmissionCycle = {
   id: number;
   sessionId: number; // immutable after creation
   name: string;
   status: AdmissionCycleStatus; // managed via transition endpoint only
+  admissionIdentityMode: AdmissionIdentityMode;
+  entryMode: AdmissionEntryMode;
+  batchNo: number;
+  supersedesCycleId: number | null;
   startDate: string | null; // ISO 8601 or null
   endDate: string | null; // ISO 8601 or null
   createdAt: string; // ISO 8601; always set
@@ -34,27 +47,34 @@ export type AdmissionCycle = {
 export type CreateAdmissionCycleRequest = {
   sessionId: number;
   name: string;
+  admissionIdentityMode?: AdmissionIdentityMode;
+  entryMode?: AdmissionEntryMode;
+  batchNo?: number;
+  supersedesCycleId?: number | null;
   startDate?: string | null;
   endDate?: string | null;
 };
 
 /**
- * PUT body — sessionId and status are NOT sent; they are immutable / transition-only.
+ * PUT body — sessionId, lane fields, and status are NOT sent.
  */
 export type UpdateAdmissionCycleRequest = {
   id: number;
   name: string;
+  admissionIdentityMode?: AdmissionIdentityMode;
   startDate?: string | null;
   endDate?: string | null;
 };
 
 /**
  * PATCH body for the transition endpoint.
- * status must be the immediate next status in the lifecycle.
+ * status must be the immediate next (forward) or previous (rollback) status.
+ * reason is required for rollback transitions.
  */
 export type TransitionAdmissionCycleRequest = {
   id: number;
   status: AdmissionCycleStatus;
+  reason?: string;
 };
 
 /**
@@ -67,6 +87,8 @@ export type AdmissionCycleListParams = {
   "search[name]"?: string;
   "exact[status]"?: AdmissionCycleStatus;
   "exact[sessionId]"?: number;
+  "exact[entryMode]"?: AdmissionEntryMode;
+  "exact[batchNo]"?: number;
 };
 
 /**

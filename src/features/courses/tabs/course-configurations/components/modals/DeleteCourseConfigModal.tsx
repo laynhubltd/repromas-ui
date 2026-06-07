@@ -1,6 +1,5 @@
 // Feature: course-management
 import { useToken } from "@/shared/hooks/useToken";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Alert, Button, Modal, Typography } from "antd";
 import { useDeleteCourseConfigModal } from "../../hooks/useCourseConfigModal";
 import type { CourseConfiguration } from "../../types/course-configuration";
@@ -14,7 +13,7 @@ export type DeleteCourseConfigModalProps = {
 export function DeleteCourseConfigModal({ open, target, onClose }: DeleteCourseConfigModalProps) {
   const token = useToken();
   const { state, actions } = useDeleteCourseConfigModal(target, open, onClose);
-  const { error, isLoading } = state;
+  const { isLoading } = state;
   const { handleConfirm, handleCancel } = actions;
 
   const courseCode = target?.course?.code ?? `Course #${target?.courseId}`;
@@ -40,7 +39,6 @@ export function DeleteCourseConfigModal({ open, target, onClose }: DeleteCourseC
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert error={error} />
         <Typography.Text>
           Are you sure you want to remove{" "}
           <Typography.Text strong>

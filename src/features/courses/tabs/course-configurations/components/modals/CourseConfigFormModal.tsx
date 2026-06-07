@@ -1,6 +1,5 @@
 // Feature: course-management
 import { useToken } from "@/shared/hooks/useToken";
-import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Button, Form, InputNumber, Modal, Select } from "antd";
 import { useCourseConfigFormModal } from "../../hooks/useCourseConfigModal";
 import type { CourseConfiguration } from "../../types/course-configuration";
@@ -41,7 +40,7 @@ export function CourseConfigFormModal({
     prefillLevelId,
     prefillSemesterTypeId,
   );
-  const { formError, isLoading, isEditMode } = state;
+  const { isLoading, isEditMode } = state;
   const { handleSubmit, handleCancel, handleCourseChange } = actions;
 
   return (
@@ -63,7 +62,6 @@ export function CourseConfigFormModal({
       }}
     >
       <div style={{ padding: 24 }}>
-        <ErrorAlert error={formError} />
         <Form
           form={form}
           layout="vertical"

@@ -3,8 +3,12 @@ import { Permission } from "@/features/access-control/permissions";
 import { ExplainerCallout, DashCard } from "@/components/ui-kit";
 import { useToken } from "@/shared/hooks/useToken";
 import {
+  ADMISSION_CYCLE_ENTRY_MODE_OPTIONS,
   ADMISSION_CYCLE_ITEMS_PER_PAGE,
   ADMISSION_CYCLE_STATUS_OPTIONS,
+  ADMISSION_CYCLE_UI_COPY,
+  identityModeColorByValue,
+  identityModeLabelByValue,
 } from "@/shared/constants/admissionCycleOptions";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
 import { DataLoader } from "@/shared/ui/DataLoader";
@@ -22,6 +26,7 @@ import {
   Flex,
   Form,
   Input,
+  InputNumber,
   Popover,
   Row,
   Select,
@@ -30,9 +35,11 @@ import {
   Typography,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useAdmissionCycleTab } from "../hooks/useAdmissionCycleTab";
 import type { AdmissionCycleRow } from "../hooks/useAdmissionCycleTab";
+import type { AdmissionIdentityMode } from "../types/admission-cycle";
+import { formatEntryBatchLabel } from "../utils/admissionCycleDisplay";
 import { AdmissionCycleRowActions } from "./AdmissionCycleStatusAction";
 import { AdmissionCycleFormModal } from "./modals/AdmissionCycleFormModal";
 import { DeleteAdmissionCycleModal } from "./modals/DeleteAdmissionCycleModal";
@@ -68,24 +75,30 @@ export function AdmissionCycleTab() {
     search,
     statusFilter,
     sessionFilter,
+    entryModeFilter,
+    batchNoFilter,
     page,
     formTarget,
     formOpen,
     deleteTarget,
     deleteOpen,
     transitionTarget,
+    transitionDirection,
     transitionOpen,
     sessions,
-    usedSessionIds,
+    existingCycles,
     totalCyclesCount,
     activeCyclesCount,
-    currentSessionCycle,
+    openForApplicationsCount,
+    currentSessionCyclesCount,
     isMetricsRowLoading,
   } = state;
   const {
     handleSearchChange,
     handleStatusFilterChange,
     handleSessionFilterChange,
+    handleEntryModeFilterChange,
+    handleBatchNoFilterChange,
     handlePageChange,
     handleOpenCreate,
     handleOpenEdit,
@@ -100,6 +113,11 @@ export function AdmissionCycleTab() {
   const { hasData, isFilterActive, activeFilterCount } = flags;
 
   const cardState = isMetricsRowLoading ? "loading" : "default";
+
+  const transitionSessionName = useMemo(() => {
+    if (!transitionTarget) return undefined;
+    return sessions.find((s) => s.id === transitionTarget.sessionId)?.name;
+  }, [transitionTarget, sessions]);
 
   const columns: ColumnsType<AdmissionCycleRow> = [
     {
@@ -124,6 +142,14 @@ export function AdmissionCycleTab() {
       ),
     },
     {
+      title: ADMISSION_CYCLE_UI_COPY.entryBatchColumn,
+      key: "entryBatch",
+      width: 160,
+      render: (_, record) => (
+        <Tag>{formatEntryBatchLabel(record.entryMode, record.batchNo)}</Tag>
+      ),
+    },
+    {
       title: "Status",
       dataIndex: "status",
       key: "status",
@@ -131,6 +157,17 @@ export function AdmissionCycleTab() {
       render: (status: string) => (
         <Tag color={statusColorByValue[status] ?? "default"}>
           {statusLabelByValue[status] ?? status}
+        </Tag>
+      ),
+    },
+    {
+      title: "Identity mode",
+      dataIndex: "admissionIdentityMode",
+      key: "admissionIdentityMode",
+      width: 160,
+      render: (mode: AdmissionIdentityMode) => (
+        <Tag color={identityModeColorByValue[mode] ?? "default"}>
+          {identityModeLabelByValue[mode] ?? mode}
         </Tag>
       ),
     },
@@ -187,7 +224,7 @@ export function AdmissionCycleTab() {
             }))}
           />
         </Form.Item>
-        <Form.Item label="Session" style={{ marginBottom: 0 }}>
+        <Form.Item label="Session" style={{ marginBottom: 12 }}>
           <Select
             placeholder="Any session"
             allowClear
@@ -200,6 +237,33 @@ export function AdmissionCycleTab() {
                 ? `${session.name} (Current)`
                 : session.name,
             }))}
+          />
+        </Form.Item>
+        <Form.Item label="Entry mode" style={{ marginBottom: 12 }}>
+          <Select
+            placeholder="Any entry mode"
+            allowClear
+            value={entryModeFilter}
+            onChange={handleEntryModeFilterChange}
+            style={{ width: "100%" }}
+            options={ADMISSION_CYCLE_ENTRY_MODE_OPTIONS.map((opt) => ({
+              value: opt.value,
+              label: opt.label,
+            }))}
+          />
+        </Form.Item>
+        <Form.Item label="Batch number" style={{ marginBottom: 0 }}>
+          <InputNumber
+            placeholder="Any batch"
+            min={1}
+            precision={0}
+            value={batchNoFilter}
+            onChange={(value) =>
+              handleBatchNoFilterChange(
+                value !== null && value !== undefined ? value : undefined,
+              )
+            }
+            style={{ width: "100%" }}
           />
         </Form.Item>
         <ConditionalRenderer when={activeFilterCount > 0}>
@@ -224,7 +288,7 @@ export function AdmissionCycleTab() {
         intent="info"
         collapsible
         title="Admission Cycles"
-        body="An admission cycle is the top-level container for one admission exercise per academic session. Each session allows at most one cycle. Cycles start in Pre-processing and advance forward only — open applications, run screening, release lists, then close. Status changes use dedicated transition actions, not the edit form."
+        body="An admission cycle is the top-level container for one admission exercise. Each academic session can run separate cycles for UTME, Direct Entry, and Transfer, with multiple batches per entry mode when needed (e.g. a second UTME batch). During pre-processing, choose JAMB/CAPS or open admission — this drives the public candidate sign-up flow. Identity mode cannot be changed after applications open. Cycles advance one step at a time; rollbacks require a reason."
       />
 
       <Row gutter={[16, 16]}>
@@ -248,11 +312,16 @@ export function AdmissionCycleTab() {
         </Col>
         <Col xs={24} sm={8}>
           <DashCard
-            title="Current Session Cycle"
-            value={currentSessionCycle ? currentSessionCycle.name : "None"}
+            title={ADMISSION_CYCLE_UI_COPY.openForApplicationsMetric}
+            value={openForApplicationsCount}
             state={cardState}
             size="md"
             density="comfortable"
+            meta={
+              currentSessionCyclesCount > 0
+                ? `${currentSessionCyclesCount} in current session`
+                : undefined
+            }
           />
         </Col>
       </Row>
@@ -387,7 +456,7 @@ export function AdmissionCycleTab() {
         target={formTarget}
         onClose={handleCloseForm}
         sessions={sessions}
-        usedSessionIds={usedSessionIds}
+        existingCycles={existingCycles}
       />
       <DeleteAdmissionCycleModal
         open={deleteOpen}
@@ -397,6 +466,8 @@ export function AdmissionCycleTab() {
       <TransitionAdmissionCycleModal
         open={transitionOpen}
         target={transitionTarget}
+        direction={transitionDirection}
+        sessionName={transitionSessionName}
         onClose={handleCloseTransition}
       />
     </Flex>

@@ -56,7 +56,7 @@ export type CreateGradingSystemRequest = {
   scope: GradingSystemScope;
   referenceId: number | null;
   levelId: number | null;
-  curriculumVersionId: number | null;
+  curriculumVersionId: number;
 };
 
 export type UpdateGradingSystemRequest = {
@@ -65,7 +65,8 @@ export type UpdateGradingSystemRequest = {
   isGpaBased: boolean;
   maxCgpa: number | null;
   levelId: number | null;
-  // NOTE: scope, referenceId, curriculumVersionId are intentionally omitted — immutable
+  curriculumVersionId: number | null;
+  // NOTE: scope and referenceId are intentionally omitted — immutable
 };
 
 export type GradingSystemCollection = {
