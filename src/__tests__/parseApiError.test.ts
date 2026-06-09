@@ -551,6 +551,19 @@ describe('parseApiError — isSetupError', () => {
     expect(result.message).toMatch(/active semester/i);
   });
 
+  it('flags 422 missing default transition status and rewrites the message', () => {
+    const body: GenericApiError = {
+      type: ApiErrorType.UnprocessableEntity,
+      title: 'Unprocessable Entity',
+      status: 422,
+      detail: 'No default StudentTransitionStatus configured for this tenant.',
+    };
+    const result = parseApiError({ message: 'error', error: JSON.stringify(body) });
+    expect(result.isSetupError).toBe(true);
+    expect(result.message).toMatch(/default transition status/i);
+    expect(result.message).toMatch(/Settings/i);
+  });
+
   it('does not flag 422 transition errors as setup errors', () => {
     const body: GenericApiError = {
       type: ApiErrorType.UnprocessableEntity,

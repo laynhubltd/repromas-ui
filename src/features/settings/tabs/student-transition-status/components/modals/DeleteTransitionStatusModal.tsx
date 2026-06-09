@@ -1,6 +1,7 @@
 // Feature: student-transition-status
 import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
+import { TRANSITION_STATUS_DEFAULT_DELETE_BLOCKED } from "@/shared/constants/studentTransitionStatusOptions";
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
 import { Button, Modal, Typography } from "antd";
@@ -21,8 +22,13 @@ export function DeleteTransitionStatusModal({
   onClose,
 }: DeleteTransitionStatusModalProps) {
   const token = useToken();
-  const { state, actions } = useDeleteTransitionStatusModal(target, usageCount, open, onClose);
-  const { isLoading, isBlocked } = state;
+  const { state, actions } = useDeleteTransitionStatusModal(
+    target,
+    usageCount,
+    open,
+    onClose,
+  );
+  const { isLoading, isBlocked, isDefaultStatus, isUsageBlocked } = state;
   const { handleConfirm, handleCancel } = actions;
 
   return (
@@ -44,19 +50,22 @@ export function DeleteTransitionStatusModal({
       }}
     >
       <div style={{ padding: 24 }}>
-        {/* Blocking message — status is in use */}
-        <ConditionalRenderer when={isBlocked}>
+        <ConditionalRenderer when={isDefaultStatus}>
+          <Typography.Text>{TRANSITION_STATUS_DEFAULT_DELETE_BLOCKED}</Typography.Text>
+        </ConditionalRenderer>
+
+        <ConditionalRenderer when={!isDefaultStatus && isUsageBlocked}>
           <Typography.Text>
             This status is assigned to{" "}
-            <strong>{usageCount}</strong> enrollment transition(s) and cannot be deleted.
-            Reassign those transitions first.
+            <strong>{usageCount}</strong> enrollment transition(s) and cannot be
+            deleted. Reassign those transitions first.
           </Typography.Text>
         </ConditionalRenderer>
 
-        {/* Confirmation message — safe to delete */}
         <ConditionalRenderer when={!isBlocked}>
           <Typography.Text>
-            Delete status &ldquo;<strong>{target?.name}</strong>&rdquo;? This cannot be undone.
+            Delete status &ldquo;<strong>{target?.name}</strong>&rdquo;? This
+            cannot be undone.
           </Typography.Text>
         </ConditionalRenderer>
       </div>
@@ -71,7 +80,6 @@ export function DeleteTransitionStatusModal({
           background: token.colorBgLayout,
         }}
       >
-        {/* Destructive confirm button — only shown when not blocked */}
         <ConditionalRenderer when={!isBlocked}>
           <PermissionGuard permission={Permission.StudentTransitionStatusesDelete}>
             <Button

@@ -46,6 +46,7 @@ const studentTransitionStatusApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: [
         { type: ApiTagTypes.StudentTransitionStatus, id: "LIST" },
+        ApiTagTypes.SetupStatus,
       ],
     }),
 
@@ -60,6 +61,7 @@ const studentTransitionStatusApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: [
         { type: ApiTagTypes.StudentTransitionStatus, id: "LIST" },
+        ApiTagTypes.SetupStatus,
       ],
     }),
 
@@ -70,6 +72,7 @@ const studentTransitionStatusApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: [
         { type: ApiTagTypes.StudentTransitionStatus, id: "LIST" },
+        ApiTagTypes.SetupStatus,
       ],
     }),
   }),
@@ -84,7 +87,7 @@ export const {
 } = studentTransitionStatusApi;
 
 // ── Enrollment Transitions — minimal injection for UsageCheck ─────────────────
-// GET /api/student-enrollment-transitions?exact[statusId]={id}&itemsPerPage=1
+// GET /api/student-enrollment-transitions?exact[status]={id}&itemsPerPage=1
 
 type EnrollmentTransitionsParams = {
   "exact[status]"?: number;

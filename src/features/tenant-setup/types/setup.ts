@@ -6,6 +6,7 @@ export type SetupStepId =
   | "curriculumVersion"
   | "course"
   | "staff"
+  | "transitionStatusDefault"
   | "student"
   | "admissionConfig"
   | "admissionCandidate"
@@ -24,6 +25,7 @@ export type SetupProbeCounts = {
   curriculumVersions: number;
   courses: number;
   staff: number;
+  transitionStatusDefaults: number;
   students: number;
   admissionConfigs: number;
   admissionCandidates: number;

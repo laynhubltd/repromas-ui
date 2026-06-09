@@ -4,6 +4,7 @@ import {
   useGetSetupAdmissionConfigCountQuery,
   useGetSetupCourseCountQuery,
   useGetSetupCurriculumVersionCountQuery,
+  useGetSetupDefaultTransitionStatusCountQuery,
   useGetSetupDepartmentCountQuery,
   useGetSetupLevelCountQuery,
   useGetSetupProgramCountQuery,
@@ -39,6 +40,10 @@ export function useSetupStatus() {
     data: admissionCandidates = 0,
     isLoading: isAdmissionCandidatesLoading,
   } = useGetSetupAdmissionCandidateCountQuery();
+  const {
+    data: transitionStatusDefaults = 0,
+    isLoading: isTransitionStatusDefaultsLoading,
+  } = useGetSetupDefaultTransitionStatusCountQuery();
 
   const isLoading =
     isDepartmentsLoading ||
@@ -49,7 +54,8 @@ export function useSetupStatus() {
     isStaffLoading ||
     isStudentsLoading ||
     isAdmissionConfigLoading ||
-    isAdmissionCandidatesLoading;
+    isAdmissionCandidatesLoading ||
+    isTransitionStatusDefaultsLoading;
 
   const probes: SetupProbeCounts = useMemo(
     () => ({
@@ -59,6 +65,7 @@ export function useSetupStatus() {
       curriculumVersions,
       courses,
       staff,
+      transitionStatusDefaults,
       students,
       admissionConfigs,
       admissionCandidates,
@@ -70,6 +77,7 @@ export function useSetupStatus() {
       curriculumVersions,
       courses,
       staff,
+      transitionStatusDefaults,
       students,
       admissionConfigs,
       admissionCandidates,

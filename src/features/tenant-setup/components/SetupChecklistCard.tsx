@@ -28,6 +28,7 @@ const STEP_ICONS: Record<SetupStepId, ReactNode> = {
   curriculumVersion: <BookOutlined />,
   course: <BookOutlined />,
   staff: <UserOutlined />,
+  transitionStatusDefault: <RadiusSettingOutlined />,
   student: <UsergroupAddOutlined />,
   admissionConfig: <SettingOutlined />,
   admissionCandidate: <SolutionOutlined />,
