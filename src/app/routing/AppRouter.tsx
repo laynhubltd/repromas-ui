@@ -15,6 +15,9 @@ const SignUp = lazy(() => import("@/features/auth/components/SignUp"));
 const ForgotPassword = lazy(
   () => import("@/features/auth/components/ForgotPassword"),
 );
+const ResetPassword = lazy(
+  () => import("@/features/auth/components/ResetPassword"),
+);
 const Dashboard = lazy(
   () => import("@/features/dashboard/components/Dashboard"),
 );
@@ -46,6 +49,7 @@ export function AppRouter() {
         <Route path={appPaths.login} element={<Login />} />
         <Route path={appPaths.signUp} element={<SignUp />} />
         <Route path={appPaths.forgotPassword} element={<ForgotPassword />} />
+        <Route path={appPaths.resetPassword} element={<ResetPassword />} />
         <Route path={appPaths.unauthorized} element={<Unauthorized />} />
 
         <Route path="/" element={<GuardedDashboardShell />}>

@@ -14,12 +14,14 @@ import UnknownDomain from "@/features/auth/components/UnknownDomain";
 import type { ApiRole } from "@/features/auth/types";
 import type useAuthState from "@/features/auth/use-auth-state";
 import { hasTenantClaimMismatch } from "@/features/auth/utils/tenant-claim";
-import React from "react";
+import React, { lazy } from "react";
 import { Navigate, Route } from "react-router-dom";
 import { appPaths } from "./app-path";
 import type { ModuleRegistry } from "./module-registry";
 import RouterShell from "./router-shell";
 import { isTokenExpired } from "@/shared/utils/token-util";
+
+const ResetPassword = lazy(() => import("@/features/auth/components/ResetPassword"));
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -193,6 +195,7 @@ export function moduleMounter({
         path={appPaths.forgotPassword}
         element={<Navigate to={defaultPath} replace />}
       />
+      <Route path={appPaths.resetPassword} element={<ResetPassword />} />
       <Route path={appPaths.unauthorized} element={<Unauthorized />} />
       {moduleRoutes}
       <Route path="*" element={<Navigate to={defaultPath} replace />} />

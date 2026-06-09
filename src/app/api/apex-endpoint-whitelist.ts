@@ -8,6 +8,7 @@ export const APEX_ENDPOINT_WHITELIST = [
   "/auth/login",
   "/auth/register",
   "/auth/forgot-password",
+  "/auth/reset-password",
   "/tenants/validate",
   "/tenant-signup",
 ] as const;

@@ -3,6 +3,7 @@ export const appPaths = {
   signUp: "/auth/signup",
   candidateSignUp: "/auth/candidate-signup",
   forgotPassword: "/auth/forgot-password",
+  resetPassword: "/auth/reset-password/:token",
   unauthorized: "/unauthorized",
   dashboard: "/dashboard",
   academicStructure: "/academic-structure",

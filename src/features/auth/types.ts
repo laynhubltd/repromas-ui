@@ -43,7 +43,12 @@ export type LoginResponse = {
 
 export type SignUpRequest = { email: string; password: string };
 export type SignUpResponse = { message?: string };
-export type ForgotPasswordRequest = { email: string };
+
+export type {
+  ForgotPasswordRequest,
+  ForgotPasswordResponse,
+  ResetPasswordRequest,
+} from "./types/password-reset";
 
 export type UserProfile = {
   id: string;

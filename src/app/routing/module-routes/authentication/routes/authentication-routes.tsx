@@ -5,6 +5,7 @@ import { Navigate, Route } from "react-router-dom";
 const Login = lazy(() => import("@/features/auth/components/Login"));
 const SignUp = lazy(() => import("@/features/auth/components/SignUp"));
 const ForgotPassword = lazy(() => import("@/features/auth/components/ForgotPassword"));
+const ResetPassword = lazy(() => import("@/features/auth/components/ResetPassword"));
 const CandidateSignUpPage = lazy(() =>
   import("@/features/auth/candidate-signup").then((m) => ({
     default: m.CandidateSignUpPage,
@@ -21,6 +22,7 @@ export function getAuthenticationRoutes() {
                 <Route path={appPaths.signUp} element={<SignUp />} />
                 <Route path={appPaths.candidateSignUp} element={<CandidateSignUpPage />} />
                 <Route path={appPaths.forgotPassword} element={<ForgotPassword />} />
+                <Route path={appPaths.resetPassword} element={<ResetPassword />} />
                 <Route path={appPaths.unauthorized} element={<Unauthorized />} />
                 <Route path="*" element={<Navigate to={appPaths.login} replace />} />
             </Route>
