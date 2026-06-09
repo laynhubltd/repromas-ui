@@ -7,8 +7,10 @@ import { createApi, type QueryReturnValue } from "@reduxjs/toolkit/query/react";
 import { authCleared, userLoggedIn, userLoggedOut } from "../events";
 import type {
   ForgotPasswordRequest,
+  ForgotPasswordResponse,
   LoginRequest,
   LoginResponse,
+  ResetPasswordRequest,
   SignUpRequest,
   SignUpResponse,
   UserProfile,
@@ -74,12 +76,21 @@ export const authApi = createApi({
       },
     }),
 
-    forgotPassword: builder.mutation<{ message?: string }, ForgotPasswordRequest>({
+    forgotPassword: builder.mutation<ForgotPasswordResponse, ForgotPasswordRequest>({
       query: (body) => ({
         url: `${AUTH_BASE}/forgot-password`,
         method: "POST",
         data: body,
       }),
+    }),
+
+    resetPassword: builder.mutation<void, ResetPasswordRequest>({
+      query: (body) => ({
+        url: `${AUTH_BASE}/reset-password`,
+        method: "POST",
+        data: body,
+      }),
+      transformResponse: () => undefined,
     }),
 
     signUp: builder.mutation<SignUpResponse, SignUpRequest>({
@@ -109,6 +120,7 @@ export const {
   useRefreshMutation,
   useLogoutMutation,
   useForgotPasswordMutation,
+  useResetPasswordMutation,
   useSignUpMutation,
   useGetProfileQuery,
 } = authApi;
