@@ -9,6 +9,7 @@ export type StudentTransitionStatus = {
   appearsOnBroadsheet: boolean;
   canRegisterCourses: boolean;
   canAccessPortal: boolean;
+  isDefault: boolean;
   createdAt: string; // ISO 8601
   updatedAt: string; // ISO 8601
 };
@@ -22,6 +23,7 @@ export type TransitionStatusListParams = {
   "boolean[isTerminal]"?: boolean;
   "boolean[canRegisterCourses]"?: boolean;
   "boolean[canAccessPortal]"?: boolean;
+  "boolean[isDefault]"?: boolean;
 };
 
 export type CreateTransitionStatusRequest = {
@@ -32,9 +34,10 @@ export type CreateTransitionStatusRequest = {
   appearsOnBroadsheet?: boolean;
   canRegisterCourses?: boolean;
   canAccessPortal?: boolean;
+  isDefault?: boolean;
 };
 
-// PUT requires all 7 writable fields
+// PUT requires all 8 writable fields
 export type UpdateTransitionStatusRequest = {
   name: string;
   isTerminal: boolean;
@@ -43,6 +46,7 @@ export type UpdateTransitionStatusRequest = {
   appearsOnBroadsheet: boolean;
   canRegisterCourses: boolean;
   canAccessPortal: boolean;
+  isDefault: boolean;
 };
 
 export type PaginatedResponse<T> = {

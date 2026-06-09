@@ -2,6 +2,11 @@
 import { DashCard, ExplainerCallout, Table } from "@/components/ui-kit";
 import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
+import {
+  IS_DEFAULT_FILTER_OPTIONS,
+  STATE_CATEGORY_OPTIONS,
+  TRANSITION_STATUS_NO_DEFAULT_BANNER,
+} from "@/shared/constants/studentTransitionStatusOptions";
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer, centeredBox } from "@/shared/ui/ConditionalRenderer";
 import { DataLoader } from "@/shared/ui/DataLoader";
@@ -39,12 +44,6 @@ import { isSortFieldAllowed } from "../utils/sortFieldAllowlist";
 import { DeleteTransitionStatusModal } from "./modals/DeleteTransitionStatusModal";
 import { TransitionStatusFormModal } from "./modals/TransitionStatusFormModal";
 
-const STATE_CATEGORY_OPTIONS: { value: StateCategory; label: string }[] = [
-  { value: "POSITIVE", label: "Positive" },
-  { value: "NEGATIVE", label: "Negative" },
-  { value: "NEUTRAL", label: "Neutral" },
-];
-
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, {
     year: "numeric",
@@ -65,6 +64,7 @@ export function TransitionStatusTab() {
     itemsPerPage,
     search,
     categoryFilter,
+    isDefaultFilter,
     sort,
     formTarget,
     deleteTarget,
@@ -75,6 +75,7 @@ export function TransitionStatusTab() {
   const {
     handleSearchChange,
     handleCategoryFilterChange,
+    handleIsDefaultFilterChange,
     handleClearFilters,
     handleSortChange,
     handlePageChange,
@@ -85,7 +86,8 @@ export function TransitionStatusTab() {
     handleCloseDelete,
     refetch,
   } = actions;
-  const { hasData, isSearchActive, activeFilterCount } = flags;
+  const { hasData, isSearchActive, activeFilterCount, hasDefaultConfigured } =
+    flags;
 
   const [filterOpen, setFilterOpen] = useState(false);
 
@@ -96,7 +98,7 @@ export function TransitionStatusTab() {
       acc[s.stateCategory] = (acc[s.stateCategory] ?? 0) + 1;
       return acc;
     },
-    {}
+    {},
   );
   const breakdownLabel =
     statuses.length > 0
@@ -106,7 +108,7 @@ export function TransitionStatusTab() {
   const handleTableChange = (
     _: unknown,
     __: unknown,
-    sorter: SorterResult<StudentTransitionStatus> | SorterResult<StudentTransitionStatus>[]
+    sorter: SorterResult<StudentTransitionStatus> | SorterResult<StudentTransitionStatus>[],
   ) => {
     const s = Array.isArray(sorter) ? sorter[0] : sorter;
     if (!s.columnKey || !s.order) {
@@ -120,7 +122,9 @@ export function TransitionStatusTab() {
   };
 
   const [sortField, sortOrder] = sort.split(":");
-  const antSortOrder = (sortOrder === "asc" ? "ascend" : "descend") as "ascend" | "descend";
+  const antSortOrder = (sortOrder === "asc" ? "ascend" : "descend") as
+    | "ascend"
+    | "descend";
 
   const columns: ColumnsType<StudentTransitionStatus> = [
     {
@@ -130,7 +134,16 @@ export function TransitionStatusTab() {
       sorter: isSortFieldAllowed("name"),
       sortDirections: ["ascend", "descend"],
       sortOrder: sortField === "name" ? antSortOrder : undefined,
-      render: (name: string) => <Typography.Text strong>{name}</Typography.Text>,
+      render: (name: string, record: StudentTransitionStatus) => (
+        <Flex align="center" gap={8} wrap="wrap">
+          <Typography.Text strong>{name}</Typography.Text>
+          <ConditionalRenderer when={record.isDefault}>
+            <Tag color="green" style={{ margin: 0 }}>
+              Default
+            </Tag>
+          </ConditionalRenderer>
+        </Flex>
+      ),
     },
     {
       title: "Category",
@@ -225,7 +238,7 @@ export function TransitionStatusTab() {
   const filterPopoverContent = (
     <Flex vertical gap={16} style={{ width: 260 }}>
       <Form layout="vertical" size="middle">
-        <Form.Item label="State Category" style={{ marginBottom: 0 }}>
+        <Form.Item label="State Category" style={{ marginBottom: 12 }}>
           <Select
             placeholder="All Categories"
             allowClear
@@ -235,6 +248,24 @@ export function TransitionStatusTab() {
             }}
             style={{ width: "100%" }}
             options={STATE_CATEGORY_OPTIONS}
+          />
+        </Form.Item>
+        <Form.Item label="Default Status" style={{ marginBottom: 0 }}>
+          <Select
+            placeholder="Any"
+            value={
+              isDefaultFilter === undefined ? "any" : String(isDefaultFilter)
+            }
+            onChange={(val: string) => {
+              handleIsDefaultFilterChange(
+                val === "any" ? undefined : val === "true",
+              );
+            }}
+            style={{ width: "100%" }}
+            options={IS_DEFAULT_FILTER_OPTIONS.map((opt) => ({
+              value: opt.value,
+              label: opt.label,
+            }))}
           />
         </Form.Item>
       </Form>
@@ -259,13 +290,27 @@ export function TransitionStatusTab() {
       <ExplainerCallout
         intent="info"
         title="Student Transition Statuses"
-        body="Define the academic states that students can be assigned to. Each status controls what students are permitted to do — including course registration, portal access, broadsheet appearance, and residency counting."
+        body="Define the academic states that students can be assigned to. Each status controls what students are permitted to do — including course registration, portal access, broadsheet appearance, and residency counting. Exactly one status must be marked as default for new student enrollment."
         dismissible
         collapsible
       />
 
+      <ConditionalRenderer when={!isLoading && !hasDefaultConfigured}>
+        <ErrorAlert
+          variant="section"
+          error={TRANSITION_STATUS_NO_DEFAULT_BANNER}
+          action={
+            <PermissionGuard permission={Permission.StudentTransitionStatusesCreate}>
+              <Button type="primary" size="small" onClick={handleOpenCreate}>
+                Create default status
+              </Button>
+            </PermissionGuard>
+          }
+        />
+      </ConditionalRenderer>
+
       <Row gutter={[16, 16]}>
-        <Col xs={24} sm={12}>
+        <Col xs={24} sm={8}>
           <DashCard
             title="Total Statuses"
             value={totalItems}
@@ -274,7 +319,16 @@ export function TransitionStatusTab() {
             density="comfortable"
           />
         </Col>
-        <Col xs={24} sm={12}>
+        <Col xs={24} sm={8}>
+          <DashCard
+            title="Default Configured"
+            value={hasDefaultConfigured ? "Yes" : "No"}
+            state={cardState}
+            size="md"
+            density="comfortable"
+          />
+        </Col>
+        <Col xs={24} sm={8}>
           <DashCard
             title="Category Breakdown"
             value={breakdownLabel}
@@ -350,7 +404,7 @@ export function TransitionStatusTab() {
           })}
         >
           <Typography.Text type="secondary" style={{ display: "block", marginBottom: 16 }}>
-            No transition statuses configured. Create your first status to get started.
+            No transition statuses configured. Create your first status and mark it as default.
           </Typography.Text>
           <PermissionGuard permission={Permission.StudentTransitionStatusesCreate}>
             <Button
@@ -405,6 +459,7 @@ export function TransitionStatusTab() {
         open={formModalOpen}
         target={formTarget}
         isInUse={usageCount > 0}
+        hasNoDefaultInTenant={!hasDefaultConfigured}
         onClose={handleCloseForm}
       />
       <DeleteTransitionStatusModal

@@ -109,6 +109,21 @@ const setupStatusApi = baseApi.injectEndpoints({
       transformResponse: extractTotalItems,
       providesTags: [ApiTagTypes.AdmissionCandidate, ApiTagTypes.SetupStatus],
     }),
+    getSetupDefaultTransitionStatusCount: builder.query<number, void>({
+      query: () => ({
+        url: "/student-transition-statuses",
+        method: "GET",
+        params: {
+          ...COUNT_PARAMS,
+          "boolean[isDefault]": true,
+        },
+      }),
+      transformResponse: extractTotalItems,
+      providesTags: [
+        { type: ApiTagTypes.StudentTransitionStatus, id: "LIST" },
+        ApiTagTypes.SetupStatus,
+      ],
+    }),
   }),
 });
 
@@ -122,6 +137,7 @@ export const {
   useGetSetupStudentCountQuery,
   useGetSetupAdmissionConfigCountQuery,
   useGetSetupAdmissionCandidateCountQuery,
+  useGetSetupDefaultTransitionStatusCountQuery,
 } = setupStatusApi;
 
 export default setupStatusApi;

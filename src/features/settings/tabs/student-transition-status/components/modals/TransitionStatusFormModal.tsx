@@ -1,6 +1,12 @@
 // Feature: student-transition-status
+import { ExplainerCallout } from "@/components/ui-kit";
 import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
+import {
+  STATE_CATEGORY_OPTIONS,
+  TRANSITION_STATUS_DEFAULT_WARNING,
+  TRANSITION_STATUS_NO_DEFAULT_CALLOUT,
+} from "@/shared/constants/studentTransitionStatusOptions";
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
 import { Alert, Button, Form, Input, Modal, Select, Switch, Typography } from "antd";
@@ -13,32 +19,46 @@ export type TransitionStatusFormModalProps = {
   open: boolean;
   target: StudentTransitionStatus | null;
   isInUse: boolean;
+  hasNoDefaultInTenant: boolean;
   onClose: () => void;
 };
-
-const STATE_CATEGORY_OPTIONS = [
-  { value: "POSITIVE", label: "Positive" },
-  { value: "NEGATIVE", label: "Negative" },
-  { value: "NEUTRAL", label: "Neutral" },
-];
 
 export function TransitionStatusFormModal({
   open,
   target,
   isInUse: isInUseProp,
+  hasNoDefaultInTenant,
   onClose,
 }: TransitionStatusFormModalProps) {
   const token = useToken();
-  const { state, actions, form } = useTransitionStatusFormModal(target, open, onClose);
-  const { isLoading, isEditMode, isInUse, showCourseRegWarning } = state;
-  const { handleSubmit, handleCancel, handleCanRegisterCoursesChange, setIsInUse } = actions;
+  const { state, actions, form } = useTransitionStatusFormModal(
+    target,
+    open,
+    onClose,
+  );
+  const {
+    isLoading,
+    isEditMode,
+    isInUse,
+    showCourseRegWarning,
+    isDefault,
+    isDefaultSwitchDisabled,
+  } = state;
+  const {
+    handleSubmit,
+    handleCancel,
+    handleCanRegisterCoursesChange,
+    handleIsDefaultChange,
+    setIsInUse,
+  } = actions;
 
-  // Sync the isInUse prop (from parent UsageCheck) into the hook when the modal opens
   useEffect(() => {
     if (open) {
       setIsInUse(isInUseProp);
     }
   }, [open, isInUseProp, setIsInUse]);
+
+  const showNoDefaultCallout = hasNoDefaultInTenant && !isEditMode;
 
   return (
     <Modal
@@ -59,7 +79,16 @@ export function TransitionStatusFormModal({
       }}
     >
       <div style={{ padding: 24 }}>
-        {/* Warning: status is in use */}
+        <ConditionalRenderer when={showNoDefaultCallout}>
+          <div style={{ marginBottom: 16 }}>
+            <ExplainerCallout
+              intent="warning"
+              title="Default status required"
+              body={TRANSITION_STATUS_NO_DEFAULT_CALLOUT}
+            />
+          </div>
+        </ConditionalRenderer>
+
         <ConditionalRenderer when={isInUse}>
           <div style={{ marginBottom: 16 }}>
             <Alert
@@ -70,7 +99,6 @@ export function TransitionStatusFormModal({
           </div>
         </ConditionalRenderer>
 
-        {/* Warning: disabling course registration on in-use status */}
         <ConditionalRenderer when={showCourseRegWarning}>
           <div style={{ marginBottom: 16 }}>
             <Alert
@@ -93,14 +121,17 @@ export function TransitionStatusFormModal({
             appearsOnBroadsheet: true,
             canRegisterCourses: false,
             canAccessPortal: true,
+            isDefault: false,
           }}
         >
-          {/* name */}
           <Form.Item
             name="name"
             label={
               <span>
-                Name <span style={{ color: token.colorError, fontWeight: 700 }}>*</span>
+                Name{" "}
+                <span style={{ color: token.colorError, fontWeight: 700 }}>
+                  *
+                </span>
               </span>
             }
             rules={nameRules}
@@ -108,7 +139,6 @@ export function TransitionStatusFormModal({
             <Input placeholder="e.g. Active Enrollment" style={{ height: 40 }} />
           </Form.Item>
 
-          {/* stateCategory */}
           <Form.Item name="stateCategory" label="State Category">
             <Select
               style={{ height: 40 }}
@@ -117,7 +147,6 @@ export function TransitionStatusFormModal({
             />
           </Form.Item>
 
-          {/* isTerminal */}
           <Form.Item
             name="isTerminal"
             label="Terminal Status"
@@ -126,7 +155,6 @@ export function TransitionStatusFormModal({
             <Switch />
           </Form.Item>
 
-          {/* countsTowardsResidency */}
           <Form.Item
             name="countsTowardsResidency"
             label="Counts Towards Residency"
@@ -135,7 +163,6 @@ export function TransitionStatusFormModal({
             <Switch />
           </Form.Item>
 
-          {/* appearsOnBroadsheet */}
           <Form.Item
             name="appearsOnBroadsheet"
             label="Appears on Broadsheet"
@@ -144,7 +171,6 @@ export function TransitionStatusFormModal({
             <Switch />
           </Form.Item>
 
-          {/* canRegisterCourses */}
           <Form.Item
             name="canRegisterCourses"
             label="Can Register Courses"
@@ -153,20 +179,48 @@ export function TransitionStatusFormModal({
             <Switch onChange={handleCanRegisterCoursesChange} />
           </Form.Item>
           <div style={{ marginTop: -16, marginBottom: 16 }}>
-            <Typography.Text type="secondary" style={{ fontSize: token.fontSizeSM }}>
-              Enabling this allows students in this status to register for courses.
+            <Typography.Text
+              type="secondary"
+              style={{ fontSize: token.fontSizeSM }}
+            >
+              Enabling this allows students in this status to register for
+              courses.
             </Typography.Text>
           </div>
 
-          {/* canAccessPortal */}
           <Form.Item
             name="canAccessPortal"
             label="Can Access Portal"
             valuePropName="checked"
-            style={{ marginBottom: 0 }}
           >
             <Switch />
           </Form.Item>
+
+          <Form.Item
+            name="isDefault"
+            label="Default Status"
+            valuePropName="checked"
+            style={{ marginBottom: isDefault ? 8 : 0 }}
+            extra={
+              isDefaultSwitchDisabled
+                ? "The current default cannot be unset. Set another status as default to change."
+                : undefined
+            }
+          >
+            <Switch
+              onChange={handleIsDefaultChange}
+              disabled={isDefaultSwitchDisabled}
+            />
+          </Form.Item>
+
+          <ConditionalRenderer when={isDefault && !isDefaultSwitchDisabled}>
+            <Alert
+              type="warning"
+              showIcon
+              message={TRANSITION_STATUS_DEFAULT_WARNING}
+              style={{ marginBottom: 0 }}
+            />
+          </ConditionalRenderer>
         </Form>
       </div>
 

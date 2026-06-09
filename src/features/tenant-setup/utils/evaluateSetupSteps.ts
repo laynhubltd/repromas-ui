@@ -27,6 +27,8 @@ function isStepComplete(id: SetupStepId, probes: SetupProbeCounts): boolean {
       return probes.courses > 0;
     case "staff":
       return probes.staff > 0;
+    case "transitionStatusDefault":
+      return probes.transitionStatusDefaults > 0;
     case "student":
       return probes.students > 0;
     case "admissionConfig":

@@ -5,15 +5,18 @@ import {
   notifyMutationSuccess,
 } from "@/shared/utils/feedback/notifyMutationSuccess";
 import { Form } from "antd";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useReducer } from "react";
 import {
-    useCreateTransitionStatusMutation,
-    useDeleteTransitionStatusMutation,
-    useUpdateTransitionStatusMutation,
+  useCreateTransitionStatusMutation,
+  useDeleteTransitionStatusMutation,
+  useUpdateTransitionStatusMutation,
 } from "../api/studentTransitionStatusApi";
+import {
+  TransitionStatusFormActionType,
+  initialTransitionStatusFormState,
+  transitionStatusFormReducer,
+} from "../state/transitionStatusFormState";
 import type { StateCategory, StudentTransitionStatus } from "../types/student-transition-status";
-
-// ─── Form field values shape ──────────────────────────────────────────────────
 
 type TransitionStatusFormValues = {
   name: string;
@@ -23,26 +26,32 @@ type TransitionStatusFormValues = {
   appearsOnBroadsheet: boolean;
   canRegisterCourses: boolean;
   canAccessPortal: boolean;
+  isDefault: boolean;
 };
-
-// ─── Upsert (Create / Edit) ───────────────────────────────────────────────────
 
 export function useTransitionStatusFormModal(
   target: StudentTransitionStatus | null,
   open: boolean,
-  onClose: () => void
+  onClose: () => void,
 ) {
   const isEditMode = target !== null;
   const [form] = Form.useForm<TransitionStatusFormValues>();
-  const [createTransitionStatus, { isLoading: isCreating }] = useCreateTransitionStatusMutation();
-  const [updateTransitionStatus, { isLoading: isUpdating }] = useUpdateTransitionStatusMutation();
+  const [state, dispatch] = useReducer(
+    transitionStatusFormReducer,
+    initialTransitionStatusFormState,
+  );
+  const { isDefault, showCourseRegWarning, isInUse } = state;
+
+  const [createTransitionStatus, { isLoading: isCreating }] =
+    useCreateTransitionStatusMutation();
+  const [updateTransitionStatus, { isLoading: isUpdating }] =
+    useUpdateTransitionStatusMutation();
   const handleApiError = useApiError();
-  const [isInUse, setIsInUse] = useState(false);
-  const [showCourseRegWarning, setShowCourseRegWarning] = useState(false);
 
   const isLoading = isCreating || isUpdating;
+  const isCurrentDefault = isEditMode && target.isDefault === true;
+  const isDefaultSwitchDisabled = isCurrentDefault;
 
-  // Pre-fill all 7 writable fields from target in edit mode
   useEffect(() => {
     if (open && target) {
       form.setFieldsValue({
@@ -53,31 +62,60 @@ export function useTransitionStatusFormModal(
         appearsOnBroadsheet: target.appearsOnBroadsheet,
         canRegisterCourses: target.canRegisterCourses,
         canAccessPortal: target.canAccessPortal,
+        isDefault: target.isDefault,
       });
-      setIsInUse(false);
-      setShowCourseRegWarning(false);
-    }
-    if (!open) {
-      setIsInUse(false);
-      setShowCourseRegWarning(false);
+      dispatch({
+        type: TransitionStatusFormActionType.SetIsDefault,
+        value: target.isDefault,
+      });
     }
   }, [open, target, form]);
 
-  const handleCanRegisterCoursesChange = (checked: boolean) => {
-    // Show warning when disabling course registration on an in-use status
-    if (isInUse && !checked && target?.canRegisterCourses === true) {
-      setShowCourseRegWarning(true);
-    } else {
-      setShowCourseRegWarning(false);
-    }
-  };
+  const reset = useCallback(() => {
+    form.resetFields();
+    dispatch({ type: TransitionStatusFormActionType.Reset });
+  }, [form]);
+
+  const setIsInUse = useCallback((value: boolean) => {
+    dispatch({ type: TransitionStatusFormActionType.SetIsInUse, value });
+  }, []);
+
+  const handleIsDefaultChange = useCallback(
+    (value: boolean) => {
+      if (isDefaultSwitchDisabled && !value) {
+        return;
+      }
+      dispatch({
+        type: TransitionStatusFormActionType.SetIsDefault,
+        value,
+      });
+      form.setFieldValue("isDefault", value);
+    },
+    [form, isDefaultSwitchDisabled],
+  );
+
+  const handleCanRegisterCoursesChange = useCallback(
+    (checked: boolean) => {
+      if (isInUse && !checked && target?.canRegisterCourses === true) {
+        dispatch({
+          type: TransitionStatusFormActionType.SetShowCourseRegWarning,
+          value: true,
+        });
+      } else {
+        dispatch({
+          type: TransitionStatusFormActionType.SetShowCourseRegWarning,
+          value: false,
+        });
+      }
+    },
+    [isInUse, target?.canRegisterCourses],
+  );
 
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
 
       if (isEditMode) {
-        // PUT always sends all 7 writable fields
         await updateTransitionStatus({
           id: target.id,
           name: values.name.trim(),
@@ -87,6 +125,7 @@ export function useTransitionStatusFormModal(
           appearsOnBroadsheet: values.appearsOnBroadsheet,
           canRegisterCourses: values.canRegisterCourses,
           canAccessPortal: values.canAccessPortal,
+          isDefault: values.isDefault,
         }).unwrap();
       } else {
         await createTransitionStatus({
@@ -97,6 +136,7 @@ export function useTransitionStatusFormModal(
           appearsOnBroadsheet: values.appearsOnBroadsheet,
           canRegisterCourses: values.canRegisterCourses,
           canAccessPortal: values.canAccessPortal,
+          isDefault: values.isDefault,
         }).unwrap();
       }
 
@@ -106,7 +146,7 @@ export function useTransitionStatusFormModal(
           isEditMode ? "updated" : "created",
         ),
       );
-      form.resetFields();
+      reset();
       onClose();
     } catch (err: unknown) {
       const decision = handleApiError(err, {
@@ -123,9 +163,7 @@ export function useTransitionStatusFormModal(
   };
 
   const handleCancel = () => {
-    form.resetFields();
-    setIsInUse(false);
-    setShowCourseRegWarning(false);
+    reset();
     onClose();
   };
 
@@ -135,34 +173,38 @@ export function useTransitionStatusFormModal(
       isEditMode,
       isInUse,
       showCourseRegWarning,
+      isDefault,
+      isDefaultSwitchDisabled,
     },
     actions: {
       handleSubmit,
       handleCancel,
       handleCanRegisterCoursesChange,
+      handleIsDefaultChange,
       setIsInUse,
     },
     form,
   };
 }
 
-// ─── Delete ───────────────────────────────────────────────────────────────────
-
 export function useDeleteTransitionStatusModal(
   target: StudentTransitionStatus | null,
   usageCount: number,
   open: boolean,
-  onClose: () => void
+  onClose: () => void,
 ) {
-  const [deleteTransitionStatus, { isLoading }] = useDeleteTransitionStatusMutation();
+  const [deleteTransitionStatus, { isLoading }] =
+    useDeleteTransitionStatusMutation();
   const handleApiError = useApiError();
 
-  const isBlocked = usageCount > 0;
+  const isDefaultStatus = target?.isDefault === true;
+  const isUsageBlocked = usageCount > 0;
+  const isBlocked = isDefaultStatus || isUsageBlocked;
 
   void open;
 
   const handleConfirm = async () => {
-    if (!target) return;
+    if (!target || isBlocked) return;
     try {
       await deleteTransitionStatus(target.id).unwrap();
       notifyMutationSuccess(
@@ -187,6 +229,8 @@ export function useDeleteTransitionStatusModal(
     state: {
       isLoading,
       isBlocked,
+      isDefaultStatus,
+      isUsageBlocked,
       usageCount,
     },
     actions: {

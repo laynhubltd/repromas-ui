@@ -103,6 +103,11 @@ const SETUP_ERROR_PATTERNS: Array<{
       'Score sheets cannot be created because no default evaluation status is configured. Please contact your administrator.',
   },
   {
+    match: /no default studenttransitionstatus|no default transition status/i,
+    message:
+      "Students cannot be enrolled until a default transition status is configured. Go to Settings → Transition Statuses and mark one status as default.",
+  },
+  {
     match: /no assessment policy found/i,
     message:
       'Scores cannot be graded because no assessment policy is configured for this course. Please contact your administrator.',

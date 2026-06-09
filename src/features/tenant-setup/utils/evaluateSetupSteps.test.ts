@@ -12,6 +12,7 @@ const emptyProbes: SetupProbeCounts = {
   curriculumVersions: 0,
   courses: 0,
   staff: 0,
+  transitionStatusDefaults: 0,
   students: 0,
   admissionConfigs: 0,
   admissionCandidates: 0,
@@ -35,7 +36,7 @@ describe("evaluateSetupSteps", () => {
     expect(evaluation.currentStepId).toBe("level");
   });
 
-  it("blocks students until program, level, and curriculum exist", () => {
+  it("blocks students until program, level, curriculum, and default transition status exist", () => {
     const evaluation = evaluateSetupSteps({
       ...emptyProbes,
       departments: 1,
@@ -49,8 +50,17 @@ describe("evaluateSetupSteps", () => {
       programs: 1,
       levels: 1,
       curriculumVersions: 1,
+      transitionStatusDefaults: 1,
     });
     expect(ready.steps.student.accessible).toBe(true);
+  });
+
+  it("marks transitionStatusDefault complete when a default status exists", () => {
+    const evaluation = evaluateSetupSteps({
+      ...emptyProbes,
+      transitionStatusDefaults: 1,
+    });
+    expect(evaluation.steps.transitionStatusDefault.complete).toBe(true);
   });
 
   it("marks phase 1 complete when foundation entities exist", () => {
