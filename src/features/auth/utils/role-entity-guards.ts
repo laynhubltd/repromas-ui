@@ -19,7 +19,7 @@ export function isAuthFacultyEntity(
     "code" in entity &&
     !("facultyId" in entity) &&
     !("matricNumber" in entity) &&
-    !("jamb_reg_no" in entity)
+    !("jambRegNo" in entity)
   );
 }
 
@@ -70,6 +70,6 @@ export function isAuthCandidateEntity(
     scope === "CANDIDATE" &&
     entity !== null &&
     typeof entity === "object" &&
-    "jamb_reg_no" in entity
+    "jambRegNo" in entity
   );
 }

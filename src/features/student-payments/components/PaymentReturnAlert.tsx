@@ -46,6 +46,13 @@ export function PaymentReturnAlert({ polling }: PaymentReturnAlertProps) {
                 {STUDENT_PAYMENT_UI_COPY.retryPoll}
               </Button>
             ) : null}
+            {ui.state === "success" ? (
+              <Link to={ui.continueApplicationUrl}>
+                <Button type="primary" size="small">
+                  {STUDENT_PAYMENT_UI_COPY.continueApplicationCta}
+                </Button>
+              </Link>
+            ) : null}
             {ui.state === "success" && ui.paymentId ? (
               <Link
                 to={generatePath(appPaths.studentPaymentReceipt, {

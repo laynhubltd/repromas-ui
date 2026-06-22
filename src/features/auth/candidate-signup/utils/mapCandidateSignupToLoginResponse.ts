@@ -21,9 +21,7 @@ function mapSignupRole(
     name: role.name,
     scope: toAuthRoleScope(role.scope),
     scopeReferenceId:
-      scopeRef === null || scopeRef === undefined
-        ? null
-        : Number(scopeRef),
+      scopeRef === null || scopeRef === undefined ? null : Number(scopeRef),
     entity: null,
   };
 }
@@ -41,19 +39,19 @@ export function mapCandidateSignupToLoginResponse(
             scopeReferenceId: data.candidateId,
             entity: {
               id: data.candidateId,
-              cycle_id: 0,
-              jamb_reg_no: "",
-              first_name: data.profile.firstName,
-              last_name: data.profile.lastName,
-              date_of_birth: null,
+              cycleId: 0,
+              jambRegNo: "",
+              firstName: data.profile.firstName,
+              lastName: data.profile.lastName,
+              dateOfBirth: null,
               gender: null,
-              state_id: 0,
-              lga_id: null,
+              stateId: 0,
+              lgaId: null,
               email: data.user.email,
               phone: null,
-              entry_mode: "UTME",
+              entryMode: "UTME",
               metadata: null,
-              created_at: "",
+              createdAt: "",
               application: null,
               state: null,
               lga: null,

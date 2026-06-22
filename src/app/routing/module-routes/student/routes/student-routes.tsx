@@ -44,6 +44,24 @@ const CandidateBioDataPage = lazy(() =>
   })),
 );
 
+const AdmissionApplicationPage = lazy(() =>
+  import("@/features/admission-application").then((m) => ({
+    default: m.AdmissionApplicationPage,
+  })),
+);
+
+const AdmissionApplicationWizard = lazy(() =>
+  import("@/features/admission-application").then((m) => ({
+    default: m.AdmissionApplicationWizard,
+  })),
+);
+
+const StudentAdmissionPage = lazy(() =>
+  import("@/features/student-admission").then((m) => ({
+    default: m.StudentAdmissionPage,
+  })),
+);
+
 const GuardedStudentShell = withAuthGuard({
   Component: StudentShell,
   fallback: null,
@@ -66,6 +84,9 @@ export function getStudentRouteEntries() {
             path="payments/:paymentId"
             element={<StudentPaymentReceiptPage />}
           />
+          <Route path="apply" element={<AdmissionApplicationWizard />} />
+          <Route path="application" element={<AdmissionApplicationPage />} />
+          <Route path="admission" element={<StudentAdmissionPage />} />
           <Route path="bio-data" element={<CandidateBioDataPage />} />
         </Route>
       </Route>

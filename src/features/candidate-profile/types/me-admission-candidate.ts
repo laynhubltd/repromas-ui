@@ -1,10 +1,10 @@
-import type { AdmissionEntryMode } from "@/features/admission-config/tabs/admission-cycle/types/admission-cycle";
 import type {
-  AdmissionApplication,
-  CandidateGender,
-  LgaRef,
-  StateRef,
-} from "@/features/admission-candidate/types/admission-candidate";
+    AdmissionApplication,
+    CandidateGender,
+    LgaRef,
+    StateRef,
+} from "@/features/admission-candidate/tabs/candidate/types/admission-candidate";
+import type { AdmissionEntryMode } from "@/features/admission-config/tabs/admission-cycle/types/admission-cycle";
 
 export type MeAdmissionCycleEmbed = {
   id: number;

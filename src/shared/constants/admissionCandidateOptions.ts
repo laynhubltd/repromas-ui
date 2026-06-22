@@ -2,7 +2,9 @@ import type {
   CandidateEntryMode,
   CandidateGender,
   CandidateIntakeMode,
-} from "@/features/admission-candidate/types/admission-candidate";
+  OfferDecision,
+  SeatBucket,
+} from "@/features/admission-candidate/tabs/candidate/types/admission-candidate";
 
 export const CANDIDATE_GENDER_OPTIONS: {
   value: CandidateGender;
@@ -29,11 +31,10 @@ export const ADMISSION_CANDIDATE_SORT_DEFAULT = "createdAt:desc";
 
 export const ADMISSION_CANDIDATE_ITEMS_PER_PAGE = 30;
 
-export const ADMISSION_CANDIDATE_LIST_INCLUDE =
-  "application,screening,state";
+export const ADMISSION_CANDIDATE_LIST_INCLUDE = "application,screening,state";
 
 export const ADMISSION_CANDIDATE_DETAIL_INCLUDE =
-  "application.appliedProgram,application.offeredProgram,application.candidate.jambScores.subject,screening,state,lga,cycle";
+  "application.appliedProgram,application.offeredProgram,application.candidate.jambScores.subject,application.candidate.olevelSittings.grades.subject,screening,state,lga,cycle";
 
 export const CAPS_TEMPLATE_FILENAME =
   "admission-jamb-caps-upload-template.xlsx";
@@ -74,7 +75,8 @@ export const ADMISSION_CANDIDATE_CREATE_UI_COPY = {
   modalTitleResult: "Candidate processed",
   intakeClosedBanner:
     "Candidate intake is closed for this cycle. Ingestion is only allowed during Pre-processing or Application Open.",
-  manualModeHelper: "For walk-in or direct entry applicants without a JAMB registration number.",
+  manualModeHelper:
+    "For walk-in or direct entry applicants without a JAMB registration number.",
   jambModeHelper:
     "Enter the JAMB registration number and optional subject scores for CAPS parity.",
   manualConfirmTitle: "Create without JAMB number?",
@@ -100,3 +102,18 @@ export const ADMISSION_CANDIDATE_CREATE_UI_COPY = {
   cancel: "Cancel",
   successWithWarnings: "Candidate processed with notes.",
 } as const;
+
+export const OFFER_DECISION_OPTIONS: { value: OfferDecision; label: string }[] =
+  [
+    { value: "ADMIT_MERIT", label: "Admit (Merit)" },
+    { value: "ADMIT_CATCHMENT", label: "Admit (Catchment)" },
+    { value: "ADMIT_ELDS", label: "Admit (ELDS)" },
+    { value: "OFFER_CHANGE_OF_COURSE", label: "Change of course" },
+    { value: "REJECTED", label: "Rejected" },
+  ];
+
+export const SEAT_BUCKET_OPTIONS: { value: SeatBucket; label: string }[] = [
+  { value: "MERIT", label: "Merit" },
+  { value: "CATCHMENT", label: "Catchment" },
+  { value: "ELDS", label: "ELDS" },
+];

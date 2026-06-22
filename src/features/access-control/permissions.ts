@@ -296,6 +296,31 @@ export const Permission = {
   BillingInvoicesList: "system-configs:list",
   BillingPaymentsList: "system-configs:list",
   BillingPaymentTransactionsList: "system-configs:list",
+  // Dynamic Forms
+  DynamicFormsList: "dynamic-forms:list",
+  DynamicFormsRead: "dynamic-forms:read",
+  DynamicFormsCreate: "dynamic-forms:create",
+  DynamicFormsUpdate: "dynamic-forms:update",
+  DynamicFormsDelete: "dynamic-forms:delete",
+  DynamicFormsManage: "dynamic-forms:manage",
+  // Dynamic Form Assignments
+  DynamicFormAssignmentsList: "dynamic-form-assignments:list",
+  DynamicFormAssignmentsRead: "dynamic-form-assignments:read",
+  DynamicFormAssignmentsCreate: "dynamic-form-assignments:create",
+  DynamicFormAssignmentsUpdate: "dynamic-form-assignments:update",
+  DynamicFormAssignmentsDelete: "dynamic-form-assignments:delete",
+  DynamicFormAssignmentsManage: "dynamic-form-assignments:manage",
+  // Dynamic Form Submissions
+  DynamicFormSubmissionsList: "dynamic-form-submissions:list",
+  DynamicFormSubmissionsRead: "dynamic-form-submissions:read",
+
+  AdmissionRecommendedCandidatesList: "admission-recommended-candidates:list",
+
+  // Admission Document Types
+  AdmissionDocumentTypesList: "system-configs:list",
+  AdmissionDocumentTypesCreate: "system-configs:create",
+  AdmissionDocumentTypesUpdate: "system-configs:update",
+  AdmissionDocumentTypesDelete: "system-configs:delete",
 } as const;
 
 export type Permission = (typeof Permission)[keyof typeof Permission];

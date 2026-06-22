@@ -20,8 +20,6 @@ export function resolveHost(
   const hostname = normalizeHostname(rawHostname);
   const apexDomain = normalizeApexDomain(options.apexDomain);
 
-  console.log({ hostname, apexDomain });
-
   if (!hostname) {
     return {
       kind: "unknown",

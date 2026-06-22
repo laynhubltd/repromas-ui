@@ -3,6 +3,7 @@ import { useAccessControl } from "@/features/access-control/use-access-control";
 import {
   DollarOutlined,
   FileOutlined,
+  FileTextOutlined,
   FormOutlined,
   HomeOutlined,
   TrophyOutlined,
@@ -49,10 +50,28 @@ export const studentRoutesMenuList: StudentRouteMenuItem[] = [
     allowedScopes: [StudentPortalScope.Student],
   },
   {
+    key: appPaths.StudentApply,
+    icon: <FormOutlined />,
+    label: "Apply",
+    allowedScopes: [StudentPortalScope.Candidate],
+  },
+  {
+    key: appPaths.StudentApplication,
+    icon: <FileOutlined />,
+    label: "Application",
+    allowedScopes: [StudentPortalScope.Candidate],
+  },
+  {
+    key: appPaths.StudentAdmission,
+    icon: <FileTextOutlined />,
+    label: "Admission",
+    allowedScopes: [StudentPortalScope.Candidate],
+  },
+  {
     key: appPaths.StudentBioData,
     icon: <UserOutlined />,
     label: "Bio Data",
-    allowedScopes: [StudentPortalScope.Student, StudentPortalScope.Candidate],
+    allowedScopes: [StudentPortalScope.Student],
   },
 ];
 

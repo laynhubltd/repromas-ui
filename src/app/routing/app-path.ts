@@ -28,6 +28,9 @@ export const appPaths = {
   studentPaymentReceipt: "/payments/:paymentId",
   StudentResults: "/results",
   StudentBioData: "/bio-data",
+  StudentApply: "/apply",
+  StudentApplication: "/application",
+  StudentAdmission: "/admission",
 
   // Add other app paths here
 };

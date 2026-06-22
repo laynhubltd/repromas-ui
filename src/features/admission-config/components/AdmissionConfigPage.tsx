@@ -3,6 +3,8 @@
 
 import { Tabs } from "@/components/ui-kit";
 import { AdmissionCycleTab } from "../tabs/admission-cycle";
+import { DocumentTypeTab } from "../tabs/document-type";
+import { DynamicFormsTab } from "../tabs/dynamic-forms";
 import { GeographyRuleTab } from "../tabs/geography-rule";
 import { JambRuleTab } from "../tabs/jamb-rule";
 import { OlevelGradePointTab } from "../tabs/olevel-grade-point";
@@ -63,6 +65,16 @@ export function AdmissionConfigPage() {
             key: "scoring-strategy",
             label: "Scoring Strategy",
             children: <ScoringStrategyTab />,
+          },
+          {
+            key: "document-type",
+            label: "Document Types",
+            children: <DocumentTypeTab />,
+          },
+          {
+            key: "dynamic-forms",
+            label: "Form Builder",
+            children: <DynamicFormsTab />,
           },
         ]}
         defaultActiveKey="admission-cycle"

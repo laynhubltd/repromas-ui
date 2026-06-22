@@ -4,6 +4,7 @@ import { Permission } from "@/features/access-control/permissions";
 import { useToken } from "@/shared/hooks/useToken";
 import { DataLoader } from "@/shared/ui/DataLoader";
 import { ErrorAlert } from "@/shared/ui/ErrorAlert";
+import { MetadataRenderer } from "@/shared/ui/MetadataRenderer";
 import { SkeletonRows } from "@/shared/ui/SkeletonRows";
 import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
 import { Breadcrumb, Button, Descriptions, Drawer, Flex, Typography } from "antd";
@@ -142,8 +143,16 @@ export function StudentDrawer({
             </Descriptions>
 
             <TransitionsSection studentId={student.id} />
+
+            <MetadataRenderer
+              title="Metadata"
+              value={student.metaData}
+              variant="descriptions"
+              size="small"
+              bordered
+              column={1}
+            />
           </Flex>
-          
           </>
         ) : null}
       </DataLoader>
