@@ -1,7 +1,7 @@
 import type {
     AdmissionCandidate,
     AdmissionCandidateJambScore,
-} from "../tabs/candidate/types/admission-candidate";
+} from "../types/admission-candidate";
 
 /** JAMB scores are nested under application.candidate per API include paths. */
 export function getCandidateJambScores(

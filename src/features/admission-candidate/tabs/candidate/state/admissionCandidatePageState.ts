@@ -1,7 +1,7 @@
 import type {
     CandidateEntryMode,
     CandidateGender,
-} from "../tabs/candidate/types/admission-candidate";
+} from "../types/admission-candidate";
 
 export const AdmissionCandidatePageActionType = {
   SetCycleId: "SET_CYCLE_ID",
@@ -21,6 +21,8 @@ export const AdmissionCandidatePageActionType = {
   SetBulkUploadModalOpen: "SET_BULK_UPLOAD_MODAL_OPEN",
   SetOfferTargetId: "SET_OFFER_TARGET_ID",
   SetMatriculateTargetId: "SET_MATRICULATE_TARGET_ID",
+  SetMetadataModalOpen: "SET_METADATA_MODAL_OPEN",
+  SetMetadataTargetId: "SET_METADATA_TARGET_ID",
   Reset: "RESET",
 } as const;
 
@@ -42,6 +44,8 @@ export type AdmissionCandidatePageState = {
   bulkUploadModalOpen: boolean;
   offerTargetId: number | null;
   matriculateTargetId: number | null;
+  metadataModalOpen: boolean;
+  metadataTargetId: number | null;
 };
 
 export type AdmissionCandidatePageAction =
@@ -107,6 +111,14 @@ export type AdmissionCandidatePageAction =
       type: typeof AdmissionCandidatePageActionType.SetMatriculateTargetId;
       id: number | null;
     }
+  | {
+      type: typeof AdmissionCandidatePageActionType.SetMetadataModalOpen;
+      open: boolean;
+    }
+  | {
+      type: typeof AdmissionCandidatePageActionType.SetMetadataTargetId;
+      id: number | null;
+    }
   | { type: typeof AdmissionCandidatePageActionType.Reset };
 
 export const initialAdmissionCandidatePageState: AdmissionCandidatePageState = {
@@ -127,6 +139,8 @@ export const initialAdmissionCandidatePageState: AdmissionCandidatePageState = {
   bulkUploadModalOpen: false,
   offerTargetId: null,
   matriculateTargetId: null,
+  metadataModalOpen: false,
+  metadataTargetId: null,
 };
 
 export function admissionCandidatePageReducer(
@@ -174,5 +188,9 @@ export function admissionCandidatePageReducer(
       return { ...state, matriculateTargetId: action.id };
     case AdmissionCandidatePageActionType.Reset:
       return initialAdmissionCandidatePageState;
+    default: {
+      const _exhaustive: never = action;
+      return _exhaustive;
+    }
   }
 }

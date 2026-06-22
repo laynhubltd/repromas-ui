@@ -3,7 +3,7 @@ import {
   formatApplicationStatusLabel,
   formatCapsWarningMessage,
   formatCapsWarningStage,
-} from "@/features/admission-candidate/utils/capsWarningDisplay";
+} from "@/features/admission-candidate/tabs/candidate/utils/capsWarningDisplay";
 
 describe("capsWarningDisplay", () => {
   it("maps known warning stages", () => {
