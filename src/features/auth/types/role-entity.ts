@@ -2,11 +2,11 @@ import type {
   Department,
   Faculty,
 } from "@/features/academic-structure/types/faculty";
-import type { AdmissionCycleStatus } from "@/features/admission-config/tabs/admission-cycle/types/admission-cycle";
 import type {
   LgaRef,
   StateRef,
-} from "@/features/admission-candidate/types/admission-candidate";
+} from "@/features/admission-candidate/tabs/candidate/types/admission-candidate";
+import type { AdmissionCycleStatus } from "@/features/admission-config/tabs/admission-cycle/types/admission-cycle";
 import type { Program } from "@/features/program/tabs/programs/types/program";
 import type {
   AcademicSession,
@@ -98,13 +98,13 @@ export type AuthCandidateFinalDecision =
 
 export type AuthCandidateApplication = {
   id: number;
-  candidate_id: number;
-  applied_program_id: number;
-  offered_program_id: number | null;
-  application_status: AuthCandidateApplicationStatus;
-  final_decision: AuthCandidateFinalDecision;
-  is_matriculated: boolean;
-  updated_at: string;
+  candidateId: number;
+  appliedProgramId: number;
+  offeredProgramId: number | null;
+  applicationStatus: AuthCandidateApplicationStatus;
+  finalDecision: AuthCandidateFinalDecision;
+  isMatriculated: boolean;
+  updatedAt: string;
 };
 
 export type AuthCandidateCycleEmbed = {
@@ -120,19 +120,19 @@ export type AuthCandidateCycleEmbed = {
 /** Login / role-switch wire format — snake_case at root per API contract. */
 export type AuthCandidateEntity = {
   id: number;
-  cycle_id: number;
-  jamb_reg_no: string;
-  first_name: string;
-  last_name: string;
-  date_of_birth: string | null;
+  cycleId: number;
+  jambRegNo: string;
+  firstName: string;
+  lastName: string;
+  dateOfBirth: string | null;
   gender: string | null;
-  state_id: number;
-  lga_id: number | null;
+  stateId: number;
+  lgaId: number | null;
   email: string | null;
   phone: string | null;
-  entry_mode: string;
+  entryMode: string;
   metadata: Record<string, unknown> | null;
-  created_at: string;
+  createdAt: string;
   application: AuthCandidateApplication | null;
   state: StateRef | null;
   lga: LgaRef | null;

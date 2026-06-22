@@ -69,6 +69,7 @@ export const STUDENT_PAYMENT_UI_COPY = {
   retryPoll: "Check again",
   viewPaymentHistory: "View payment history",
   viewReceiptCta: "View receipt",
+  continueApplicationCta: "Continue application",
   copyReference: "Copy reference",
   referenceCopied: "Reference copied",
   lineAmount: "Amount",

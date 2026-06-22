@@ -6,15 +6,17 @@ import type { WorkflowBlockingUi } from "../utils/workflowStepDecisionDisplay";
 
 type BillingWorkflowBlockingBannerProps = {
   blockingUi: WorkflowBlockingUi;
-  onPayNow: (payload: WorkflowPayNowPayload) => void;
+  onPayNow: (payload: WorkflowPayNowPayload) => void | Promise<void>;
   onRetry?: () => void;
+  isPayNowLoading?: boolean;
 };
 
 type BannerCtaProps = {
   blockingUi: WorkflowBlockingUi;
-  onPayNow: (payload: WorkflowPayNowPayload) => void;
+  onPayNow: (payload: WorkflowPayNowPayload) => void | Promise<void>;
   onRetry?: () => void;
   isMobile: boolean;
+  isPayNowLoading?: boolean;
 };
 
 function BannerCta({
@@ -22,6 +24,7 @@ function BannerCta({
   onPayNow,
   onRetry,
   isMobile,
+  isPayNowLoading = false,
 }: BannerCtaProps) {
   if (blockingUi.variant === "preparing" && onRetry) {
     return (
@@ -45,11 +48,13 @@ function BannerCta({
     : BILLING_WORKFLOW_UI_COPY.payNow;
 
   const handlePayNow = () => {
+    if (isPayNowLoading) return;
+
     const { primaryItem } = blockingUi;
     if (!primaryItem || primaryItem.feeChargeId === null) {
       return;
     }
-    onPayNow({
+    void onPayNow({
       feeChargeId: primaryItem.feeChargeId,
       eventCode: primaryItem.eventCode,
       amountOutstandingRequired: primaryItem.amountOutstandingRequired,
@@ -60,6 +65,8 @@ function BannerCta({
     <Button
       type="primary"
       block={isMobile}
+      loading={isPayNowLoading}
+      disabled={isPayNowLoading}
       onClick={handlePayNow}
       data-testid="billing-workflow-pay-now-button"
     >
@@ -72,6 +79,7 @@ export function BillingWorkflowBlockingBanner({
   blockingUi,
   onPayNow,
   onRetry,
+  isPayNowLoading = false,
 }: BillingWorkflowBlockingBannerProps) {
   const isMobile = useIsMobile();
 
@@ -98,6 +106,7 @@ export function BillingWorkflowBlockingBanner({
       onPayNow={onPayNow}
       onRetry={onRetry}
       isMobile={isMobile}
+      isPayNowLoading={isPayNowLoading}
     />
   );
 

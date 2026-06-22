@@ -1,13 +1,16 @@
+import { baseApi } from "@/app/api/baseApi";
+import { clearAllSubmissionIds } from "@/features/admission-application/state/admissionApplicationSessionSlice";
 import { isTokenExpired } from "@/shared/utils/token-util";
 import { createListenerMiddleware } from "@reduxjs/toolkit";
 import { REHYDRATE } from "redux-persist";
 import {
-    authCleared,
-    roleSelected,
-    roleSwitched,
-    userLoggedIn,
+  authCleared,
+  roleSelected,
+  roleSwitched,
+  userLoggedIn,
+  userLoggedOut,
 } from "../events";
-import { type AuthState } from "./auth-slice";
+import { clearAuth, type AuthState } from "./auth-slice";
 
 type ListenerRootState = { auth: AuthState };
 
@@ -21,12 +24,38 @@ const startListening = authListenerMiddleware.startListening.withTypes<
 
 startListening({
   actionCreator: userLoggedIn,
-  effect: async () => {
+  effect: async (_action, listenerApi) => {
+    // Drop cached API data from any prior session/user before the new tree mounts.
+    listenerApi.dispatch(baseApi.util.resetApiState());
+
     const { persistor } = await import("@/app/store");
     await persistor.flush();
     // No redirect needed — HostRouter reads auth state directly
     // and transitions to the authenticated route tree on its own.
   },
+});
+
+const clearUserScopedClientState = (
+  _action: unknown,
+  listenerApi: { dispatch: (action: unknown) => void },
+) => {
+  listenerApi.dispatch(clearAllSubmissionIds());
+  listenerApi.dispatch(baseApi.util.resetApiState());
+};
+
+startListening({
+  actionCreator: authCleared,
+  effect: clearUserScopedClientState,
+});
+
+startListening({
+  actionCreator: userLoggedOut,
+  effect: clearUserScopedClientState,
+});
+
+startListening({
+  actionCreator: clearAuth,
+  effect: clearUserScopedClientState,
 });
 
 startListening({
@@ -36,12 +65,12 @@ startListening({
   },
 });
 
-startListening({
-  actionCreator: roleSwitched,
-  effect: async (_action, _listenerApi) => {
-    // Hook point for future analytics
-  },
-});
+// startListening({
+//   actionCreator: roleSwitched,
+//   effect: async (_action, _listenerApi) => {
+//     // Hook point for future analytics
+//   },
+// });
 
 startListening({
   predicate: (action) => action.type === REHYDRATE,

@@ -4,7 +4,7 @@ import { useApiError } from "@/shared/hooks/useApiError";
 import { RequestScreen } from "@/shared/types/error-ui";
 import { deriveSectionErrorMessage } from "@/shared/utils/error/deriveSectionErrorMessage";
 import { useCallback, useEffect, useMemo, useReducer } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   useGetMyInvoiceQuery,
   useInitiateFeeChargePaymentMutation,
@@ -15,11 +15,13 @@ import {
   StudentInvoicePayPageActionType,
 } from "../state/studentInvoicePayPageState";
 import { saveCheckoutContext } from "@/features/student-payments/utils/paymentSession";
+import { validateReturnUrl } from "@/shared/utils/validateReturnUrl";
 import { buildSelectedOptionalLineIdsParam } from "../utils/invoiceDisplay";
 import { resolvePayerTypeFromScope } from "../utils/resolvePayerType";
 
 export function useStudentInvoicePayPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { invoiceId: invoiceIdParam } = useParams<{ invoiceId: string }>();
   const { activeRole, userProfile } = useAuthState();
   const handleApiError = useApiError();
@@ -27,6 +29,25 @@ export function useStudentInvoicePayPage() {
   const invoiceId = Number.parseInt(invoiceIdParam ?? "", 10);
   const payerType = resolvePayerTypeFromScope(activeRole?.scope);
   const skip = payerType === null || Number.isNaN(invoiceId);
+  const validatedReturnTo = useMemo(
+    () => validateReturnUrl(searchParams.get("returnTo")),
+    [searchParams],
+  );
+
+  const buildInvoicesReturnPath = useCallback(
+    (providerReference?: string) => {
+      const redirect = new URL(appPaths.StudentInvoices, "http://local");
+      redirect.searchParams.set("paymentReturn", "1");
+      if (providerReference) {
+        redirect.searchParams.set("providerReference", providerReference);
+      }
+      if (validatedReturnTo) {
+        redirect.searchParams.set("returnTo", validatedReturnTo);
+      }
+      return `${redirect.pathname}${redirect.search}`;
+    },
+    [validatedReturnTo],
+  );
 
   const [state, dispatch] = useReducer(
     studentInvoicePayPageReducer,
@@ -117,7 +138,7 @@ export function useStudentInvoicePayPage() {
       const result = await initiatePayment({
         feeChargeId: invoice.feeChargeId,
         body: {
-          redirectUrl: `${window.location.origin}${appPaths.StudentInvoices}?paymentReturn=1`,
+          redirectUrl: `${window.location.origin}${buildInvoicesReturnPath()}`,
           customerEmail: userProfile?.email ?? undefined,
           customerName:
             [userProfile?.firstName, userProfile?.lastName]
@@ -132,11 +153,6 @@ export function useStudentInvoicePayPage() {
       }).unwrap();
 
       if (result.providerReference) {
-        const redirect = new URL(
-          `${window.location.origin}${appPaths.StudentInvoices}`,
-        );
-        redirect.searchParams.set("paymentReturn", "1");
-        redirect.searchParams.set("providerReference", result.providerReference);
         saveCheckoutContext({
           providerReference: result.providerReference,
           amount: result.amount,
@@ -155,6 +171,7 @@ export function useStudentInvoicePayPage() {
     }
   }, [
     handleApiError,
+    buildInvoicesReturnPath,
     initiatePayment,
     invoice,
     state.selectedOptionalLineIds,

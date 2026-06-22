@@ -1,7 +1,7 @@
 import { validators } from "@/shared/utils/validators";
 import type { Rule } from "antd/es/form";
 
-export { jambRegNoRules } from "@/features/admission-candidate/utils/validators";
+export { jambRegNoRules } from "@/features/admission-candidate/tabs/candidate/utils/validators";
 
 export const emailRules: Rule[] = [
   { required: true, message: "Email is required" },
@@ -50,5 +50,6 @@ export const lgaIdRules: Rule[] = [
 export {
   firstNameRules,
   lastNameRules,
-  stateIdRules,
-} from "@/features/admission-candidate/utils/validators";
+  stateIdRules
+} from "@/features/admission-candidate/tabs/candidate/utils/validators";
+

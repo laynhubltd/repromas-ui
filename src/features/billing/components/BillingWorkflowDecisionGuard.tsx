@@ -1,5 +1,5 @@
-import { BILLING_WORKFLOW_UI_COPY } from "@/shared/constants/billingWorkflowOptions";
 import type { WorkflowStep } from "@/shared/constants/billingWorkflowOptions";
+import { BILLING_WORKFLOW_UI_COPY } from "@/shared/constants/billingWorkflowOptions";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
 import { DataLoader } from "@/shared/ui/DataLoader";
 import { ErrorAlert } from "@/shared/ui/ErrorAlert";
@@ -14,7 +14,8 @@ export type BillingWorkflowDecisionGuardProps = {
   eventCode?: string;
   skip?: boolean;
   children: ReactNode;
-  onPayNow?: (payload: WorkflowPayNowPayload) => void;
+  onPayNow?: (payload: WorkflowPayNowPayload) => void | Promise<void>;
+  isPayNowLoading?: boolean;
   showBanner?: boolean;
 };
 
@@ -24,11 +25,12 @@ export function BillingWorkflowDecisionGuard({
   skip = false,
   children,
   onPayNow,
+  isPayNowLoading = false,
   showBanner = true,
 }: BillingWorkflowDecisionGuardProps) {
   const { state, actions, flags } = useBillingWorkflowDecisionGuard(
     workflowStep,
-    { eventCode, skip, onPayNow },
+    { eventCode, skip, onPayNow, isPayNowLoading },
   );
 
   if (flags.skip) {
@@ -53,6 +55,7 @@ export function BillingWorkflowDecisionGuard({
             blockingUi={state.blockingUi}
             onPayNow={actions.handlePayNow}
             onRetry={actions.handleRetry}
+            isPayNowLoading={flags.isPayNowLoading}
           />
         </ConditionalRenderer>
 

@@ -8,6 +8,7 @@ import {
 import { useIsMobile } from "@/hooks/useBreakpoint";
 import { RequestScreen } from "@/shared/types/error-ui";
 import { deriveSectionErrorMessage } from "@/shared/utils/error/deriveSectionErrorMessage";
+import { validateReturnUrl } from "@/shared/utils/validateReturnUrl";
 import { usePaymentReturnPolling } from "@/features/student-payments/hooks/usePaymentReturnPolling";
 import { message } from "antd";
 import { useCallback, useEffect, useMemo, useReducer } from "react";
@@ -34,7 +35,13 @@ export function useStudentInvoicesPage() {
   );
 
   const feeChargeIdParam = searchParams.get("feeChargeId");
-  const paymentReturnPolling = usePaymentReturnPolling();
+  const validatedReturnTo = useMemo(
+    () => validateReturnUrl(searchParams.get("returnTo")),
+    [searchParams],
+  );
+  const paymentReturnPolling = usePaymentReturnPolling({
+    returnTo: validatedReturnTo,
+  });
 
   const skip = payerType === null;
 
@@ -80,12 +87,13 @@ export function useStudentInvoicesPage() {
     nextParams.delete("feeChargeId");
 
     if (invoiceId !== null) {
-      navigate(
-        generatePath(appPaths.studentInvoicePay, {
-          invoiceId: String(invoiceId),
-        }),
-        { replace: true },
-      );
+      const payPath = generatePath(appPaths.studentInvoicePay, {
+        invoiceId: String(invoiceId),
+      });
+      const query = validatedReturnTo
+        ? `?returnTo=${encodeURIComponent(validatedReturnTo)}`
+        : "";
+      navigate(`${payPath}${query}`, { replace: true });
       return;
     }
 
@@ -99,6 +107,7 @@ export function useStudentInvoicesPage() {
     searchParams,
     setSearchParams,
     skip,
+    validatedReturnTo,
   ]);
 
   const handlePageChange = useCallback((page: number) => {

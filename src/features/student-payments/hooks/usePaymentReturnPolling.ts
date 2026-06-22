@@ -1,4 +1,5 @@
 import useAuthState from "@/features/auth/use-auth-state";
+import { appPaths } from "@/app/routing/app-path";
 import { baseApi } from "@/app/api/baseApi";
 import { ApiTagTypes } from "@/shared/types/apiTagTypes";
 import {
@@ -21,6 +22,7 @@ import {
   readProviderReferenceFromUrl,
 } from "../utils/paymentSession";
 import { resolvePayerTypeFromScope } from "@/features/student-invoices/utils/resolvePayerType";
+import { validateReturnUrl } from "@/shared/utils/validateReturnUrl";
 import type { PaymentReturnPollState } from "../types/student-payment";
 import { useDispatch } from "react-redux";
 
@@ -32,6 +34,7 @@ export type PaymentReturnUi = {
   title: string;
   description: string;
   isActive: boolean;
+  continueApplicationUrl: string;
 };
 
 function copyForState(
@@ -68,12 +71,13 @@ function copyForState(
 
 type UsePaymentReturnPollingOptions = {
   enabled?: boolean;
+  returnTo?: string | null;
 };
 
 export function usePaymentReturnPolling(
   options: UsePaymentReturnPollingOptions = {},
 ) {
-  const { enabled = true } = options;
+  const { enabled = true, returnTo: returnToOption = null } = options;
   const [searchParams, setSearchParams] = useSearchParams();
   const { activeRole } = useAuthState();
   const dispatch = useDispatch();
@@ -82,6 +86,11 @@ export function usePaymentReturnPolling(
   const paymentReturnParam = searchParams.get("paymentReturn") === "1";
   const providerReference = readProviderReferenceFromUrl(searchParams);
   const storedContext = readCheckoutContext();
+  const continueApplicationUrl = useMemo(() => {
+    const fromUrl = validateReturnUrl(searchParams.get("returnTo"));
+    const fromOption = validateReturnUrl(returnToOption);
+    return fromUrl ?? fromOption ?? appPaths.StudentApply;
+  }, [returnToOption, searchParams]);
 
   const shouldPoll =
     enabled &&
@@ -128,6 +137,7 @@ export function usePaymentReturnPolling(
           ApiTagTypes.StudentInvoice,
           ApiTagTypes.BillingWorkflow,
           ApiTagTypes.StudentPayment,
+          ApiTagTypes.MeAdmissionProgress,
         ]),
       );
       clearCheckoutContext();
@@ -160,6 +170,7 @@ export function usePaymentReturnPolling(
     const next = new URLSearchParams(searchParams);
     next.delete("paymentReturn");
     next.delete("providerReference");
+    next.delete("returnTo");
     setSearchParams(next, { replace: true });
     clearCheckoutContext();
     setPollState("idle");
@@ -189,9 +200,11 @@ export function usePaymentReturnPolling(
       title: copy.title,
       description: copy.description,
       isActive: shouldPoll && pollState !== "idle",
+      continueApplicationUrl,
     };
   }, [
     amountDisplay,
+    continueApplicationUrl,
     paymentId,
     pollState,
     providerReference,

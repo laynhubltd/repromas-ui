@@ -19,6 +19,7 @@ import storage from "redux-persist/lib/storage";
 import { baseApi } from "./api/baseApi";
 
 import themeReducer from "@/app/state/theme-slice";
+import admissionApplicationSessionReducer from "@/features/admission-application/state/admissionApplicationSessionSlice";
 import { authReducer } from "@/features/auth/state/auth-slice";
 import setupUiReducer from "@/features/tenant-setup/state/setupUiSlice";
 import "@/features/tenant-setup/api/setupStatusApi";
@@ -26,13 +27,14 @@ import "@/features/tenant-setup/api/setupStatusApi";
 const persistConfig = {
   key: "root",
   storage,
-  whitelist: ["auth"], // Specify which reducers to persist
+  whitelist: ["auth", "admissionApplicationSession"],
 };
 
 const rootReducer = combineReducers({
   [baseApi.reducerPath]: baseApi.reducer,
   [authApi.reducerPath]: authApi.reducer,
   auth: authReducer,
+  admissionApplicationSession: admissionApplicationSessionReducer,
   theme: themeReducer,
   setupUi: setupUiReducer,
 });

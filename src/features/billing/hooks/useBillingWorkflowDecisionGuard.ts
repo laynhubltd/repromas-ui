@@ -6,32 +6,35 @@ import { useBillingWorkflowDecision } from "./useBillingWorkflowDecision";
 type UseBillingWorkflowDecisionGuardOptions = {
   eventCode?: string;
   skip?: boolean;
-  onPayNow?: (payload: WorkflowPayNowPayload) => void;
+  onPayNow?: (payload: WorkflowPayNowPayload) => void | Promise<void>;
+  isPayNowLoading?: boolean;
 };
 
 export function useBillingWorkflowDecisionGuard(
   workflowStep: WorkflowStep,
   options: UseBillingWorkflowDecisionGuardOptions = {},
 ) {
-  const { eventCode, skip = false, onPayNow } = options;
+  const { eventCode, skip = false, onPayNow, isPayNowLoading = false } = options;
 
   const { state, actions, flags } = useBillingWorkflowDecision(workflowStep, {
     eventCode,
     skip,
   });
 
-  const handlePayNow = useCallback(() => {
+  const handlePayNow = useCallback(async () => {
+    if (isPayNowLoading) return;
+
     const { primaryItem, canPayNow } = state.blockingUi;
     if (!canPayNow || !primaryItem || primaryItem.feeChargeId === null) {
       return;
     }
 
-    onPayNow?.({
+    await onPayNow?.({
       feeChargeId: primaryItem.feeChargeId,
       eventCode: primaryItem.eventCode,
       amountOutstandingRequired: primaryItem.amountOutstandingRequired,
     });
-  }, [onPayNow, state.blockingUi]);
+  }, [isPayNowLoading, onPayNow, state.blockingUi]);
 
   const handleRetry = useCallback(() => {
     void actions.refetch();
@@ -53,6 +56,7 @@ export function useBillingWorkflowDecisionGuard(
       skip: flags.skip,
       isBlocked: flags.isBlocked,
       isPreparingFee: flags.isPreparingFee,
+      isPayNowLoading,
       showBlockedUi: !flags.skip && !state.isLoading && !state.sectionError && !flags.allowed,
       showWorkflowAction: flags.skip || (!state.isLoading && !state.sectionError && flags.allowed),
     },
