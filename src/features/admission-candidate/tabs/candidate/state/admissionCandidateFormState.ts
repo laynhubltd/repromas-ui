@@ -1,7 +1,7 @@
 import type {
     CandidateIntakeMode,
     CreateAdmissionCandidateResponse,
-} from "../tabs/candidate/types/admission-candidate";
+} from "../types/admission-candidate";
 
 export const AdmissionCandidateFormActionType = {
   SetIntakeMode: "SET_INTAKE_MODE",

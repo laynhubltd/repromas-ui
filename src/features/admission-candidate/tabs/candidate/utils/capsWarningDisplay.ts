@@ -1,6 +1,6 @@
 import { CAPS_WARNING_STAGE_COPY } from "@/shared/constants/admissionCandidateOptions";
 import { humanizeEnumValue } from "@/shared/constants/billingDisplayLabels";
-import type { CapsUploadIssue } from "../tabs/candidate/types/admission-candidate";
+import type { CapsUploadIssue } from "../types/admission-candidate";
 
 export function formatCapsWarningStage(stage: string | undefined): string {
   if (!stage) return "—";

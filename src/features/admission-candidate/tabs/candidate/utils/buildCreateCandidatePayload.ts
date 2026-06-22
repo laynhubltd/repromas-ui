@@ -3,7 +3,7 @@ import type {
     CandidateIntakeMode,
     CreateAdmissionCandidateRequest,
     JambScoreInput,
-} from "../tabs/candidate/types/admission-candidate";
+} from "../types/admission-candidate";
 
 export type JambScoreFormRow = {
   subjectId?: number;

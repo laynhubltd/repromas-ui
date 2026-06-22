@@ -5,7 +5,7 @@ import {
   dedupeJambScoreRows,
   normalizeJambScoreRows,
   validateJambScorePairing,
-} from "@/features/admission-candidate/utils/buildCreateCandidatePayload";
+} from "@/features/admission-candidate/tabs/candidate/utils/buildCreateCandidatePayload";
 
 describe("normalizeJambScoreRows", () => {
   it("drops null and undefined entries", () => {

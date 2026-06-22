@@ -11,7 +11,7 @@ import type { AdmissionRecommendedCandidate } from "../types/admission-recommend
 
 export function useRecommendedCandidateOfferModal(
   target: AdmissionRecommendedCandidate | null,
-  open: boolean,
+  _open: boolean,
   onClose: () => void,
 ) {
   const [form] = Form.useForm<{
