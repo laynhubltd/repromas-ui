@@ -56,9 +56,27 @@ const AdmissionApplicationWizard = lazy(() =>
   })),
 );
 
+const AdmissionApplicationAcknowledgementPage = lazy(() =>
+  import("@/features/admission-application").then((m) => ({
+    default: m.AdmissionApplicationAcknowledgementPage,
+  })),
+);
+
 const StudentAdmissionPage = lazy(() =>
   import("@/features/student-admission").then((m) => ({
     default: m.StudentAdmissionPage,
+  })),
+);
+
+const ProfilePage = lazy(() =>
+  import("@/features/profile").then((m) => ({
+    default: m.ProfilePage,
+  })),
+);
+
+const ProfileGate = lazy(() =>
+  import("@/features/profile").then((m) => ({
+    default: m.ProfileGate,
   })),
 );
 
@@ -72,22 +90,29 @@ export function getStudentRouteEntries() {
     <>
       <Route path="/" element={<GuardedStudentShell />}>
         <Route element={<StudentProtectedRoute />}>
-          <Route path="student" element={<StudentHomePage />} />
-          <Route
-            path="course-registration"
-            element={<CourseRegistrationPage />}
-          />
-          <Route path="invoices" element={<StudentInvoicesPage />} />
-          <Route path="invoices/:invoiceId" element={<StudentInvoicePayPage />} />
-          <Route path="payments" element={<StudentPaymentsPage />} />
-          <Route
-            path="payments/:paymentId"
-            element={<StudentPaymentReceiptPage />}
-          />
-          <Route path="apply" element={<AdmissionApplicationWizard />} />
-          <Route path="application" element={<AdmissionApplicationPage />} />
-          <Route path="admission" element={<StudentAdmissionPage />} />
-          <Route path="bio-data" element={<CandidateBioDataPage />} />
+          <Route path="profile" element={<ProfilePage />} />
+          <Route element={<ProfileGate />}>
+            <Route path="student" element={<StudentHomePage />} />
+            <Route
+              path="course-registration"
+              element={<CourseRegistrationPage />}
+            />
+            <Route path="invoices" element={<StudentInvoicesPage />} />
+            <Route path="invoices/:invoiceId" element={<StudentInvoicePayPage />} />
+            <Route path="payments" element={<StudentPaymentsPage />} />
+            <Route
+              path="payments/:paymentId"
+              element={<StudentPaymentReceiptPage />}
+            />
+            <Route path="apply" element={<AdmissionApplicationWizard />} />
+            <Route path="application" element={<AdmissionApplicationPage />} />
+            <Route
+              path="application/acknowledgement"
+              element={<AdmissionApplicationAcknowledgementPage />}
+            />
+            <Route path="admission" element={<StudentAdmissionPage />} />
+            <Route path="bio-data" element={<CandidateBioDataPage />} />
+          </Route>
         </Route>
       </Route>
     </>

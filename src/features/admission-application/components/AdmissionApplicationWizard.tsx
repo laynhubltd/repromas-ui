@@ -14,7 +14,7 @@ import {
   ArrowRightOutlined,
   SendOutlined,
 } from "@ant-design/icons";
-import { Alert, Button, Flex, Progress, Steps, Typography } from "antd";
+import { Alert, Button, Card, Flex, Progress, Steps, Typography } from "antd";
 import { useAdmissionApplicationWizard } from "../hooks/useAdmissionApplicationWizard";
 
 export function AdmissionApplicationWizard() {
@@ -28,6 +28,9 @@ export function AdmissionApplicationWizard() {
     wizardState,
     programOptions,
     subjectOptions,
+    stateOptions,
+    lgaOptions,
+    isLgasLoading,
     isLoading,
     isPatching,
     isPersistingBeforePay,
@@ -37,6 +40,8 @@ export function AdmissionApplicationWizard() {
     versionMismatchMessage,
     noAssignmentMessage,
   } = state;
+
+  const isMobile = layout.isMobile;
 
   if (noAssignment) {
     return (
@@ -50,11 +55,13 @@ export function AdmissionApplicationWizard() {
 
   const stepItems = wizardState.sortedSections.map((s, i) => ({
     title: s.title,
-    status: (i < wizardState.currentStep
-      ? "finish"
-      : i === wizardState.currentStep
-        ? "process"
-        : "wait") as "finish" | "process" | "wait",
+    status: (
+      i < wizardState.currentStep
+        ? "finish"
+        : i === wizardState.currentStep
+          ? "process"
+          : "wait"
+    ) as "finish" | "process" | "wait",
   }));
 
   const compactStepLabel = buildCompactStepLabel(
@@ -69,15 +76,19 @@ export function AdmissionApplicationWizard() {
   const navButtonStyle = { minHeight: 44 };
 
   return (
-    <div style={{ margin: "0 auto", width: "100%", maxWidth: 960 }}>
+    <div style={{ margin: "0 auto", width: "100%" }}>
+      {/* Page header */}
       <Typography.Title
-        level={layout.isMobile ? 4 : 3}
-        style={{ marginBottom: 8 }}
+        level={isMobile ? 4 : 3}
+        style={{ marginBottom: 4 }}
       >
         {renderPackage?.form.name ?? "Admission Application"}
       </Typography.Title>
       {renderPackage?.form && (
-        <Typography.Paragraph type="secondary" style={{ marginBottom: 24 }}>
+        <Typography.Paragraph
+          type="secondary"
+          style={{ marginBottom: isMobile ? 16 : 24 }}
+        >
           Version {renderPackage.form.version}
         </Typography.Paragraph>
       )}
@@ -100,116 +111,167 @@ export function AdmissionApplicationWizard() {
       >
         {wizardState.sortedSections.length > 0 && (
           <>
-            {layout.stepsVariant === "compact" ? (
-              <div style={{ marginBottom: 24 }}>
+            {/* ── Mobile: compact progress bar on top ───────────────── */}
+            {isMobile && (
+              <div style={{ marginBottom: 16 }}>
                 <Typography.Text
                   strong
-                  style={{ display: "block", marginBottom: 8 }}
+                  style={{ display: "block", marginBottom: 6, fontSize: token.fontSizeSM }}
                 >
                   {compactStepLabel}
                 </Typography.Text>
-                <Progress percent={stepProgress} showInfo={false} />
-              </div>
-            ) : (
-              <Steps
-                current={wizardState.currentStep}
-                items={stepItems}
-                size="small"
-                style={{ marginBottom: 32 }}
-              />
-            )}
-
-            {currentSection && (
-              <>
-                <Typography.Title
-                  level={layout.isMobile ? 5 : 4}
-                  style={{ marginBottom: 16 }}
-                >
-                  {currentSection.title}
-                </Typography.Title>
-                <DynamicFormSectionView
-                  section={currentSection}
-                  values={currentValues}
-                  onFieldChange={actions.handleFieldChange}
-                  fieldErrors={wizardState.fieldErrors}
-                  programOptions={programOptions}
-                  subjectOptions={subjectOptions}
-                  candidateId={candidate?.id}
-                  actorType="CANDIDATE"
+                <Progress
+                  percent={stepProgress}
+                  showInfo={false}
+                  strokeColor={token.colorPrimary}
                 />
-              </>
+              </div>
             )}
 
-            {wizardState.lastSavedAt && (
-              <Alert
-                type="info"
-                message={`Draft saved at ${new Date(wizardState.lastSavedAt).toLocaleTimeString()}`}
-                style={{ marginBottom: 16 }}
-                showIcon
-              />
-            )}
-
+            {/* ── Main layout: sidebar + content ────────────────────── */}
             <div
               style={
-                layout.stickyNav
-                  ? {
-                      position: "sticky",
-                      bottom: 0,
-                      zIndex: 1,
-                      background: token.colorBgContainer,
-                      paddingTop: 12,
-                      paddingBottom: 8,
-                      borderTop: `1px solid ${token.colorBorderSecondary}`,
-                      marginTop: 24,
+                isMobile
+                  ? { display: "flex", flexDirection: "column", gap: 16 }
+                  : {
+                      display: "grid",
+                      gridTemplateColumns: "25% 1fr",
+                      gap: 24,
+                      alignItems: "start",
                     }
-                  : { marginTop: 24 }
               }
             >
-              <Flex
-                vertical={layout.navButtonsBlock}
-                justify="space-between"
-                gap={12}
-              >
-                <Button
-                  icon={<ArrowLeftOutlined />}
-                  onClick={actions.handleBack}
-                  disabled={wizardState.currentStep === 0}
-                  block={layout.navButtonsBlock}
-                  style={navButtonStyle}
+              {/* Steps sidebar — desktop only */}
+              {!isMobile && (
+                <Card
+                  size="small"
+                  style={{
+                    position: "sticky",
+                    top: 24,
+                    border: `1px solid ${token.colorBorderSecondary}`,
+                    borderRadius: token.borderRadius,
+                    background: token.colorBgContainer,
+                  }}
+                  styles={{ body: { padding: "16px 12px" } }}
                 >
-                  Back
-                </Button>
-                {isLastStep ? (
-                  <BillingWorkflowDecisionGuard
-                    workflowStep="SUBMIT_APPLICATION"
-                    onPayNow={actions.handleBillingPayNow}
-                    isPayNowLoading={isPatching || isPersistingBeforePay}
-                    showBanner={true}
+                  <Steps
+                    current={wizardState.currentStep}
+                    items={stepItems}
+                    size="small"
+                    direction="vertical"
+                    style={{ margin: 0 }}
+                  />
+                </Card>
+              )}
+
+              {/* Section content */}
+              <Card
+                size="small"
+                title={currentSection?.title}
+                style={{
+                  border: `1px solid ${token.colorBorderSecondary}`,
+                  borderRadius: token.borderRadius,
+                  background: token.colorBgContainer,
+                }}
+                styles={{
+                  header: currentSection
+                    ? { padding: isMobile ? "12px 16px" : "16px 24px" }
+                    : undefined,
+                  body: { padding: isMobile ? 16 : 24 },
+                }}
+              >
+                {currentSection && (
+                  <DynamicFormSectionView
+                    section={currentSection}
+                    values={currentValues}
+                    onFieldChange={actions.handleFieldChange}
+                    fieldErrors={wizardState.fieldErrors}
+                    programOptions={programOptions}
+                    stateOptions={stateOptions}
+                    lgaOptions={lgaOptions}
+                    isLgasLoading={isLgasLoading}
+                    subjectOptions={subjectOptions}
+                    candidateId={candidate?.id}
+                    actorType="CANDIDATE"
+                  />
+                )}
+
+                {wizardState.lastSavedAt && (
+                  <Alert
+                    type="info"
+                    message={`Draft saved at ${new Date(wizardState.lastSavedAt).toLocaleTimeString()}`}
+                    style={{ marginBottom: 16, marginTop: 8 }}
+                    showIcon
+                  />
+                )}
+
+                {/* Navigation buttons */}
+                <div
+                  style={
+                    layout.stickyNav
+                      ? {
+                          position: "sticky",
+                          bottom: 0,
+                          zIndex: 1,
+                          background: token.colorBgContainer,
+                          paddingTop: 12,
+                          paddingBottom: 8,
+                          borderTop: `1px solid ${token.colorBorderSecondary}`,
+                          marginTop: 24,
+                          marginInline: isMobile ? -16 : -24,
+                          paddingInline: isMobile ? 16 : 24,
+                        }
+                      : { marginTop: 24 }
+                  }
+                >
+                  <Flex
+                    vertical={layout.navButtonsBlock}
+                    justify="space-between"
+                    gap={12}
                   >
                     <Button
-                      type="primary"
-                      icon={<SendOutlined />}
-                      loading={wizardState.submitting}
-                      onClick={actions.handleSubmit}
+                      icon={<ArrowLeftOutlined />}
+                      onClick={actions.handleBack}
+                      disabled={wizardState.currentStep === 0}
                       block={layout.navButtonsBlock}
                       style={navButtonStyle}
                     >
-                      Submit application
+                      Back
                     </Button>
-                  </BillingWorkflowDecisionGuard>
-                ) : (
-                  <Button
-                    type="primary"
-                    icon={<ArrowRightOutlined />}
-                    loading={isPatching}
-                    onClick={actions.handleNext}
-                    block={layout.navButtonsBlock}
-                    style={navButtonStyle}
-                  >
-                    Next
-                  </Button>
-                )}
-              </Flex>
+
+                    {isLastStep ? (
+                      <BillingWorkflowDecisionGuard
+                        workflowStep="SUBMIT_APPLICATION"
+                        onPayNow={actions.handleBillingPayNow}
+                        isPayNowLoading={isPatching || isPersistingBeforePay}
+                        showBanner
+                      >
+                        <Button
+                          type="primary"
+                          icon={<SendOutlined />}
+                          loading={wizardState.submitting}
+                          onClick={actions.handleSubmit}
+                          block={layout.navButtonsBlock}
+                          style={navButtonStyle}
+                        >
+                          Submit application
+                        </Button>
+                      </BillingWorkflowDecisionGuard>
+                    ) : (
+                      <Button
+                        type="primary"
+                        icon={<ArrowRightOutlined />}
+                        loading={isPatching}
+                        onClick={actions.handleNext}
+                        block={layout.navButtonsBlock}
+                        style={navButtonStyle}
+                      >
+                        Next
+                      </Button>
+                    )}
+                  </Flex>
+                </div>
+              </Card>
             </div>
           </>
         )}

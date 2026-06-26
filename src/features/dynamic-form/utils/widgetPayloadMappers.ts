@@ -1,4 +1,6 @@
 import type { FieldType, RenderSection } from "../types/dynamic-form";
+import { evaluateVisibilityCondition } from "./evaluateVisibilityCondition";
+import { isEmptyFieldValue } from "./fieldValueEmptiness";
 
 type RawRecord = Record<string, unknown>;
 
@@ -269,6 +271,46 @@ export function validateOlevelWidgetValue(
   return null;
 }
 
+export function hasOlevelWidgetContent(value: unknown): boolean {
+  const widget = olevelWidgetFromWire(value);
+  if (widget.sittings.length === 0) return false;
+
+  return widget.sittings.some((sitting) => {
+    if (
+      sitting.examType ||
+      sitting.examYear != null ||
+      sitting.examRegNo ||
+      sitting.centerNumber ||
+      sitting.schoolName
+    ) {
+      return true;
+    }
+    return (sitting.grades ?? []).some(
+      (grade) => grade.subjectId != null || grade.grade,
+    );
+  });
+}
+
+export function hasJambWidgetContent(value: unknown): boolean {
+  const widget = jambWidgetFromWire(value);
+  return widget.scores.some(
+    (row) => row.subjectId != null || row.score != null,
+  );
+}
+
+export function hasWidgetContent(fieldType: FieldType, value: unknown): boolean {
+  switch (fieldType) {
+    case "WIDGET_OLEVEL":
+      return hasOlevelWidgetContent(value);
+    case "WIDGET_JAMB":
+      return hasJambWidgetContent(value);
+    case "WIDGET_PROGRAM_CHOICE":
+      return !isEmptyFieldValue(value);
+    default:
+      return false;
+  }
+}
+
 export function validateJambWidgetValue(
   fieldKey: string,
   value: unknown,
@@ -305,15 +347,27 @@ export function validateWidgetFieldsInSection(
   const errors: Record<string, string> = {};
 
   for (const field of section.fields) {
-    if (!field.isRequired && !(field.fieldKey in values)) continue;
+    if (
+      !evaluateVisibilityCondition(
+        field.visibilityConfig?.["x-condition"],
+        values,
+      )
+    ) {
+      continue;
+    }
+
+    const value = values[field.fieldKey];
+    const shouldValidate =
+      field.isRequired || hasWidgetContent(field.fieldType, value);
+    if (!shouldValidate) continue;
 
     let message: string | null = null;
     switch (field.fieldType) {
       case "WIDGET_OLEVEL":
-        message = validateOlevelWidgetValue(field.fieldKey, values[field.fieldKey]);
+        message = validateOlevelWidgetValue(field.fieldKey, value);
         break;
       case "WIDGET_JAMB":
-        message = validateJambWidgetValue(field.fieldKey, values[field.fieldKey]);
+        message = validateJambWidgetValue(field.fieldKey, value);
         break;
       default:
         break;

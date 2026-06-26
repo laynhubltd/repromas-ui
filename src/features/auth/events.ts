@@ -9,3 +9,7 @@ export const authCleared = createAction('auth/authCleared')
 
 export const roleSelected = createAction<ApiRole>('auth/roleSelected')
 export const roleSwitched = createAction<ApiRole>('auth/roleSwitched')
+
+export const profilePictureUploaded = createAction<{ profilePictureUrl: string }>(
+  'auth/profilePictureUploaded',
+)

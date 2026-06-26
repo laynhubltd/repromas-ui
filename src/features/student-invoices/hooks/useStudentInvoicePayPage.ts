@@ -15,6 +15,7 @@ import {
   StudentInvoicePayPageActionType,
 } from "../state/studentInvoicePayPageState";
 import { saveCheckoutContext } from "@/features/student-payments/utils/paymentSession";
+import { submitRemitaPaymentForm } from "@/features/student-payments/utils/remitaCheckout";
 import { validateReturnUrl } from "@/shared/utils/validateReturnUrl";
 import { buildSelectedOptionalLineIdsParam } from "../utils/invoiceDisplay";
 import { resolvePayerTypeFromScope } from "../utils/resolvePayerType";
@@ -85,8 +86,11 @@ export function useStudentInvoicePayPage() {
   const [initiatePayment, { isLoading: isPaying }] =
     useInitiateFeeChargePaymentMutation();
 
-  const lines = invoice?.lines ?? [];
-  const optionalLines = lines.filter((line) => !line.isRequired);
+  const lines = useMemo(() => invoice?.lines ?? [], [invoice?.lines]);
+  const optionalLines = useMemo(
+    () => lines.filter((line) => !line.isRequired),
+    [lines],
+  );
 
   useEffect(() => {
     if (!invoice || optionalLines.length === 0) return;
@@ -138,7 +142,7 @@ export function useStudentInvoicePayPage() {
       const result = await initiatePayment({
         feeChargeId: invoice.feeChargeId,
         body: {
-          redirectUrl: `${window.location.origin}${buildInvoicesReturnPath()}`,
+          redirectUrl: `${import.meta.env.VITE_APP_URL?.replace(/\/$/, "") ?? window.location.origin}${buildInvoicesReturnPath()}`,
           customerEmail: userProfile?.email ?? undefined,
           customerName:
             [userProfile?.firstName, userProfile?.lastName]
@@ -155,14 +159,23 @@ export function useStudentInvoicePayPage() {
       if (result.providerReference) {
         saveCheckoutContext({
           providerReference: result.providerReference,
+          provider: result.provider,
           amount: result.amount,
           currency: result.currency ?? invoice.currency,
         });
-        if (result.checkoutUrl) {
-          window.location.href = result.checkoutUrl;
+      }
+
+      console.log({ result });
+
+      if (result.checkoutUrl) {
+        switch (result.provider) {
+          case "REMITA":
+            submitRemitaPaymentForm(result.checkoutUrl);
+            break;
+          default:
+            window.location.href = result.checkoutUrl;
+            break;
         }
-      } else if (result.checkoutUrl) {
-        window.location.href = result.checkoutUrl;
       }
     } catch (err: unknown) {
       handleApiError(err, {

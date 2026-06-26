@@ -89,10 +89,15 @@ export function AdmissionApplicationPage() {
             lifecycle={state.lifecycle}
             jambScoreRows={state.jambScoreRows}
             candidateId={application.candidate?.id}
+            acknowledgementSlipModel={state.acknowledgementSlipModel}
+            printableApplicationModel={state.printableApplicationModel}
+            slipContentRef={state.slipContentRef}
+            applicationContentRef={state.applicationContentRef}
             flags={{
               showContinueApply: flags.showContinueApply,
               showViewPayments: flags.showViewPayments,
               showFeeBanner: flags.showFeeBanner,
+              showDocumentActions: flags.showDocumentActions,
               showOfferCard: flags.showOfferCard,
               showScreeningSection: flags.showScreeningSection,
               showScreeningPending: flags.showScreeningPending,
@@ -103,6 +108,8 @@ export function AdmissionApplicationPage() {
             onContinueApply={actions.handleContinueApply}
             onViewPayments={actions.handleViewPayments}
             onBillingPayNow={actions.handleBillingPayNow}
+            onPrintAcknowledgementSlip={actions.handlePrintAcknowledgementSlip}
+            onPrintApplication={actions.handlePrintApplication}
           />
         ) : null}
       </DataLoader>

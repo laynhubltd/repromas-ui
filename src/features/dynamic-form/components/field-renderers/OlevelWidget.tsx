@@ -184,52 +184,75 @@ export function OlevelWidget({
               >
                 Subject grades
               </Typography.Text>
-              {(sitting.grades ?? []).map((grade, gi) => (
-                <Flex
-                  key={gi}
-                  gap={8}
-                  align={
-                    gradeRowDirection === "vertical" ? "stretch" : "center"
-                  }
-                  vertical={gradeRowDirection === "vertical"}
-                >
-                  <Select
-                    value={grade.subjectId}
-                    onChange={(v) => updateGrade(si, gi, { subjectId: v })}
-                    options={subjectOptions}
-                    disabled={disabled}
-                    placeholder="Subject"
-                    showSearch
-                    optionFilterProp="label"
-                    style={{ flex: 1, width: "100%" }}
-                  />
-                  <Select
-                    value={grade.grade}
-                    onChange={(v) => updateGrade(si, gi, { grade: v })}
-                    options={OLEVEL_GRADES.map((g) => ({ value: g, label: g }))}
-                    disabled={disabled}
-                    placeholder="Grade"
-                    style={{
-                      width: gradeRowDirection === "vertical" ? "100%" : 100,
-                    }}
-                  />
-                  <Button
-                    type="text"
-                    danger
-                    aria-label={`Remove subject grade ${gi + 1}`}
-                    icon={<DeleteOutlined />}
-                    onClick={() => removeGrade(si, gi)}
-                    disabled={disabled}
-                    style={{
-                      ...touchIconButtonStyle,
-                      alignSelf:
-                        gradeRowDirection === "vertical"
-                          ? "flex-end"
-                          : undefined,
-                    }}
-                  />
-                </Flex>
-              ))}
+              {(sitting.grades ?? []).map((grade, gi) => {
+                // Build the set of subjectIds already used by other rows in this sitting
+                const usedInSitting = new Set(
+                  (sitting.grades ?? [])
+                    .filter((_, idx) => idx !== gi)
+                    .map((g) => g.subjectId)
+                    .filter((id): id is number => id != null),
+                );
+
+                const subjectOptionsForRow = subjectOptions.map((opt) => ({
+                  ...opt,
+                  disabled: usedInSitting.has(opt.value),
+                }));
+
+                return (
+                  <Flex
+                    key={gi}
+                    gap={8}
+                    align={
+                      gradeRowDirection === "vertical" ? "stretch" : "center"
+                    }
+                    vertical={gradeRowDirection === "vertical"}
+                    style={{ width: "100%", overflow: "hidden" }}
+                  >
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <Select
+                        value={grade.subjectId}
+                        onChange={(v) => updateGrade(si, gi, { subjectId: v })}
+                        options={subjectOptionsForRow}
+                        disabled={disabled}
+                        placeholder="Subject"
+                        showSearch
+                        filterOption={(input, option) =>
+                          String(option?.label ?? "")
+                            .toLowerCase()
+                            .includes(input.toLowerCase())
+                        }
+                        style={{ width: "100%" }}
+                      />
+                    </div>
+                    <div style={{ flexShrink: 0, width: gradeRowDirection === "vertical" ? "100%" : 90 }}>
+                      <Select
+                        value={grade.grade}
+                        onChange={(v) => updateGrade(si, gi, { grade: v })}
+                        options={OLEVEL_GRADES.map((g) => ({ value: g, label: g }))}
+                        disabled={disabled}
+                        placeholder="Grade"
+                        style={{ width: "100%" }}
+                      />
+                    </div>
+                    <Button
+                      type="text"
+                      danger
+                      aria-label={`Remove subject grade ${gi + 1}`}
+                      icon={<DeleteOutlined />}
+                      onClick={() => removeGrade(si, gi)}
+                      disabled={disabled}
+                      style={{
+                        ...touchIconButtonStyle,
+                        flexShrink: 0,
+                        alignSelf:
+                          gradeRowDirection === "vertical"
+                            ? "flex-end"
+                            : undefined,
+                      }}
+                    />
+                  </Flex>
+                );
+              })}
               <Button
                 type="dashed"
                 size="small"

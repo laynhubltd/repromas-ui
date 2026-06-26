@@ -1,10 +1,8 @@
 import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
-  UserOutlined,
 } from "@ant-design/icons";
 import {
-  Avatar,
   Button,
   Drawer,
   Dropdown,
@@ -13,6 +11,7 @@ import {
   Tag,
   theme,
 } from "antd";
+import { UserAvatar } from "@/shared/ui/UserAvatar";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { RepromasLogo } from "./RepromasLogo";
@@ -30,6 +29,10 @@ export default function MainLayout({
   userMenuItems,
   userDisplayName,
   userRoleLabel,
+  userAvatarUrl,
+  userFirstName,
+  userLastName,
+  userEmail,
 }: MainLayoutProps) {
   const { token } = theme.useToken();
   const siderBg = sidebarBackground ?? token.colorPrimary;
@@ -277,9 +280,13 @@ export default function MainLayout({
                 e.currentTarget.style.background = "transparent";
               }}
             >
-              <Avatar
-                icon={<UserOutlined />}
-                style={{ background: token.colorPrimary }}
+              <UserAvatar
+                src={userAvatarUrl}
+                firstName={userFirstName}
+                lastName={userLastName}
+                email={userEmail}
+                displayName={userDisplayName}
+                size={40}
               />
               {!isMobile && (
                 <div

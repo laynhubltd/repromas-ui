@@ -63,4 +63,20 @@ describe("DynamicFormSectionView", () => {
     await user.type(input, "a");
     expect(onFieldChange).toHaveBeenCalled();
   });
+
+  it("renders field errors in the form item help slot", () => {
+    const { container } = render(
+      <DynamicFormSectionView
+        section={mockSection}
+        values={{ email: "bad" }}
+        onFieldChange={vi.fn()}
+        fieldErrors={{ email: "Email is required." }}
+      />,
+    );
+
+    expect(screen.getByText("Email is required.")).toBeInTheDocument();
+    expect(
+      container.querySelector(".ant-form-item-explain-error"),
+    ).toHaveTextContent("Email is required.");
+  });
 });

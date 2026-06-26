@@ -59,7 +59,20 @@ export function JambWidget({
         Enter your JAMB subject scores (0–400 per subject). Submitting replaces
         all previously saved JAMB rows.
       </Typography.Text>
-      {scores.map((score, index) => (
+      {scores.map((score, index) => {
+        const usedInScores = new Set(
+          scores
+            .filter((_, rowIndex) => rowIndex !== index)
+            .map((row) => row.subjectId)
+            .filter((id): id is number => id != null),
+        );
+
+        const subjectOptionsForRow = subjectOptions.map((opt) => ({
+          ...opt,
+          disabled: usedInScores.has(opt.value),
+        }));
+
+        return (
         <Flex
           key={index}
           gap={8}
@@ -71,20 +84,28 @@ export function JambWidget({
                   border: `1px solid ${token.colorBorder}`,
                   borderRadius: token.borderRadius,
                   padding: 12,
+                  width: "100%",
+                  overflow: "hidden",
                 }
-              : undefined
+              : { width: "100%", overflow: "hidden" }
           }
         >
-          <Select
-            value={score.subjectId}
-            onChange={(v) => updateScore(index, { subjectId: v })}
-            options={subjectOptions}
-            disabled={disabled}
-            placeholder="Subject"
-            showSearch
-            optionFilterProp="label"
-            style={{ flex: 1, width: "100%" }}
-          />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <Select
+              value={score.subjectId}
+              onChange={(v) => updateScore(index, { subjectId: v })}
+              options={subjectOptionsForRow}
+              disabled={disabled}
+              placeholder="Subject"
+              showSearch
+              filterOption={(input, option) =>
+                String(option?.label ?? "")
+                  .toLowerCase()
+                  .includes(input.toLowerCase())
+              }
+              style={{ width: "100%" }}
+            />
+          </div>
           <InputNumber
             value={score.score}
             onChange={(v) => updateScore(index, { score: v ?? undefined })}
@@ -92,7 +113,10 @@ export function JambWidget({
             min={0}
             max={400}
             placeholder="Score"
-            style={{ width: layout.stackWidgetRows ? "100%" : 120 }}
+            style={{
+              width: layout.stackWidgetRows ? "100%" : 120,
+              flexShrink: 0,
+            }}
           />
           <Button
             type="text"
@@ -103,11 +127,13 @@ export function JambWidget({
             disabled={disabled}
             style={{
               ...touchIconButtonStyle,
+              flexShrink: 0,
               alignSelf: layout.stackWidgetRows ? "flex-end" : undefined,
             }}
           />
         </Flex>
-      ))}
+        );
+      })}
       <Button
         type="dashed"
         icon={<PlusOutlined />}

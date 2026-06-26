@@ -45,3 +45,11 @@ export function validateSectionPayload(
     sectionData,
   );
 }
+
+export function validateSanitizedSectionPayload(
+  jsonSchema: Record<string, unknown>,
+  sectionId: number,
+  sectionData: Record<string, unknown>,
+): SchemaValidationResult {
+  return validateSectionPayload(jsonSchema, sectionId, sectionData);
+}

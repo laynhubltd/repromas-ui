@@ -296,6 +296,15 @@ export const Permission = {
   BillingInvoicesList: "system-configs:list",
   BillingPaymentsList: "system-configs:list",
   BillingPaymentTransactionsList: "system-configs:list",
+  // Billing Payment Gateway Configs
+  // BillingGatewayConfigsList: "billing-gateway-configs:list",
+  // BillingGatewayConfigsCreate: "billing-gateway-configs:create",
+  // BillingGatewayConfigsUpdate: "billing-gateway-configs:update",
+  // BillingGatewayConfigsDelete: "billing-gateway-configs:delete",
+  BillingGatewayConfigsList: "system-configs:list",
+  BillingGatewayConfigsCreate: "system-configs:create",
+  BillingGatewayConfigsUpdate: "system-configs:update",
+  BillingGatewayConfigsDelete: "system-configs:delete",
   // Dynamic Forms
   DynamicFormsList: "dynamic-forms:list",
   DynamicFormsRead: "dynamic-forms:read",

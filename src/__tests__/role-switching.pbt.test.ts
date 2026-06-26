@@ -34,6 +34,7 @@ const sampleProfile: AuthProfile = {
   score: 0,
   metadata: null,
   email: "test@example.com",
+  profilePictureUrl: null,
 };
 
 const apiRoleArb: fc.Arbitrary<ApiRole> = fc.record({

@@ -1,7 +1,9 @@
 import { BILLING_PAYMENT_SESSION_KEYS } from "@/shared/constants/billingPaymentOptions";
+import type { BillingPaymentProvider } from "@/features/student-invoices/types/student-invoice";
 
 export type StoredCheckoutContext = {
   providerReference: string;
+  provider?: BillingPaymentProvider;
   amount?: string;
   currency?: string;
 };
@@ -11,6 +13,12 @@ export function saveCheckoutContext(context: StoredCheckoutContext): void {
     BILLING_PAYMENT_SESSION_KEYS.lastProviderReference,
     context.providerReference,
   );
+  if (context.provider) {
+    sessionStorage.setItem(
+      BILLING_PAYMENT_SESSION_KEYS.lastPaymentProvider,
+      context.provider,
+    );
+  }
   if (context.amount) {
     sessionStorage.setItem(
       BILLING_PAYMENT_SESSION_KEYS.lastPaymentAmount,
@@ -33,6 +41,10 @@ export function readCheckoutContext(): StoredCheckoutContext | null {
 
   return {
     providerReference,
+    provider:
+      (sessionStorage.getItem(
+        BILLING_PAYMENT_SESSION_KEYS.lastPaymentProvider,
+      ) as BillingPaymentProvider | null) ?? undefined,
     amount:
       sessionStorage.getItem(BILLING_PAYMENT_SESSION_KEYS.lastPaymentAmount) ??
       undefined,
@@ -44,6 +56,7 @@ export function readCheckoutContext(): StoredCheckoutContext | null {
 
 export function clearCheckoutContext(): void {
   sessionStorage.removeItem(BILLING_PAYMENT_SESSION_KEYS.lastProviderReference);
+  sessionStorage.removeItem(BILLING_PAYMENT_SESSION_KEYS.lastPaymentProvider);
   sessionStorage.removeItem(BILLING_PAYMENT_SESSION_KEYS.lastPaymentAmount);
   sessionStorage.removeItem(BILLING_PAYMENT_SESSION_KEYS.lastPaymentCurrency);
 }

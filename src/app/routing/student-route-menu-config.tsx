@@ -26,6 +26,12 @@ export const studentRoutesMenuList: StudentRouteMenuItem[] = [
     allowedScopes: [StudentPortalScope.Student, StudentPortalScope.Candidate],
   },
   {
+    key: appPaths.StudentApply,
+    icon: <FormOutlined />,
+    label: "Apply",
+    allowedScopes: [StudentPortalScope.Candidate],
+  },
+  {
     key: appPaths.StudentInvoices,
     icon: <FileOutlined />,
     label: "Invoices",
@@ -48,12 +54,6 @@ export const studentRoutesMenuList: StudentRouteMenuItem[] = [
     icon: <TrophyOutlined />,
     label: "Results",
     allowedScopes: [StudentPortalScope.Student],
-  },
-  {
-    key: appPaths.StudentApply,
-    icon: <FormOutlined />,
-    label: "Apply",
-    allowedScopes: [StudentPortalScope.Candidate],
   },
   {
     key: appPaths.StudentApplication,

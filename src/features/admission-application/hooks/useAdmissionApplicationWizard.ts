@@ -4,21 +4,26 @@ import { useAccessControl } from "@/features/access-control/use-access-control";
 import type { WorkflowPayNowPayload } from "@/features/billing/types/workflow-step-decision";
 import { useGetMeAdmissionCandidateQuery } from "@/features/candidate-profile/api/candidateProfileApi";
 import { isFormVersionMismatch } from "@/features/dynamic-form/utils/isFormVersionMismatch";
+import type { RenderSection } from "@/features/dynamic-form/types";
 import { mapViolationToFieldErrors } from "@/features/dynamic-form/utils/mapViolationToFieldErrors";
 import { sortSectionsByStepOrder } from "@/features/dynamic-form/utils/sortSectionsByStepOrder";
 import {
   isStateGeographyFieldKey,
   lgaFieldKeysInSection,
 } from "@/features/dynamic-form/utils/geographyFieldKeys";
-import { validateSectionPayload } from "@/features/dynamic-form/utils/validateJsonSchema";
+import { validateSanitizedSectionPayload } from "@/features/dynamic-form/utils/validateJsonSchema";
+import {
+  sanitizeSectionDataForSchemaValidation,
+  validateDynamicFormSection,
+} from "@/features/dynamic-form/utils/validateSectionFields";
 import {
   buildFullSubmitPayload,
   sectionValuesToSubmitPayload,
-  validateWidgetFieldsInSection,
 } from "@/features/dynamic-form/utils/widgetPayloadMappers";
 import { useGetProgramsQuery } from "@/features/program/tabs/programs/api/programsApi";
 import { useGetOlevelSubjectsQuery } from "@/features/admission-config/tabs/olevel-subject/api/olevelSubjectApi";
 import { useDynamicFormLayout } from "@/features/dynamic-form/hooks/useDynamicFormLayout";
+import { useGeographyFieldOptions } from "@/features/dynamic-form/hooks/useGeographyFieldOptions";
 import {
   DYNAMIC_FORM_NO_ASSIGNMENT_MESSAGE,
   DYNAMIC_FORM_SUBMIT_SUCCESS,
@@ -220,6 +225,11 @@ export function useAdmissionApplicationWizard() {
     [currentSection, wizardState.sectionValues],
   );
 
+  const { stateOptions, lgaOptions, isLgasLoading } = useGeographyFieldOptions({
+    sectionValues: currentValues,
+    skip: !isCandidate,
+  });
+
   const noAssignment = useMemo(() => {
     if (!isPackageError || !packageError) return false;
     const parsed = parseApiError(packageError);
@@ -331,46 +341,92 @@ export function useAdmissionApplicationWizard() {
         sectionId: currentSection.id,
         values: nextValues,
       });
-
-      if (isStateChange) {
-        void refetchPackage();
-      }
     },
-    [currentSection, currentValues, refetchPackage],
+    [currentSection, currentValues],
+  );
+
+  const validateSectionStep = useCallback(
+    (
+      section: RenderSection,
+      values: Record<string, unknown>,
+    ): Record<string, string> => {
+      if (!renderPackage) return {};
+      return validateDynamicFormSection(
+        section,
+        values,
+        renderPackage.jsonSchema,
+      );
+    },
+    [renderPackage],
   );
 
   const validateCurrentStep = useCallback((): boolean => {
     if (!currentSection || !renderPackage) return true;
 
-    const widgetErrors = validateWidgetFieldsInSection(
-      currentSection,
-      currentValues,
-    );
-    if (Object.keys(widgetErrors).length > 0) {
+    const errors = validateSectionStep(currentSection, currentValues);
+    if (Object.keys(errors).length > 0) {
       dispatch({
         type: AdmissionWizardActionType.SetFieldErrors,
-        errors: widgetErrors,
+        errors,
       });
       return false;
     }
 
-    const result = validateSectionPayload(
-      renderPackage.jsonSchema,
-      currentSection.id,
-      currentValues,
-    );
-    if (result.valid) {
-      dispatch({ type: AdmissionWizardActionType.SetFieldErrors, errors: {} });
-      return true;
+    dispatch({ type: AdmissionWizardActionType.SetFieldErrors, errors: {} });
+    return true;
+  }, [currentSection, currentValues, renderPackage, validateSectionStep]);
+
+  const validateAllSections = useCallback((): boolean => {
+    if (!renderPackage) return true;
+
+    for (let step = 0; step < wizardState.sortedSections.length; step += 1) {
+      const section = wizardState.sortedSections[step];
+      const values = wizardState.sectionValues[section.id] ?? {};
+      const errors = validateSectionStep(section, values);
+      if (Object.keys(errors).length > 0) {
+        dispatch({
+          type: AdmissionWizardActionType.SetCurrentStep,
+          step,
+        });
+        dispatch({
+          type: AdmissionWizardActionType.SetFieldErrors,
+          errors,
+        });
+        return false;
+      }
+
+      const sanitized = sanitizeSectionDataForSchemaValidation(section, values);
+      const schemaResult = validateSanitizedSectionPayload(
+        renderPackage.jsonSchema,
+        section.id,
+        sanitized,
+      );
+      if (!schemaResult.valid) {
+        const schemaErrors: Record<string, string> = {};
+        for (const err of schemaResult.errors) {
+          const key = err.path.split(".").pop() ?? err.path;
+          schemaErrors[key] = err.message;
+        }
+        dispatch({
+          type: AdmissionWizardActionType.SetCurrentStep,
+          step,
+        });
+        dispatch({
+          type: AdmissionWizardActionType.SetFieldErrors,
+          errors: schemaErrors,
+        });
+        return false;
+      }
     }
-    const errors: Record<string, string> = {};
-    for (const err of result.errors) {
-      const key = err.path.split(".").pop() ?? err.path;
-      errors[key] = err.message;
-    }
-    dispatch({ type: AdmissionWizardActionType.SetFieldErrors, errors });
-    return false;
-  }, [currentSection, currentValues, renderPackage]);
+
+    dispatch({ type: AdmissionWizardActionType.SetFieldErrors, errors: {} });
+    return true;
+  }, [
+    renderPackage,
+    wizardState.sortedSections,
+    wizardState.sectionValues,
+    validateSectionStep,
+  ]);
 
   const handleNext = useCallback(async () => {
     if (!validateCurrentStep()) return;
@@ -399,7 +455,7 @@ export function useAdmissionApplicationWizard() {
   }, [wizardState.currentStep]);
 
   const handleSubmit = useCallback(async () => {
-    if (!validateCurrentStep() || !renderPackage || cycleId == null) return;
+    if (!validateAllSections() || !renderPackage || cycleId == null) return;
 
     const saved = await persistCurrentStepIfDirty();
     if (!saved) return;
@@ -422,7 +478,7 @@ export function useAdmissionApplicationWizard() {
 
       reduxDispatch(clearSubmissionId(cycleId));
       notifyMutationSuccess(DYNAMIC_FORM_SUBMIT_SUCCESS);
-      navigate(appPaths.studentHome);
+      navigate(`${appPaths.StudentApplicationAcknowledgement}?justSubmitted=1`);
     } catch (err: unknown) {
       const parsed = parseApiError(err);
       if (isFormVersionMismatch(parsed)) {
@@ -447,7 +503,7 @@ export function useAdmissionApplicationWizard() {
       dispatch({ type: AdmissionWizardActionType.SetSubmitting, value: false });
     }
   }, [
-    validateCurrentStep,
+    validateAllSections,
     persistCurrentStepIfDirty,
     renderPackage,
     cycleId,
@@ -508,6 +564,9 @@ export function useAdmissionApplicationWizard() {
       wizardState,
       programOptions,
       subjectOptions,
+      stateOptions,
+      lgaOptions,
+      isLgasLoading,
       isLoading,
       isPatching,
       isPersistingBeforePay,

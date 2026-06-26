@@ -5,8 +5,8 @@ type SkeletonRowsProps = {
   /** Number of skeleton rows to render (default: 3) */
   count?: number;
   /**
-   * "card"   — bordered card with padding, margin-bottom, and a title line (default)
-   * "inline" — borderless row with bottom border only, no title line
+   * "card"   — bordered card with padding, margin-bottom (default)
+   * "inline" — borderless row with bottom border only
    */
   variant?: "card" | "inline";
 };
@@ -40,7 +40,11 @@ export function SkeletonRows({ count = 3, variant = "card" }: SkeletonRowsProps)
               background: token.colorBgContainer,
             }}
           >
-            <Skeleton active paragraph={{ rows: 1 }} title={{ width: "40%" }} />
+            <Skeleton
+              active
+              title={{ width: "40%" }}
+              paragraph={{ rows: 1, width: "80%" }}
+            />
           </div>
         ) : (
           <div
@@ -51,7 +55,11 @@ export function SkeletonRows({ count = 3, variant = "card" }: SkeletonRowsProps)
               background: token.colorBgContainer,
             }}
           >
-            <Skeleton active paragraph={{ rows: 1 }} title={false} />
+            <Skeleton
+              active
+              title={false}
+              paragraph={{ rows: 1, width: "70%" }}
+            />
           </div>
         )
       )}

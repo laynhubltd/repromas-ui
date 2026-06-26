@@ -28,8 +28,10 @@ export const appPaths = {
   studentPaymentReceipt: "/payments/:paymentId",
   StudentResults: "/results",
   StudentBioData: "/bio-data",
+  profile: "/profile",
   StudentApply: "/apply",
   StudentApplication: "/application",
+  StudentApplicationAcknowledgement: "/application/acknowledgement",
   StudentAdmission: "/admission",
 
   // Add other app paths here

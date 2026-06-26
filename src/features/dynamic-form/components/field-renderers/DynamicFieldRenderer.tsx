@@ -60,15 +60,15 @@ function selectOptionsForField(
   lgaOptions: FieldOption[],
 ): FieldOption[] {
   const inline = coerceFieldOptions(field.options);
-  if (inline.length > 0) return inline;
-  if (isProgramSelectField(field) && programOptions.length > 0) {
-    return programOptions;
-  }
   if (isStateGeographyFieldKey(field.fieldKey) && stateOptions.length > 0) {
     return stateOptions;
   }
   if (isLgaGeographyFieldKey(field.fieldKey) && lgaOptions.length > 0) {
     return lgaOptions;
+  }
+  if (inline.length > 0) return inline;
+  if (isProgramSelectField(field) && programOptions.length > 0) {
+    return programOptions;
   }
   return [];
 }
@@ -82,6 +82,7 @@ type DynamicFieldRendererProps = {
   stateOptions?: Array<{ value: number; label: string }>;
   lgaOptions?: Array<{ value: number; label: string }>;
   subjectOptions?: Array<{ value: number; label: string }>;
+  isLgasLoading?: boolean;
   layout?: DynamicFormLayoutFlags;
   /** Candidate entity ID — required for FILE field uploads */
   candidateId?: number;
@@ -110,6 +111,7 @@ export function DynamicFieldRenderer({
   stateOptions = [],
   lgaOptions = [],
   subjectOptions = [],
+  isLgasLoading = false,
   layout = defaultLayout,
   candidateId,
   actorType,
@@ -126,6 +128,7 @@ export function DynamicFieldRenderer({
   );
   const isLgaField = isLgaGeographyFieldKey(field.fieldKey);
   const lgaAwaitingState = isLgaField && selectOptions.length === 0;
+  const lgaSelectLoading = isLgaField && isLgasLoading;
 
   switch (field.fieldType) {
     case "TEXT":
@@ -180,10 +183,13 @@ export function DynamicFieldRenderer({
             label: o.label,
           }))}
           disabled={disabled || field.isReadOnly || lgaAwaitingState}
+          loading={lgaSelectLoading}
           placeholder={
-            lgaAwaitingState
-              ? "Select a state first"
-              : (placeholder ?? "Select...")
+            lgaSelectLoading
+              ? "Loading LGAs..."
+              : lgaAwaitingState
+                ? "Select a state first"
+                : (placeholder ?? "Select...")
           }
           style={fullWidthStyle}
           allowClear

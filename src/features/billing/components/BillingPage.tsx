@@ -6,6 +6,7 @@ import { InvoicesTab } from "@/features/billing/tabs/invoices";
 import { PaymentsTab } from "@/features/billing/tabs/payments";
 import { PaymentTransactionsTab } from "@/features/billing/tabs/payment-transactions";
 import { FeeItemsTab } from "@/features/billing/tabs/fee-items";
+import { PaymentGatewayTab } from "@/features/billing/tabs/payment-gateway";
 import { PricingRulesTab } from "@/features/billing/tabs/pricing-rules";
 import type { ConfigurePricingParams } from "@/features/billing/types/configure-pricing";
 import { useState } from "react";
@@ -102,6 +103,11 @@ export function BillingPage() {
                 key={`${pricingEventCode ?? "default"}-${pricingPolicyId ?? "p"}-${pricingCloneFromPolicyId ?? "c"}`}
               />
             ),
+          },
+          {
+            key: "payment-gateway",
+            label: "Payment Gateway",
+            children: <PaymentGatewayTab />,
           },
           {
             key: "fee-charges",

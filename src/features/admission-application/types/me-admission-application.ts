@@ -122,6 +122,8 @@ export type MeAdmissionApplication = {
   finalDecision: MeFinalDecision | string;
   isMatriculated: boolean;
   updatedAt: string;
+  submittedAt?: string | null;
+  acknowledgementNumber?: string | null;
   candidate?: MeAdmissionApplicationCandidate | null;
   appliedProgram?: MeAdmissionProgramSummary | null;
   offeredProgram?: MeAdmissionProgramSummary | null;

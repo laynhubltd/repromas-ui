@@ -1,10 +1,17 @@
+import { useAppSelector } from "@/app/hooks";
 import { appPaths } from "@/app/routing/app-path";
 import { StudentPortalScope } from "@/features/access-control/student-portal-scopes";
 import { useAccessControl } from "@/features/access-control/use-access-control";
 import { useBillingWorkflowDecision } from "@/features/billing";
 import type { WorkflowPayNowPayload } from "@/features/billing/types/workflow-step-decision";
-import { ME_APPLICATION_UI_COPY } from "../constants/meAdmissionApplicationOptions";
+import useAuthState from "@/features/auth/use-auth-state";
+import { deriveSectionErrorMessage } from "@/shared/utils/error/deriveSectionErrorMessage";
+import { RequestScreen } from "@/shared/types/error-ui";
+import { buildStudentApplyReturnTo } from "@/shared/utils/validateReturnUrl";
+import { useCallback, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useGetMeAdmissionApplicationQuery } from "../api/meAdmissionApplicationApi";
+import { ME_APPLICATION_UI_COPY } from "../constants/meAdmissionApplicationOptions";
 import type { MeAdmissionApplication } from "../types/me-admission-application";
 import {
   deriveLifecycleState,
@@ -15,20 +22,24 @@ import {
   shouldShowScreeningPending,
   shouldShowScreeningSection,
 } from "../utils/applicationDossierDisplay";
+import { buildAcknowledgementSlipModel } from "../utils/buildAcknowledgementSlipModel";
+import { buildPrintableApplicationModel } from "../utils/buildPrintableApplicationModel";
+import { canViewApplicationDocuments } from "../utils/canViewApplicationDocuments";
 import { getQueryHttpStatus } from "../utils/getQueryHttpStatus";
 import {
   getCandidateJambScores,
   sortJambScores,
 } from "../utils/meApplicationJambDisplay";
-import { deriveSectionErrorMessage } from "@/shared/utils/error/deriveSectionErrorMessage";
-import { RequestScreen } from "@/shared/types/error-ui";
-import { buildStudentApplyReturnTo } from "@/shared/utils/validateReturnUrl";
-import { useCallback, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useAcknowledgementSlip } from "./useAcknowledgementSlip";
+import { useMyDocumentUploads } from "./useMyDocumentUploads";
+import { usePrintableApplication } from "./usePrintableApplication";
 
 export function useAdmissionApplicationPage() {
   const navigate = useNavigate();
   const { hasStudentPortalScope } = useAccessControl();
+  const { userProfile } = useAuthState();
+  const logoUrl = useAppSelector((state) => state.theme.logoUrl);
+  const schoolName = useAppSelector((state) => state.theme.schoolName);
   const isCandidate = hasStudentPortalScope([StudentPortalScope.Candidate]);
   const [isPayNowLoading, setIsPayNowLoading] = useState(false);
 
@@ -39,6 +50,19 @@ export function useAdmissionApplicationPage() {
     error,
     refetch,
   } = useGetMeAdmissionApplicationQuery(undefined, { skip: !isCandidate });
+
+  const candidateId = application?.candidate?.id;
+  const showDocumentActions = canViewApplicationDocuments(
+    application?.applicationStatus,
+  );
+
+  const { state: documentUploadState } = useMyDocumentUploads({
+    candidateId,
+    skip: !isCandidate || !showDocumentActions,
+  });
+
+  const slipPrint = useAcknowledgementSlip();
+  const applicationPrint = usePrintableApplication();
 
   const queryStatus = getQueryHttpStatus(error);
   const notStarted = isError && queryStatus === 404;
@@ -76,6 +100,33 @@ export function useAdmissionApplicationPage() {
     [application?.candidate?.jambScores],
   );
 
+  const acknowledgementSlipModel = useMemo(() => {
+    if (!application) return null;
+    return buildAcknowledgementSlipModel({
+      application,
+      profilePictureUrl: userProfile?.profilePictureUrl,
+      logoUrl,
+      schoolName,
+    });
+  }, [application, userProfile?.profilePictureUrl, logoUrl, schoolName]);
+
+  const printableApplicationModel = useMemo(() => {
+    if (!application) return null;
+    return buildPrintableApplicationModel({
+      application,
+      profilePictureUrl: userProfile?.profilePictureUrl,
+      logoUrl,
+      schoolName,
+      documentUploads: documentUploadState.uploads,
+    });
+  }, [
+    application,
+    userProfile?.profilePictureUrl,
+    logoUrl,
+    schoolName,
+    documentUploadState.uploads,
+  ]);
+
   const flags = useMemo(
     () => ({
       isCandidate,
@@ -84,6 +135,7 @@ export function useAdmissionApplicationPage() {
       hasApplication: Boolean(application),
       showFeeBanner: isDraft,
       showContinueApply: isDraft,
+      showDocumentActions,
       showViewPayments:
         Boolean(application) &&
         !isDraft &&
@@ -100,7 +152,7 @@ export function useAdmissionApplicationPage() {
       showOlevelSection: application ? shouldShowOlevelSection(application) : false,
       showCandidateMetadata: Boolean(application?.candidate?.metadata),
     }),
-    [application, isCandidate, isDraft, notStarted, permissionDenied],
+    [application, isCandidate, isDraft, notStarted, permissionDenied, showDocumentActions],
   );
 
   const handleStartApplication = useCallback(() => {
@@ -133,6 +185,14 @@ export function useAdmissionApplicationPage() {
     [isPayNowLoading, navigate],
   );
 
+  const handlePrintAcknowledgementSlip = useCallback(() => {
+    slipPrint.actions.handlePrint();
+  }, [slipPrint.actions]);
+
+  const handlePrintApplication = useCallback(() => {
+    applicationPrint.actions.handlePrint();
+  }, [applicationPrint.actions]);
+
   return {
     state: {
       application: application as MeAdmissionApplication | undefined,
@@ -141,6 +201,10 @@ export function useAdmissionApplicationPage() {
       lifecycle,
       jambScoreRows,
       isPayNowLoading,
+      acknowledgementSlipModel,
+      printableApplicationModel,
+      slipContentRef: slipPrint.state.contentRef,
+      applicationContentRef: applicationPrint.state.contentRef,
     },
     actions: {
       refetch,
@@ -148,6 +212,8 @@ export function useAdmissionApplicationPage() {
       handleContinueApply,
       handleViewPayments,
       handleBillingPayNow,
+      handlePrintAcknowledgementSlip,
+      handlePrintApplication,
     },
     flags,
   };
