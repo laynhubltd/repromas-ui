@@ -22,6 +22,11 @@ export const studentRoutePrivilegeMatrix: Record<string, StudentPortalScope[]> =
   ],
   [appPaths.StudentApply]: [StudentPortalScope.Candidate],
   [appPaths.StudentApplication]: [StudentPortalScope.Candidate],
+  [appPaths.StudentApplicationAcknowledgement]: [StudentPortalScope.Candidate],
   [appPaths.StudentAdmission]: [StudentPortalScope.Candidate],
   [appPaths.StudentBioData]: [StudentPortalScope.Student],
+  [appPaths.profile]: [
+    StudentPortalScope.Student,
+    StudentPortalScope.Candidate,
+  ],
 };

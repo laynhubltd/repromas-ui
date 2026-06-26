@@ -16,6 +16,7 @@ type DynamicFormSectionViewProps = {
   stateOptions?: Array<{ value: number; label: string }>;
   lgaOptions?: Array<{ value: number; label: string }>;
   subjectOptions?: Array<{ value: number; label: string }>;
+  isLgasLoading?: boolean;
   /** Candidate entity ID — forwarded to FILE field upload widgets */
   candidateId?: number;
   /** Actor type — forwarded to FILE field upload widgets */
@@ -32,10 +33,13 @@ function renderFieldItem(
   stateOptions: Array<{ value: number; label: string }> | undefined,
   lgaOptions: Array<{ value: number; label: string }> | undefined,
   subjectOptions: Array<{ value: number; label: string }> | undefined,
+  isLgasLoading: boolean | undefined,
   layout: DynamicFormLayoutFlags,
   candidateId?: number,
   actorType?: string,
 ) {
+  const errorMessage = fieldErrors[field.fieldKey];
+
   return (
     <Form.Item
       key={field.fieldKey}
@@ -49,9 +53,8 @@ function renderFieldItem(
           </span>
         ) : null
       }
-      help={field.helpText}
-      validateStatus={fieldErrors[field.fieldKey] ? "error" : undefined}
-      extra={fieldErrors[field.fieldKey]}
+      help={errorMessage ?? field.helpText ?? undefined}
+      validateStatus={errorMessage ? "error" : undefined}
       style={{ marginBottom: 16 }}
     >
       <DynamicFieldRenderer
@@ -63,6 +66,7 @@ function renderFieldItem(
         stateOptions={stateOptions}
         lgaOptions={lgaOptions}
         subjectOptions={subjectOptions}
+        isLgasLoading={isLgasLoading}
         layout={layout}
         candidateId={candidateId}
         actorType={actorType}
@@ -81,6 +85,7 @@ export function DynamicFormSectionView({
   stateOptions,
   lgaOptions,
   subjectOptions,
+  isLgasLoading,
   candidateId,
   actorType,
 }: DynamicFormSectionViewProps) {
@@ -117,6 +122,7 @@ export function DynamicFormSectionView({
               stateOptions,
               lgaOptions,
               subjectOptions,
+              isLgasLoading,
               layout,
               candidateId,
               actorType,
@@ -137,6 +143,7 @@ export function DynamicFormSectionView({
                     stateOptions,
                     lgaOptions,
                     subjectOptions,
+                    isLgasLoading,
                     layout,
                     candidateId,
                     actorType,

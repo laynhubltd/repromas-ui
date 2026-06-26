@@ -58,6 +58,7 @@ export const ApiTagTypes = {
   BillingPayment: "BillingPayment",
   BillingPaymentTransaction: "BillingPaymentTransaction",
   BillingInvoice: "BillingInvoice",
+  PaymentGatewayConfig: "PaymentGatewayConfig",
   SetupStatus: "SetupStatus",
   DynamicForm: "DynamicForm",
   DynamicFormSection: "DynamicFormSection",

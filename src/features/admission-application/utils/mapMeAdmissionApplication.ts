@@ -272,6 +272,12 @@ export function mapMeAdmissionApplication(raw: unknown): MeAdmissionApplication 
     finalDecision: readString(data, "final_decision", "finalDecision"),
     isMatriculated: readBoolean(data, "is_matriculated", "isMatriculated"),
     updatedAt: readString(data, "updated_at", "updatedAt"),
+    submittedAt: readNullableString(data, "submitted_at", "submittedAt"),
+    acknowledgementNumber: readNullableString(
+      data,
+      "acknowledgement_number",
+      "acknowledgementNumber",
+    ),
     ...(candidate ? { candidate } : {}),
     ...(appliedProgram ? { appliedProgram } : {}),
     ...(offeredProgram ? { offeredProgram } : {}),

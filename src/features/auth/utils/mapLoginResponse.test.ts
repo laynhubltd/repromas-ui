@@ -45,6 +45,48 @@ describe("mapLoginResponse", () => {
       entity: null,
     });
     expect(result.permissions).toEqual(["faculties:list", "roles:read"]);
+    expect(result.profile.profilePictureUrl).toBeNull();
+  });
+
+  it("maps top-level profilePictureUrl from login profile", () => {
+    const result = mapLoginResponse({
+      token: "t",
+      refresh_token: "r",
+      profile: {
+        id: 1,
+        email: "student@test.edu",
+        profilePictureUrl: "https://storage.example.com/futb/profiles/5/avatar.jpg",
+      },
+      roles: [],
+      permissions: [],
+    });
+
+    expect(result.profile.profilePictureUrl).toBe(
+      "https://storage.example.com/futb/profiles/5/avatar.jpg",
+    );
+    expect(
+      mapAuthProfileToUserProfile(result.profile).profilePictureUrl,
+    ).toBe("https://storage.example.com/futb/profiles/5/avatar.jpg");
+  });
+
+  it("falls back to metadata.profilePictureUrl when top-level is missing", () => {
+    const result = mapLoginResponse({
+      token: "t",
+      refresh_token: "r",
+      profile: {
+        id: 1,
+        email: "student@test.edu",
+        metadata: {
+          profilePictureUrl: "https://storage.example.com/futb/profiles/5/avatar.png",
+        },
+      },
+      roles: [],
+      permissions: [],
+    });
+
+    expect(result.profile.profilePictureUrl).toBe(
+      "https://storage.example.com/futb/profiles/5/avatar.png",
+    );
   });
 
   it("coerces string scopeReferenceId to number", () => {
@@ -86,6 +128,7 @@ describe("mapAuthProfileToUserProfile", () => {
       score: 0,
       metadata: null,
       email: "ada@test.edu",
+      profilePictureUrl: null,
     });
 
     expect(user.id).toBe("2");

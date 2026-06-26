@@ -62,6 +62,23 @@ function readScopeReferenceId(raw: RawRecord): number | null {
   return null;
 }
 
+function readMetadataProfilePictureUrl(metadata: unknown): string | null {
+  if (!metadata || typeof metadata !== "object") return null;
+  const value = (metadata as RawRecord).profilePictureUrl;
+  if (typeof value !== "string" || value.trim() === "") return null;
+  return value;
+}
+
+function readProfilePictureUrl(p: RawRecord): string | null {
+  const topLevel = readNullableString(
+    p,
+    "profile_picture_url",
+    "profilePictureUrl",
+  );
+  if (topLevel) return topLevel;
+  return readMetadataProfilePictureUrl(p.metadata);
+}
+
 function readRole(raw: unknown): ApiRole | null {
   if (!raw || typeof raw !== "object") return null;
   const r = raw as RawRecord;
@@ -97,6 +114,7 @@ function readProfile(raw: RawRecord, topLevelTenantId: number | null): AuthProfi
     score: readNumber(p, "score", "score"),
     metadata: p.metadata === undefined ? null : p.metadata,
     email: readString(p, "email", "email"),
+    profilePictureUrl: readProfilePictureUrl(p),
   };
 }
 
@@ -108,6 +126,7 @@ export function mapAuthProfileToUserProfile(profile: AuthProfile): UserProfile {
     firstName: profile.firstName,
     lastName: profile.lastName,
     email: profile.email,
+    profilePictureUrl: profile.profilePictureUrl,
   };
 }
 

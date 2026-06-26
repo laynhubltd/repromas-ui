@@ -95,9 +95,18 @@ export type InitiatePaymentRequest = {
   selectedOptionalLineIds?: number[];
 };
 
+export type BillingPaymentProvider =
+  | "FLUTTERWAVE"
+  | "PAYSTACK"
+  | "REMITA"
+  | "BANK_TRANSFER"
+  | "MANUAL";
+
 export type InitiatePaymentResponse = {
   checkoutUrl: string;
   providerReference?: string;
+  /** Gateway selected for this tenant — drives checkout behaviour */
+  provider?: BillingPaymentProvider;
   feeChargeId?: number;
   invoiceId?: number | null;
   amount?: string;

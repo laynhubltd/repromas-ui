@@ -71,6 +71,7 @@ export function mapCandidateSignupToLoginResponse(
     score: 0,
     metadata: null,
     email: data.user.email,
+    profilePictureUrl: null,
   };
 
   return {

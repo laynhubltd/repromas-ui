@@ -15,6 +15,7 @@ import type {
   SignUpResponse,
   UserProfile,
 } from "../types";
+import type { ChangePasswordRequest } from "../types/change-password";
 import { mapLoginResponse } from "../utils/mapLoginResponse";
 
 const AUTH_BASE = "/auth";
@@ -93,6 +94,15 @@ export const authApi = createApi({
       transformResponse: () => undefined,
     }),
 
+    changePassword: builder.mutation<void, ChangePasswordRequest>({
+      query: (body) => ({
+        url: `${AUTH_BASE}/change-password`,
+        method: "POST",
+        data: body,
+      }),
+      transformResponse: () => undefined,
+    }),
+
     signUp: builder.mutation<SignUpResponse, SignUpRequest>({
       query: (body) => ({
         url: `${AUTH_BASE}/register`,
@@ -121,6 +131,7 @@ export const {
   useLogoutMutation,
   useForgotPasswordMutation,
   useResetPasswordMutation,
+  useChangePasswordMutation,
   useSignUpMutation,
   useGetProfileQuery,
 } = authApi;

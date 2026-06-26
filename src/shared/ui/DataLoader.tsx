@@ -48,12 +48,27 @@ export function DataLoader({
   minHeight = "120px",
 }: DataLoaderProps) {
   if (loading) {
+    // Custom loaders (e.g. SkeletonRows) render full-width block content —
+    // wrapping them in a flex centering container collapses their width.
+    // Only apply centering for the default spinner.
+    if (loader) {
+      return (
+        <div className={className} style={{ minHeight }}>
+          {loader}
+        </div>
+      );
+    }
     return (
       <div
         className={className}
-        style={{ minHeight, display: "flex", alignItems: "center", justifyContent: "center" }}
+        style={{
+          minHeight,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
       >
-        {loader ?? defaultLoader}
+        {defaultLoader}
       </div>
     );
   }

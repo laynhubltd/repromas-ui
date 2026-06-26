@@ -76,6 +76,10 @@ export const ME_APPLICATION_UI_COPY = {
   examYear: "Exam year",
   examRegNo: "Exam registration number",
   schoolName: "School name",
+  printAcknowledgementSlip: "Print acknowledgement slip",
+  printApplication: "Print application",
+  acknowledgementPageTitle: "Application received",
+  sectionDocuments: "Uploaded documents",
 } as const;
 
 const APPLICATION_STATUS_COLORS: Partial<Record<string, string>> = {

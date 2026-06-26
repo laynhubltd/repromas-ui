@@ -72,6 +72,12 @@ const BillingPage = lazy(() =>
   })),
 );
 
+const ProfilePage = lazy(() =>
+  import("@/features/profile").then((m) => ({
+    default: m.ProfilePage,
+  })),
+);
+
 const GuardedDashboardShell = withAuthGuard({
   Component: DashboardShell,
   fallback: null,
@@ -82,6 +88,7 @@ export function getAdminRouteEntries() {
     <>
       <Route path="/" element={<GuardedDashboardShell />}>
         <Route path="dashboard" element={<Dashboard />} />
+        <Route path="profile" element={<ProfilePage />} />
         <Route element={<ProtectedRoute />}>
           <Route element={<SetupGatedRoute />}>
             <Route path="academic-structure" element={<AcademicStructure />} />

@@ -57,6 +57,7 @@ export function getMockLoginResponse(credentials: LoginRequest): LoginResponse {
     score: 0,
     metadata: null,
     email: credentials.email,
+    profilePictureUrl: null,
   };
   return {
     token,

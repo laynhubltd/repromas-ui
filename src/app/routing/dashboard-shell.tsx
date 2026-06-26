@@ -6,7 +6,8 @@ import useAuthState from "@/features/auth/use-auth-state";
 import { LogoutOutlined, SwapOutlined, UserOutlined } from "@ant-design/icons";
 import type { ItemType } from "antd/es/menu/interface";
 import { useMemo } from "react";
-import { Link, Outlet } from "react-router-dom";
+import { Link, Outlet, useNavigate } from "react-router-dom";
+import { appPaths } from "./app-path";
 import {
   SetupChecklistLauncher,
   useSetupGatedMenuItems,
@@ -23,6 +24,7 @@ export default function DashboardShell() {
   const gatedBottomItems = useSetupGatedMenuItems(restrictedBottomItems);
   const { userProfile, roles, activeRole } = useAuthState();
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const [logout] = useLogoutMutation();
 
   const onLogout = () => {
@@ -68,7 +70,7 @@ export default function DashboardShell() {
         key: "profile",
         icon: <UserOutlined />,
         label: "Profile",
-        onClick: () => {},
+        onClick: () => navigate(appPaths.profile),
       },
     ];
 
@@ -89,7 +91,7 @@ export default function DashboardShell() {
     });
 
     return items;
-  }, [roles, dispatch, onLogout]);
+  }, [roles, dispatch, onLogout, navigate]);
 
   return (
     <MainLayout
@@ -98,6 +100,10 @@ export default function DashboardShell() {
       userMenuItems={userMenuItems}
       userDisplayName={displayName}
       userRoleLabel={activeRole?.name}
+      userAvatarUrl={userProfile?.profilePictureUrl}
+      userFirstName={userProfile?.firstName}
+      userLastName={userProfile?.lastName}
+      userEmail={userProfile?.email}
     >
       <Outlet />
       <SetupChecklistLauncher />

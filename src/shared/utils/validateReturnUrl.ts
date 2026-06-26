@@ -3,6 +3,7 @@ import { appPaths } from "@/app/routing/app-path";
 const ALLOWED_PATHS = new Set<string>([
   appPaths.StudentApply,
   appPaths.StudentApplication,
+  appPaths.StudentApplicationAcknowledgement,
   appPaths.studentHome,
 ]);
 
@@ -60,6 +61,13 @@ export function validateReturnUrl(raw: string | null | undefined): string | null
   }
 
   if (url.pathname === appPaths.StudentApplication) {
+    if (url.search) {
+      return null;
+    }
+    return url.pathname;
+  }
+
+  if (url.pathname === appPaths.StudentApplicationAcknowledgement) {
     if (url.search) {
       return null;
     }

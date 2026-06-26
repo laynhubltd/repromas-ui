@@ -28,6 +28,7 @@ const sampleProfile: AuthProfile = {
   score: 0,
   metadata: null,
   email: "admin@futb.edu.ng",
+  profilePictureUrl: null,
 };
 
 const adminRole: ApiRole = {

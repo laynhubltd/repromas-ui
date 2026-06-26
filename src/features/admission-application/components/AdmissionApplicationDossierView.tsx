@@ -25,6 +25,14 @@ import { ApplicationLifecycleSteps } from "./ApplicationLifecycleSteps";
 import { ApplicationOlevelSection } from "./ApplicationOlevelSection";
 import { ApplicationStatusHero } from "./ApplicationStatusHero";
 import { ApplicationDocumentsSection } from "./ApplicationDocumentsSection";
+import { AcknowledgementSlip } from "./acknowledgement/AcknowledgementSlip";
+import { ApplicationDocumentActions } from "./print/ApplicationDocumentActions";
+import { PrintableApplicationDossier } from "./print/PrintableApplicationDossier";
+import type {
+  AcknowledgementSlipModel,
+  PrintableApplicationDocumentModel,
+} from "../types/acknowledgement-slip";
+import type { RefObject } from "react";
 
 type AdmissionApplicationDossierViewProps = {
   application: MeAdmissionApplication;
@@ -35,16 +43,23 @@ type AdmissionApplicationDossierViewProps = {
     showContinueApply: boolean;
     showViewPayments: boolean;
     showFeeBanner: boolean;
+    showDocumentActions: boolean;
     showOfferCard: boolean;
     showScreeningSection: boolean;
     showScreeningPending: boolean;
     showJambSection: boolean;
     showCandidateMetadata: boolean;
   };
+  acknowledgementSlipModel: AcknowledgementSlipModel | null;
+  printableApplicationModel: PrintableApplicationDocumentModel | null;
+  slipContentRef: RefObject<HTMLDivElement | null>;
+  applicationContentRef: RefObject<HTMLDivElement | null>;
   isPayNowLoading: boolean;
   onContinueApply: () => void;
   onViewPayments: () => void;
   onBillingPayNow: (payload: WorkflowPayNowPayload) => void | Promise<void>;
+  onPrintAcknowledgementSlip: () => void;
+  onPrintApplication: () => void;
 };
 
 export function AdmissionApplicationDossierView({
@@ -53,10 +68,16 @@ export function AdmissionApplicationDossierView({
   jambScoreRows,
   candidateId,
   flags,
+  acknowledgementSlipModel,
+  printableApplicationModel,
+  slipContentRef,
+  applicationContentRef,
   isPayNowLoading,
   onContinueApply,
   onViewPayments,
   onBillingPayNow,
+  onPrintAcknowledgementSlip,
+  onPrintApplication,
 }: AdmissionApplicationDossierViewProps) {
   const jambScoreColumns: ColumnsType<MeAdmissionJambScore> = useMemo(
     () => [
@@ -78,6 +99,13 @@ export function AdmissionApplicationDossierView({
 
   return (
     <>
+      <ConditionalRenderer when={flags.showDocumentActions}>
+        <ApplicationDocumentActions
+          onPrintAcknowledgementSlip={onPrintAcknowledgementSlip}
+          onPrintApplication={onPrintApplication}
+        />
+      </ConditionalRenderer>
+
       <Flex justify="flex-end" gap={8} wrap="wrap">
         <ConditionalRenderer when={flags.showContinueApply}>
           <Button type="primary" onClick={onContinueApply}>
@@ -255,6 +283,33 @@ export function AdmissionApplicationDossierView({
       </ConditionalRenderer>
 
       <ApplicationDocumentsSection candidateId={candidateId} />
+
+      <ConditionalRenderer
+        when={
+          flags.showDocumentActions &&
+          acknowledgementSlipModel != null &&
+          printableApplicationModel != null
+        }
+      >
+        {acknowledgementSlipModel ? (
+          <AcknowledgementSlip
+            model={acknowledgementSlipModel}
+            contentRef={slipContentRef}
+            showToolbar={false}
+          />
+        ) : null}
+        {printableApplicationModel ? (
+          <div className="application-print-source">
+            <div
+              ref={applicationContentRef}
+              className="app-print-batch-wrapper"
+              style={{ width: "820px" }}
+            >
+              <PrintableApplicationDossier model={printableApplicationModel} />
+            </div>
+          </div>
+        ) : null}
+      </ConditionalRenderer>
     </>
   );
 }

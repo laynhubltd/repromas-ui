@@ -36,6 +36,7 @@ export const BILLING_PAYMENT_SESSION_KEYS = {
   lastProviderReference: "billing:lastProviderReference",
   lastPaymentAmount: "billing:lastPaymentAmount",
   lastPaymentCurrency: "billing:lastPaymentCurrency",
+  lastPaymentProvider: "billing:lastPaymentProvider",
 } as const;
 
 export const STUDENT_PAYMENT_UI_COPY = {

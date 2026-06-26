@@ -28,4 +28,9 @@ export type MainLayoutProps = {
   userDisplayName: string;
   /** Active role name shown under the display name in the header. */
   userRoleLabel?: string;
+  /** Profile picture URL for the header avatar. */
+  userAvatarUrl?: string | null;
+  userFirstName?: string | null;
+  userLastName?: string | null;
+  userEmail?: string | null;
 };

@@ -30,6 +30,7 @@ export type AuthProfile = {
   score: number;
   metadata: unknown | null;
   email: string;
+  profilePictureUrl: string | null;
 };
 
 export type LoginRequest = { email: string; password: string };
@@ -50,6 +51,11 @@ export type {
   ResetPasswordRequest,
 } from "./types/password-reset";
 
+export type {
+  ChangePasswordFormValues,
+  ChangePasswordRequest,
+} from "./types/change-password";
+
 export type UserProfile = {
   id: string;
   userId?: number;
@@ -57,6 +63,7 @@ export type UserProfile = {
   firstName?: string | null;
   lastName?: string | null;
   email: string;
+  profilePictureUrl?: string | null;
   /** @deprecated Legacy multi-profile login; no longer sent by API */
   role?: UserRole;
   /** @deprecated Legacy multi-profile login */

@@ -8,6 +8,7 @@ import { REHYDRATE } from "redux-persist";
 import {
   authCleared,
   profileFetched,
+  profilePictureUploaded,
   roleSelected,
   tokenRefreshed,
   userLoggedIn,
@@ -155,6 +156,11 @@ const authSlice = createSlice({
           scope: action.payload.scope,
           scopeReferenceId: action.payload.scopeReferenceId,
         };
+      })
+      .addCase(profilePictureUploaded, (state, action) => {
+        if (state.userProfile) {
+          state.userProfile.profilePictureUrl = action.payload.profilePictureUrl;
+        }
       })
       .addCase(REHYDRATE, (state, action: AnyAction) => {
         if (state.token && !isTokenExpired(state.token)) {
