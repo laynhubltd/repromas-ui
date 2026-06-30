@@ -180,8 +180,9 @@ export function ScoringStrategyFormModal({
     maxSchoolScore,
   );
 
-  const showPriorQualWarning =
-    screeningMethod && methodIncludesPriorQual(screeningMethod);
+  const showPriorQualWarning = Boolean(
+    screeningMethod && methodIncludesPriorQual(screeningMethod),
+  );
 
   const editLaneLabel = target
     ? getLaneProfileLabel(resolveLaneProfileFromStrategy(target))
@@ -456,7 +457,7 @@ export function ScoringStrategyFormModal({
                 },
               ]}
             >
-              <ScoringComponentsBuilder method={screeningMethod} />
+              <ScoringComponentsBuilder method={screeningMethod!} />
             </Form.Item>
           </ConditionalRenderer>
 
