@@ -1,6 +1,7 @@
 // Feature: course-assessment-policy
 import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
+import { getCalculationMethodLabel } from "@/shared/constants/courseAssessmentPolicyOptions";
 import { useToken } from "@/shared/hooks/useToken";
 import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { SkeletonRows } from "@/shared/ui/SkeletonRows";
@@ -14,19 +15,12 @@ import {
 import { Button, Flex, Tag, Tooltip, Typography } from "antd";
 import { useGetCourseAssessmentComponentsQuery } from "../api/courseAssessmentComponentsApi";
 import type {
-  CalculationMethod,
   CourseAssessmentComponent,
   CourseAssessmentPolicy,
 } from "../types/course-assessment-policy";
 import { WeightBar } from "./WeightBar";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const CALCULATION_METHOD_LABELS: Record<CalculationMethod, string> = {
-  WEIGHTED_SUM: "Weighted Sum",
-  AVERAGE: "Average",
-  BEST_OF: "Best Of",
-};
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -130,7 +124,7 @@ export function PolicyCard({
                 type="secondary"
                 style={{ fontSize: token.fontSizeSM }}
               >
-                {CALCULATION_METHOD_LABELS[policy.calculationMethod]}
+                {getCalculationMethodLabel(policy.calculationMethod)}
               </Typography.Text>
               <Typography.Text
                 type="secondary"

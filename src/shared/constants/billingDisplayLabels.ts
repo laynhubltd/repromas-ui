@@ -16,6 +16,11 @@ export const PAYER_TYPE_LABELS: Record<string, string> = {
   admission_candidate: "Admission candidate",
 };
 
+export const SEED_SKIPPED_REASON_LABELS: Record<string, string> = {
+  already_exists: "Already configured",
+  no_catalog_defaults: "No catalog defaults",
+};
+
 /** Converts SCREAMING_SNAKE (or snake) codes to title-style words. */
 export function humanizeEnumValue(value: string): string {
   return value
@@ -40,6 +45,13 @@ export function formatPayerTypeLabel(
 ): string {
   if (!payerType) return "—";
   return PAYER_TYPE_LABELS[payerType] ?? humanizeEnumValue(payerType);
+}
+
+export function getSeedSkippedReasonLabel(
+  reason: string | null | undefined,
+): string {
+  if (!reason) return "—";
+  return SEED_SKIPPED_REASON_LABELS[reason] ?? humanizeEnumValue(reason);
 }
 
 export function formatEventCodeLabel(

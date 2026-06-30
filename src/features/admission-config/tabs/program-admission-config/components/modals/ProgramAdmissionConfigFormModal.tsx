@@ -1,36 +1,27 @@
 import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
-import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
 import { ErrorAlert } from "@/shared/ui/ErrorAlert";
-import { Button, Form, InputNumber, Modal, Select, Space, Typography } from "antd";
-import { useMemo } from "react";
+import { Button, Form, Modal, Select, Space, Typography } from "antd";
 import { useProgramAdmissionConfigFormModal } from "../../hooks/useProgramAdmissionConfigModal";
 import type { ProgramAdmissionConfig } from "../../types/program-admission-config";
-import { computeQuotaSeats } from "../../utils/seatMath";
-import {
-  cutoffRules,
-  programIdRules,
-  quotaPercentageRules,
-  totalCapacityRules,
-} from "../../utils/validators";
+import { programIdRules } from "../../utils/validators";
+import { CapacityQuotaFields } from "../form/CapacityQuotaFields";
+import { CutoffFields } from "../form/CutoffFields";
+import { JambFloorField } from "../form/JambFloorField";
+import { OlevelCreditGateSection } from "../form/OlevelCreditGateSection";
 
 type ProgramAdmissionConfigFormModalProps = {
   open: boolean;
   target: ProgramAdmissionConfig | null;
   onClose: () => void;
-  programs: { id: number; name: string; department?: { name: string } | null }[];
-  configs: ProgramAdmissionConfig[];
 };
 
 export function ProgramAdmissionConfigFormModal({
   open,
   target,
   onClose,
-  programs,
-  configs,
 }: ProgramAdmissionConfigFormModalProps) {
-  const token = useToken();
   const {
     state: {
       isEditMode,
@@ -39,48 +30,18 @@ export function ProgramAdmissionConfigFormModal({
       programLocked,
       totalSeatsUsed,
       programOptions,
+      programsLoading,
+      noProgramsAvailable,
     },
-    actions: { handleSubmit, handleCancel, applyFederalPreset },
+    actions: { handleSubmit, handleCancel, applyFederalPreset, initializeForm },
     form,
-  } = useProgramAdmissionConfigFormModal(target, open, onClose, programs, configs);
+  } = useProgramAdmissionConfigFormModal(target, open, onClose);
 
-  const totalCapacity = Form.useWatch("totalCapacity", form);
-  const meritPercentage = Form.useWatch("meritPercentage", form);
-  const catchmentPercentage = Form.useWatch("catchmentPercentage", form);
-  const eldsPercentage = Form.useWatch("eldsPercentage", form);
-
-  const quotaSum =
-    Number(meritPercentage ?? 0) +
-    Number(catchmentPercentage ?? 0) +
-    Number(eldsPercentage ?? 0);
-
-  const seatsPreview = useMemo(() => {
-    if (
-      totalCapacity === undefined ||
-      meritPercentage === undefined ||
-      catchmentPercentage === undefined ||
-      eldsPercentage === undefined
-    ) {
-      return null;
+  const handleAfterOpenChange = (visible: boolean) => {
+    if (visible) {
+      initializeForm(target);
     }
-    return computeQuotaSeats({
-      totalCapacity,
-      meritPercentage,
-      catchmentPercentage,
-      eldsPercentage,
-      meritSeatsUsed: target?.meritSeatsUsed ?? 0,
-      catchmentSeatsUsed: target?.catchmentSeatsUsed ?? 0,
-      eldsSeatsUsed: target?.eldsSeatsUsed ?? 0,
-    });
-  }, [
-    totalCapacity,
-    meritPercentage,
-    catchmentPercentage,
-    eldsPercentage,
-    target?.meritSeatsUsed,
-    target?.catchmentSeatsUsed,
-    target?.eldsSeatsUsed,
-  ]);
+  };
 
   return (
     <Modal
@@ -88,9 +49,10 @@ export function ProgramAdmissionConfigFormModal({
       open={open}
       onCancel={handleCancel}
       footer={null}
-      width={640}
+      width={720}
       destroyOnHidden
       closable
+      afterOpenChange={handleAfterOpenChange}
     >
       <ErrorAlert error={formError} />
       <Form
@@ -106,7 +68,9 @@ export function ProgramAdmissionConfigFormModal({
           extra={
             programLocked
               ? "Program cannot be changed after slots have been allocated."
-              : undefined
+              : noProgramsAvailable
+                ? "Every program already has an admission config, or programs are still loading."
+                : undefined
           }
         >
           <Select
@@ -115,119 +79,29 @@ export function ProgramAdmissionConfigFormModal({
             showSearch
             optionFilterProp="label"
             disabled={programLocked}
+            loading={programsLoading}
+            notFoundContent={
+              programsLoading ? "Loading programs..." : "No programs available"
+            }
           />
         </Form.Item>
 
-        <Form.Item
-          name="totalCapacity"
-          label="Total capacity"
-          rules={totalCapacityRules}
-        >
-          <InputNumber style={{ width: "100%" }} min={1} precision={0} />
-        </Form.Item>
+        <CapacityQuotaFields
+          form={form}
+          target={target}
+          onApplyFederalPreset={applyFederalPreset}
+        />
 
-        <Space size={8} style={{ marginBottom: 12 }}>
-          <Typography.Text strong>Quota split (%)</Typography.Text>
-          <Button type="link" size="small" onClick={applyFederalPreset}>
-            Apply 45/30/25 preset
-          </Button>
-        </Space>
+        <CutoffFields />
 
-        <Space.Compact style={{ width: "100%", marginBottom: 8 }}>
-          <Form.Item
-            name="meritPercentage"
-            label="Merit %"
-            rules={quotaPercentageRules}
-            style={{ width: "33%" }}
-          >
-            <InputNumber style={{ width: "100%" }} min={0} max={100} precision={0} />
-          </Form.Item>
-          <Form.Item
-            name="catchmentPercentage"
-            label="Catchment %"
-            rules={quotaPercentageRules}
-            style={{ width: "33%" }}
-          >
-            <InputNumber style={{ width: "100%" }} min={0} max={100} precision={0} />
-          </Form.Item>
-          <Form.Item
-            name="eldsPercentage"
-            label="ELDS %"
-            rules={quotaPercentageRules}
-            style={{ width: "34%" }}
-          >
-            <InputNumber style={{ width: "100%" }} min={0} max={100} precision={0} />
-          </Form.Item>
-        </Space.Compact>
+        <OlevelCreditGateSection defaultExpanded={!isEditMode} />
 
-        <Typography.Text
-          type={quotaSum === 100 ? "secondary" : "danger"}
-          style={{ display: "block", marginBottom: 16 }}
-        >
-          Quota total: {quotaSum}% (must be exactly 100%)
-        </Typography.Text>
-
-        <Typography.Text strong style={{ display: "block", marginBottom: 8 }}>
-          Minimum cut-offs
-        </Typography.Text>
-        <Space.Compact style={{ width: "100%", marginBottom: 8 }}>
-          <Form.Item
-            name="meritCutoff"
-            label="Merit"
-            rules={cutoffRules}
-            style={{ width: "33%" }}
-          >
-            <InputNumber style={{ width: "100%" }} min={0} max={100} precision={2} />
-          </Form.Item>
-          <Form.Item
-            name="catchmentCutoff"
-            label="Catchment"
-            rules={cutoffRules}
-            style={{ width: "33%" }}
-          >
-            <InputNumber style={{ width: "100%" }} min={0} max={100} precision={2} />
-          </Form.Item>
-          <Form.Item
-            name="eldsCutoff"
-            label="ELDS"
-            rules={cutoffRules}
-            style={{ width: "34%" }}
-          >
-            <InputNumber style={{ width: "100%" }} min={0} max={100} precision={2} />
-          </Form.Item>
-        </Space.Compact>
-        <Typography.Text type="secondary" style={{ display: "block", marginBottom: 16 }}>
-          Ordering rule: Merit cut-off must be greater than or equal to Catchment, and Catchment greater than or equal to ELDS.
-        </Typography.Text>
-
-        <ConditionalRenderer when={seatsPreview !== null}>
-          <div
-            style={{
-              border: `1px solid ${token.colorBorderSecondary}`,
-              borderRadius: token.borderRadius,
-              background: token.colorBgLayout,
-              padding: token.paddingSM,
-              marginBottom: 16,
-            }}
-          >
-            <Typography.Text strong style={{ display: "block", marginBottom: 4 }}>
-              Slot allocation preview
-            </Typography.Text>
-            <Typography.Text type="secondary" style={{ display: "block" }}>
-              Merit: {seatsPreview?.meritAllocated} allocated, {seatsPreview?.meritAvailable} available
-            </Typography.Text>
-            <Typography.Text type="secondary" style={{ display: "block" }}>
-              Catchment: {seatsPreview?.catchmentAllocated} allocated, {seatsPreview?.catchmentAvailable} available
-            </Typography.Text>
-            <Typography.Text type="secondary" style={{ display: "block" }}>
-              ELDS: {seatsPreview?.eldsAllocated} allocated, {seatsPreview?.eldsAvailable} available
-            </Typography.Text>
-          </div>
-        </ConditionalRenderer>
+        <JambFloorField />
 
         <ConditionalRenderer when={isEditMode && totalSeatsUsed > 0}>
           <Typography.Text type="warning" style={{ display: "block", marginBottom: 16 }}>
-            {totalSeatsUsed} slots have already been used. Reducing capacity or quota percentages below used slots will be rejected by the API.
+            {totalSeatsUsed} slots have already been used. Reducing capacity or quota
+            percentages below used slots will be rejected by the API.
           </Typography.Text>
         </ConditionalRenderer>
 

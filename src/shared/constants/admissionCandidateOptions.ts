@@ -5,6 +5,7 @@ import type {
   OfferDecision,
   SeatBucket,
 } from "@/features/admission-candidate/tabs/candidate/types/admission-candidate";
+import { humanizeEnumValue } from "@/shared/constants/billingDisplayLabels";
 
 export const CANDIDATE_GENDER_OPTIONS: {
   value: CandidateGender;
@@ -117,3 +118,115 @@ export const SEAT_BUCKET_OPTIONS: { value: SeatBucket; label: string }[] = [
   { value: "CATCHMENT", label: "Catchment" },
   { value: "ELDS", label: "ELDS" },
 ];
+
+export const APPLICATION_STATUS_LABELS: Record<string, string> = {
+  DRAFT: "Draft",
+  SUBMITTED: "Submitted",
+  PENDING: "Pending",
+  DOCUMENTS_VERIFIED: "Documents verified",
+  OFFER_ADMISSION: "Offer admission",
+  REJECTED: "Rejected",
+};
+
+export const FINAL_DECISION_LABELS: Record<string, string> = {
+  PENDING: "Awaiting decision",
+  OFFER_ADMISSION: "Offer admission",
+  REJECTED: "Not admitted",
+  ADMIT_MERIT: "Admitted (merit)",
+  ADMIT_CATCHMENT: "Admitted (catchment)",
+  ADMIT_ELDS: "Admitted (ELDS)",
+  OFFER_CHANGE_OF_COURSE: "Offer change of course",
+};
+
+export const OFFER_DECISION_LABELS = Object.fromEntries(
+  OFFER_DECISION_OPTIONS.map((o) => [o.value, o.label]),
+) as Record<OfferDecision, string>;
+
+export const SEAT_BUCKET_LABELS = Object.fromEntries(
+  SEAT_BUCKET_OPTIONS.map((o) => [o.value, o.label]),
+) as Record<SeatBucket, string>;
+
+export const CANDIDATE_GENDER_LABELS = Object.fromEntries(
+  CANDIDATE_GENDER_OPTIONS.map((o) => [o.value, o.label]),
+) as Record<CandidateGender, string>;
+
+export const CANDIDATE_ENTRY_MODE_LABELS = Object.fromEntries(
+  CANDIDATE_ENTRY_MODE_OPTIONS.map((o) => [o.value, o.label]),
+) as Record<CandidateEntryMode, string>;
+
+export const OFFER_DECISION_SOURCE_LABELS: Record<string, string> = {
+  RECOMMENDATION: "From recommendation",
+  MANUAL_OVERRIDE: "Manual override",
+};
+
+export const FINAL_DECISION_TAG_COLORS: Partial<Record<string, string>> = {
+  PENDING: "default",
+  OFFER_ADMISSION: "success",
+  REJECTED: "error",
+  ADMIT_MERIT: "success",
+  ADMIT_CATCHMENT: "success",
+  ADMIT_ELDS: "success",
+  OFFER_CHANGE_OF_COURSE: "warning",
+};
+
+export function getApplicationStatusLabel(
+  status: string | null | undefined,
+): string {
+  if (!status) return "—";
+  return APPLICATION_STATUS_LABELS[status] ?? humanizeEnumValue(status);
+}
+
+export function getFinalDecisionLabel(
+  decision: string | null | undefined,
+): string {
+  if (!decision) return "—";
+  return FINAL_DECISION_LABELS[decision] ?? humanizeEnumValue(decision);
+}
+
+export function getOfferDecisionLabel(
+  decision: string | null | undefined,
+): string {
+  if (!decision) return "—";
+  return OFFER_DECISION_LABELS[decision as OfferDecision] ?? humanizeEnumValue(decision);
+}
+
+export function getSeatBucketLabel(bucket: string | null | undefined): string {
+  if (!bucket) return "—";
+  return SEAT_BUCKET_LABELS[bucket as SeatBucket] ?? humanizeEnumValue(bucket);
+}
+
+export function getCycleStatusLabel(status: string | null | undefined): string {
+  if (!status) return "—";
+  return CYCLE_STATUS_LABELS[status] ?? humanizeEnumValue(status);
+}
+
+export function getCapsWarningStageLabel(
+  stage: string | null | undefined,
+): string {
+  if (!stage) return "—";
+  return CAPS_WARNING_STAGE_COPY[stage] ?? humanizeEnumValue(stage);
+}
+
+export function getCandidateGenderLabel(
+  gender: string | null | undefined,
+): string {
+  if (!gender) return "—";
+  return CANDIDATE_GENDER_LABELS[gender as CandidateGender] ?? humanizeEnumValue(gender);
+}
+
+export function getCandidateEntryModeLabel(
+  entryMode: string | null | undefined,
+): string {
+  if (!entryMode) return "—";
+  return (
+    CANDIDATE_ENTRY_MODE_LABELS[entryMode as CandidateEntryMode] ??
+    humanizeEnumValue(entryMode)
+  );
+}
+
+export function getOfferDecisionSourceLabel(
+  source: string | null | undefined,
+): string {
+  if (!source) return "—";
+  return OFFER_DECISION_SOURCE_LABELS[source] ?? humanizeEnumValue(source);
+}

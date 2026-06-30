@@ -3,16 +3,38 @@
 
 import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
-import { useToken } from "@/shared/hooks/useToken";
 import {
+  ALL_SCREENING_METHOD_OPTIONS,
+  getComponentTypeLabel,
+  getLaneProfileLabel,
   getScopeLabel,
-  SCREENING_METHOD_OPTIONS,
+  LANE_TAG_COLORS,
+  PRIOR_QUAL_STUB_WARNING,
   SCOPE_TAG_COLORS,
 } from "@/shared/constants/scoringStrategyOptions";
+import { useToken } from "@/shared/hooks/useToken";
+import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
 import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
-import { Button, Descriptions, Drawer, Flex, Tag, Typography } from "antd";
-import type { AdmissionScoringStrategy } from "../types/scoring-strategy";
+import {
+  Alert,
+  Button,
+  Descriptions,
+  Drawer,
+  Flex,
+  Table,
+  Tag,
+  Typography,
+} from "antd";
+import type {
+  AdmissionScoringStrategy,
+  ScoringComponentType,
+} from "../types/scoring-strategy";
 import { resolveReferenceLabel } from "../utils/resolveReferenceLabel";
+import {
+  locksJambToZero,
+  methodIncludesPriorQual,
+  resolveLaneProfileFromStrategy,
+} from "../utils/scoringStrategyDisplay";
 import { ScoringStrategyMaxScores } from "./ScoringStrategyMaxScores";
 
 export type ScoringStrategyDrawerProps = {
@@ -33,13 +55,18 @@ export function ScoringStrategyDrawer({
   const token = useToken();
 
   const scopeLabel = strategy ? getScopeLabel(strategy.scope) : "";
-
-  // Get screening method details
-  const screeningMethodDetails = SCREENING_METHOD_OPTIONS.find(
-    (opt) => opt.value === strategy?.strategy.screening_method
+  const method = strategy?.strategy.screening_method;
+  const laneProfile = strategy
+    ? resolveLaneProfileFromStrategy(strategy)
+    : null;
+  const screeningMethodDetails = ALL_SCREENING_METHOD_OPTIONS.find(
+    (opt) => opt.value === method,
   );
+  const hideJamb =
+    laneProfile && method ? locksJambToZero(laneProfile, method) : false;
+  const requiresJamb = strategy?.strategy.requires_jamb ?? false;
+  const components = strategy?.strategy.components ?? [];
 
-  // Format updated at
   const formatUpdatedAt = (updatedAt: string | null): string => {
     if (!updatedAt) return "Just created";
     return new Date(updatedAt).toLocaleString();
@@ -92,9 +119,8 @@ export function ScoringStrategyDrawer({
       }
       destroyOnHidden
     >
-      {strategy && (
+      {strategy && method && (
         <Flex vertical gap={24}>
-          {/* Scope & Reference */}
           <Descriptions
             title="Scope & Reference"
             column={1}
@@ -103,26 +129,32 @@ export function ScoringStrategyDrawer({
             styles={{ label: { width: 160 } }}
           >
             <Descriptions.Item label="Scope">
-              <Tag color={SCOPE_TAG_COLORS[strategy.scope]}>
-                {scopeLabel}
-              </Tag>
+              <Tag color={SCOPE_TAG_COLORS[strategy.scope]}>{scopeLabel}</Tag>
             </Descriptions.Item>
             <Descriptions.Item label="Reference">
-              <Typography.Text>
-                {resolveReferenceLabel(strategy)}
-              </Typography.Text>
+              <Typography.Text>{resolveReferenceLabel(strategy)}</Typography.Text>
               {strategy.referenceEntity?.code && (
                 <Typography.Text
                   type="secondary"
-                  style={{ display: "block", fontSize: token.fontSizeSM, marginTop: 4 }}
+                  style={{
+                    display: "block",
+                    fontSize: token.fontSizeSM,
+                    marginTop: 4,
+                  }}
                 >
                   Code: {strategy.referenceEntity.code}
                 </Typography.Text>
               )}
             </Descriptions.Item>
+            <Descriptions.Item label="Lane">
+              {laneProfile && (
+                <Tag color={LANE_TAG_COLORS[laneProfile]}>
+                  {getLaneProfileLabel(laneProfile)}
+                </Tag>
+              )}
+            </Descriptions.Item>
           </Descriptions>
 
-          {/* Screening Method */}
           <Descriptions
             title="Screening Method"
             column={1}
@@ -138,9 +170,15 @@ export function ScoringStrategyDrawer({
                 </Typography.Text>
               </Flex>
             </Descriptions.Item>
+            <Descriptions.Item label="Requires JAMB">
+              <Typography.Text>{requiresJamb ? "Yes" : "No"}</Typography.Text>
+            </Descriptions.Item>
           </Descriptions>
 
-          {/* Weight Distribution */}
+          <ConditionalRenderer when={methodIncludesPriorQual(method)}>
+            <Alert type="warning" message={PRIOR_QUAL_STUB_WARNING} showIcon />
+          </ConditionalRenderer>
+
           <Descriptions
             title="Weight Distribution"
             column={1}
@@ -150,7 +188,7 @@ export function ScoringStrategyDrawer({
           >
             <Descriptions.Item label="JAMB Weight">
               <Typography.Text strong style={{ fontSize: token.fontSizeLG }}>
-                {strategy.strategy.jamb_weight_percentage}%
+                {hideJamb ? "—" : `${strategy.strategy.jamb_weight_percentage}%`}
               </Typography.Text>
             </Descriptions.Item>
             <Descriptions.Item label="School Weight">
@@ -160,13 +198,38 @@ export function ScoringStrategyDrawer({
             </Descriptions.Item>
           </Descriptions>
 
+          <ConditionalRenderer when={components.length > 0}>
+            <Flex vertical gap={8}>
+              <Typography.Text strong>Components</Typography.Text>
+              <Table
+                size="small"
+                pagination={false}
+                rowKey="type"
+                dataSource={components}
+                columns={[
+                  {
+                    title: "Component",
+                    dataIndex: "type",
+                    render: (type: ScoringComponentType) =>
+                      getComponentTypeLabel(type),
+                  },
+                  {
+                    title: "Weight",
+                    dataIndex: "weight_percentage",
+                    render: (weight: number) => `${weight}%`,
+                  },
+                ]}
+              />
+            </Flex>
+          </ConditionalRenderer>
+
           <ScoringStrategyMaxScores
             maxJambScore={strategy.strategy.max_jamb_score}
             maxSchoolScore={strategy.strategy.max_school_score}
             variant="expanded"
+            hideJamb={hideJamb}
           />
 
-          {/* Description */}
           {strategy.description && (
             <Descriptions
               title="Description"
@@ -181,7 +244,6 @@ export function ScoringStrategyDrawer({
             </Descriptions>
           )}
 
-          {/* Metadata */}
           <Descriptions
             title="Metadata"
             column={1}

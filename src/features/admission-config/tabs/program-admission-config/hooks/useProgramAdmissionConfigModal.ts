@@ -1,10 +1,27 @@
+import { useGetOlevelSubjectsQuery } from "@/features/admission-config/tabs/olevel-subject/api/olevelSubjectApi";
+import { useGetProgramsQuery } from "@/features/program/tabs/programs/api/programsApi";
 import { useApiError } from "@/shared/hooks/useApiError";
 import { RequestScreen } from "@/shared/types/error-ui";
-import { Form, notification } from "antd";
+import {
+  mutationSuccessMessage,
+  notifyMutationSuccess,
+} from "@/shared/utils/feedback/notifyMutationSuccess";
+import { OLEVEL_SUBJECT_SORT_DEFAULT } from "@/shared/constants/olevelSubjectOptions";
+import {
+  DEFAULT_CUTOFFS,
+  DEFAULT_OLEVEL_CREDIT_GATE,
+  DEFAULT_QUOTA_PERCENTAGES,
+  OLEVEL_SUBJECT_PICKER_ITEMS_PER_PAGE,
+  PROGRAM_ADMISSION_CONFIG_INCLUDE,
+  PROGRAM_ADMISSION_CONFIG_PICKER_ITEMS_PER_PAGE,
+  PROGRAM_ADMISSION_CONFIG_SORT,
+} from "@/shared/constants/programAdmissionConfigOptions";
+import { Form } from "antd";
 import { useCallback, useEffect, useMemo, useReducer } from "react";
 import {
   useCreateProgramAdmissionConfigMutation,
   useDeleteProgramAdmissionConfigMutation,
+  useGetProgramAdmissionConfigsQuery,
   useUpdateProgramAdmissionConfigMutation,
 } from "../api/programAdmissionConfigApi";
 import {
@@ -16,6 +33,12 @@ import type {
   ProgramAdmissionConfig,
   ProgramAdmissionConfigFormValues,
 } from "../types/program-admission-config";
+import { buildProgramAdmissionConfigPayload } from "../utils/buildProgramAdmissionConfigPayload";
+import { extractConfiguredProgramIds } from "../utils/configuredProgramIds";
+import {
+  pickCanonicalEnglishSubjectId,
+  pickCanonicalMathematicsSubjectId,
+} from "../utils/detectCanonicalOlevelSubjects";
 import {
   validateCutoffOrdering,
   validateQuotaTotals,
@@ -27,16 +50,48 @@ type ProgramOption = {
   department?: { name: string } | null;
 };
 
-function buildPayload(values: ProgramAdmissionConfigFormValues) {
+function formatProgramLabel(program: ProgramOption): string {
+  return program.department?.name
+    ? `${program.name} (${program.department.name})`
+    : program.name;
+}
+
+function createDefaultFormValues(): ProgramAdmissionConfigFormValues {
   return {
-    programId: values.programId,
-    totalCapacity: values.totalCapacity,
-    meritPercentage: values.meritPercentage,
-    catchmentPercentage: values.catchmentPercentage,
-    eldsPercentage: values.eldsPercentage,
-    meritCutoff: values.meritCutoff.toFixed(2),
-    catchmentCutoff: values.catchmentCutoff.toFixed(2),
-    eldsCutoff: values.eldsCutoff.toFixed(2),
+    programId: undefined as unknown as number,
+    totalCapacity: 100,
+    meritPercentage: DEFAULT_QUOTA_PERCENTAGES.merit,
+    catchmentPercentage: DEFAULT_QUOTA_PERCENTAGES.catchment,
+    eldsPercentage: DEFAULT_QUOTA_PERCENTAGES.elds,
+    meritCutoff: DEFAULT_CUTOFFS.merit,
+    catchmentCutoff: DEFAULT_CUTOFFS.catchment,
+    eldsCutoff: DEFAULT_CUTOFFS.elds,
+    minimumJambScore: null,
+    ...DEFAULT_OLEVEL_CREDIT_GATE,
+    englishSubjectId: null,
+    mathematicsSubjectId: null,
+  };
+}
+
+function formValuesFromConfig(
+  target: ProgramAdmissionConfig,
+): ProgramAdmissionConfigFormValues {
+  return {
+    programId: target.programId,
+    totalCapacity: target.totalCapacity,
+    meritPercentage: target.meritPercentage,
+    catchmentPercentage: target.catchmentPercentage,
+    eldsPercentage: target.eldsPercentage,
+    meritCutoff: Number(target.meritCutoff),
+    catchmentCutoff: Number(target.catchmentCutoff),
+    eldsCutoff: Number(target.eldsCutoff),
+    minimumJambScore: target.minimumJambScore,
+    minimumOlevelCredits: target.minimumOlevelCredits,
+    maxOlevelSittings: target.maxOlevelSittings,
+    requireOlevelEnglish: target.requireOlevelEnglish,
+    requireOlevelMathematics: target.requireOlevelMathematics,
+    englishSubjectId: target.englishSubjectId,
+    mathematicsSubjectId: target.mathematicsSubjectId,
   };
 }
 
@@ -44,8 +99,6 @@ export function useProgramAdmissionConfigFormModal(
   target: ProgramAdmissionConfig | null,
   open: boolean,
   onClose: () => void,
-  programs: ProgramOption[],
-  configs: ProgramAdmissionConfig[],
 ) {
   const isEditMode = target !== null;
   const [form] = Form.useForm<ProgramAdmissionConfigFormValues>();
@@ -53,6 +106,29 @@ export function useProgramAdmissionConfigFormModal(
     programAdmissionConfigFormReducer,
     initialProgramAdmissionConfigFormState,
   );
+
+  const { data: programsData, isLoading: isProgramsLoading } = useGetProgramsQuery(
+    {
+      itemsPerPage: 100,
+      sort: "name:asc",
+      include: "department",
+    },
+    { skip: !open },
+  );
+
+  const { data: pickerData, isLoading: isConfigsLoading } =
+    useGetProgramAdmissionConfigsQuery(
+      {
+        page: 1,
+        itemsPerPage: PROGRAM_ADMISSION_CONFIG_PICKER_ITEMS_PER_PAGE,
+        include: PROGRAM_ADMISSION_CONFIG_INCLUDE,
+        sort: PROGRAM_ADMISSION_CONFIG_SORT,
+      },
+      { skip: !open },
+    );
+
+  const programs = programsData?.member ?? [];
+  const configs = pickerData?.member ?? [];
 
   const [createConfig, { isLoading: isCreating }] =
     useCreateProgramAdmissionConfigMutation();
@@ -62,33 +138,16 @@ export function useProgramAdmissionConfigFormModal(
 
   const isSubmitting = isCreating || isUpdating;
 
-  useEffect(() => {
-    if (!open) return;
-    if (isEditMode && target) {
-      form.setFieldsValue({
-        programId: target.programId,
-        totalCapacity: target.totalCapacity,
-        meritPercentage: target.meritPercentage,
-        catchmentPercentage: target.catchmentPercentage,
-        eldsPercentage: target.eldsPercentage,
-        meritCutoff: Number(target.meritCutoff),
-        catchmentCutoff: Number(target.catchmentCutoff),
-        eldsCutoff: Number(target.eldsCutoff),
-      });
-      return;
-    }
-
-    form.setFieldsValue({
-      programId: undefined,
-      totalCapacity: 100,
-      meritPercentage: 45,
-      catchmentPercentage: 30,
-      eldsPercentage: 25,
-      meritCutoff: 60,
-      catchmentCutoff: 55,
-      eldsCutoff: 50,
-    });
-  }, [open, isEditMode, target, form]);
+  const initializeForm = useCallback(
+    (editTarget: ProgramAdmissionConfig | null) => {
+      if (editTarget) {
+        form.setFieldsValue(formValuesFromConfig(editTarget));
+        return;
+      }
+      form.setFieldsValue(createDefaultFormValues());
+    },
+    [form],
+  );
 
   const reset = useCallback(() => {
     form.resetFields();
@@ -106,27 +165,74 @@ export function useProgramAdmissionConfigFormModal(
   const programLocked = isEditMode && totalSeatsUsed > 0;
 
   const programOptions = useMemo(() => {
-    const existingProgramIds = new Set(configs.map((config) => config.programId));
+    const existingProgramIds = extractConfiguredProgramIds(configs);
+    const editProgramId = isEditMode ? target?.programId : undefined;
+
     return programs
       .filter((program) => {
-        if (isEditMode && target?.programId === program.id) return true;
+        if (editProgramId !== undefined && editProgramId === program.id) return true;
         return !existingProgramIds.has(program.id);
       })
       .map((program) => ({
         value: program.id,
-        label: program.department?.name
-          ? `${program.name} (${program.department.name})`
-          : program.name,
+        label: formatProgramLabel(program),
       }));
   }, [programs, configs, isEditMode, target?.programId]);
 
+  const programsLoading = isProgramsLoading || isConfigsLoading;
+  const noProgramsAvailable =
+    open && !isEditMode && !programsLoading && programOptions.length === 0;
+
   const applyFederalPreset = useCallback(() => {
     form.setFieldsValue({
-      meritPercentage: 45,
-      catchmentPercentage: 30,
-      eldsPercentage: 25,
+      meritPercentage: DEFAULT_QUOTA_PERCENTAGES.merit,
+      catchmentPercentage: DEFAULT_QUOTA_PERCENTAGES.catchment,
+      eldsPercentage: DEFAULT_QUOTA_PERCENTAGES.elds,
     });
   }, [form]);
+
+  const requireOlevelEnglish = Form.useWatch("requireOlevelEnglish", form);
+  const requireOlevelMathematics = Form.useWatch("requireOlevelMathematics", form);
+  const englishSubjectId = Form.useWatch("englishSubjectId", form);
+  const mathematicsSubjectId = Form.useWatch("mathematicsSubjectId", form);
+
+  const { data: englishPickData } = useGetOlevelSubjectsQuery(
+    {
+      itemsPerPage: OLEVEL_SUBJECT_PICKER_ITEMS_PER_PAGE,
+      sort: OLEVEL_SUBJECT_SORT_DEFAULT,
+      "search[name]": "english",
+    },
+    {
+      skip: !open || !requireOlevelEnglish || englishSubjectId != null,
+    },
+  );
+
+  const { data: mathPickData } = useGetOlevelSubjectsQuery(
+    {
+      itemsPerPage: OLEVEL_SUBJECT_PICKER_ITEMS_PER_PAGE,
+      sort: OLEVEL_SUBJECT_SORT_DEFAULT,
+      "search[name]": "math",
+    },
+    {
+      skip: !open || !requireOlevelMathematics || mathematicsSubjectId != null,
+    },
+  );
+
+  useEffect(() => {
+    if (!open || !requireOlevelEnglish || englishSubjectId != null) return;
+    const picked = pickCanonicalEnglishSubjectId(englishPickData?.member ?? []);
+    if (picked != null) {
+      form.setFieldValue("englishSubjectId", picked);
+    }
+  }, [open, requireOlevelEnglish, englishSubjectId, englishPickData, form]);
+
+  useEffect(() => {
+    if (!open || !requireOlevelMathematics || mathematicsSubjectId != null) return;
+    const picked = pickCanonicalMathematicsSubjectId(mathPickData?.member ?? []);
+    if (picked != null) {
+      form.setFieldValue("mathematicsSubjectId", picked);
+    }
+  }, [open, requireOlevelMathematics, mathematicsSubjectId, mathPickData, form]);
 
   const handleSubmit = async () => {
     try {
@@ -154,18 +260,18 @@ export function useProgramAdmissionConfigFormModal(
         return;
       }
 
-      const payload = buildPayload(values);
+      const payload = buildProgramAdmissionConfigPayload(values);
 
       if (isEditMode && target) {
         await updateConfig({ id: target.id, ...payload }).unwrap();
-        notification.success({
-          message: "Admission cut-offs and quota updated successfully.",
-        });
+        notifyMutationSuccess(
+          mutationSuccessMessage("Admission cut-offs and quota", "updated"),
+        );
       } else {
         await createConfig(payload).unwrap();
-        notification.success({
-          message: "Admission cut-offs and quota created successfully.",
-        });
+        notifyMutationSuccess(
+          mutationSuccessMessage("Admission cut-offs and quota", "created"),
+        );
       }
 
       reset();
@@ -194,11 +300,14 @@ export function useProgramAdmissionConfigFormModal(
       programLocked,
       totalSeatsUsed,
       programOptions,
+      programsLoading,
+      noProgramsAvailable,
     },
     actions: {
       handleSubmit,
       handleCancel,
       applyFederalPreset,
+      initializeForm,
     },
     form,
   };
@@ -222,9 +331,9 @@ export function useDeleteProgramAdmissionConfigModal(
     if (!target || blockedByAllocations) return;
     try {
       await deleteConfig(target.id).unwrap();
-      notification.success({
-        message: "Admission cut-offs and quota removed successfully.",
-      });
+      notifyMutationSuccess(
+        mutationSuccessMessage("Admission cut-offs and quota", "deleted"),
+      );
       onClose();
     } catch (err: unknown) {
       handleApiError(err, {

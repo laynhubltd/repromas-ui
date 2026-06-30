@@ -20,3 +20,13 @@
 .ui-kit-tabs--ghost .ant-tabs-ink-bar {
   display: none;
 }
+
+/* Primary-filled active tab (card/outlined sub-tabs) */
+.ui-kit-tabs--primary-active.ant-tabs-card > .ant-tabs-nav .ant-tabs-tab-active {
+  background: var(--tabs-primary-active-bg) !important;
+  border-color: var(--tabs-primary-active-bg) !important;
+}
+
+.ui-kit-tabs--primary-active.ant-tabs-card > .ant-tabs-nav .ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: var(--tabs-primary-active-fg) !important;
+}

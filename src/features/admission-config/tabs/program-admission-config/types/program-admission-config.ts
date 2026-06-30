@@ -8,6 +8,13 @@ export type ProgramAdmissionConfig = {
   meritCutoff: string;
   catchmentCutoff: string;
   eldsCutoff: string;
+  minimumJambScore: number | null;
+  minimumOlevelCredits: number;
+  maxOlevelSittings: number;
+  requireOlevelEnglish: boolean;
+  requireOlevelMathematics: boolean;
+  englishSubjectId: number | null;
+  mathematicsSubjectId: number | null;
   meritSeatsUsed: number;
   catchmentSeatsUsed: number;
   eldsSeatsUsed: number;
@@ -31,7 +38,22 @@ export type ProgramAdmissionConfigListParams = {
   itemsPerPage?: number;
   sort?: string;
   include?: string;
+  "search[program.name]"?: string;
+  "search[program.department.name]"?: string;
   "exact[programId]"?: number;
+  "exact[totalCapacity]"?: number;
+  "exact[meritPercentage]"?: number;
+  "exact[catchmentPercentage]"?: number;
+  "exact[eldsPercentage]"?: number;
+  "exact[meritCutoff]"?: string;
+  "exact[catchmentCutoff]"?: string;
+  "exact[eldsCutoff]"?: string;
+  "exact[meritSeatsUsed]"?: number;
+  "exact[catchmentSeatsUsed]"?: number;
+  "exact[eldsSeatsUsed]"?: number;
+  "exact[minimumJambScore]"?: number;
+  "exact[minimumOlevelCredits]"?: number;
+  "exact[maxOlevelSittings]"?: number;
 };
 
 export type CreateProgramAdmissionConfigRequest = {
@@ -43,6 +65,13 @@ export type CreateProgramAdmissionConfigRequest = {
   meritCutoff: string;
   catchmentCutoff: string;
   eldsCutoff: string;
+  minimumJambScore: number | null;
+  minimumOlevelCredits: number;
+  maxOlevelSittings: number;
+  requireOlevelEnglish: boolean;
+  requireOlevelMathematics: boolean;
+  englishSubjectId: number | null;
+  mathematicsSubjectId: number | null;
 };
 
 export type UpdateProgramAdmissionConfigRequest =
@@ -62,6 +91,13 @@ export type ProgramAdmissionConfigFormValues = {
   meritCutoff: number;
   catchmentCutoff: number;
   eldsCutoff: number;
+  minimumJambScore?: number | null;
+  minimumOlevelCredits: number;
+  maxOlevelSittings: number;
+  requireOlevelEnglish: boolean;
+  requireOlevelMathematics: boolean;
+  englishSubjectId: number | null;
+  mathematicsSubjectId: number | null;
 };
 
 export type ComputedQuotaSeats = {
@@ -74,3 +110,10 @@ export type ComputedQuotaSeats = {
 };
 
 export type QuotaFilterValue = "ANY_FULL" | "ALL_OPEN" | "ZERO_CUTOFF";
+
+export type ProgramAdmissionConfigListQueryState = {
+  page: number;
+  debouncedProgramNameSearch: string;
+  debouncedDepartmentNameSearch: string;
+  programFilter?: number;
+};

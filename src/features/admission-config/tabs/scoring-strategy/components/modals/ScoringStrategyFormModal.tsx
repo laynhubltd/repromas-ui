@@ -6,14 +6,22 @@ import { Permission } from "@/features/access-control/permissions";
 import { useGetDepartmentsQuery } from "@/features/academic-structure/api/departmentsApi";
 import { useGetFacultiesQuery } from "@/features/academic-structure/api/facultiesApi";
 import { useGetProgramsQuery } from "@/features/program/tabs/programs/api/programsApi";
+import {
+  getLaneProfileLabel,
+  LANE_PROFILE_OPTIONS,
+  OPEN_UTME_RENORMALIZE_HELPER,
+  PRIOR_QUAL_STUB_WARNING,
+  SCOPE_OPTIONS,
+} from "@/shared/constants/scoringStrategyOptions";
 import { useToken } from "@/shared/hooks/useToken";
-import { SCOPE_OPTIONS, SCREENING_METHOD_OPTIONS } from "@/shared/constants/scoringStrategyOptions";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
 import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import {
   Alert,
   Button,
+  Checkbox,
   Form,
+  Grid,
   Input,
   InputNumber,
   Modal,
@@ -24,12 +32,24 @@ import { useMemo } from "react";
 import { useScoringStrategyFormModal } from "../../hooks/useScoringStrategyModal";
 import type { AdmissionScoringStrategy } from "../../types/scoring-strategy";
 import { resolveReferenceLabel } from "../../utils/resolveReferenceLabel";
-import { ScoringStrategyMaxScores } from "../ScoringStrategyMaxScores";
+import {
+  getMaxSchoolScoreExtra,
+  getMaxSchoolScoreLabel,
+  getMaxSchoolScorePlaceholder,
+  methodIncludesPriorQual,
+  resolveLaneProfileFromStrategy,
+} from "../../utils/scoringStrategyDisplay";
 import {
   descriptionRules,
+  laneProfileRules,
   maxScoreRules,
   weightRules,
 } from "../../utils/validators";
+import { ScoringComponentsBuilder } from "../ScoringComponentsBuilder";
+import { ScoringMethodField } from "../ScoringMethodField";
+import { ScoringStrategyLaneSummary } from "../ScoringStrategyLaneSummary";
+import { ScoringStrategyMaxScores } from "../ScoringStrategyMaxScores";
+import { ScoringStrategyPresetsPanel } from "../ScoringStrategyPresetsPanel";
 
 type ScoringStrategyFormModalProps = {
   open: boolean;
@@ -43,20 +63,63 @@ export function ScoringStrategyFormModal({
   onClose,
 }: ScoringStrategyFormModalProps) {
   const token = useToken();
+  const screens = Grid.useBreakpoint();
+  const isCompact = !screens.md;
   const isEditMode = target !== null;
 
   const {
-    state: { formError, isSubmitting, isJambOnly },
-    actions: { handleSubmit, handleCancel, handleMethodChange, handlePreset },
+    state: {
+      formError,
+      isSubmitting,
+      isJambOnly,
+      isMixed,
+      isJambWeightsVisible,
+      showRequiresJambToggle,
+      showSchoolOnlyPreview,
+      showRenormalizeHelper,
+      laneProfile,
+      screeningMethod,
+      requiresJamb,
+    },
+    actions: {
+      handleSubmit,
+      handleCancel,
+      handleMethodChange,
+      handlePreset,
+      handleLaneChange,
+      initializeForm,
+    },
     form,
   } = useScoringStrategyFormModal(target, open, onClose);
 
-  // Watch scope value to conditionally render reference field and fetch options
   const scopeValue = Form.useWatch("scope", form);
   const maxJambScore = Form.useWatch("max_jamb_score", form);
   const maxSchoolScore = Form.useWatch("max_school_score", form);
+  const jambWeight = Form.useWatch("jamb_weight_percentage", form);
+  const schoolWeight = Form.useWatch("school_weight_percentage", form);
+  const components = Form.useWatch("components", form);
 
-  // Fetch reference options based on scope
+  const strategyPreview = useMemo(
+    () => ({
+      screening_method: screeningMethod,
+      jamb_weight_percentage: jambWeight,
+      school_weight_percentage: schoolWeight,
+      max_jamb_score: maxJambScore,
+      max_school_score: maxSchoolScore,
+      requires_jamb: requiresJamb,
+      components,
+    }),
+    [
+      screeningMethod,
+      jambWeight,
+      schoolWeight,
+      maxJambScore,
+      maxSchoolScore,
+      requiresJamb,
+      components,
+    ],
+  );
+
   const shouldFetchFaculties = open && scopeValue === "FACULTY";
   const shouldFetchDepartments = open && scopeValue === "DEPARTMENT";
   const shouldFetchPrograms = open && scopeValue === "PROGRAM";
@@ -79,7 +142,6 @@ export function ScoringStrategyFormModal({
       { skip: !shouldFetchPrograms },
     );
 
-  // Build reference options based on scope
   const referenceOptionsLocal = useMemo(() => {
     if (scopeValue === "FACULTY") {
       return (facultiesData?.member ?? []).map((f) => ({
@@ -105,17 +167,42 @@ export function ScoringStrategyFormModal({
   const isLoadingRefsLocal =
     isFacultiesLoading || isDepartmentsLoading || isProgramsLoading;
 
+  const maxSchoolScoreLabel = screeningMethod
+    ? getMaxSchoolScoreLabel(screeningMethod)
+    : "Max School Score";
+
+  const maxSchoolScorePlaceholder = screeningMethod
+    ? getMaxSchoolScorePlaceholder(screeningMethod)
+    : "100";
+
+  const maxSchoolScoreExtra = getMaxSchoolScoreExtra(
+    screeningMethod,
+    maxSchoolScore,
+  );
+
+  const showPriorQualWarning =
+    screeningMethod && methodIncludesPriorQual(screeningMethod);
+
+  const editLaneLabel = target
+    ? getLaneProfileLabel(resolveLaneProfileFromStrategy(target))
+    : "";
+
   return (
     <Modal
       title={isEditMode ? "Edit Scoring Strategy" : "Create Scoring Strategy"}
       open={open}
       onCancel={handleCancel}
+      afterOpenChange={(visible) => {
+        if (visible) {
+          initializeForm();
+        }
+      }}
       footer={null}
-      width={640}
+      width={720}
       destroyOnHidden
       closable
       styles={{
-        body: { padding: `${token.paddingSM}px ${token.paddingSM}px` },
+        body: { padding: 0 },
         header: {
           margin: 0,
           padding: `${token.paddingSM}px ${token.paddingSM}px`,
@@ -123,11 +210,16 @@ export function ScoringStrategyFormModal({
         },
       }}
     >
-      <div style={{ padding: 24 }}>
+      <div
+        style={{
+          padding: isCompact
+            ? `${token.paddingMD}px ${token.paddingSM}px`
+            : 24,
+        }}
+      >
         <ErrorAlert variant="form" error={formError} />
 
         <Form form={form} layout="vertical" requiredMark={false} onFinish={handleSubmit}>
-          {/* Edit mode: read-only scope and referenceId labels */}
           <ConditionalRenderer when={isEditMode}>
             <div style={{ marginBottom: 24 }}>
               <div style={{ marginBottom: 16 }}>
@@ -135,13 +227,11 @@ export function ScoringStrategyFormModal({
                   Scope
                 </Typography.Text>
                 <div style={{ marginTop: 4 }}>
-                  <Typography.Text strong>
-                    {target?.scope}
-                  </Typography.Text>
+                  <Typography.Text strong>{target?.scope}</Typography.Text>
                 </div>
               </div>
-              {target?.scope !== "GLOBAL" && (
-                <div>
+              <ConditionalRenderer when={target?.scope !== "GLOBAL"}>
+                <div style={{ marginBottom: 16 }}>
                   <Typography.Text type="secondary" style={{ fontSize: token.fontSizeSM }}>
                     Reference
                   </Typography.Text>
@@ -151,13 +241,22 @@ export function ScoringStrategyFormModal({
                     </Typography.Text>
                   </div>
                 </div>
-              )}
+              </ConditionalRenderer>
+              <div>
+                <Typography.Text type="secondary" style={{ fontSize: token.fontSizeSM }}>
+                  Lane
+                </Typography.Text>
+                <div style={{ marginTop: 4 }}>
+                  <Typography.Text strong>{editLaneLabel}</Typography.Text>
+                </div>
+              </div>
+              <Form.Item name="laneProfile" hidden>
+                <Input />
+              </Form.Item>
             </div>
           </ConditionalRenderer>
 
-          {/* Create mode: scope and reference selects */}
           <ConditionalRenderer when={!isEditMode}>
-            {/* Scope */}
             <Form.Item
               name="scope"
               label={
@@ -177,7 +276,6 @@ export function ScoringStrategyFormModal({
               />
             </Form.Item>
 
-            {/* Reference — conditional on scope */}
             <ConditionalRenderer when={scopeValue && scopeValue !== "GLOBAL"}>
               <Form.Item
                 name="referenceId"
@@ -189,12 +287,7 @@ export function ScoringStrategyFormModal({
                     </span>
                   </span>
                 }
-                rules={[
-                  {
-                    required: true,
-                    message: "Please select a reference",
-                  },
-                ]}
+                rules={[{ required: true, message: "Please select a reference" }]}
               >
                 <Select
                   placeholder="Select reference"
@@ -204,42 +297,37 @@ export function ScoringStrategyFormModal({
                 />
               </Form.Item>
             </ConditionalRenderer>
+
+            <Form.Item
+              name="laneProfile"
+              label={
+                <span>
+                  Lane{" "}
+                  <span style={{ color: token.colorError, fontWeight: 700 }}>
+                    *
+                  </span>
+                </span>
+              }
+              rules={laneProfileRules}
+            >
+              <Select
+                placeholder="Select lane"
+                style={{ height: 40 }}
+                options={LANE_PROFILE_OPTIONS}
+                onChange={handleLaneChange}
+              />
+            </Form.Item>
           </ConditionalRenderer>
 
-          {/* Preset buttons row */}
-          <div
-            style={{
-              display: "flex",
-              gap: 12,
-              marginBottom: 24,
-              paddingBottom: 24,
-              borderBottom: `1px solid ${token.colorBorderSecondary}`,
-            }}
-          >
-            <Button
-              type="default"
-              onClick={() => handlePreset("jamb-only")}
-              style={{ flex: 1 }}
-            >
-              JAMB Only
-            </Button>
-            <Button
-              type="default"
-              onClick={() => handlePreset("olevel-5050")}
-              style={{ flex: 1 }}
-            >
-              50/50 O'Level
-            </Button>
-            <Button
-              type="default"
-              onClick={() => handlePreset("post-utme-5050")}
-              style={{ flex: 1 }}
-            >
-              50/50 Post-UTME
-            </Button>
-          </div>
+          <ConditionalRenderer when={!isEditMode}>
+            <ScoringStrategyPresetsPanel
+              laneProfile={laneProfile}
+              strategy={strategyPreview}
+              onPreset={handlePreset}
+              onLaneChange={handleLaneChange}
+            />
+          </ConditionalRenderer>
 
-          {/* Screening Method */}
           <Form.Item
             name="screening_method"
             label={
@@ -250,34 +338,42 @@ export function ScoringStrategyFormModal({
                 </span>
               </span>
             }
-            rules={[
-              { required: true, message: "Please select a screening method" },
-            ]}
+            rules={[{ required: true, message: "Please select a screening method" }]}
           >
-            <Select
-              placeholder="Select screening method"
-              style={{ height: 40 }}
-              onChange={handleMethodChange}
-              options={SCREENING_METHOD_OPTIONS.map((opt) => ({
-                value: opt.value,
-                label: (
-                  <div>
-                    <div style={{ fontWeight: 500 }}>{opt.label}</div>
-                    <div
-                      style={{
-                        fontSize: token.fontSizeSM,
-                        color: token.colorTextSecondary,
-                      }}
-                    >
-                      {opt.description}
-                    </div>
-                  </div>
-                ),
-              }))}
+            <ScoringMethodField
+              laneProfile={laneProfile}
+              onMethodChange={handleMethodChange}
             />
           </Form.Item>
 
-          {/* Edit mode warning */}
+          <ScoringStrategyLaneSummary
+            laneProfile={laneProfile}
+            requiresJamb={requiresJamb}
+          />
+
+          <ConditionalRenderer when={showRequiresJambToggle}>
+            <Form.Item
+              name="requires_jamb"
+              valuePropName="checked"
+              style={{ marginBottom: showRenormalizeHelper ? 8 : 24 }}
+            >
+              <Checkbox>JAMB required for scoring</Checkbox>
+            </Form.Item>
+          </ConditionalRenderer>
+
+          <ConditionalRenderer when={showRenormalizeHelper}>
+            <Typography.Text
+              type="secondary"
+              style={{
+                display: "block",
+                fontSize: token.fontSizeSM,
+                marginBottom: 24,
+              }}
+            >
+              {OPEN_UTME_RENORMALIZE_HELPER}
+            </Typography.Text>
+          </ConditionalRenderer>
+
           <ConditionalRenderer when={isEditMode}>
             <Alert
               type="warning"
@@ -287,92 +383,127 @@ export function ScoringStrategyFormModal({
             />
           </ConditionalRenderer>
 
-          {/* JAMB Weight % */}
-          <Form.Item
-            name="jamb_weight_percentage"
-            label={
-              <span>
-                JAMB Weight %{" "}
-                <span style={{ color: token.colorError, fontWeight: 700 }}>
-                  *
-                </span>
-              </span>
-            }
-            rules={weightRules}
-          >
-            <InputNumber
-              min={0}
-              max={100}
-              disabled={isJambOnly}
-              style={{ width: "100%", height: 40 }}
-              placeholder="0"
+          <ConditionalRenderer when={showPriorQualWarning}>
+            <Alert
+              type="warning"
+              message={PRIOR_QUAL_STUB_WARNING}
+              style={{ marginBottom: 24 }}
+              showIcon
             />
-          </Form.Item>
+          </ConditionalRenderer>
 
-          {/* School Weight % */}
-          <Form.Item
-            name="school_weight_percentage"
-            label={
-              <span>
-                School Weight %{" "}
-                <span style={{ color: token.colorError, fontWeight: 700 }}>
-                  *
+          <ConditionalRenderer when={isJambWeightsVisible}>
+            <Form.Item
+              name="jamb_weight_percentage"
+              label={
+                <span>
+                  JAMB Weight %{" "}
+                  <span style={{ color: token.colorError, fontWeight: 700 }}>
+                    *
+                  </span>
                 </span>
-              </span>
-            }
-            rules={weightRules}
-          >
-            <InputNumber
-              min={0}
-              max={100}
-              disabled={isJambOnly}
-              style={{ width: "100%", height: 40 }}
-              placeholder="0"
-            />
-          </Form.Item>
+              }
+              rules={weightRules}
+            >
+              <InputNumber
+                min={0}
+                max={100}
+                disabled={isJambOnly}
+                style={{ width: "100%", height: 40 }}
+                placeholder="0"
+              />
+            </Form.Item>
+          </ConditionalRenderer>
 
-          {/* Max JAMB Score */}
-          <Form.Item
-            name="max_jamb_score"
-            label={
-              <span>
-                Max JAMB Score{" "}
-                <span style={{ color: token.colorError, fontWeight: 700 }}>
-                  *
+          <ConditionalRenderer when={isJambWeightsVisible}>
+            <Form.Item
+              name="school_weight_percentage"
+              label={
+                <span>
+                  School Weight %{" "}
+                  <span style={{ color: token.colorError, fontWeight: 700 }}>
+                    *
+                  </span>
                 </span>
-              </span>
-            }
-            rules={maxScoreRules}
-          >
-            <InputNumber
-              min={1}
-              style={{ width: "100%", height: 40 }}
-              placeholder="400"
-            />
-          </Form.Item>
+              }
+              rules={weightRules}
+            >
+              <InputNumber
+                min={0}
+                max={100}
+                disabled={isJambOnly}
+                style={{ width: "100%", height: 40 }}
+                placeholder="0"
+              />
+            </Form.Item>
+          </ConditionalRenderer>
 
-          {/* Max School Score */}
+          <ConditionalRenderer when={Boolean(isMixed && screeningMethod)}>
+            <Form.Item
+              name="components"
+              label={
+                <span>
+                  Component Weights{" "}
+                  <span style={{ color: token.colorError, fontWeight: 700 }}>
+                    *
+                  </span>
+                </span>
+              }
+              rules={[
+                {
+                  required: true,
+                  message: "Component weights are required for mixed methods",
+                },
+              ]}
+            >
+              <ScoringComponentsBuilder method={screeningMethod} />
+            </Form.Item>
+          </ConditionalRenderer>
+
+          <ConditionalRenderer when={isJambWeightsVisible}>
+            <Form.Item
+              name="max_jamb_score"
+              label={
+                <span>
+                  Max JAMB Score{" "}
+                  <span style={{ color: token.colorError, fontWeight: 700 }}>
+                    *
+                  </span>
+                </span>
+              }
+              rules={maxScoreRules}
+            >
+              <InputNumber
+                min={1}
+                style={{ width: "100%", height: 40 }}
+                placeholder="400"
+              />
+            </Form.Item>
+          </ConditionalRenderer>
+
           <Form.Item
             name="max_school_score"
             label={
               <span>
-                Max School Score{" "}
+                {maxSchoolScoreLabel}{" "}
                 <span style={{ color: token.colorError, fontWeight: 700 }}>
                   *
                 </span>
               </span>
             }
+            extra={maxSchoolScoreExtra}
             rules={maxScoreRules}
           >
             <InputNumber
               min={1}
               style={{ width: "100%", height: 40 }}
-              placeholder="100"
+              placeholder={maxSchoolScorePlaceholder}
             />
           </Form.Item>
 
           <ConditionalRenderer
             when={
+              isJambWeightsVisible &&
               typeof maxJambScore === "number" &&
               typeof maxSchoolScore === "number" &&
               maxJambScore > 0 &&
@@ -388,12 +519,27 @@ export function ScoringStrategyFormModal({
             </div>
           </ConditionalRenderer>
 
-          {/* Description */}
-          <Form.Item
-            name="description"
-            label="Description"
-            rules={descriptionRules}
+          <ConditionalRenderer
+            when={
+              Boolean(showSchoolOnlyPreview) &&
+              typeof maxSchoolScore === "number" &&
+              maxSchoolScore > 0
+            }
           >
+            <div style={{ marginBottom: 24 }}>
+              <ScoringStrategyMaxScores
+                maxJambScore={0}
+                maxSchoolScore={maxSchoolScore}
+                variant="expanded"
+                hideJamb
+                schoolLabel={
+                  screeningMethod === "OLEVEL_ONLY" ? "O-Level scale cap" : "School"
+                }
+              />
+            </div>
+          </ConditionalRenderer>
+
+          <Form.Item name="description" label="Description" rules={descriptionRules}>
             <Input.TextArea
               placeholder="Optional description (max 255 characters)"
               rows={3}
@@ -404,13 +550,14 @@ export function ScoringStrategyFormModal({
         </Form>
       </div>
 
-      {/* Footer */}
       <div
         style={{
           display: "flex",
           flexDirection: "column",
           gap: 12,
-          padding: 24,
+          padding: isCompact
+            ? `${token.paddingMD}px ${token.paddingSM}px`
+            : 24,
           borderTop: `1px solid ${token.colorBorderSecondary}`,
           background: token.colorBgLayout,
         }}

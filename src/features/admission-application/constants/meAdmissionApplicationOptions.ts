@@ -1,3 +1,8 @@
+import {
+  APPLICATION_STATUS_LABELS,
+  FINAL_DECISION_LABELS,
+  FINAL_DECISION_TAG_COLORS,
+} from "@/shared/constants/admissionCandidateOptions";
 import { humanizeEnumValue } from "@/shared/constants/billingDisplayLabels";
 import type {
   MeApplicationStatus,
@@ -11,21 +16,24 @@ export const ME_APPLICATION_STATUS_OPTIONS: {
   value: MeApplicationStatus;
   label: string;
 }[] = [
-  { value: "DRAFT", label: "Draft" },
-  { value: "SUBMITTED", label: "Submitted" },
-  { value: "DOCUMENTS_VERIFIED", label: "Documents verified" },
+  { value: "DRAFT", label: APPLICATION_STATUS_LABELS.DRAFT },
+  { value: "SUBMITTED", label: APPLICATION_STATUS_LABELS.SUBMITTED },
+  { value: "DOCUMENTS_VERIFIED", label: APPLICATION_STATUS_LABELS.DOCUMENTS_VERIFIED },
 ];
 
 export const ME_FINAL_DECISION_OPTIONS: {
   value: MeFinalDecision;
   label: string;
 }[] = [
-  { value: "PENDING", label: "Awaiting decision" },
-  { value: "ADMIT_MERIT", label: "Admitted (merit)" },
-  { value: "ADMIT_CATCHMENT", label: "Admitted (catchment)" },
-  { value: "ADMIT_ELDS", label: "Admitted (ELDS)" },
-  { value: "OFFER_CHANGE_OF_COURSE", label: "Offer change of course" },
-  { value: "REJECTED", label: "Not admitted" },
+  { value: "PENDING", label: FINAL_DECISION_LABELS.PENDING },
+  { value: "ADMIT_MERIT", label: FINAL_DECISION_LABELS.ADMIT_MERIT },
+  { value: "ADMIT_CATCHMENT", label: FINAL_DECISION_LABELS.ADMIT_CATCHMENT },
+  { value: "ADMIT_ELDS", label: FINAL_DECISION_LABELS.ADMIT_ELDS },
+  {
+    value: "OFFER_CHANGE_OF_COURSE",
+    label: FINAL_DECISION_LABELS.OFFER_CHANGE_OF_COURSE,
+  },
+  { value: "REJECTED", label: FINAL_DECISION_LABELS.REJECTED },
 ];
 
 export type StatusDisplay = {
@@ -88,22 +96,12 @@ const APPLICATION_STATUS_COLORS: Partial<Record<string, string>> = {
   DOCUMENTS_VERIFIED: "success",
 };
 
-const FINAL_DECISION_COLORS: Partial<Record<string, string>> = {
-  PENDING: "default",
-  ADMIT_MERIT: "success",
-  ADMIT_CATCHMENT: "success",
-  ADMIT_ELDS: "success",
-  OFFER_CHANGE_OF_COURSE: "warning",
-  REJECTED: "error",
-};
-
 export function resolveApplicationStatusDisplay(
   status: string | undefined,
 ): StatusDisplay {
   if (!status) return { label: "—" };
-  const match = ME_APPLICATION_STATUS_OPTIONS.find((o) => o.value === status);
   return {
-    label: match?.label ?? humanizeEnumValue(status),
+    label: APPLICATION_STATUS_LABELS[status] ?? humanizeEnumValue(status),
     color: APPLICATION_STATUS_COLORS[status],
   };
 }
@@ -112,9 +110,8 @@ export function resolveFinalDecisionDisplay(
   decision: string | undefined,
 ): StatusDisplay {
   if (!decision) return { label: "—" };
-  const match = ME_FINAL_DECISION_OPTIONS.find((o) => o.value === decision);
   return {
-    label: match?.label ?? humanizeEnumValue(decision),
-    color: FINAL_DECISION_COLORS[decision],
+    label: FINAL_DECISION_LABELS[decision] ?? humanizeEnumValue(decision),
+    color: FINAL_DECISION_TAG_COLORS[decision],
   };
 }

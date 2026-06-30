@@ -1,6 +1,8 @@
 import {
+  getLaneProfileLabel,
   getScopeLabel,
   getScreeningMethodLabel,
+  LANE_TAG_COLORS,
   SCOPE_TAG_COLORS,
 } from "@/shared/constants/scoringStrategyOptions";
 import { useToken } from "@/shared/hooks/useToken";
@@ -18,6 +20,12 @@ import type { MouseEvent } from "react";
 import { useMemo } from "react";
 import type { AdmissionScoringStrategy } from "../types/scoring-strategy";
 import { resolveReferenceLabel } from "../utils/resolveReferenceLabel";
+import {
+  formatComponentsSummary,
+  isMixedComponentMethod,
+  locksJambToZero,
+  resolveLaneProfileFromStrategy,
+} from "../utils/scoringStrategyDisplay";
 import { ScoringStrategyMaxScores } from "./ScoringStrategyMaxScores";
 
 type ScoringStrategyCardProps = {
@@ -47,6 +55,14 @@ export function ScoringStrategyCard({
   onDelete,
 }: ScoringStrategyCardProps) {
   const token = useToken();
+  const method = strategy.strategy.screening_method;
+  const laneProfile = resolveLaneProfileFromStrategy(strategy);
+  const laneLabel = getLaneProfileLabel(laneProfile);
+  const hideJamb = locksJambToZero(laneProfile, method);
+  const componentsSummary = formatComponentsSummary(
+    strategy.strategy.components,
+  );
+  const requiresJamb = strategy.strategy.requires_jamb ?? false;
 
   const referenceLabel = resolveReferenceLabel(strategy);
 
@@ -105,15 +121,27 @@ export function ScoringStrategyCard({
           >
             {referenceLabel}
           </Typography.Text>
+          <Tag color={LANE_TAG_COLORS[laneProfile]} style={{ margin: 0 }}>
+            {laneLabel}
+          </Tag>
           <Tag style={{ margin: 0 }}>
-            {getScreeningMethodLabel(strategy.strategy.screening_method)}
+            {getScreeningMethodLabel(method)}
           </Tag>
-          <Tag color="blue" style={{ margin: 0 }}>
-            JAMB {strategy.strategy.jamb_weight_percentage}%
-          </Tag>
-          <Tag color="purple" style={{ margin: 0 }}>
-            School {strategy.strategy.school_weight_percentage}%
-          </Tag>
+          <ConditionalRenderer when={requiresJamb}>
+            <Tag color="blue" style={{ margin: 0 }}>
+              JAMB {strategy.strategy.jamb_weight_percentage}%
+            </Tag>
+          </ConditionalRenderer>
+          <ConditionalRenderer when={!isMixedComponentMethod(method)}>
+            <Tag color="purple" style={{ margin: 0 }}>
+              School {strategy.strategy.school_weight_percentage}%
+            </Tag>
+          </ConditionalRenderer>
+          <ConditionalRenderer when={Boolean(componentsSummary)}>
+            <Tag color="geekblue" style={{ margin: 0 }}>
+              {componentsSummary}
+            </Tag>
+          </ConditionalRenderer>
         </Flex>
       ),
       extra: (
@@ -146,6 +174,7 @@ export function ScoringStrategyCard({
             maxJambScore={strategy.strategy.max_jamb_score}
             maxSchoolScore={strategy.strategy.max_school_score}
             variant="compact"
+            hideJamb={hideJamb}
           />
 
           <Typography.Text type="secondary" style={{ fontSize: token.fontSizeSM }}>

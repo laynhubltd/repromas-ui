@@ -20,6 +20,34 @@ export const cutoffRules: Rule[] = [
   { type: "number", min: 0, max: 100, message: "Cut-off must be 0 to 100" },
 ];
 
+export const minimumOlevelCreditsRules: Rule[] = [
+  { required: true, message: "Minimum O-Level credits is required" },
+  { type: "number", min: 1, max: 9, message: "Credits must be between 1 and 9" },
+];
+
+export const maxOlevelSittingsRules: Rule[] = [
+  { required: true, message: "Max O-Level sittings is required" },
+  { type: "number", min: 1, max: 5, message: "Sittings must be between 1 and 5" },
+];
+
+export const minimumJambScoreRules: Rule[] = [
+  { type: "number", min: 0, max: 400, message: "JAMB score must be 0 to 400" },
+];
+
+export function englishSubjectIdRules(
+  requireOlevelEnglish: boolean,
+): Rule[] {
+  if (!requireOlevelEnglish) return [];
+  return [{ required: true, message: "English subject is required" }];
+}
+
+export function mathematicsSubjectIdRules(
+  requireOlevelMathematics: boolean,
+): Rule[] {
+  if (!requireOlevelMathematics) return [];
+  return [{ required: true, message: "Mathematics subject is required" }];
+}
+
 export function validateQuotaTotals(values: ProgramAdmissionConfigFormValues): string | null {
   const total =
     values.meritPercentage + values.catchmentPercentage + values.eldsPercentage;

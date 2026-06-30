@@ -6,6 +6,10 @@ import { useGetStatesQuery } from "@/features/admission-config/tabs/geography-ru
 import {
   CANDIDATE_ENTRY_MODE_OPTIONS,
   CANDIDATE_GENDER_OPTIONS,
+  FINAL_DECISION_TAG_COLORS,
+  getApplicationStatusLabel,
+  getCandidateGenderLabel,
+  getFinalDecisionLabel,
 } from "@/shared/constants/admissionCandidateOptions";
 import { useToken } from "@/shared/hooks/useToken";
 import {
@@ -265,13 +269,15 @@ export function CandidateTab() {
       key: "gender",
       sorter: true,
       sortDirections: ["ascend", "descend"],
-      render: (v: string | null) => v ?? "—",
+      render: (v: string | null) => getCandidateGenderLabel(v),
     },
     {
       title: "App Status",
       key: "applicationStatus",
       render: (_: unknown, r: AdmissionCandidate) =>
-        r.application?.applicationStatus ?? (
+        r.application?.applicationStatus ? (
+          getApplicationStatusLabel(r.application.applicationStatus)
+        ) : (
           <Typography.Text type="secondary">—</Typography.Text>
         ),
     },
@@ -284,8 +290,8 @@ export function CandidateTab() {
           return <Typography.Text type="secondary">—</Typography.Text>;
         }
         return (
-          <Tag color={decision === "OFFER_ADMISSION" ? "success" : undefined}>
-            {decision}
+          <Tag color={FINAL_DECISION_TAG_COLORS[decision]}>
+            {getFinalDecisionLabel(decision)}
           </Tag>
         );
       },

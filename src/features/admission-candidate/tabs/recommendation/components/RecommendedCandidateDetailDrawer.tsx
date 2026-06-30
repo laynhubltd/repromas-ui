@@ -1,6 +1,14 @@
 import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
-import { RECOMMENDED_DECISION_LABELS } from "@/shared/constants/admissionRecommendedCandidateOptions";
+import { getRecommenderReasonLabel } from "@/shared/constants/admissionRecommenderOptions";
+import {
+  getQuotaCategoryLabel,
+  getRecommendedDecisionLabel,
+} from "@/shared/constants/admissionRecommendedCandidateOptions";
+import {
+  getCandidateEntryModeLabel,
+  getCandidateGenderLabel,
+} from "@/shared/constants/admissionCandidateOptions";
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
 import { DataLoader } from "@/shared/ui/DataLoader";
@@ -65,8 +73,6 @@ export function RecommendedCandidateDetailDrawer({
     target?.recommendedDecision === "OFFER_CHANGE_OF_COURSE";
   const isRejected = target?.recommendedDecision === "REJECTED";
 
-  console.log({ target });
-
   return (
     <Drawer
       open={open}
@@ -80,7 +86,7 @@ export function RecommendedCandidateDetailDrawer({
               {target.firstName} {target.lastName}
             </Typography.Text>
             <Tag color={QUOTA_TAG_COLOR[target.quotaCategory]}>
-              {target.quotaCategory}
+              {getQuotaCategoryLabel(target.quotaCategory)}
             </Tag>
           </Flex>
         ) : (
@@ -113,7 +119,7 @@ export function RecommendedCandidateDetailDrawer({
               {resolveRelatedName(target?.application?.candidate?.cycle, target?.application?.candidate?.cycleId)}
             </Descriptions.Item>
             <Descriptions.Item label="Gender">
-              {target?.application?.candidate?.gender ?? "—"}
+              {getCandidateGenderLabel(target?.application?.candidate?.gender)}
             </Descriptions.Item>
             <Descriptions.Item label="Date of Birth">
               {formatDate(target?.application?.candidate?.dateOfBirth)}
@@ -127,7 +133,9 @@ export function RecommendedCandidateDetailDrawer({
                 : "—"}
             </Descriptions.Item>
             <Descriptions.Item label="Entry Mode">
-              {target?.application?.candidate?.entryMode}
+              {getCandidateEntryModeLabel(
+                target?.application?.candidate?.entryMode,
+              )}
             </Descriptions.Item>
             <Descriptions.Item label="Email">
               {target?.application?.candidate?.email ?? "—"}
@@ -145,7 +153,7 @@ export function RecommendedCandidateDetailDrawer({
               {target?.aggregateScore ?? "—"}
             </Descriptions.Item>
             <Descriptions.Item label="Quota Category">
-              {target?.quotaCategory ?? "—"}
+              {getQuotaCategoryLabel(target?.quotaCategory)}
             </Descriptions.Item>
             <Descriptions.Item label="Recommended Decision">
               {target != null && (
@@ -154,8 +162,7 @@ export function RecommendedCandidateDetailDrawer({
                     target.recommendedDecision,
                   )}
                 >
-                  {RECOMMENDED_DECISION_LABELS[target.recommendedDecision] ??
-                    target.recommendedDecision}
+                  {getRecommendedDecisionLabel(target.recommendedDecision)}
                 </Tag>
               )}
             </Descriptions.Item>
@@ -173,10 +180,8 @@ export function RecommendedCandidateDetailDrawer({
                 )}
               </Descriptions.Item>
             )}
-            <Descriptions.Item label="Reason Code">
-              <Typography.Text code>
-                {target?.reasonCode ?? "—"}
-              </Typography.Text>
+            <Descriptions.Item label="Reason">
+              {getRecommenderReasonLabel(target?.reasonCode)}
             </Descriptions.Item>
           </Descriptions>
 

@@ -140,7 +140,7 @@ export const ADMISSION_STEP_DESCRIPTIONS: Partial<
   matriculation: "Complete matriculation after admission.",
 };
 
-const BLOCKER_MESSAGES: Partial<Record<BlockerCode, string>> = {
+export const ADMISSION_BLOCKER_LABELS: Partial<Record<BlockerCode, string>> = {
   APPLICATION_FEE_UNPAID: ME_PROGRESS_UI_COPY.blockerApplicationFeeUnpaid,
   CYCLE_NOT_OPEN: ME_PROGRESS_UI_COPY.blockerCycleNotOpen,
 };
@@ -175,8 +175,12 @@ export function resolveStepLabel(stepKey: string): string {
   return match?.label ?? humanizeEnumValue(stepKey);
 }
 
+export function getAdmissionBlockerLabel(code: BlockerCode): string {
+  return ADMISSION_BLOCKER_LABELS[code] ?? humanizeEnumValue(code);
+}
+
 export function resolveBlockerMessage(code: BlockerCode): string {
-  return BLOCKER_MESSAGES[code] ?? humanizeEnumValue(code);
+  return getAdmissionBlockerLabel(code);
 }
 
 export const PROGRESS_POLLING_INTERVAL_MS = 30_000;

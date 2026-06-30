@@ -9,7 +9,11 @@
  * - Delete modal state (deleteTarget)
  */
 
-import type { AdmissionScoringStrategy, ScopeValue } from "../types/scoring-strategy";
+import type {
+  AdmissionScoringStrategy,
+  LaneProfile,
+  ScopeValue,
+} from "../types/scoring-strategy";
 
 /**
  * Action type constants
@@ -17,6 +21,7 @@ import type { AdmissionScoringStrategy, ScopeValue } from "../types/scoring-stra
  */
 export const ScoringStrategyTabActionType = {
   SetScopeFilter: "SET_SCOPE_FILTER",
+  SetLaneFilter: "SET_LANE_FILTER",
   SetSearch: "SET_SEARCH",
   SetDebouncedSearch: "SET_DEBOUNCED_SEARCH",
   SetPage: "SET_PAGE",
@@ -35,6 +40,7 @@ export const ScoringStrategyTabActionType = {
  */
 export type ScoringStrategyTabState = {
   scopeFilter: ScopeValue | undefined;
+  laneFilter: LaneProfile | undefined;
   search: string;
   debouncedSearch: string;
   page: number;
@@ -51,6 +57,10 @@ export type ScoringStrategyTabAction =
   | {
       type: typeof ScoringStrategyTabActionType.SetScopeFilter;
       value: ScopeValue | undefined;
+    }
+  | {
+      type: typeof ScoringStrategyTabActionType.SetLaneFilter;
+      value: LaneProfile | undefined;
     }
   | {
       type: typeof ScoringStrategyTabActionType.SetSearch;
@@ -95,6 +105,7 @@ export type ScoringStrategyTabAction =
  */
 export const initialScoringStrategyTabState: ScoringStrategyTabState = {
   scopeFilter: undefined,
+  laneFilter: undefined,
   search: "",
   debouncedSearch: "",
   page: 1,
@@ -116,6 +127,9 @@ export function scoringStrategyTabReducer(
   switch (action.type) {
     case ScoringStrategyTabActionType.SetScopeFilter:
       return { ...state, scopeFilter: action.value, page: 1 };
+
+    case ScoringStrategyTabActionType.SetLaneFilter:
+      return { ...state, laneFilter: action.value, page: 1 };
 
     case ScoringStrategyTabActionType.SetSearch:
       return { ...state, search: action.value };
