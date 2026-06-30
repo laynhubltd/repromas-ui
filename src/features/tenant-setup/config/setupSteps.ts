@@ -34,9 +34,7 @@ export const PHASE1_CHECKLIST_STEP_IDS: SetupStepId[] = [
 ];
 
 export const PHASE2_CHECKLIST_STEP_IDS: SetupStepId[] = [
-  "staff",
   "transitionStatusDefault",
-  "student",
   "admissionConfig",
   "admissionCandidate",
   "courseRegistration",
@@ -99,7 +97,7 @@ export const SETUP_STEP_DEFINITIONS: Record<SetupStepId, SetupStepDefinition> = 
     prerequisites: ["department"],
     route: appPaths.staff,
     menuPath: appPaths.staff,
-    checklistVisible: true,
+    checklistVisible: false,
   },
   transitionStatusDefault: {
     id: "transitionStatusDefault",
@@ -115,7 +113,7 @@ export const SETUP_STEP_DEFINITIONS: Record<SetupStepId, SetupStepDefinition> = 
     prerequisites: ["program", "level", "curriculumVersion", "transitionStatusDefault"],
     route: appPaths.students,
     menuPath: appPaths.students,
-    checklistVisible: true,
+    checklistVisible: false,
   },
   admissionConfig: {
     id: "admissionConfig",
@@ -174,6 +172,23 @@ export const SETUP_STEP_DEFINITIONS: Record<SetupStepId, SetupStepDefinition> = 
     checklistVisible: false,
   },
 };
+
+/** Steps shown on the onboarding checklist (excludes staff, student, settings, etc.) */
+export function getOnboardingChecklistStepIds(
+  isPhase1Complete: boolean,
+): SetupStepId[] {
+  const phaseIds = isPhase1Complete
+    ? PHASE2_CHECKLIST_STEP_IDS
+    : PHASE1_CHECKLIST_STEP_IDS.filter((id) => id !== "signedIn");
+  return phaseIds.filter((id) => SETUP_STEP_DEFINITIONS[id].checklistVisible);
+}
+
+export function getAllOnboardingChecklistStepIds(): SetupStepId[] {
+  return [
+    ...PHASE1_CHECKLIST_STEP_IDS.filter((id) => id !== "signedIn"),
+    ...PHASE2_CHECKLIST_STEP_IDS,
+  ].filter((id) => SETUP_STEP_DEFINITIONS[id].checklistVisible);
+}
 
 export const PATH_TO_SETUP_STEP: Record<string, SetupStepId> = {
   [appPaths.academicStructure]: "department",

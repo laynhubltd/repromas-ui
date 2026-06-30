@@ -1,6 +1,5 @@
 import {
-  PHASE1_CHECKLIST_STEP_IDS,
-  PHASE2_CHECKLIST_STEP_IDS,
+  getOnboardingChecklistStepIds,
   SETUP_STEP_DEFINITIONS,
 } from "../config/setupSteps";
 import {
@@ -31,10 +30,7 @@ export function useSetupChecklist() {
   const { state, actions, flags } = useSetupStatus();
 
   const visibleStepIds = useMemo(
-    () =>
-      flags.isPhase1Complete
-        ? PHASE2_CHECKLIST_STEP_IDS
-        : PHASE1_CHECKLIST_STEP_IDS.filter((id) => id !== "signedIn"),
+    () => getOnboardingChecklistStepIds(flags.isPhase1Complete),
     [flags.isPhase1Complete],
   );
 
