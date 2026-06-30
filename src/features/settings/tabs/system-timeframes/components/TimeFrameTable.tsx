@@ -3,6 +3,7 @@ import { Table } from "@/components/ui-kit";
 import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import { useToken } from "@/shared/hooks/useToken";
+import { getTimeframeScopeLabel } from "@/shared/constants/systemTimeframeOptions";
 import { DataLoader } from "@/shared/ui/DataLoader";
 import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { DeleteOutlined, EditOutlined, MoreOutlined } from "@ant-design/icons";
@@ -31,15 +32,6 @@ function formatDateTime(iso: string): string {
   });
 }
 
-const SCOPE_LABELS: Record<string, string> = {
-  GLOBAL: "Global",
-  FACULTY: "Faculty",
-  DEPARTMENT: "Department",
-  PROGRAM: "Program",
-  LEVEL: "Level",
-  STUDENT: "Student",
-};
-
 const SEMESTER_STATUS_COLORS: Record<string, string> = {
   OPEN: "green",
   PENDING: "default",
@@ -63,7 +55,9 @@ export function TimeFrameTable({
       dataIndex: "scope",
       key: "scope",
       render: (scope: string) => (
-        <Typography.Text style={{ whiteSpace: "nowrap" }}>{SCOPE_LABELS[scope] ?? scope}</Typography.Text>
+        <Typography.Text style={{ whiteSpace: "nowrap" }}>
+          {getTimeframeScopeLabel(scope)}
+        </Typography.Text>
       ),
     },
     {

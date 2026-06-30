@@ -2,9 +2,19 @@
 // Requirements: 8.1–8.14, 9.1–9.10, 10.1–10.8, 16.2, 16.3
 
 import { useApiError } from "@/shared/hooks/useApiError";
+import {
+  getDefaultComponentsForMethod,
+  SCORING_STRATEGY_PRESET_CATALOG,
+  STRATEGY_PRESETS,
+  type StrategyPresetKey,
+} from "@/shared/constants/scoringStrategyOptions";
 import { RequestScreen } from "@/shared/types/error-ui";
-import { Form, notification } from "antd";
-import { useCallback, useEffect, useReducer } from "react";
+import {
+  mutationSuccessMessage,
+  notifyMutationSuccess,
+} from "@/shared/utils/feedback/notifyMutationSuccess";
+import { Form } from "antd";
+import { useCallback, useReducer } from "react";
 import {
   useCreateScoringStrategyMutation,
   useDeleteScoringStrategyMutation,
@@ -18,61 +28,89 @@ import {
 } from "../state/scoringStrategyFormState";
 import type {
   AdmissionScoringStrategy,
-  ScopeValue,
-  StrategyPayload,
+  LaneProfile,
+  ScoringStrategyFormValues,
+  ScreeningMethod,
 } from "../types/scoring-strategy";
+import { buildStrategyPayload } from "../utils/buildStrategyPayload";
+import {
+  defaultRequiresJamb,
+  isJambWeightEditable,
+  isMethodAllowedForLane,
+  isMixedComponentMethod,
+  isSchoolOnlyMethod,
+  locksJambToZero,
+  resolveLaneProfileFromStrategy,
+} from "../utils/scoringStrategyDisplay";
+import { validateStrategyPayload } from "../utils/validateStrategyPayload";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-type ScoringStrategyFormValues = {
-  scope: ScopeValue;
-  referenceId: number | null;
-  screening_method: "JAMB_ONLY" | "OLEVEL_GRADING" | "POST_UTME_TEST";
-  jamb_weight_percentage: number;
-  school_weight_percentage: number;
-  max_jamb_score: number;
-  max_school_score: number;
-  description?: string;
+const CREATE_FORM_DEFAULTS: Partial<ScoringStrategyFormValues> = {
+  scope: undefined,
+  referenceId: null,
+  laneProfile: "UTME_JAMB",
+  screening_method: undefined,
+  jamb_weight_percentage: 0,
+  school_weight_percentage: 0,
+  max_jamb_score: 400,
+  max_school_score: 100,
+  requires_jamb: true,
+  components: undefined,
+  description: undefined,
 };
 
-// ─── Preset Definitions ───────────────────────────────────────────────────────
+function applyMethodDefaults(
+  laneProfile: LaneProfile,
+  method: ScreeningMethod,
+): Partial<ScoringStrategyFormValues> {
+  if (method === "JAMB_ONLY") {
+    return {
+      screening_method: method,
+      jamb_weight_percentage: 100,
+      school_weight_percentage: 0,
+      requires_jamb: true,
+    };
+  }
 
-const PRESETS = {
-  "jamb-only": {
-    screening_method: "JAMB_ONLY" as const,
-    jamb_weight_percentage: 100,
-    school_weight_percentage: 0,
-    max_jamb_score: 400,
-    max_school_score: 100,
-  },
-  "olevel-5050": {
-    screening_method: "OLEVEL_GRADING" as const,
-    jamb_weight_percentage: 50,
-    school_weight_percentage: 50,
-    max_jamb_score: 400,
-    max_school_score: 30,
-  },
-  "post-utme-5050": {
-    screening_method: "POST_UTME_TEST" as const,
-    jamb_weight_percentage: 50,
-    school_weight_percentage: 50,
-    max_jamb_score: 400,
-    max_school_score: 100,
-  },
-} as const;
+  if (isJambWeightEditable(laneProfile, method)) {
+    return {
+      screening_method: method,
+      requires_jamb: defaultRequiresJamb(laneProfile, method),
+      max_jamb_score: 400,
+      components: undefined,
+    };
+  }
+
+  if (locksJambToZero(laneProfile, method)) {
+    const defaults: Partial<ScoringStrategyFormValues> = {
+      screening_method: method,
+      jamb_weight_percentage: 0,
+      school_weight_percentage: 100,
+      max_jamb_score: 0,
+      requires_jamb: false,
+    };
+
+    if (method === "OLEVEL_ONLY") {
+      defaults.max_school_score = 30;
+      defaults.components = undefined;
+    } else if (
+      method === "POST_SCREENING_ONLY" ||
+      method === "PRIOR_QUAL_ONLY"
+    ) {
+      defaults.max_school_score = 100;
+      defaults.components = undefined;
+    } else if (isMixedComponentMethod(method)) {
+      defaults.max_school_score = 100;
+      defaults.components = getDefaultComponentsForMethod(method);
+    }
+
+    return defaults;
+  }
+
+  return { screening_method: method };
+}
 
 // ─── Upsert (Create / Edit) ───────────────────────────────────────────────────
 
-/**
- * Hook for managing the scoring strategy form modal (create and edit modes).
- *
- * Requirements: 8.1–8.14, 9.1–9.10, 16.2, 16.3
- *
- * @param target - The strategy to edit, or null for create mode
- * @param open - Whether the modal is open
- * @param onClose - Callback to close the modal
- * @returns State and action handlers for the form modal
- */
 export function useScoringStrategyFormModal(
   target: AdmissionScoringStrategy | null,
   open: boolean,
@@ -86,7 +124,6 @@ export function useScoringStrategyFormModal(
   );
   const { formError } = modalState;
 
-  // Always call both mutations per Rules of Hooks (Req 8.1)
   const [createScoringStrategy, { isLoading: isCreating }] =
     useCreateScoringStrategyMutation();
   const [updateScoringStrategy, { isLoading: isUpdating }] =
@@ -94,82 +131,125 @@ export function useScoringStrategyFormModal(
   const handleApiError = useApiError();
 
   const isSubmitting = isCreating || isUpdating;
-  const screeningMethod = Form.useWatch("screening_method", form);
-  const isJambOnly = screeningMethod === "JAMB_ONLY";
+  const laneProfile = Form.useWatch("laneProfile", form) as
+    | LaneProfile
+    | undefined;
+  const screeningMethod = Form.useWatch("screening_method", form) as
+    | ScreeningMethod
+    | undefined;
+  const requiresJamb = Form.useWatch("requires_jamb", form) as
+    | boolean
+    | undefined;
 
-  // Pre-fill form in edit mode (Req 9.1–9.3)
-  // Initialize form with default values in create mode
-  useEffect(() => {
-    if (open && isEditMode && target) {
-      form.setFieldsValue({
-        scope: target.scope,
-        referenceId: target.referenceId,
-        screening_method: target.strategy.screening_method,
-        jamb_weight_percentage: target.strategy.jamb_weight_percentage,
-        school_weight_percentage: target.strategy.school_weight_percentage,
-        max_jamb_score: target.strategy.max_jamb_score,
-        max_school_score: target.strategy.max_school_score,
-        description: target.description || undefined,
-      });
-    } else if (open && !isEditMode) {
-      // Initialize create mode with default values
-      form.setFieldsValue({
-        scope: undefined,
-        referenceId: null,
-        screening_method: undefined,
-        jamb_weight_percentage: 0,
-        school_weight_percentage: 0,
-        max_jamb_score: 400,
-        max_school_score: 100,
-        description: undefined,
-      });
-    }
-  }, [open, isEditMode, target, form]);
+  const isJambOnly = screeningMethod === "JAMB_ONLY";
+  const isMixed = screeningMethod
+    ? isMixedComponentMethod(screeningMethod)
+    : false;
+  const isJambWeightsVisible =
+    laneProfile && screeningMethod
+      ? isJambWeightEditable(laneProfile, screeningMethod)
+      : false;
+  const showRequiresJambToggle = laneProfile === "UTME_OPEN";
+  const showSchoolOnlyPreview =
+    laneProfile && screeningMethod
+      ? isSchoolOnlyMethod(laneProfile, screeningMethod) &&
+        !isMixedComponentMethod(screeningMethod)
+      : false;
+  const showRenormalizeHelper =
+    showRequiresJambToggle &&
+    requiresJamb === false &&
+    isJambWeightsVisible &&
+    screeningMethod === "OLEVEL_GRADING";
 
   const reset = useCallback(() => {
     form.resetFields();
     dispatch({ type: ScoringStrategyFormActionType.Reset });
   }, [form]);
 
-  /**
-   * Handle screening method change (Req 8.5–8.6)
-   * If JAMB_ONLY: lock weights to 100/0
-   * Otherwise: unlock weights
-   */
-  const handleMethodChange = useCallback(
-    (method: "JAMB_ONLY" | "OLEVEL_GRADING" | "POST_UTME_TEST") => {
-      if (method === "JAMB_ONLY") {
-        form.setFieldsValue({
-          jamb_weight_percentage: 100,
-          school_weight_percentage: 0,
-        });
+  const initializeForm = useCallback(() => {
+    dispatch({
+      type: ScoringStrategyFormActionType.SetFormError,
+      message: null,
+    });
+
+    if (isEditMode && target) {
+      const method = target.strategy.screening_method;
+      const resolvedLane = resolveLaneProfileFromStrategy(target);
+      form.setFieldsValue({
+        scope: target.scope,
+        referenceId: target.referenceId,
+        laneProfile: resolvedLane,
+        screening_method: method,
+        jamb_weight_percentage: target.strategy.jamb_weight_percentage,
+        school_weight_percentage: target.strategy.school_weight_percentage,
+        max_jamb_score: target.strategy.max_jamb_score,
+        max_school_score: target.strategy.max_school_score,
+        requires_jamb:
+          target.strategy.requires_jamb ??
+          defaultRequiresJamb(resolvedLane, method),
+        components: target.strategy.components ?? undefined,
+        description: target.description || undefined,
+      });
+      return;
+    }
+
+    form.setFieldsValue(CREATE_FORM_DEFAULTS);
+  }, [form, isEditMode, target]);
+
+  const handleLaneChange = useCallback(
+    (nextLane: LaneProfile) => {
+      const currentMethod = form.getFieldValue("screening_method") as
+        | ScreeningMethod
+        | undefined;
+
+      form.setFieldsValue({
+        laneProfile: nextLane,
+        screening_method: undefined,
+        jamb_weight_percentage: 0,
+        school_weight_percentage: 0,
+        max_jamb_score: nextLane === "DIRECT_ENTRY" ? 0 : 400,
+        max_school_score: 100,
+        requires_jamb: defaultRequiresJamb(nextLane, "JAMB_ONLY"),
+        components: undefined,
+      });
+
+      if (currentMethod && isMethodAllowedForLane(nextLane, currentMethod)) {
+        form.setFieldsValue(applyMethodDefaults(nextLane, currentMethod));
       }
     },
     [form],
   );
 
-  /**
-   * Handle preset button click (Req 8.7)
-   * Pre-fill all five strategy fields from preset table
-   */
+  const handleMethodChange = useCallback(
+    (method: ScreeningMethod) => {
+      const currentLane =
+        (form.getFieldValue("laneProfile") as LaneProfile) ?? "UTME_JAMB";
+      form.setFieldsValue(applyMethodDefaults(currentLane, method));
+    },
+    [form],
+  );
+
   const handlePreset = useCallback(
-    (presetKey: keyof typeof PRESETS) => {
-      const preset = PRESETS[presetKey];
+    (presetKey: StrategyPresetKey) => {
+      const preset = STRATEGY_PRESETS[presetKey];
+      const catalogItem = SCORING_STRATEGY_PRESET_CATALOG.find(
+        (item) => item.key === presetKey,
+      );
+
       form.setFieldsValue({
+        laneProfile: catalogItem?.lane ?? form.getFieldValue("laneProfile"),
         screening_method: preset.screening_method,
         jamb_weight_percentage: preset.jamb_weight_percentage,
         school_weight_percentage: preset.school_weight_percentage,
         max_jamb_score: preset.max_jamb_score,
         max_school_score: preset.max_school_score,
+        requires_jamb: preset.requires_jamb,
+        components: preset.components ?? undefined,
       });
     },
     [form],
   );
 
-  /**
-   * Handle form submission (Req 8.8–8.14, 9.4–9.8)
-   * Validates client-side, then calls create or update mutation
-   */
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
@@ -178,62 +258,36 @@ export function useScoringStrategyFormModal(
         message: null,
       });
 
-      // Client-side validation (Req 8.8)
-      const weightsSum =
-        values.jamb_weight_percentage + values.school_weight_percentage;
-      if (weightsSum !== 100) {
-        const msg = "Weights must sum to 100%";
-        dispatch({
-          type: ScoringStrategyFormActionType.SetFormError,
-          message: msg,
-        });
-        return;
-      }
-
-      if (values.screening_method === "JAMB_ONLY") {
-        if (
-          values.jamb_weight_percentage !== 100 ||
-          values.school_weight_percentage !== 0
-        ) {
-          const msg = "JAMB Only requires 100% JAMB and 0% school";
-          dispatch({
-            type: ScoringStrategyFormActionType.SetFormError,
-            message: msg,
-          });
-          return;
-        }
-      }
-
-      if (values.max_jamb_score <= 0 || values.max_school_score <= 0) {
-        const msg = "Max scores must be greater than 0";
-        dispatch({
-          type: ScoringStrategyFormActionType.SetFormError,
-          message: msg,
-        });
-        return;
-      }
-
-      // Only validate referenceId in create mode or when scope is not GLOBAL
       const currentScope = isEditMode ? target.scope : values.scope;
       if (currentScope !== "GLOBAL" && !values.referenceId && !isEditMode) {
-        const msg = "Reference is required for non-GLOBAL scopes";
         dispatch({
           type: ScoringStrategyFormActionType.SetFormError,
-          message: msg,
+          message: "Reference is required for non-GLOBAL scopes",
         });
         return;
       }
 
-      const strategyPayload: StrategyPayload = {
-        screening_method: values.screening_method,
-        jamb_weight_percentage: values.jamb_weight_percentage,
-        school_weight_percentage: values.school_weight_percentage,
-        max_jamb_score: values.max_jamb_score,
-        max_school_score: values.max_school_score,
-      };
+      const resolvedLane = isEditMode
+        ? resolveLaneProfileFromStrategy(target)
+        : values.laneProfile;
+
+      const strategyPayload = buildStrategyPayload(resolvedLane, {
+        ...values,
+        requires_jamb:
+          values.requires_jamb ??
+          defaultRequiresJamb(resolvedLane, values.screening_method),
+      });
+
+      const validation = validateStrategyPayload(resolvedLane, strategyPayload);
+      if (!validation.valid) {
+        dispatch({
+          type: ScoringStrategyFormActionType.SetFormError,
+          message: validation.message ?? "Invalid strategy configuration",
+        });
+        return;
+      }
 
       if (isEditMode) {
-        // PUT: include scope and referenceId (immutable but required by API)
         await updateScoringStrategy({
           id: target.id,
           scope: target.scope,
@@ -241,20 +295,20 @@ export function useScoringStrategyFormModal(
           strategy: strategyPayload,
           description: values.description,
         }).unwrap();
-        notification.success({
-          message: "Scoring strategy updated successfully.",
-        });
+        notifyMutationSuccess(
+          mutationSuccessMessage("Scoring strategy", "updated"),
+        );
       } else {
-        // POST: all fields including scope and referenceId (Req 8.9–8.14)
         await createScoringStrategy({
           scope: values.scope,
           referenceId: values.referenceId,
+          laneProfile: values.laneProfile,
           strategy: strategyPayload,
           description: values.description,
         }).unwrap();
-        notification.success({
-          message: "Scoring strategy created successfully.",
-        });
+        notifyMutationSuccess(
+          mutationSuccessMessage("Scoring strategy", "created"),
+        );
       }
 
       reset();
@@ -270,10 +324,6 @@ export function useScoringStrategyFormModal(
     }
   };
 
-  /**
-   * Handle form cancellation (Req 8.10)
-   * Reset state and close modal
-   */
   const handleCancel = () => {
     reset();
     onClose();
@@ -285,12 +335,23 @@ export function useScoringStrategyFormModal(
       formError,
       isSubmitting,
       isJambOnly,
+      isMixed,
+      isJambWeightsVisible,
+      showRequiresJambToggle,
+      showSchoolOnlyPreview,
+      showRenormalizeHelper,
+      laneProfile,
+      screeningMethod,
+      requiresJamb,
+      open,
     },
     actions: {
       handleSubmit,
       handleCancel,
       handleMethodChange,
       handlePreset,
+      handleLaneChange,
+      initializeForm,
     },
     form,
   };
@@ -298,15 +359,6 @@ export function useScoringStrategyFormModal(
 
 // ─── Delete ───────────────────────────────────────────────────────────────────
 
-/**
- * Hook for managing the delete confirmation modal.
- *
- * Requirements: 10.1–10.8
- *
- * @param target - The strategy to delete
- * @param onClose - Callback to close the modal
- * @returns State and action handlers for the delete modal
- */
 export function useDeleteScoringStrategyModal(
   target: AdmissionScoringStrategy | null,
   onClose: () => void,
@@ -315,7 +367,6 @@ export function useDeleteScoringStrategyModal(
     useDeleteScoringStrategyMutation();
   const handleApiError = useApiError();
 
-  // Check if this is the only GLOBAL strategy (Req 10.2)
   const { data: globalData } = useGetScoringStrategiesQuery(
     { "exact[scope]": "GLOBAL", itemsPerPage: 1 },
     { skip: target?.scope !== "GLOBAL" },
@@ -324,17 +375,13 @@ export function useDeleteScoringStrategyModal(
   const isOnlyGlobal =
     target?.scope === "GLOBAL" && (globalData?.totalItems ?? 0) === 1;
 
-  /**
-   * Handle delete confirmation (Req 10.3–10.5)
-   * Call mutation and handle success/error
-   */
   const handleConfirm = async () => {
     if (!target) return;
     try {
       await deleteStrategy(target.id).unwrap();
-      notification.success({
-        message: "Scoring strategy deleted successfully.",
-      });
+      notifyMutationSuccess(
+        mutationSuccessMessage("Scoring strategy", "deleted"),
+      );
       onClose();
     } catch (err: unknown) {
       handleApiError(err, {
@@ -343,10 +390,6 @@ export function useDeleteScoringStrategyModal(
     }
   };
 
-  /**
-   * Handle delete cancellation (Req 10.6)
-   * Close modal without deleting
-   */
   const handleCancel = () => {
     onClose();
   };

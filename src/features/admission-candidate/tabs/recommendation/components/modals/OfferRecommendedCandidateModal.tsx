@@ -1,4 +1,8 @@
-import { RECOMMENDED_DECISION_LABELS } from "@/shared/constants/admissionRecommendedCandidateOptions";
+import { getRecommenderReasonLabel } from "@/shared/constants/admissionRecommenderOptions";
+import {
+  getQuotaCategoryLabel,
+  getRecommendedDecisionLabel,
+} from "@/shared/constants/admissionRecommendedCandidateOptions";
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
 import {
@@ -91,15 +95,14 @@ export function OfferRecommendedCandidateModal({
             {target?.aggregateScore ?? "—"}
           </Descriptions.Item>
           <Descriptions.Item label="Quota category">
-            {target?.quotaCategory ?? "—"}
+            {getQuotaCategoryLabel(target?.quotaCategory)}
           </Descriptions.Item>
           <Descriptions.Item label="Recommendation">
             {target != null && (
               <Tag
                 color={recommendedDecisionTagColor(target.recommendedDecision)}
               >
-                {RECOMMENDED_DECISION_LABELS[target.recommendedDecision] ??
-                  target.recommendedDecision}
+                {getRecommendedDecisionLabel(target.recommendedDecision)}
               </Tag>
             )}
           </Descriptions.Item>
@@ -117,8 +120,8 @@ export function OfferRecommendedCandidateModal({
               )}
             </Descriptions.Item>
           </ConditionalRenderer>
-          <Descriptions.Item label="Reason code">
-            <Typography.Text code>{target?.reasonCode ?? "—"}</Typography.Text>
+          <Descriptions.Item label="Reason">
+            {getRecommenderReasonLabel(target?.reasonCode)}
           </Descriptions.Item>
         </Descriptions>
 

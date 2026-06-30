@@ -68,6 +68,8 @@ export const ApiTagTypes = {
   AdmissionRecommendedCandidate: "AdmissionRecommendedCandidate",
   AdmissionDocumentType: "AdmissionDocumentType",
   AdmissionDocumentUpload: "AdmissionDocumentUpload",
+  PriorQualificationType: "PriorQualificationType",
+  ProgramPriorQualificationRequirement: "ProgramPriorQualificationRequirement",
 } as const;
 
 export type ApiTagLiteral = (typeof ApiTagTypes)[keyof typeof ApiTagTypes];

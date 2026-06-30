@@ -1,9 +1,11 @@
-import {
-  PROGRAM_ADMISSION_CONFIG_INCLUDE,
-  PROGRAM_ADMISSION_CONFIG_ITEMS_PER_PAGE,
-  PROGRAM_ADMISSION_CONFIG_SORT,
-} from "@/shared/constants/programAdmissionConfigOptions";
 import { useGetProgramsQuery } from "@/features/program/tabs/programs/api/programsApi";
+import {
+  useGetSetupAdmissionConfigCountQuery,
+  useGetSetupProgramCountQuery,
+} from "@/features/tenant-setup/api/setupStatusApi";
+import { PROGRAM_ADMISSION_CONFIG_LIST_ITEMS_PER_PAGE } from "@/shared/constants/programAdmissionConfigOptions";
+import { deriveSectionErrorMessage } from "@/shared/utils/error/deriveSectionErrorMessage";
+import { RequestScreen } from "@/shared/types/error-ui";
 import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
 import { useGetProgramAdmissionConfigsQuery } from "../api/programAdmissionConfigApi";
 import {
@@ -15,39 +17,11 @@ import type {
   ProgramAdmissionConfig,
   QuotaFilterValue,
 } from "../types/program-admission-config";
+import { buildListQueryParams } from "../utils/buildListQueryParams";
+import { matchesQuotaFilter } from "../utils/quotaFilter";
 import { computeQuotaSeats } from "../utils/seatMath";
 
 const DEBOUNCE_MS = 300;
-
-function matchesQuotaFilter(
-  config: ProgramAdmissionConfig,
-  quotaFilter: QuotaFilterValue | undefined,
-): boolean {
-  if (!quotaFilter) return true;
-  const seats = computeQuotaSeats(config);
-
-  if (quotaFilter === "ANY_FULL") {
-    return (
-      seats.meritAvailable === 0 ||
-      seats.catchmentAvailable === 0 ||
-      seats.eldsAvailable === 0
-    );
-  }
-
-  if (quotaFilter === "ALL_OPEN") {
-    return (
-      seats.meritAvailable > 0 &&
-      seats.catchmentAvailable > 0 &&
-      seats.eldsAvailable > 0
-    );
-  }
-
-  return (
-    Number(config.meritCutoff) === 0 ||
-    Number(config.catchmentCutoff) === 0 ||
-    Number(config.eldsCutoff) === 0
-  );
-}
 
 export function useProgramAdmissionConfigTab() {
   const [state, dispatch] = useReducer(
@@ -55,19 +29,47 @@ export function useProgramAdmissionConfigTab() {
     initialProgramAdmissionConfigTabState,
   );
 
-  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const programNameDebounceTimer = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+  const departmentNameDebounceTimer = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
 
   useEffect(() => {
     return () => {
-      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+      if (programNameDebounceTimer.current) {
+        clearTimeout(programNameDebounceTimer.current);
+      }
+      if (departmentNameDebounceTimer.current) {
+        clearTimeout(departmentNameDebounceTimer.current);
+      }
     };
   }, []);
 
-  const { data, isLoading, isError, refetch } = useGetProgramAdmissionConfigsQuery({
-    itemsPerPage: PROGRAM_ADMISSION_CONFIG_ITEMS_PER_PAGE,
-    include: PROGRAM_ADMISSION_CONFIG_INCLUDE,
-    sort: PROGRAM_ADMISSION_CONFIG_SORT,
-  });
+  const queryParams = useMemo(
+    () =>
+      buildListQueryParams({
+        page: state.page,
+        debouncedProgramNameSearch: state.debouncedProgramNameSearch,
+        debouncedDepartmentNameSearch: state.debouncedDepartmentNameSearch,
+        programFilter: state.programFilter,
+      }),
+    [
+      state.page,
+      state.debouncedProgramNameSearch,
+      state.debouncedDepartmentNameSearch,
+      state.programFilter,
+    ],
+  );
+
+  const {
+    data,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useGetProgramAdmissionConfigsQuery(queryParams);
 
   const { data: programsData, isLoading: isProgramsLoading } = useGetProgramsQuery({
     itemsPerPage: 100,
@@ -75,48 +77,32 @@ export function useProgramAdmissionConfigTab() {
     include: "department",
   });
 
-  const configs = data?.member ?? [];
+  const { data: setupProgramCount, isLoading: isSetupProgramLoading } =
+    useGetSetupProgramCountQuery();
+  const { data: setupConfigCount, isLoading: isSetupConfigLoading } =
+    useGetSetupAdmissionConfigCountQuery();
+
+  const pageConfigs = data?.member ?? [];
+  const totalItems = data?.totalItems ?? 0;
   const programs = programsData?.member ?? [];
 
-  const filteredConfigs = useMemo(() => {
-    const searchValue = state.debouncedSearch.trim().toLowerCase();
-    return configs.filter((config) => {
-      if (state.programFilter !== undefined && config.programId !== state.programFilter) {
-        return false;
-      }
-
-      if (!matchesQuotaFilter(config, state.quotaFilter)) {
-        return false;
-      }
-
-      if (!searchValue) return true;
-      const programName = config.program?.name?.toLowerCase() ?? "";
-      const departmentName = config.program?.department?.name?.toLowerCase() ?? "";
-      return (
-        programName.includes(searchValue) || departmentName.includes(searchValue)
-      );
-    });
-  }, [configs, state.debouncedSearch, state.programFilter, state.quotaFilter]);
-
-  const configuredProgramIds = useMemo(
-    () => new Set(configs.map((config) => config.programId)),
-    [configs],
+  const configs = useMemo(
+    () => pageConfigs.filter((config) => matchesQuotaFilter(config, state.quotaFilter)),
+    [pageConfigs, state.quotaFilter],
   );
 
-  const missingProgramCount = useMemo(
-    () => programs.filter((program) => !configuredProgramIds.has(program.id)).length,
-    [programs, configuredProgramIds],
-  );
+  const configuredProgramCount = setupConfigCount ?? 0;
+  const totalProgramCount = setupProgramCount ?? 0;
+  const missingProgramCount = Math.max(0, totalProgramCount - configuredProgramCount);
 
   const totalCapacity = useMemo(
-    () =>
-      filteredConfigs.reduce((sum, config) => sum + config.totalCapacity, 0),
-    [filteredConfigs],
+    () => configs.reduce((sum, config) => sum + config.totalCapacity, 0),
+    [configs],
   );
 
   const fullQuotaProgramCount = useMemo(
     () =>
-      filteredConfigs.filter((config) => {
+      configs.filter((config) => {
         const seats = computeQuotaSeats(config);
         return (
           seats.meritAvailable === 0 ||
@@ -124,15 +110,45 @@ export function useProgramAdmissionConfigTab() {
           seats.eldsAvailable === 0
         );
       }).length,
-    [filteredConfigs],
+    [configs],
   );
 
-  const handleSearchChange = useCallback((value: string) => {
-    dispatch({ type: ProgramAdmissionConfigTabActionType.SetSearch, value });
-    if (debounceTimer.current) clearTimeout(debounceTimer.current);
-    debounceTimer.current = setTimeout(() => {
+  const sectionErrorMessage = useMemo(
+    () =>
+      deriveSectionErrorMessage(isError, error, {
+        screen: RequestScreen.List,
+        method: "GET",
+      }),
+    [isError, error],
+  );
+
+  const handleProgramNameSearchChange = useCallback((value: string) => {
+    dispatch({
+      type: ProgramAdmissionConfigTabActionType.SetProgramNameSearch,
+      value,
+    });
+    if (programNameDebounceTimer.current) {
+      clearTimeout(programNameDebounceTimer.current);
+    }
+    programNameDebounceTimer.current = setTimeout(() => {
       dispatch({
-        type: ProgramAdmissionConfigTabActionType.SetDebouncedSearch,
+        type: ProgramAdmissionConfigTabActionType.SetDebouncedProgramNameSearch,
+        value,
+      });
+    }, DEBOUNCE_MS);
+  }, []);
+
+  const handleDepartmentNameSearchChange = useCallback((value: string) => {
+    dispatch({
+      type: ProgramAdmissionConfigTabActionType.SetDepartmentNameSearch,
+      value,
+    });
+    if (departmentNameDebounceTimer.current) {
+      clearTimeout(departmentNameDebounceTimer.current);
+    }
+    departmentNameDebounceTimer.current = setTimeout(() => {
+      dispatch({
+        type: ProgramAdmissionConfigTabActionType.SetDebouncedDepartmentNameSearch,
         value,
       });
     }, DEBOUNCE_MS);
@@ -155,6 +171,10 @@ export function useProgramAdmissionConfigTab() {
     [],
   );
 
+  const handlePageChange = useCallback((page: number) => {
+    dispatch({ type: ProgramAdmissionConfigTabActionType.SetPage, page });
+  }, []);
+
   const handleOpenCreate = useCallback(() => {
     dispatch({ type: ProgramAdmissionConfigTabActionType.OpenForm, target: null });
   }, []);
@@ -175,6 +195,14 @@ export function useProgramAdmissionConfigTab() {
     dispatch({ type: ProgramAdmissionConfigTabActionType.CloseDelete });
   }, []);
 
+  const handleOpenDrawer = useCallback((target: ProgramAdmissionConfig) => {
+    dispatch({ type: ProgramAdmissionConfigTabActionType.OpenDrawer, target });
+  }, []);
+
+  const handleCloseDrawer = useCallback(() => {
+    dispatch({ type: ProgramAdmissionConfigTabActionType.CloseDrawer });
+  }, []);
+
   const handleClearFilters = useCallback(() => {
     dispatch({
       type: ProgramAdmissionConfigTabActionType.SetProgramFilter,
@@ -184,9 +212,20 @@ export function useProgramAdmissionConfigTab() {
       type: ProgramAdmissionConfigTabActionType.SetQuotaFilter,
       value: undefined,
     });
-    dispatch({ type: ProgramAdmissionConfigTabActionType.SetSearch, value: "" });
     dispatch({
-      type: ProgramAdmissionConfigTabActionType.SetDebouncedSearch,
+      type: ProgramAdmissionConfigTabActionType.SetProgramNameSearch,
+      value: "",
+    });
+    dispatch({
+      type: ProgramAdmissionConfigTabActionType.SetDebouncedProgramNameSearch,
+      value: "",
+    });
+    dispatch({
+      type: ProgramAdmissionConfigTabActionType.SetDepartmentNameSearch,
+      value: "",
+    });
+    dispatch({
+      type: ProgramAdmissionConfigTabActionType.SetDebouncedDepartmentNameSearch,
       value: "",
     });
   }, []);
@@ -194,39 +233,54 @@ export function useProgramAdmissionConfigTab() {
   const activeFilterCount = [state.programFilter, state.quotaFilter].filter(
     (value) => value !== undefined,
   ).length;
-  const hasData = filteredConfigs.length > 0;
+  const hasData = configs.length > 0;
   const isSearchOrFilterActive =
-    activeFilterCount > 0 || state.debouncedSearch.trim().length > 0;
+    activeFilterCount > 0 ||
+    state.debouncedProgramNameSearch.trim().length > 0 ||
+    state.debouncedDepartmentNameSearch.trim().length > 0;
+  const isQuotaHealthFilterActive = state.quotaFilter !== undefined;
 
   return {
     state: {
-      allConfigs: configs,
-      configs: filteredConfigs,
+      configs,
       programs,
-      configuredProgramCount: configs.length,
+      configuredProgramCount,
       missingProgramCount,
       totalCapacity,
       fullQuotaProgramCount,
-      isLoading: isLoading || isProgramsLoading,
+      isLoading:
+        isLoading || isProgramsLoading || isSetupProgramLoading || isSetupConfigLoading,
       isError,
-      search: state.search,
+      sectionErrorMessage,
+      programNameSearch: state.programNameSearch,
+      departmentNameSearch: state.departmentNameSearch,
       programFilter: state.programFilter,
       quotaFilter: state.quotaFilter,
+      page: state.page,
+      itemsPerPage: PROGRAM_ADMISSION_CONFIG_LIST_ITEMS_PER_PAGE,
+      totalItems,
       formTarget: state.formTarget,
       formOpen: state.formOpen,
       deleteTarget: state.deleteTarget,
       deleteOpen: state.deleteOpen,
+      drawerTarget: state.drawerTarget,
+      drawerOpen: state.drawerOpen,
       activeFilterCount,
+      isQuotaHealthFilterActive,
     },
     actions: {
-      handleSearchChange,
+      handleProgramNameSearchChange,
+      handleDepartmentNameSearchChange,
       handleProgramFilterChange,
       handleQuotaFilterChange,
+      handlePageChange,
       handleOpenCreate,
       handleOpenEdit,
       handleCloseForm,
       handleOpenDelete,
       handleCloseDelete,
+      handleOpenDrawer,
+      handleCloseDrawer,
       handleClearFilters,
       refetch,
     },

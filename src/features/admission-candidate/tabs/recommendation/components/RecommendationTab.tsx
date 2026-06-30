@@ -3,9 +3,11 @@ import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import { formatCycleOptionLabel } from "@/features/admission-config/tabs/admission-cycle/utils/admissionCycleDisplay";
 import {
+  getQuotaCategoryLabel,
+  getRecommendedDecisionLabel,
   QUOTA_CATEGORY_OPTIONS,
-  RECOMMENDED_DECISION_LABELS,
 } from "@/shared/constants/admissionRecommendedCandidateOptions";
+import { getRecommenderReasonLabel } from "@/shared/constants/admissionRecommenderOptions";
 import { useToken } from "@/shared/hooks/useToken";
 import {
   ConditionalRenderer,
@@ -137,15 +139,16 @@ export function RecommendationTab() {
       title: "Quota",
       dataIndex: "quotaCategory",
       key: "quotaCategory",
-      render: (v: QuotaCategory) => <Tag color={QUOTA_TAG_COLOR[v]}>{v}</Tag>,
+      render: (v: QuotaCategory) => (
+        <Tag color={QUOTA_TAG_COLOR[v]}>{getQuotaCategoryLabel(v)}</Tag>
+      ),
     },
     {
       title: "Recommendation",
       key: "recommendedDecision",
       render: (_: unknown, r: AdmissionRecommendedCandidate) => (
         <Tag color={recommendedDecisionTagColor(r.recommendedDecision)}>
-          {RECOMMENDED_DECISION_LABELS[r.recommendedDecision] ??
-            r.recommendedDecision}
+          {getRecommendedDecisionLabel(r.recommendedDecision)}
         </Tag>
       ),
     },
@@ -171,6 +174,13 @@ export function RecommendationTab() {
         ) : (
           <Typography.Text type="secondary">—</Typography.Text>
         ),
+    },
+    {
+      title: "Reason",
+      key: "reasonCode",
+      render: (_: unknown, r: AdmissionRecommendedCandidate) => (
+        <Typography.Text>{getRecommenderReasonLabel(r.reasonCode)}</Typography.Text>
+      ),
     },
     {
       title: "Actions",

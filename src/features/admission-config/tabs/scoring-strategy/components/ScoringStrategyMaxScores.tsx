@@ -5,6 +5,8 @@ type ScoringStrategyMaxScoresProps = {
   maxJambScore: number;
   maxSchoolScore: number;
   variant?: "compact" | "expanded";
+  hideJamb?: boolean;
+  schoolLabel?: string;
 };
 
 type ScoreTileProps = {
@@ -74,6 +76,8 @@ export function ScoringStrategyMaxScores({
   maxJambScore,
   maxSchoolScore,
   variant = "compact",
+  hideJamb = false,
+  schoolLabel = "School",
 }: ScoringStrategyMaxScoresProps) {
   const token = useToken();
 
@@ -91,14 +95,16 @@ export function ScoringStrategyMaxScores({
         Max scores
       </Typography.Text>
       <Flex gap={8} wrap="wrap">
+        {!hideJamb && (
+          <ScoreTile
+            label="JAMB"
+            value={maxJambScore}
+            accentColor={token.colorPrimary}
+            variant={variant}
+          />
+        )}
         <ScoreTile
-          label="JAMB"
-          value={maxJambScore}
-          accentColor={token.colorPrimary}
-          variant={variant}
-        />
-        <ScoreTile
-          label="School"
+          label={schoolLabel}
           value={maxSchoolScore}
           accentColor="#722ed1"
           variant={variant}

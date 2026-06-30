@@ -1,9 +1,8 @@
 import { DashCard, ExplainerCallout } from "@/components/ui-kit";
 import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
-import {
-  QUOTA_FILTER_OPTIONS,
-} from "@/shared/constants/programAdmissionConfigOptions";
+import { QUOTA_FILTER_OPTIONS } from "@/shared/constants/programAdmissionConfigOptions";
+import { useIsMobile } from "@/hooks/useBreakpoint";
 import { useToken } from "@/shared/hooks/useToken";
 import {
   ConditionalRenderer,
@@ -12,13 +11,23 @@ import {
 import { DataLoader } from "@/shared/ui/DataLoader";
 import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { SkeletonRows } from "@/shared/ui/SkeletonRows";
-import { DeleteOutlined, EditOutlined, FilterOutlined, PlusOutlined } from "@ant-design/icons";
+import {
+  DeleteOutlined,
+  EditOutlined,
+  EyeOutlined,
+  FilterOutlined,
+  MoreOutlined,
+  PlusOutlined,
+} from "@ant-design/icons";
+import type { MenuProps } from "antd";
 import {
   Badge,
   Button,
+  Dropdown,
   Flex,
   Form,
   Input,
+  Pagination,
   Popover,
   Select,
   Space,
@@ -30,17 +39,19 @@ import type { ColumnsType } from "antd/es/table";
 import { useMemo, useState } from "react";
 import { useProgramAdmissionConfigTab } from "../hooks/useProgramAdmissionConfigTab";
 import type { ProgramAdmissionConfig } from "../types/program-admission-config";
+import { formatGateSummaryTags, formatJambFloor } from "../utils/configDisplay";
 import { computeQuotaSeats } from "../utils/seatMath";
+import { ProgramAdmissionConfigDrawer } from "./ProgramAdmissionConfigDrawer";
 import { DeleteProgramAdmissionConfigModal } from "./modals/DeleteProgramAdmissionConfigModal";
 import { ProgramAdmissionConfigFormModal } from "./modals/ProgramAdmissionConfigFormModal";
 
 export function ProgramAdmissionConfigTab() {
   const token = useToken();
+  const isMobile = useIsMobile();
   const [filterOpen, setFilterOpen] = useState(false);
   const { state, actions, flags } = useProgramAdmissionConfigTab();
   const {
     configs,
-    allConfigs,
     programs,
     configuredProgramCount,
     missingProgramCount,
@@ -48,24 +59,36 @@ export function ProgramAdmissionConfigTab() {
     fullQuotaProgramCount,
     isLoading,
     isError,
-    search,
+    sectionErrorMessage,
+    programNameSearch,
+    departmentNameSearch,
     programFilter,
     quotaFilter,
+    page,
+    itemsPerPage,
+    totalItems,
     activeFilterCount,
+    isQuotaHealthFilterActive,
     formOpen,
     formTarget,
     deleteOpen,
     deleteTarget,
+    drawerOpen,
+    drawerTarget,
   } = state;
   const {
-    handleSearchChange,
+    handleProgramNameSearchChange,
+    handleDepartmentNameSearchChange,
     handleProgramFilterChange,
     handleQuotaFilterChange,
+    handlePageChange,
     handleOpenCreate,
     handleOpenEdit,
     handleCloseForm,
     handleOpenDelete,
     handleCloseDelete,
+    handleOpenDrawer,
+    handleCloseDrawer,
     handleClearFilters,
     refetch,
   } = actions;
@@ -82,6 +105,31 @@ export function ProgramAdmissionConfigTab() {
     [programs],
   );
 
+  const buildRowMenuItems = (
+    record: ProgramAdmissionConfig,
+  ): MenuProps["items"] => [
+    {
+      key: "view",
+      label: "View details",
+      icon: <EyeOutlined />,
+      onClick: () => handleOpenDrawer(record),
+    },
+    {
+      key: "edit",
+      label: "Edit",
+      icon: <EditOutlined />,
+      onClick: () => handleOpenEdit(record),
+    },
+    { type: "divider" },
+    {
+      key: "delete",
+      label: "Delete",
+      icon: <DeleteOutlined />,
+      danger: true,
+      onClick: () => handleOpenDelete(record),
+    },
+  ];
+
   const columns: ColumnsType<ProgramAdmissionConfig> = [
     {
       title: "Program",
@@ -91,9 +139,11 @@ export function ProgramAdmissionConfigTab() {
       fixed: "left",
       render: (_, record) => (
         <Space orientation="vertical" size={0}>
-          <Typography.Text strong>
-            {record.program?.name ?? "Unknown program"}
-          </Typography.Text>
+          <Typography.Link onClick={() => handleOpenDrawer(record)}>
+            <Typography.Text strong>
+              {record.program?.name ?? "Unknown program"}
+            </Typography.Text>
+          </Typography.Link>
           <Typography.Text type="secondary">
             {record.program?.department?.name ?? "Department not loaded"}
           </Typography.Text>
@@ -131,25 +181,19 @@ export function ProgramAdmissionConfigTab() {
       ),
     },
     {
-      title: "Slots Used / Available",
-      key: "seats",
-      width: 280,
-      render: (_, record) => {
-        const seats = computeQuotaSeats(record);
-        return (
-          <Space orientation="vertical" size={0}>
-            <Typography.Text type="secondary">
-              Merit: {record.meritSeatsUsed} / {seats.meritAvailable}
-            </Typography.Text>
-            <Typography.Text type="secondary">
-              Catchment: {record.catchmentSeatsUsed} / {seats.catchmentAvailable}
-            </Typography.Text>
-            <Typography.Text type="secondary">
-              ELDS: {record.eldsSeatsUsed} / {seats.eldsAvailable}
-            </Typography.Text>
-          </Space>
-        );
-      },
+      title: "Eligibility gates",
+      key: "eligibility",
+      width: 200,
+      render: (_, record) => (
+        <Space size={[4, 4]} wrap>
+          {formatGateSummaryTags(record).map((label) => (
+            <Tag key={label}>{label}</Tag>
+          ))}
+          {record.minimumJambScore != null && (
+            <Tag color="geekblue">JAMB {formatJambFloor(record)}</Tag>
+          )}
+        </Space>
+      ),
     },
     {
       title: "Status",
@@ -185,26 +229,21 @@ export function ProgramAdmissionConfigTab() {
       key: "actions",
       width: 120,
       fixed: "right",
+      align: "center",
       render: (_, record) => (
-        <Space>
-          <PermissionGuard permission={Permission.AdmissionProgramAdmissionConfigsUpdate}>
-            <Button
-              type="text"
-              size="small"
-              icon={<EditOutlined />}
-              onClick={() => handleOpenEdit(record)}
-            />
-          </PermissionGuard>
-          <PermissionGuard permission={Permission.AdmissionProgramAdmissionConfigsDelete}>
-            <Button
-              type="text"
-              size="small"
-              danger
-              icon={<DeleteOutlined />}
-              onClick={() => handleOpenDelete(record)}
-            />
-          </PermissionGuard>
-        </Space>
+        <Dropdown
+          menu={{ items: buildRowMenuItems(record) }}
+          trigger={["click"]}
+          placement="bottomRight"
+        >
+          <Button
+            type="text"
+            size="small"
+            icon={<MoreOutlined />}
+            aria-label="Row actions"
+            onClick={(event) => event.stopPropagation()}
+          />
+        </Dropdown>
       ),
     },
   ];
@@ -223,7 +262,11 @@ export function ProgramAdmissionConfigTab() {
             options={programOptions}
           />
         </Form.Item>
-        <Form.Item label="Quota Health" style={{ marginBottom: 0 }}>
+        <Form.Item
+          label="Quota Health"
+          style={{ marginBottom: 0 }}
+          extra="Narrows the current page only. Clear it to browse all pages."
+        >
           <Select
             placeholder="Any health"
             allowClear
@@ -234,7 +277,12 @@ export function ProgramAdmissionConfigTab() {
         </Form.Item>
       </Form>
       <ConditionalRenderer when={activeFilterCount > 0}>
-        <Button type="link" size="small" onClick={handleClearFilters} style={{ padding: 0 }}>
+        <Button
+          type="link"
+          size="small"
+          onClick={handleClearFilters}
+          style={{ padding: 0 }}
+        >
           Clear all filters
         </Button>
       </ConditionalRenderer>
@@ -247,24 +295,51 @@ export function ProgramAdmissionConfigTab() {
         intent="info"
         collapsible
         title="Admission Cut-offs and Quota"
-        body="Set per-program capacity, federal-character quota split (Merit/Catchment/ELDS), and minimum aggregate cut-offs used by admission offers. Quota slots are computed using floor(capacity × percentage)."
+        body="Set per-program capacity, federal-character quota split (Merit/Catchment/ELDS), and minimum aggregate cut-offs used after scoring. O-Level credit gates are a pre-check on the Direct Entry lane before program subject rules apply."
       />
 
       <Flex gap={16} wrap="wrap">
-        <DashCard title="Programs Configured" value={configuredProgramCount} state={isLoading ? "loading" : "default"} />
-        <DashCard title="Programs Missing Config" value={missingProgramCount} state={isLoading ? "loading" : "default"} />
-        <DashCard title="Total Capacity (Filtered)" value={totalCapacity} state={isLoading ? "loading" : "default"} />
-        <DashCard title="Programs With Full Quota" value={fullQuotaProgramCount} state={isLoading ? "loading" : "default"} />
+        <DashCard
+          title="Programs Configured"
+          value={configuredProgramCount}
+          state={isLoading ? "loading" : "default"}
+        />
+        <DashCard
+          title="Programs Missing Config"
+          value={missingProgramCount}
+          state={isLoading ? "loading" : "default"}
+        />
+        <DashCard
+          title="Total Capacity (Page)"
+          value={totalCapacity}
+          state={isLoading ? "loading" : "default"}
+        />
+        <DashCard
+          title="Programs With Full Quota (Page)"
+          value={fullQuotaProgramCount}
+          state={isLoading ? "loading" : "default"}
+        />
       </Flex>
 
       <Flex justify="space-between" align="center" wrap="wrap" gap={12}>
-        <Flex align="center" gap={12} wrap="wrap">
+        <Flex align="center" gap={12} wrap={isMobile ? "wrap" : "nowrap"}>
           <Input
-            placeholder="Search by program or department..."
-            value={search}
-            onChange={(event) => handleSearchChange(event.target.value)}
+            placeholder="Search by program name..."
+            value={programNameSearch}
+            onChange={(event) =>
+              handleProgramNameSearchChange(event.target.value)
+            }
             allowClear
-            style={{ minWidth: 260, maxWidth: 340 }}
+            style={isMobile ? { width: "100%" } : { minWidth: 220, maxWidth: 280 }}
+          />
+          <Input
+            placeholder="Search by department name..."
+            value={departmentNameSearch}
+            onChange={(event) =>
+              handleDepartmentNameSearchChange(event.target.value)
+            }
+            allowClear
+            style={isMobile ? { width: "100%" } : { minWidth: 220, maxWidth: 280 }}
           />
           <Popover
             content={filterContent}
@@ -290,18 +365,34 @@ export function ProgramAdmissionConfigTab() {
           </Popover>
         </Flex>
 
-        <PermissionGuard permission={Permission.AdmissionProgramAdmissionConfigsCreate}>
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleOpenCreate}>
+        <PermissionGuard
+          permission={Permission.AdmissionProgramAdmissionConfigsCreate}
+        >
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={handleOpenCreate}
+          >
             Create Config
           </Button>
         </PermissionGuard>
       </Flex>
 
-      <DataLoader loading={isLoading} loader={<SkeletonRows count={5} variant="card" />}>
+      <ConditionalRenderer when={isQuotaHealthFilterActive}>
+        <Typography.Text type="secondary">
+          Quota health filter is applied to the current page only. Clear it to
+          browse all pages.
+        </Typography.Text>
+      </ConditionalRenderer>
+
+      <DataLoader
+        loading={isLoading}
+        loader={<SkeletonRows count={5} variant="card" />}
+      >
         <ConditionalRenderer when={isError}>
           <ErrorAlert
             variant="section"
-            error="Failed to load admission cut-offs/quota."
+            error={sectionErrorMessage}
             onRetry={refetch}
           />
         </ConditionalRenderer>
@@ -315,10 +406,17 @@ export function ProgramAdmissionConfigTab() {
           })}
         >
           <Typography.Text type="secondary" style={{ marginBottom: 12 }}>
-            No program admission configs yet. Create your first quota and cut-off rule.
+            No program admission configs yet. Create your first quota and
+            cut-off rule.
           </Typography.Text>
-          <PermissionGuard permission={Permission.AdmissionProgramAdmissionConfigsCreate}>
-            <Button type="primary" icon={<PlusOutlined />} onClick={handleOpenCreate}>
+          <PermissionGuard
+            permission={Permission.AdmissionProgramAdmissionConfigsCreate}
+          >
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={handleOpenCreate}
+            >
               Create Config
             </Button>
           </PermissionGuard>
@@ -346,22 +444,46 @@ export function ProgramAdmissionConfigTab() {
             columns={columns}
             dataSource={configs}
             pagination={false}
-            scroll={{ x: 1220 }}
+            scroll={{ x: 1100 }}
           />
+          <ConditionalRenderer when={totalItems > itemsPerPage}>
+            <Flex justify="flex-end" style={{ marginTop: token.marginMD }}>
+              <Pagination
+                current={page}
+                pageSize={itemsPerPage}
+                total={totalItems}
+                showSizeChanger={false}
+                onChange={handlePageChange}
+              />
+            </Flex>
+          </ConditionalRenderer>
         </ConditionalRenderer>
       </DataLoader>
 
-      <ProgramAdmissionConfigFormModal
-        open={formOpen}
-        target={formTarget}
-        onClose={handleCloseForm}
-        programs={programs}
-        configs={allConfigs}
-      />
+      {formOpen && (
+        <ProgramAdmissionConfigFormModal
+          open={formOpen}
+          target={formTarget}
+          onClose={handleCloseForm}
+        />
+      )}
       <DeleteProgramAdmissionConfigModal
         open={deleteOpen}
         target={deleteTarget}
         onClose={handleCloseDelete}
+      />
+      <ProgramAdmissionConfigDrawer
+        config={drawerTarget}
+        open={drawerOpen}
+        onClose={handleCloseDrawer}
+        onEdit={(config) => {
+          handleCloseDrawer();
+          handleOpenEdit(config);
+        }}
+        onDelete={(config) => {
+          handleCloseDrawer();
+          handleOpenDelete(config);
+        }}
       />
     </Flex>
   );

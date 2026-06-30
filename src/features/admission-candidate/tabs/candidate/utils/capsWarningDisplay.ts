@@ -1,13 +1,11 @@
-import { CAPS_WARNING_STAGE_COPY } from "@/shared/constants/admissionCandidateOptions";
-import { humanizeEnumValue } from "@/shared/constants/billingDisplayLabels";
+import {
+  getApplicationStatusLabel,
+  getCapsWarningStageLabel,
+} from "@/shared/constants/admissionCandidateOptions";
 import type { CapsUploadIssue } from "../types/admission-candidate";
 
 export function formatCapsWarningStage(stage: string | undefined): string {
-  if (!stage) return "—";
-  return (
-    CAPS_WARNING_STAGE_COPY[stage] ??
-    humanizeEnumValue(stage.replace(/_/g, " "))
-  );
+  return getCapsWarningStageLabel(stage);
 }
 
 export function formatCapsWarningMessage(issue: CapsUploadIssue): string {
@@ -30,18 +28,11 @@ export function formatCapsWarningMessage(issue: CapsUploadIssue): string {
     return "Score for this subject already exists — skipped.";
   }
 
-  return formatCapsWarningStage(stage);
+  return getCapsWarningStageLabel(stage);
 }
 
 export function formatApplicationStatusLabel(
   status: string | undefined,
 ): string {
-  if (!status) return "—";
-  const labels: Record<string, string> = {
-    PENDING: "Pending",
-    DOCUMENTS_VERIFIED: "Documents verified",
-    OFFER_ADMISSION: "Offer admission",
-    REJECTED: "Rejected",
-  };
-  return labels[status] ?? humanizeEnumValue(status);
+  return getApplicationStatusLabel(status);
 }

@@ -1,5 +1,9 @@
 import type { Rule } from "antd/es/form";
 
+export const laneProfileRules: Rule[] = [
+  { required: true, message: "Please select a lane" },
+];
+
 export const descriptionRules: Rule[] = [
   { max: 255, message: "Description must be 255 characters or fewer" },
 ];

@@ -33,8 +33,8 @@ export function formatPolicyDate(iso: string): string {
   }
 }
 
+import { getSeedSkippedReasonLabel } from "@/shared/constants/billingDisplayLabels";
+
 export function skippedReasonLabel(reason: string): string {
-  if (reason === "already_exists") return "Already configured";
-  if (reason === "no_catalog_defaults") return "No catalog defaults";
-  return reason;
+  return getSeedSkippedReasonLabel(reason);
 }

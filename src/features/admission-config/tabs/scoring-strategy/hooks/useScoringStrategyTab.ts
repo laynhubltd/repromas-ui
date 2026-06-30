@@ -12,7 +12,10 @@ import {
   scoringStrategyTabReducer,
   ScoringStrategyTabActionType,
 } from "../state/scoringStrategyTabState";
-import type { AdmissionScoringStrategy } from "../types/scoring-strategy";
+import type {
+  AdmissionScoringStrategy,
+  LaneProfile,
+} from "../types/scoring-strategy";
 
 const DEBOUNCE_MS = 300;
 
@@ -37,6 +40,7 @@ export function useScoringStrategyTab() {
     sort: SCORING_STRATEGY_SORT_DEFAULT,
     include: SCORING_STRATEGY_INCLUDE,
     ...(state.scopeFilter ? { "exact[scope]": state.scopeFilter } : {}),
+    ...(state.laneFilter ? { "exact[laneProfile]": state.laneFilter } : {}),
     ...(state.debouncedSearch
       ? { "search[description]": state.debouncedSearch }
       : {}),
@@ -60,6 +64,16 @@ export function useScoringStrategyTab() {
       dispatch({
         type: ScoringStrategyTabActionType.SetScopeFilter,
         value: scope,
+      });
+    },
+    [],
+  );
+
+  const handleLaneFilterChange = useCallback(
+    (lane: LaneProfile | undefined) => {
+      dispatch({
+        type: ScoringStrategyTabActionType.SetLaneFilter,
+        value: lane,
       });
     },
     [],
@@ -143,6 +157,10 @@ export function useScoringStrategyTab() {
       value: undefined,
     });
     dispatch({
+      type: ScoringStrategyTabActionType.SetLaneFilter,
+      value: undefined,
+    });
+    dispatch({
       type: ScoringStrategyTabActionType.SetSearch,
       value: "",
     });
@@ -156,9 +174,11 @@ export function useScoringStrategyTab() {
     });
   }, []);
 
-  const activeFilterCount = [state.scopeFilter, state.debouncedSearch.trim()].filter(
-    Boolean,
-  ).length;
+  const activeFilterCount = [
+    state.scopeFilter,
+    state.laneFilter,
+    state.debouncedSearch.trim(),
+  ].filter(Boolean).length;
   const hasData = strategies.length > 0;
   const isFilterActive = activeFilterCount > 0;
   const canEdit = hasPermission(Permission.AdmissionScoringStrategiesUpdate);
@@ -172,6 +192,7 @@ export function useScoringStrategyTab() {
       isLoading: isLoading || isGlobalLoading,
       isError,
       scopeFilter: state.scopeFilter,
+      laneFilter: state.laneFilter,
       search: state.search,
       page: state.page,
       formTarget: state.formTarget,
@@ -184,6 +205,7 @@ export function useScoringStrategyTab() {
     },
     actions: {
       handleScopeFilterChange,
+      handleLaneFilterChange,
       handleSearchChange,
       handlePageChange,
       handleOpenCreate,

@@ -1,7 +1,7 @@
 import { DashCard, ExplainerCallout } from "@/components/ui-kit";
 import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
-import { SCOPE_OPTIONS, SCORING_STRATEGY_LIST_ITEMS_PER_PAGE } from "@/shared/constants/scoringStrategyOptions";
+import { SCOPE_OPTIONS, LANE_FILTER_OPTIONS, SCORING_STRATEGY_LIST_ITEMS_PER_PAGE } from "@/shared/constants/scoringStrategyOptions";
 import { useToken } from "@/shared/hooks/useToken";
 import {
   ConditionalRenderer,
@@ -43,6 +43,7 @@ export function ScoringStrategyTab() {
     isLoading,
     isError,
     scopeFilter,
+    laneFilter,
     search,
     page,
     formTarget,
@@ -55,6 +56,7 @@ export function ScoringStrategyTab() {
   } = state;
   const {
     handleScopeFilterChange,
+    handleLaneFilterChange,
     handleSearchChange,
     handlePageChange,
     handleOpenCreate,
@@ -74,13 +76,23 @@ export function ScoringStrategyTab() {
   const filterPopoverContent = (
     <Flex vertical gap={16} style={{ width: 280 }}>
       <Form layout="vertical" size="middle">
-        <Form.Item label="Scope" style={{ marginBottom: 0 }}>
+        <Form.Item label="Scope" style={{ marginBottom: 16 }}>
           <Select
             placeholder="Any scope"
             allowClear
             value={scopeFilter}
             onChange={handleScopeFilterChange}
             options={SCOPE_OPTIONS}
+            style={{ width: "100%" }}
+          />
+        </Form.Item>
+        <Form.Item label="Lane" style={{ marginBottom: 0 }}>
+          <Select
+            placeholder="Any lane"
+            allowClear
+            value={laneFilter}
+            onChange={handleLaneFilterChange}
+            options={LANE_FILTER_OPTIONS}
             style={{ width: "100%" }}
           />
         </Form.Item>

@@ -9,14 +9,35 @@
  */
 export type ScopeValue = "GLOBAL" | "FACULTY" | "DEPARTMENT" | "PROGRAM";
 
+/** Admission lane profile — immutable after create */
+export type LaneProfile = "UTME_JAMB" | "UTME_OPEN" | "DIRECT_ENTRY";
+
 /**
  * Screening method determines how the school portion is calculated
  */
-export type ScreeningMethod = "JAMB_ONLY" | "OLEVEL_GRADING" | "POST_UTME_TEST";
+export type ScreeningMethod =
+  | "JAMB_ONLY"
+  | "OLEVEL_GRADING"
+  | "POST_UTME_TEST"
+  | "OLEVEL_ONLY"
+  | "POST_SCREENING_ONLY"
+  | "OLEVEL_POST_SCREENING"
+  | "PRIOR_QUAL_POST_SCREENING"
+  | "PRIOR_QUAL_ONLY";
+
+export type ScoringComponentType =
+  | "jamb"
+  | "olevel"
+  | "post_screening"
+  | "prior_qualification";
+
+export type ScoringComponent = {
+  type: ScoringComponentType;
+  weight_percentage: number;
+};
 
 /**
- * Strategy payload with five snake_case keys
- * All five keys are required on every POST/PUT
+ * Strategy payload with snake_case keys inside `strategy`
  */
 export type StrategyPayload = {
   screening_method: ScreeningMethod;
@@ -24,6 +45,22 @@ export type StrategyPayload = {
   school_weight_percentage: number;
   max_jamb_score: number;
   max_school_score: number;
+  requires_jamb?: boolean;
+  components?: ScoringComponent[] | null;
+};
+
+export type ScoringStrategyFormValues = {
+  scope: ScopeValue;
+  referenceId: number | null;
+  laneProfile: LaneProfile;
+  screening_method: ScreeningMethod;
+  jamb_weight_percentage: number;
+  school_weight_percentage: number;
+  max_jamb_score: number;
+  max_school_score: number;
+  requires_jamb: boolean;
+  components?: ScoringComponent[];
+  description?: string;
 };
 
 /**
@@ -43,6 +80,7 @@ export type AdmissionScoringStrategy = {
   id: number;
   scope: ScopeValue;
   referenceId: number | null;
+  laneProfile: LaneProfile;
   strategy: StrategyPayload;
   description: string | null;
   updatedAt: string | null; // ISO 8601; null on freshly created records
@@ -56,6 +94,7 @@ export type AdmissionScoringStrategy = {
 export type CreateScoringStrategyRequest = {
   scope: ScopeValue;
   referenceId: number | null;
+  laneProfile: LaneProfile;
   strategy: StrategyPayload;
   description?: string;
 };
@@ -81,6 +120,7 @@ export type ScoringStrategyListParams = {
   sort?: string;
   "exact[scope]"?: ScopeValue;
   "exact[referenceId]"?: number;
+  "exact[laneProfile]"?: LaneProfile;
   "search[description]"?: string;
   include?: string;
 };
@@ -93,3 +133,6 @@ export type PaginatedResponse<T> = {
   totalItems: number;
   member: T[];
 };
+
+/** @deprecated Use LaneProfile for list filters */
+export type ScoringStrategyLaneFilter = LaneProfile;

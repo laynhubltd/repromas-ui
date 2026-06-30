@@ -330,6 +330,16 @@ export const Permission = {
   AdmissionDocumentTypesCreate: "system-configs:create",
   AdmissionDocumentTypesUpdate: "system-configs:update",
   AdmissionDocumentTypesDelete: "system-configs:delete",
+  // Admission Prior Qualification Types
+  AdmissionPriorQualificationTypesList: "system-configs:list",
+  AdmissionPriorQualificationTypesCreate: "system-configs:create",
+  AdmissionPriorQualificationTypesUpdate: "system-configs:update",
+  AdmissionPriorQualificationTypesDelete: "system-configs:delete",
+  // Admission Program Prior Qualification Requirements
+  AdmissionProgramPriorQualificationRequirementsList: "system-configs:list",
+  AdmissionProgramPriorQualificationRequirementsCreate: "system-configs:create",
+  AdmissionProgramPriorQualificationRequirementsUpdate: "system-configs:update",
+  AdmissionProgramPriorQualificationRequirementsDelete: "system-configs:delete",
 } as const;
 
 export type Permission = (typeof Permission)[keyof typeof Permission];

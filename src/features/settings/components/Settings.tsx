@@ -131,8 +131,8 @@ export default function Settings() {
         activeKey={state.activeKey}
         onChange={actions.handleTabChange}
         size="md"
-        density="spacious"
-        variant="default"
+        density="compact"
+        variant="outlined"
         aria-label="Settings navigation"
       />
     </div>

@@ -1,5 +1,6 @@
 import type { OfferDecision } from "@/features/admission-candidate/tabs/candidate/types/admission-candidate";
 import type { QuotaCategory } from "@/features/admission-candidate/tabs/recommendation/types/admission-recommended-candidate";
+import { humanizeEnumValue } from "@/shared/constants/billingDisplayLabels";
 import {
   OFFER_DECISION_OPTIONS,
   SEAT_BUCKET_OPTIONS,
@@ -22,3 +23,21 @@ export const QUOTA_CATEGORY_OPTIONS = SEAT_BUCKET_OPTIONS as {
 export const RECOMMENDED_DECISION_LABELS = Object.fromEntries(
   OFFER_DECISION_OPTIONS.map((o) => [o.value, o.label]),
 ) as Record<OfferDecision, string>;
+
+export function getRecommendedDecisionLabel(
+  decision: string | null | undefined,
+): string {
+  if (!decision) return "—";
+  return (
+    RECOMMENDED_DECISION_LABELS[decision as OfferDecision] ??
+    humanizeEnumValue(decision)
+  );
+}
+
+export function getQuotaCategoryLabel(
+  category: string | null | undefined,
+): string {
+  if (!category) return "—";
+  const match = QUOTA_CATEGORY_OPTIONS.find((o) => o.value === category);
+  return match?.label ?? humanizeEnumValue(category);
+}

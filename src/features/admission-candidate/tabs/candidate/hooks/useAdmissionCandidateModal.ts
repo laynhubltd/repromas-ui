@@ -9,7 +9,7 @@ import { useGetProgramsQuery } from "@/features/program/tabs/programs/api/progra
 import {
   ADMISSION_CANDIDATE_CREATE_UI_COPY,
   ADMISSION_CANDIDATE_DETAIL_INCLUDE,
-  CYCLE_STATUS_LABELS,
+  getCycleStatusLabel,
   OFFER_DECISION_OPTIONS,
   SEAT_BUCKET_OPTIONS,
 } from "@/shared/constants/admissionCandidateOptions";
@@ -158,8 +158,7 @@ export function useAdmissionCandidateFormModal({
   );
 
   const cycleStatusLabel = selectedCycle?.status
-    ? (CYCLE_STATUS_LABELS[selectedCycle.status] ??
-      selectedCycle.status.replace(/_/g, " ").toLowerCase())
+    ? getCycleStatusLabel(selectedCycle.status)
     : null;
 
   const reset = useCallback(() => {

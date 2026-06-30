@@ -1,4 +1,5 @@
 import type { EventType, SystemTimeFrame, UpdateSystemTimeFrameRequest } from "../types/system-timeframe";
+import { getTimeframeEventTypeLabel } from "@/shared/constants/systemTimeframeOptions";
 
 // Property 4: isLateWindow badge — "Late" with warning color when true, null when false
 export function getLateWindowBadge(
@@ -25,15 +26,7 @@ export function buildTogglePayload(
   };
 }
 
-const EVENT_TYPE_LABELS: Record<EventType, string> = {
-  APPLICATION: "Application",
-  ACCEPTANCE_FEE: "Acceptance Fee",
-  COURSE_REGISTRATION: "Course Registration",
-  ADD_DROP: "Add / Drop",
-  RESULT_UPLOAD: "Result Upload",
-};
-
 // Property 10: Accordion header — output contains human-readable label and exact count
 export function getAccordionHeaderLabel(eventType: EventType, count: number): string {
-  return `${EVENT_TYPE_LABELS[eventType]} (${count})`;
+  return `${getTimeframeEventTypeLabel(eventType)} (${count})`;
 }

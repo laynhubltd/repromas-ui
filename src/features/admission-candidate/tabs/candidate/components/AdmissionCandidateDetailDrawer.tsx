@@ -1,5 +1,12 @@
 import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
+import {
+  FINAL_DECISION_TAG_COLORS,
+  getApplicationStatusLabel,
+  getCandidateEntryModeLabel,
+  getCandidateGenderLabel,
+  getFinalDecisionLabel,
+} from "@/shared/constants/admissionCandidateOptions";
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
 import { DataLoader } from "@/shared/ui/DataLoader";
@@ -150,7 +157,7 @@ export function AdmissionCandidateDetailDrawer({
                 {resolveRelatedName(candidate.cycle, candidate.cycleId)}
               </Descriptions.Item>
               <Descriptions.Item label="Gender">
-                {candidate.gender ?? "—"}
+                {getCandidateGenderLabel(candidate.gender)}
               </Descriptions.Item>
               <Descriptions.Item label="Date of Birth">
                 {formatDate(candidate.dateOfBirth)}
@@ -164,7 +171,7 @@ export function AdmissionCandidateDetailDrawer({
                   : "—"}
               </Descriptions.Item>
               <Descriptions.Item label="Entry Mode">
-                {candidate.entryMode}
+                {getCandidateEntryModeLabel(candidate.entryMode)}
               </Descriptions.Item>
               <Descriptions.Item label="Email">
                 {candidate.email ?? "—"}
@@ -185,17 +192,17 @@ export function AdmissionCandidateDetailDrawer({
                 column={1}
               >
                 <Descriptions.Item label="Status">
-                  {candidate.application.applicationStatus}
+                  {getApplicationStatusLabel(candidate.application.applicationStatus)}
                 </Descriptions.Item>
                 <Descriptions.Item label="Final Decision">
                   <Tag
                     color={
-                      candidate.application.finalDecision === "OFFER_ADMISSION"
-                        ? "success"
-                        : undefined
+                      FINAL_DECISION_TAG_COLORS[
+                        candidate.application.finalDecision
+                      ]
                     }
                   >
-                    {candidate.application.finalDecision}
+                    {getFinalDecisionLabel(candidate.application.finalDecision)}
                   </Tag>
                 </Descriptions.Item>
                 <Descriptions.Item label="Applied Program">
