@@ -1,4 +1,6 @@
 import {
+  getAllOnboardingChecklistStepIds,
+  getOnboardingChecklistStepIds,
   PHASE1_CHECKLIST_STEP_IDS,
   PHASE2_CHECKLIST_STEP_IDS,
   SETUP_STEP_DEFINITIONS,
@@ -92,9 +94,11 @@ export function evaluateSetupSteps(probes: SetupProbeCounts): SetupEvaluation {
     {} as Record<SetupStepId, SetupStepState>,
   );
 
-  const actionableOrder = SETUP_STEP_ORDER.filter((id) => id !== "signedIn");
+  const actionableOrder = getAllOnboardingChecklistStepIds();
   const currentStepId =
-    actionableOrder.find((id) => !completion[id]) ?? "billing";
+    actionableOrder.find((id) => !completion[id]) ??
+    actionableOrder[actionableOrder.length - 1] ??
+    "billing";
 
   steps[currentStepId].active = true;
 
@@ -109,11 +113,11 @@ export function evaluateSetupSteps(probes: SetupProbeCounts): SetupEvaluation {
     (phase1CompletedCount / phase1TotalCount) * 100,
   );
   const isPhase1Complete = isPhase1CompleteByProbes(probes);
-  const isSetupComplete = SETUP_STEP_ORDER.every((id) => completion[id]);
+  const isSetupComplete = getAllOnboardingChecklistStepIds().every(
+    (id) => completion[id],
+  );
 
-  const visibleChecklistIds = isPhase1Complete
-    ? PHASE2_CHECKLIST_STEP_IDS
-    : PHASE1_CHECKLIST_STEP_IDS.filter((id) => id !== "signedIn");
+  const visibleChecklistIds = getOnboardingChecklistStepIds(isPhase1Complete);
 
   const remainingStepCount = visibleChecklistIds.filter(
     (id) => !completion[id],

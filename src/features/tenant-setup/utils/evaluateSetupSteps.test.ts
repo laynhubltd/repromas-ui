@@ -76,6 +76,20 @@ describe("evaluateSetupSteps", () => {
     expect(evaluation.phase1ProgressPercent).toBe(100);
   });
 
+  it("excludes staff and student from phase 2 checklist", () => {
+    const evaluation = evaluateSetupSteps({
+      ...emptyProbes,
+      departments: 1,
+      levels: 1,
+      programs: 1,
+      curriculumVersions: 1,
+      courses: 1,
+    });
+    expect(evaluation.phase2StepIds).not.toContain("staff");
+    expect(evaluation.phase2StepIds).not.toContain("student");
+    expect(evaluation.remainingStepCount).toBe(evaluation.phase2StepIds.length);
+  });
+
   it("canAccessSetupStep reflects prerequisite completion", () => {
     const evaluation = evaluateSetupSteps({
       ...emptyProbes,
