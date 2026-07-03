@@ -340,6 +340,11 @@ export const Permission = {
   AdmissionProgramPriorQualificationRequirementsCreate: "system-configs:create",
   AdmissionProgramPriorQualificationRequirementsUpdate: "system-configs:update",
   AdmissionProgramPriorQualificationRequirementsDelete: "system-configs:delete",
+  // Matric Number Formats
+  MatricNumberFormatsList: "system-configs:list",
+  MatricNumberFormatsCreate: "system-configs:create",
+  MatricNumberFormatsUpdate: "system-configs:update",
+  MatricNumberFormatsActivate: "system-configs:manage",
 } as const;
 
 export type Permission = (typeof Permission)[keyof typeof Permission];

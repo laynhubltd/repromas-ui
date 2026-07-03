@@ -8,7 +8,7 @@ import {
 } from "@/features/student-home/constants/meAdmissionProgressOptions";
 import type { MeAdmissionProgress } from "@/features/student-home/types/me-admission-progress";
 import { getQueryHttpStatus } from "@/features/student-home/utils/getQueryHttpStatus";
-import { usePaymentReturnPolling } from "@/features/student-payments/hooks/usePaymentReturnPolling";
+import { usePaymentReturnOrchestrator } from "@/features/student-payments/hooks/usePaymentReturnOrchestrator";
 import { RequestScreen } from "@/shared/types/error-ui";
 import { deriveSectionErrorMessage } from "@/shared/utils/error/deriveSectionErrorMessage";
 import { useMemo } from "react";
@@ -33,9 +33,10 @@ export function useStudentAdmissionPage() {
     refetchOnMountOrArgChange: true,
   });
 
-  const paymentReturnPolling = usePaymentReturnPolling({
+  const paymentReturnPolling = usePaymentReturnOrchestrator({
     enabled: isCandidate,
     returnTo: appPaths.StudentAdmission,
+    portalState: progress?.portalState,
   });
 
   const progressActions = useAdmissionProgressActions({

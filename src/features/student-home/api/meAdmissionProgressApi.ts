@@ -16,6 +16,7 @@ const meAdmissionProgressApi = baseApi.injectEndpoints({
   }),
 });
 
-export const { useGetMeAdmissionProgressQuery } = meAdmissionProgressApi;
+export const { useGetMeAdmissionProgressQuery, useLazyGetMeAdmissionProgressQuery } =
+  meAdmissionProgressApi;
 
 export default meAdmissionProgressApi;

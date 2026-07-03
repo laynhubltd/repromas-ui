@@ -1,5 +1,6 @@
 import type { ConfigTabGroupDefinition } from "@/components/ui-kit";
 import { AdmissionCycleTab } from "./tabs/admission-cycle";
+import { MatricNumberFormatTab } from "./tabs/matric-number-format";
 import { DocumentTypeTab } from "./tabs/document-type";
 import { DynamicFormsTab } from "./tabs/dynamic-forms";
 import { GeographyRuleTab } from "./tabs/geography-rule";
@@ -21,6 +22,11 @@ export const ADMISSION_CONFIG_TAB_GROUPS: ConfigTabGroupDefinition[] = [
         key: "admission-cycle",
         label: "Admission Cycle",
         children: <AdmissionCycleTab />,
+      },
+      {
+        key: "matric-number-format",
+        label: "Matric Number Format",
+        children: <MatricNumberFormatTab />,
       },
     ],
   },

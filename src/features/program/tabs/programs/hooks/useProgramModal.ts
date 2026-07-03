@@ -38,6 +38,7 @@ export function useProgramFormModal(
     if (open && target) {
       form.setFieldsValue({
         departmentId: target.departmentId,
+        code: target.code,
         name: target.name,
         degreeTitle: target.degreeTitle,
         durationInYears: target.durationInYears,
@@ -53,6 +54,7 @@ export function useProgramFormModal(
         await updateProgram({
           id: target.id,
           departmentId: values.departmentId,
+          code: values.code.trim(),
           name: values.name.trim(),
           degreeTitle: values.degreeTitle.trim(),
           durationInYears: values.durationInYears,
@@ -61,6 +63,7 @@ export function useProgramFormModal(
       } else {
         await createProgram({
           departmentId: values.departmentId,
+          code: values.code.trim(),
           name: values.name.trim(),
           degreeTitle: values.degreeTitle.trim(),
           durationInYears: values.durationInYears,

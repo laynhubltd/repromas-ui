@@ -21,9 +21,12 @@ export function useProgramsTab() {
   const [debouncedName, setDebouncedName] = useState("");
   const [degreeTitleSearch, setDegreeTitleSearch] = useState("");
   const [debouncedDegreeTitle, setDebouncedDegreeTitle] = useState("");
+  const [codeSearch, setCodeSearch] = useState("");
+  const [debouncedCode, setDebouncedCode] = useState("");
 
   const nameDebounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const degreeTitleDebounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const codeDebounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ─── Filters ──────────────────────────────────────────────────────────────
   const [departmentFilter, setDepartmentFilter] = useState<number | undefined>(undefined);
@@ -41,6 +44,7 @@ export function useProgramsTab() {
     return () => {
       if (nameDebounceTimer.current) clearTimeout(nameDebounceTimer.current);
       if (degreeTitleDebounceTimer.current) clearTimeout(degreeTitleDebounceTimer.current);
+      if (codeDebounceTimer.current) clearTimeout(codeDebounceTimer.current);
     };
   }, []);
 
@@ -57,6 +61,7 @@ export function useProgramsTab() {
     itemsPerPage: effectiveItemsPerPage,
     sort,
     ...(debouncedName ? { "search[name]": debouncedName } : {}),
+    ...(debouncedCode ? { "search[code]": debouncedCode } : {}),
     ...(debouncedDegreeTitle ? { "search[degreeTitle]": debouncedDegreeTitle } : {}),
     ...(departmentFilter !== undefined ? { "exact[department]": departmentFilter } : {}),
     ...(showDepartmentFilter ? { include: "department" } : {}),
@@ -90,6 +95,7 @@ export function useProgramsTab() {
   // ─── Flags ────────────────────────────────────────────────────────────────
   const hasData = programs.length > 0;
   const isNameSearchActive = nameSearch.trim().length > 0;
+  const isCodeSearchActive = codeSearch.trim().length > 0;
   const isDegreeTitleSearchActive = degreeTitleSearch.trim().length > 0;
 
   // ─── Actions ──────────────────────────────────────────────────────────────
@@ -105,6 +111,13 @@ export function useProgramsTab() {
     setPage(1);
     if (degreeTitleDebounceTimer.current) clearTimeout(degreeTitleDebounceTimer.current);
     degreeTitleDebounceTimer.current = setTimeout(() => setDebouncedDegreeTitle(value), 300);
+  }, []);
+
+  const handleCodeSearchChange = useCallback((value: string) => {
+    setCodeSearch(value);
+    setPage(1);
+    if (codeDebounceTimer.current) clearTimeout(codeDebounceTimer.current);
+    codeDebounceTimer.current = setTimeout(() => setDebouncedCode(value), 300);
   }, []);
 
   const handleDepartmentFilterChange = useCallback((departmentId: number | undefined) => {
@@ -162,6 +175,7 @@ export function useProgramsTab() {
       page,
       itemsPerPage,
       nameSearch,
+      codeSearch,
       degreeTitleSearch,
       departmentFilter,
       sort,
@@ -173,6 +187,7 @@ export function useProgramsTab() {
     },
     actions: {
       handleNameSearchChange,
+      handleCodeSearchChange,
       handleDegreeTitleSearchChange,
       handleDepartmentFilterChange,
       handleSortChange,
@@ -188,6 +203,7 @@ export function useProgramsTab() {
     flags: {
       hasData,
       isNameSearchActive,
+      isCodeSearchActive,
       isDegreeTitleSearchActive,
       showDepartmentFilter,
       showGroupByToggle,

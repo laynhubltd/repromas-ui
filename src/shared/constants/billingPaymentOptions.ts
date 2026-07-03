@@ -32,11 +32,17 @@ export const ADMIN_PAYMENT_TRANSACTION_ITEMS_PER_PAGE = 20;
 export const PAYMENT_RETURN_POLL_INTERVAL_MS = 2500;
 export const PAYMENT_RETURN_POLL_MAX_MS = 60000;
 
+export const HANDOFF_POLL_INTERVALS_MS = [2000, 4000, 8000] as const;
+export const HANDOFF_POLL_MAX_ATTEMPTS = 12;
+
 export const BILLING_PAYMENT_SESSION_KEYS = {
   lastProviderReference: "billing:lastProviderReference",
   lastPaymentAmount: "billing:lastPaymentAmount",
   lastPaymentCurrency: "billing:lastPaymentCurrency",
   lastPaymentProvider: "billing:lastPaymentProvider",
+  lastPaymentEventCode: "billing:lastPaymentEventCode",
+  lastPaymentFeeChargeId: "billing:lastPaymentFeeChargeId",
+  lastPaymentPayerType: "billing:lastPaymentPayerType",
 } as const;
 
 export const STUDENT_PAYMENT_UI_COPY = {
@@ -75,6 +81,30 @@ export const STUDENT_PAYMENT_UI_COPY = {
   referenceCopied: "Reference copied",
   lineAmount: "Amount",
   abandonedCheckout: "Abandoned checkout",
+} as const;
+
+export const HANDOFF_UI_COPY = {
+  confirmingPayment: "Confirming your payment…",
+  confirmingPaymentDetail:
+    "Please wait while we verify your payment with the gateway. This usually takes a few seconds.",
+  paymentConfirmed: "Payment received",
+  paymentConfirmedDetail:
+    "Your payment was recorded successfully. Your invoice balance will update shortly.",
+  matriculating: "Payment received — completing matriculation…",
+  matriculatingDetail:
+    "Your registration fee was confirmed. We are finalizing your matriculation.",
+  handoff: "Updating your account…",
+  handoffDetail: "Switching you to your student profile. This may take a moment.",
+  complete: "Matriculation complete",
+  completeDetail:
+    "You have been matriculated. Your student portal is now available.",
+  matriculationTimeout: "Matriculation still processing",
+  matriculationTimeoutDetail:
+    "Your payment was received but matriculation is taking longer than expected. Refresh the page in a few minutes or contact support.",
+  handoffTimeout: "Account update timed out",
+  handoffTimeoutDetail:
+    "Matriculation completed but we could not refresh your session. Please sign out and sign in again.",
+  goToHome: "Go to home",
 } as const;
 
 export const ADMIN_PAYMENT_UI_COPY = {
