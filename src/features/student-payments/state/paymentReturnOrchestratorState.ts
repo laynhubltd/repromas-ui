@@ -22,32 +22,35 @@ export const initialPaymentReturnOrchestratorState: PaymentReturnOrchestratorSta
     errorMessage: null,
   };
 
-export enum PaymentReturnOrchestratorActionType {
-  Reset = "RESET",
-  StartPaymentConfirm = "START_PAYMENT_CONFIRM",
-  PaymentConfirmed = "PAYMENT_CONFIRMED",
-  StartMatriculating = "START_MATRICULATING",
-  StartHandoff = "START_HANDOFF",
-  Complete = "COMPLETE",
-  PaymentPending = "PAYMENT_PENDING",
-  Failed = "FAILED",
-  Error = "ERROR",
-}
+export const PaymentReturnOrchestratorActionType = {
+  Reset: "RESET",
+  StartPaymentConfirm: "START_PAYMENT_CONFIRM",
+  PaymentConfirmed: "PAYMENT_CONFIRMED",
+  StartMatriculating: "START_MATRICULATING",
+  StartHandoff: "START_HANDOFF",
+  Complete: "COMPLETE",
+  PaymentPending: "PAYMENT_PENDING",
+  Failed: "FAILED",
+  Error: "ERROR",
+} as const;
 
 export type PaymentReturnOrchestratorAction =
-  | { type: PaymentReturnOrchestratorActionType.Reset }
-  | { type: PaymentReturnOrchestratorActionType.StartPaymentConfirm }
+  | { type: typeof PaymentReturnOrchestratorActionType.Reset }
+  | { type: typeof PaymentReturnOrchestratorActionType.StartPaymentConfirm }
   | {
-      type: PaymentReturnOrchestratorActionType.PaymentConfirmed;
+      type: typeof PaymentReturnOrchestratorActionType.PaymentConfirmed;
       paymentId?: number | null;
     }
-  | { type: PaymentReturnOrchestratorActionType.StartMatriculating }
-  | { type: PaymentReturnOrchestratorActionType.StartHandoff }
-  | { type: PaymentReturnOrchestratorActionType.Complete; paymentId?: number | null }
-  | { type: PaymentReturnOrchestratorActionType.PaymentPending }
-  | { type: PaymentReturnOrchestratorActionType.Failed }
+  | { type: typeof PaymentReturnOrchestratorActionType.StartMatriculating }
+  | { type: typeof PaymentReturnOrchestratorActionType.StartHandoff }
   | {
-      type: PaymentReturnOrchestratorActionType.Error;
+      type: typeof PaymentReturnOrchestratorActionType.Complete;
+      paymentId?: number | null;
+    }
+  | { type: typeof PaymentReturnOrchestratorActionType.PaymentPending }
+  | { type: typeof PaymentReturnOrchestratorActionType.Failed }
+  | {
+      type: typeof PaymentReturnOrchestratorActionType.Error;
       message?: string | null;
     };
 

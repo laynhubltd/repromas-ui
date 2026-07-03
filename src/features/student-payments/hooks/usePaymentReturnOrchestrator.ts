@@ -251,7 +251,11 @@ export function usePaymentReturnOrchestrator(
           PAYMENT_RETURN_POLL_MAX_MS,
         );
 
-        if (pollState === "success" && isTransactionSettled(transaction)) {
+        if (
+          pollState === "success" &&
+          transaction &&
+          isTransactionSettled(transaction)
+        ) {
           return { outcome: "settled", transaction };
         }
         if (pollState === "failed") {

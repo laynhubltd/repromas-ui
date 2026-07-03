@@ -23,17 +23,18 @@ const meHandoffApi = baseApi.injectEndpoints({
         try {
           const { data } = await queryFulfilled;
           dispatch(userLoggedIn(data));
+          dispatch(
+            baseApi.util.invalidateTags([
+              ApiTagTypes.MeAdmissionProgress,
+              ApiTagTypes.StudentInvoice,
+              ApiTagTypes.BillingWorkflow,
+              ApiTagTypes.StudentPayment,
+            ]),
+          );
         } catch {
           // handled by orchestrator / error pipeline
         }
       },
-      invalidatesTags: [
-        ApiTagTypes.Auth,
-        ApiTagTypes.MeAdmissionProgress,
-        ApiTagTypes.StudentInvoice,
-        ApiTagTypes.BillingWorkflow,
-        ApiTagTypes.StudentPayment,
-      ],
     }),
   }),
 });
