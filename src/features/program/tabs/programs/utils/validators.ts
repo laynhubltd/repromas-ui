@@ -1,4 +1,7 @@
 import type { Rule } from "antd/es/form";
+import { codeRule as academicCodeRule } from "@/features/academic-structure/utils/validators";
+
+export const programCodeRules: Rule[] = academicCodeRule("Please enter a program code");
 
 export const nameRules: Rule[] = [
   { required: true, message: "Name is required" },

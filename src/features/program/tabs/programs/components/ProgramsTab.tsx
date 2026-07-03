@@ -13,6 +13,7 @@ import { DeleteOutlined, EditOutlined, PlusOutlined } from "@ant-design/icons";
 import { Button, Col, Flex, Input, Pagination, Row, Select, Switch, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import type { SorterResult } from "antd/es/table/interface";
+import type { ReactNode } from "react";
 import { useProgramsTab } from "../hooks/useProgramsTab";
 import type { Program } from "../types/program";
 import { DeleteProgramModal } from "./modals/DeleteProgramModal";
@@ -24,6 +25,25 @@ function formatDate(iso: string): string {
     month: "short",
     day: "numeric",
   });
+}
+
+function renderCodeBadge(code: string, token: ReturnType<typeof useToken>): ReactNode {
+  return (
+    <span
+      style={{
+        padding: "2px 8px",
+        background: token.colorBgLayout,
+        border: `1px solid ${token.colorBorder}`,
+        borderRadius: token.borderRadius,
+        fontSize: token.fontSizeSM,
+        fontWeight: 600,
+        color: token.colorTextSecondary,
+        fontFamily: "monospace",
+      }}
+    >
+      {code}
+    </span>
+  );
 }
 
 function buildActionsColumn(
@@ -64,6 +84,7 @@ function buildActionsColumn(
 function buildFlatColumns(
   handleOpenEdit: (p: Program) => void,
   handleOpenDelete: (p: Program) => void,
+  token: ReturnType<typeof useToken>,
 ): ColumnsType<Program> {
   return [
     {
@@ -73,6 +94,15 @@ function buildFlatColumns(
       sorter: true,
       sortDirections: ["ascend", "descend"],
       render: (name: string) => <Typography.Text strong>{name}</Typography.Text>,
+    },
+    {
+      title: "Code",
+      dataIndex: "code",
+      key: "code",
+      sorter: true,
+      sortDirections: ["ascend", "descend"],
+      width: 120,
+      render: (code: string) => renderCodeBadge(code, token),
     },
     {
       title: "Degree Title",
@@ -117,6 +147,7 @@ function buildFlatColumns(
 function buildGroupColumns(
   handleOpenEdit: (p: Program) => void,
   handleOpenDelete: (p: Program) => void,
+  token: ReturnType<typeof useToken>,
 ): ColumnsType<Program> {
   return [
     {
@@ -124,6 +155,13 @@ function buildGroupColumns(
       dataIndex: "name",
       key: "name",
       render: (name: string) => <Typography.Text strong>{name}</Typography.Text>,
+    },
+    {
+      title: "Code",
+      dataIndex: "code",
+      key: "code",
+      width: 120,
+      render: (code: string) => renderCodeBadge(code, token),
     },
     {
       title: "Degree Title",
@@ -164,6 +202,7 @@ export function ProgramsTab() {
     page,
     itemsPerPage,
     nameSearch,
+    codeSearch,
     degreeTitleSearch,
     departmentFilter,
     formTarget,
@@ -174,6 +213,7 @@ export function ProgramsTab() {
   } = state;
   const {
     handleNameSearchChange,
+    handleCodeSearchChange,
     handleDegreeTitleSearchChange,
     handleDepartmentFilterChange,
     handleSortChange,
@@ -186,9 +226,9 @@ export function ProgramsTab() {
     handleToggleGroupByDepartment,
     refetch,
   } = actions;
-  const { hasData, isNameSearchActive, isDegreeTitleSearchActive, showDepartmentFilter } = flags;
+  const { hasData, isNameSearchActive, isCodeSearchActive, isDegreeTitleSearchActive, showDepartmentFilter } = flags;
 
-  const isSearchActive = isNameSearchActive || isDegreeTitleSearchActive;
+  const isSearchActive = isNameSearchActive || isCodeSearchActive || isDegreeTitleSearchActive;
   const cardState = isLoading ? "loading" : "default";
   const distinctDepartments = new Set(programs.map((p) => p.departmentId)).size;
 
@@ -208,10 +248,10 @@ export function ProgramsTab() {
     handleSortChange(`${String(s.columnKey)}:${s.order === "ascend" ? "asc" : "desc"}`);
   };
 
-  const flatColumns = buildFlatColumns(handleOpenEdit, handleOpenDelete).filter(
+  const flatColumns = buildFlatColumns(handleOpenEdit, handleOpenDelete, token).filter(
     (col) => showDepartmentFilter || col.key !== "department",
   );
-  const groupColumns = buildGroupColumns(handleOpenEdit, handleOpenDelete);
+  const groupColumns = buildGroupColumns(handleOpenEdit, handleOpenDelete, token);
 
   const accordionItems: AccordionItem[] = Array.from(
     groupedPrograms.entries() as IterableIterator<[number, Program[]]>,
@@ -299,6 +339,13 @@ export function ProgramsTab() {
           style={{ maxWidth: 240 }}
         />
         <Input
+          placeholder="Search by code…"
+          value={codeSearch}
+          onChange={(e) => handleCodeSearchChange(e.target.value)}
+          allowClear
+          style={{ maxWidth: 240 }}
+        />
+        <Input
           placeholder="Search by degree title…"
           value={degreeTitleSearch}
           onChange={(e) => handleDegreeTitleSearchChange(e.target.value)}
@@ -380,6 +427,7 @@ export function ProgramsTab() {
             type="link"
             onClick={() => {
               handleNameSearchChange("");
+              handleCodeSearchChange("");
               handleDegreeTitleSearchChange("");
             }}
           >

@@ -10,6 +10,7 @@ import {
     durationRules,
     maxResidencyRules,
     nameRules,
+    programCodeRules,
 } from "../../utils/validators";
 
 export type ProgramFormModalProps = {
@@ -91,6 +92,22 @@ export function ProgramFormModal({ open, target, onClose, defaultDepartmentId }:
               optionFilterProp="label"
               style={{ height: 40 }}
               options={departments.map((d) => ({ value: d.id, label: d.name }))}
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="code"
+            label={
+              <span>
+                Code <span style={{ color: token.colorError, fontWeight: 700 }}>*</span>
+              </span>
+            }
+            rules={programCodeRules}
+          >
+            <Input
+              placeholder="e.g. BSC_CS"
+              maxLength={20}
+              style={{ height: 40, fontFamily: "monospace" }}
             />
           </Form.Item>
 

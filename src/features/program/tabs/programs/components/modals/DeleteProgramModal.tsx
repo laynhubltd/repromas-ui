@@ -36,7 +36,14 @@ export function DeleteProgramModal({ open, target, onClose }: DeleteProgramModal
       <div style={{ padding: 24 }}>
         <Typography.Text>
           Delete program{" "}
-          <Typography.Text strong>'{target?.name}'</Typography.Text>? Deleting this program will
+          <Typography.Text strong>'{target?.name}'</Typography.Text>
+          {target?.code ? (
+            <>
+              {" "}
+              (<Typography.Text code>{target.code}</Typography.Text>)
+            </>
+          ) : null}
+          ? Deleting this program will
           also delete all graduation requirements associated with it. This cannot be undone.
         </Typography.Text>
       </div>

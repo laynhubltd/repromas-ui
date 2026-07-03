@@ -1,7 +1,7 @@
 import { BillingWorkflowDecisionGuard } from "@/features/billing/components/BillingWorkflowDecisionGuard";
 import type { WorkflowPayNowPayload } from "@/features/billing/types/workflow-step-decision";
 import { PaymentReturnAlert } from "@/features/student-payments/components/PaymentReturnAlert";
-import type { usePaymentReturnPolling } from "@/features/student-payments/hooks/usePaymentReturnPolling";
+import type { usePaymentReturnOrchestrator } from "@/features/student-payments/hooks/usePaymentReturnOrchestrator";
 import { useIsMobile } from "@/hooks/useBreakpoint";
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
@@ -30,7 +30,7 @@ type CandidateAdmissionProgressCardProps = {
   progressPercent: number;
   activeStepNumber: number;
   totalSteps: number;
-  paymentReturnPolling: ReturnType<typeof usePaymentReturnPolling>;
+  paymentReturnPolling: ReturnType<typeof usePaymentReturnOrchestrator>;
   showPrimaryCta: boolean;
   showFeeBanner: boolean;
   showDossierLink: boolean;

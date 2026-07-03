@@ -87,7 +87,15 @@ describe("evaluateSetupSteps", () => {
     });
     expect(evaluation.phase2StepIds).not.toContain("staff");
     expect(evaluation.phase2StepIds).not.toContain("student");
-    expect(evaluation.remainingStepCount).toBe(evaluation.phase2StepIds.length);
+    expect(evaluation.phase2StepIds).toEqual([
+      "transitionStatusDefault",
+      "admissionConfig",
+      "admissionCandidate",
+      "courseRegistration",
+      "assessment",
+      "gradingConfig",
+      "billing",
+    ]);
   });
 
   it("canAccessSetupStep reflects prerequisite completion", () => {

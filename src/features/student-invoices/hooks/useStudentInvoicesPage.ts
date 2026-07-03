@@ -9,7 +9,7 @@ import { useIsMobile } from "@/hooks/useBreakpoint";
 import { RequestScreen } from "@/shared/types/error-ui";
 import { deriveSectionErrorMessage } from "@/shared/utils/error/deriveSectionErrorMessage";
 import { validateReturnUrl } from "@/shared/utils/validateReturnUrl";
-import { usePaymentReturnPolling } from "@/features/student-payments/hooks/usePaymentReturnPolling";
+import { usePaymentReturnOrchestrator } from "@/features/student-payments/hooks/usePaymentReturnOrchestrator";
 import { message } from "antd";
 import { useCallback, useEffect, useMemo, useReducer } from "react";
 import { generatePath, useNavigate, useSearchParams } from "react-router-dom";
@@ -39,7 +39,7 @@ export function useStudentInvoicesPage() {
     () => validateReturnUrl(searchParams.get("returnTo")),
     [searchParams],
   );
-  const paymentReturnPolling = usePaymentReturnPolling({
+  const paymentReturnPolling = usePaymentReturnOrchestrator({
     returnTo: validatedReturnTo,
   });
 

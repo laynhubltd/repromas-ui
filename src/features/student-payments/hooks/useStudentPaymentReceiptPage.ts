@@ -61,14 +61,16 @@ export function useStudentPaymentReceiptPage() {
     navigate(appPaths.StudentPayments);
   }, [navigate]);
 
+  const invoiceId = payment?.invoiceId;
+
   const handleViewBill = useCallback(() => {
-    if (!payment?.invoiceId) return;
+    if (!invoiceId) return;
     navigate(
       generatePath(appPaths.studentInvoicePay, {
-        invoiceId: String(payment.invoiceId),
+        invoiceId: String(invoiceId),
       }),
     );
-  }, [navigate, payment?.invoiceId]);
+  }, [navigate, invoiceId]);
 
   const currency =
     payment?.transaction?.currency ??

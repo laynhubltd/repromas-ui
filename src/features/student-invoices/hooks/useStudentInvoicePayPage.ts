@@ -35,20 +35,14 @@ export function useStudentInvoicePayPage() {
     [searchParams],
   );
 
-  const buildInvoicesReturnPath = useCallback(
-    (providerReference?: string) => {
-      const redirect = new URL(appPaths.StudentInvoices, "http://local");
-      redirect.searchParams.set("paymentReturn", "1");
-      if (providerReference) {
-        redirect.searchParams.set("providerReference", providerReference);
-      }
-      if (validatedReturnTo) {
-        redirect.searchParams.set("returnTo", validatedReturnTo);
-      }
-      return `${redirect.pathname}${redirect.search}`;
-    },
-    [validatedReturnTo],
-  );
+  const buildInvoicesReturnPath = useCallback(() => {
+    const redirect = new URL(appPaths.StudentInvoices, "http://local");
+    redirect.searchParams.set("paymentReturn", "1");
+    if (validatedReturnTo) {
+      redirect.searchParams.set("returnTo", validatedReturnTo);
+    }
+    return `${redirect.pathname}${redirect.search}`;
+  }, [validatedReturnTo]);
 
   const [state, dispatch] = useReducer(
     studentInvoicePayPageReducer,
@@ -162,10 +156,11 @@ export function useStudentInvoicePayPage() {
           provider: result.provider,
           amount: result.amount,
           currency: result.currency ?? invoice.currency,
+          eventCode: invoice.eventCode,
+          feeChargeId: invoice.feeChargeId,
+          payerType: payerType ?? undefined,
         });
       }
-
-      console.log({ result });
 
       if (result.checkoutUrl) {
         switch (result.provider) {
@@ -188,6 +183,7 @@ export function useStudentInvoicePayPage() {
     initiatePayment,
     invoice,
     state.selectedOptionalLineIds,
+    payerType,
     userProfile,
   ]);
 

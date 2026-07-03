@@ -1,11 +1,14 @@
 import { appPaths } from "@/app/routing/app-path";
-import { STUDENT_PAYMENT_UI_COPY } from "@/shared/constants/billingPaymentOptions";
+import {
+  HANDOFF_UI_COPY,
+  STUDENT_PAYMENT_UI_COPY,
+} from "@/shared/constants/billingPaymentOptions";
 import { Alert, Button, Flex, Spin } from "antd";
 import { generatePath, Link } from "react-router-dom";
-import type { usePaymentReturnPolling } from "../hooks/usePaymentReturnPolling";
+import type { usePaymentReturnOrchestrator } from "../hooks/usePaymentReturnOrchestrator";
 
 type PaymentReturnAlertProps = {
-  polling: ReturnType<typeof usePaymentReturnPolling>;
+  polling: ReturnType<typeof usePaymentReturnOrchestrator>;
 };
 
 export function PaymentReturnAlert({ polling }: PaymentReturnAlertProps) {
@@ -13,14 +16,35 @@ export function PaymentReturnAlert({ polling }: PaymentReturnAlertProps) {
 
   if (!ui.isActive) return null;
 
+  const { phase } = ui;
+
   const alertType =
-    ui.state === "success"
+    phase === "complete" || phase === "payment_confirmed"
       ? "success"
-      : ui.state === "processing" || flags.isPolling
+      : phase === "confirming_payment" ||
+          phase === "matriculating" ||
+          phase === "handoff" ||
+          flags.isPolling
         ? "info"
-        : ui.state === "failed"
+        : phase === "failed"
           ? "error"
           : "warning";
+
+  const showSpinner =
+    phase === "confirming_payment" ||
+    phase === "matriculating" ||
+    phase === "handoff" ||
+    flags.isPolling;
+
+  const showRetry =
+    phase === "confirming_payment" ||
+    phase === "payment_pending" ||
+    phase === "error";
+
+  const showContinue =
+    phase === "payment_confirmed" || phase === "complete";
+
+  const showReceipt = phase === "payment_confirmed" && ui.paymentId;
 
   return (
     <Alert
@@ -28,7 +52,7 @@ export function PaymentReturnAlert({ polling }: PaymentReturnAlertProps) {
       showIcon
       message={
         <Flex align="center" gap={8}>
-          {ui.state === "processing" || flags.isPolling ? <Spin size="small" /> : null}
+          {showSpinner ? <Spin size="small" /> : null}
           <span>{ui.title}</span>
         </Flex>
       }
@@ -41,19 +65,27 @@ export function PaymentReturnAlert({ polling }: PaymentReturnAlertProps) {
             </span>
           ) : null}
           <Flex gap={8} wrap="wrap">
-            {ui.state === "processing" || ui.state === "timeout" ? (
+            {showRetry ? (
               <Button size="small" onClick={actions.handleRetryPoll}>
                 {STUDENT_PAYMENT_UI_COPY.retryPoll}
               </Button>
             ) : null}
-            {ui.state === "success" ? (
-              <Link to={ui.continueApplicationUrl}>
+            {showContinue ? (
+              <Link
+                to={
+                  phase === "complete"
+                    ? appPaths.studentHome
+                    : ui.continueApplicationUrl
+                }
+              >
                 <Button type="primary" size="small">
-                  {STUDENT_PAYMENT_UI_COPY.continueApplicationCta}
+                  {phase === "complete"
+                    ? HANDOFF_UI_COPY.goToHome
+                    : STUDENT_PAYMENT_UI_COPY.continueApplicationCta}
                 </Button>
               </Link>
             ) : null}
-            {ui.state === "success" && ui.paymentId ? (
+            {showReceipt ? (
               <Link
                 to={generatePath(appPaths.studentPaymentReceipt, {
                   paymentId: String(ui.paymentId),
@@ -65,7 +97,9 @@ export function PaymentReturnAlert({ polling }: PaymentReturnAlertProps) {
               </Link>
             ) : null}
             <Link to={appPaths.StudentPayments}>
-              <Button size="small">{STUDENT_PAYMENT_UI_COPY.viewPaymentHistory}</Button>
+              <Button size="small">
+                {STUDENT_PAYMENT_UI_COPY.viewPaymentHistory}
+              </Button>
             </Link>
             <Button size="small" onClick={actions.handleDismiss}>
               Dismiss

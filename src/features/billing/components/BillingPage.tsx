@@ -1,12 +1,12 @@
 import { Tabs } from "@/components/ui-kit";
-import { FeeEventsTab } from "@/features/billing/tabs/fee-events";
-import { FeePoliciesTab } from "@/features/billing/tabs/fee-policies";
 import { FeeChargesTab } from "@/features/billing/tabs/fee-charges";
-import { InvoicesTab } from "@/features/billing/tabs/invoices";
-import { PaymentsTab } from "@/features/billing/tabs/payments";
-import { PaymentTransactionsTab } from "@/features/billing/tabs/payment-transactions";
+import { FeeEventsTab } from "@/features/billing/tabs/fee-events";
 import { FeeItemsTab } from "@/features/billing/tabs/fee-items";
+import { FeePoliciesTab } from "@/features/billing/tabs/fee-policies";
+import { InvoicesTab } from "@/features/billing/tabs/invoices";
 import { PaymentGatewayTab } from "@/features/billing/tabs/payment-gateway";
+import { PaymentTransactionsTab } from "@/features/billing/tabs/payment-transactions";
+import { PaymentsTab } from "@/features/billing/tabs/payments";
 import { PricingRulesTab } from "@/features/billing/tabs/pricing-rules";
 import type { ConfigurePricingParams } from "@/features/billing/types/configure-pricing";
 import { useState } from "react";
@@ -137,8 +137,8 @@ export function BillingPage() {
         ]}
         defaultActiveKey="fee-events"
         size="md"
-        density="spacious"
-        variant="default"
+        density="compact"
+        variant="filled"
         aria-label="Billing configuration navigation"
       />
     </div>

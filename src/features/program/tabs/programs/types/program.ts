@@ -1,6 +1,7 @@
 export type Program = {
   id: number;
   departmentId: number;
+  code: string;
   name: string;
   degreeTitle: string;
   durationInYears: number;
@@ -15,6 +16,7 @@ export type ProgramListParams = {
   itemsPerPage?: number;
   sort?: string;
   'search[name]'?: string;
+  'search[code]'?: string;
   'search[degreeTitle]'?: string;
   'exact[department]'?: number;
   include?: string;
@@ -22,6 +24,7 @@ export type ProgramListParams = {
 
 export type CreateProgramRequest = {
   departmentId: number;
+  code: string;
   name: string;
   degreeTitle: string;
   durationInYears: number;
@@ -30,6 +33,7 @@ export type CreateProgramRequest = {
 
 export type UpdateProgramRequest = {
   departmentId: number;
+  code: string;
   name: string;
   degreeTitle: string;
   durationInYears: number;

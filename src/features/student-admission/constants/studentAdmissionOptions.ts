@@ -2,6 +2,7 @@ import type { WorkflowStep } from "@/shared/constants/billingWorkflowOptions";
 
 export const ADMISSION_LETTER_WORKFLOW_STEP: WorkflowStep = "MATRICULATE";
 export const ADMISSION_ACCEPTANCE_FEE_EVENT_CODE = "ADMISSION_ACCEPTANCE_FEE";
+export const ADMISSION_REGISTRATION_FEE_EVENT_CODE = "ADMISSION_REGISTRATION_FEE";
 
 export const STUDENT_ADMISSION_UI_COPY = {
   pageTitle: "Admission",

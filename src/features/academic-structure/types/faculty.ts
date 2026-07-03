@@ -3,6 +3,7 @@
 export type Program = {
   id: number;
   departmentId: number;
+  code: string;
   name: string;
   degreeTitle: string;
   durationInYears: number;

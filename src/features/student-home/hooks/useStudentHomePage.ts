@@ -1,6 +1,6 @@
 import { StudentPortalScope } from "@/features/access-control/student-portal-scopes";
 import { useAccessControl } from "@/features/access-control/use-access-control";
-import { usePaymentReturnPolling } from "@/features/student-payments/hooks/usePaymentReturnPolling";
+import { usePaymentReturnOrchestrator } from "@/features/student-payments/hooks/usePaymentReturnOrchestrator";
 import { appPaths } from "@/app/routing/app-path";
 import { useMemo } from "react";
 import { useAdmissionProgressActions } from "./useAdmissionProgressActions";
@@ -14,9 +14,11 @@ export function useStudentHomePage() {
   const progressData = useAdmissionProgressData();
   const { progress } = progressData.state;
 
-  const paymentReturnPolling = usePaymentReturnPolling({
+  const paymentReturnPolling = usePaymentReturnOrchestrator({
     enabled: isCandidate,
     returnTo: appPaths.studentHome,
+    enableMatriculatedOnLoad: true,
+    portalState: progress?.portalState,
   });
 
   const progressActions = useAdmissionProgressActions({
