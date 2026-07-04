@@ -117,7 +117,6 @@ export const EXAM_TYPE_OPTIONS = [
   { value: "WAEC", label: "WAEC" },
   { value: "NECO", label: "NECO" },
   { value: "NABTEB", label: "NABTEB" },
-  { value: "IGCSE", label: "IGCSE" },
 ] as const;
 
 /**
