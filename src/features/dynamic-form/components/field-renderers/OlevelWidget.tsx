@@ -1,3 +1,4 @@
+import { EXAM_TYPE_OPTIONS } from "@/shared/constants/dynamicFormOptions";
 import { useToken } from "@/shared/hooks/useToken";
 import { DeleteOutlined, PlusOutlined } from "@ant-design/icons";
 import { Button, Flex, Input, InputNumber, Select, Typography } from "antd";
@@ -22,7 +23,7 @@ type OlevelWidgetProps = {
   layout?: DynamicFormLayoutFlags;
 };
 
-const EXAM_TYPES = ["WAEC", "NECO", "NABTEB", "GCE"];
+
 const OLEVEL_GRADES = ["A1", "B2", "B3", "C4", "C5", "C6", "D7", "E8", "F9"];
 
 const defaultLayout: DynamicFormLayoutFlags = {
@@ -138,7 +139,7 @@ export function OlevelWidget({
               <Select
                 value={sitting.examType}
                 onChange={(v) => updateSitting(si, { examType: v })}
-                options={EXAM_TYPES.map((t) => ({ value: t, label: t }))}
+                options={[...EXAM_TYPE_OPTIONS]}
                 disabled={disabled}
                 placeholder="Exam type"
                 style={{ width: "100%" }}
