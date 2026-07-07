@@ -1,6 +1,6 @@
 import { appPaths } from "@/app/routing/app-path";
 import useAuthState from "@/features/auth/use-auth-state";
-import { resolvePayerTypeFromScope } from "@/features/student-invoices/utils/resolvePayerType";
+import { resolvePaymentPayerType } from "../utils/resolvePaymentPayerType";
 import {
   STUDENT_PAYMENT_ITEMS_PER_PAGE,
   STUDENT_PAYMENT_SORT_DEFAULT,
@@ -19,7 +19,7 @@ import {
 export function useStudentPaymentsPage() {
   const navigate = useNavigate();
   const { activeRole } = useAuthState();
-  const payerType = resolvePayerTypeFromScope(activeRole?.scope);
+  const payerType = resolvePaymentPayerType(activeRole?.scope);
 
   const [state, dispatch] = useReducer(
     studentPaymentsPageReducer,

@@ -5,6 +5,7 @@ import {
   MATRIC_NUMBER_FORMAT_UI_COPY,
   matricFormatStatusColorByValue,
   matricFormatStatusLabelByValue,
+  matricSlotLabel,
 } from "@/shared/constants/matricNumberFormatOptions";
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
@@ -12,7 +13,10 @@ import { DataLoader } from "@/shared/ui/DataLoader";
 import { Button, Drawer, Flex, Input, Tag, Typography } from "antd";
 import { useMatricNumberFormatBuilder } from "../hooks/useMatricNumberFormatBuilder";
 import { MatricNumberFormatBuilderActionType } from "../state/matricNumberFormatBuilderState";
-import type { MatricNumberFormatPrerequisites } from "../types/matric-number-format";
+import type {
+  MatricFormatActiveSlot,
+  MatricNumberFormatPrerequisites,
+} from "../types/matric-number-format";
 import { ActivateRequirementsChecklist } from "./ActivateRequirementsChecklist";
 import { CounterPartitionFields } from "./CounterPartitionFields";
 import { FormatPreviewPanel } from "./FormatPreviewPanel";
@@ -26,6 +30,7 @@ type FormatBuilderDrawerProps = {
   open: boolean;
   onClose: () => void;
   prerequisites: MatricNumberFormatPrerequisites | undefined;
+  activeSlots: MatricFormatActiveSlot[];
   onActivate: () => void;
   onDuplicate: () => void;
 };
@@ -36,6 +41,7 @@ export function FormatBuilderDrawer({
   open,
   onClose,
   prerequisites,
+  activeSlots,
   onActivate,
   onDuplicate,
 }: FormatBuilderDrawerProps) {
@@ -48,6 +54,7 @@ export function FormatBuilderDrawer({
     open,
     onClose,
     prerequisites,
+    activeSlots,
   );
 
   const {
@@ -62,6 +69,7 @@ export function FormatBuilderDrawer({
     isSessionMissing,
     canActivate,
     activationBlockers,
+    slotLockedTitle,
   } = state;
 
   const {
@@ -84,6 +92,7 @@ export function FormatBuilderDrawer({
               {matricFormatStatusLabelByValue[format.status]}
             </Tag>
           )}
+          {format && <Tag>{matricSlotLabel(format.entryMode)}</Tag>}
         </Flex>
       }
       open={open}
@@ -115,7 +124,7 @@ export function FormatBuilderDrawer({
                 onClick={onActivate}
                 title={
                   !canActivate
-                    ? "Fix prerequisites, preview errors, or template issues before activating"
+                    ? slotLockedTitle ?? "Fix prerequisites, preview errors, or template issues before activating"
                     : undefined
                 }
               >

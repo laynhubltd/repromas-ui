@@ -1,4 +1,4 @@
-import { ADMISSION_REGISTRATION_FEE_EVENT_CODE } from "@/features/student-admission/constants/studentAdmissionOptions";
+import { FEE_EVENT_CODE } from "@/shared/constants/feeEventOptions";
 import {
   HANDOFF_POLL_INTERVALS_MS,
   HANDOFF_POLL_MAX_ATTEMPTS,
@@ -37,7 +37,7 @@ export function resolvePaymentEventCode(
 export function isAdmissionRegistrationFeePayment(
   eventCode: string | null | undefined,
 ): boolean {
-  return eventCode === ADMISSION_REGISTRATION_FEE_EVENT_CODE;
+  return eventCode === FEE_EVENT_CODE.ADMISSION_REGISTRATION;
 }
 
 export function isPortalMatriculated(

@@ -1,37 +1,36 @@
 import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
-import {
-  formatActivateBodyForSlot,
-  MATRIC_NUMBER_FORMAT_UI_COPY,
-} from "@/shared/constants/matricNumberFormatOptions";
+import { MATRIC_NUMBER_FORMAT_UI_COPY } from "@/shared/constants/matricNumberFormatOptions";
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
 import { Alert, Button, Modal, Typography } from "antd";
-import { useActivateMatricNumberFormatModal } from "../../hooks/useMatricNumberFormatModal";
-import type { MatricNumberFormat } from "../../types/matric-number-format";
+import { useReactivateMatricNumberFormatModal } from "../../hooks/useMatricNumberFormatModal";
+import type { MatricFormatActiveSlot, MatricNumberFormat } from "../../types/matric-number-format";
+import { isSlotActivationLocked } from "../../utils/slotLifecycleEligibility";
 
-type ActivateMatricNumberFormatModalProps = {
+type ReactivateMatricNumberFormatModalProps = {
   open: boolean;
   target: MatricNumberFormat | null;
-  slotPeer: MatricNumberFormat | null;
+  activeSlots: MatricFormatActiveSlot[];
   onClose: () => void;
 };
 
-export function ActivateMatricNumberFormatModal({
+export function ReactivateMatricNumberFormatModal({
   open,
   target,
-  slotPeer,
+  activeSlots,
   onClose,
-}: ActivateMatricNumberFormatModalProps) {
+}: ReactivateMatricNumberFormatModalProps) {
   const token = useToken();
-  const { state, actions } = useActivateMatricNumberFormatModal(target, slotPeer, onClose);
+  const { state, actions } = useReactivateMatricNumberFormatModal(target, onClose);
   const { isLoading } = state;
   const { handleConfirm, handleCancel } = actions;
-  const activateBody = target ? formatActivateBodyForSlot(target.entryMode) : "";
+  const slotLocked =
+    target !== null && isSlotActivationLocked(activeSlots, target.entryMode);
 
   return (
     <Modal
-      title={MATRIC_NUMBER_FORMAT_UI_COPY.activateTitle}
+      title={MATRIC_NUMBER_FORMAT_UI_COPY.reactivateTitle}
       open={open}
       onCancel={handleCancel}
       footer={null}
@@ -51,17 +50,20 @@ export function ActivateMatricNumberFormatModal({
         <Alert
           type="warning"
           showIcon
-          message={activateBody}
+          message={
+            slotLocked
+              ? MATRIC_NUMBER_FORMAT_UI_COPY.reactivateBodyLockedSlot
+              : MATRIC_NUMBER_FORMAT_UI_COPY.reactivateBody
+          }
           style={{ marginBottom: 16 }}
         />
         <Typography.Text>
-          {MATRIC_NUMBER_FORMAT_UI_COPY.activateConfirmDraft}{" "}
+          {MATRIC_NUMBER_FORMAT_UI_COPY.actionReactivate}{" "}
           <Typography.Text strong>'{target?.code}'</Typography.Text>?
         </Typography.Text>
-        <ConditionalRenderer when={slotPeer !== null && slotPeer.id !== target?.id}>
+        <ConditionalRenderer when={slotLocked}>
           <Typography.Text type="secondary" style={{ display: "block", marginTop: 8 }}>
-            {MATRIC_NUMBER_FORMAT_UI_COPY.activateSlotPeerNote}{" "}
-            <Typography.Text code>{slotPeer?.code}</Typography.Text>.
+            {MATRIC_NUMBER_FORMAT_UI_COPY.reactivateLockedSlotNote}
           </Typography.Text>
         </ConditionalRenderer>
       </div>
@@ -85,7 +87,7 @@ export function ActivateMatricNumberFormatModal({
             block
             style={{ height: 48, fontWeight: 600 }}
           >
-            Activate Format
+            {MATRIC_NUMBER_FORMAT_UI_COPY.actionReactivate}
           </Button>
         </PermissionGuard>
         <Button type="text" block onClick={handleCancel} disabled={isLoading}>

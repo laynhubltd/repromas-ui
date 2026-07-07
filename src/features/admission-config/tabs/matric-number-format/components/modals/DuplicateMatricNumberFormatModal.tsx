@@ -1,5 +1,7 @@
+import { matricSlotLabel } from "@/shared/constants/matricNumberFormatOptions";
 import { useToken } from "@/shared/hooks/useToken";
-import { Button, Form, Input, Modal, Typography } from "antd";
+import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
+import { Button, Form, Input, Modal, Tag, Typography } from "antd";
 import { useDuplicateMatricNumberFormatModal } from "../../hooks/useMatricNumberFormatModal";
 import type { MatricNumberFormat } from "../../types/matric-number-format";
 import { duplicateCodeRules } from "../../utils/validators";
@@ -46,10 +48,15 @@ export function DuplicateMatricNumberFormatModal({
       }}
     >
       <div style={{ padding: 24 }}>
-        <Typography.Text style={{ display: "block", marginBottom: 16 }}>
+        <Typography.Text style={{ display: "block", marginBottom: 8 }}>
           Create an editable copy of{" "}
           <Typography.Text strong>'{target?.code}'</Typography.Text> as a new draft.
         </Typography.Text>
+        <ConditionalRenderer when={target !== null}>
+          <Tag style={{ marginBottom: 16 }}>
+            {target ? matricSlotLabel(target.entryMode) : null}
+          </Tag>
+        </ConditionalRenderer>
         <Form form={form} layout="vertical" requiredMark={false} onFinish={handleSubmit}>
           <Form.Item
             name="code"

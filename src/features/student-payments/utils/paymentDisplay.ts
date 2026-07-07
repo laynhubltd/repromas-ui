@@ -1,11 +1,14 @@
 import { formatCurrencyDisplay } from "@/features/billing/tabs/pricing-rules/utils/computeGrossPreview";
-import { humanizeEnumValue } from "@/shared/constants/billingDisplayLabels";
+import { formatPaymentContextLabel } from "@/features/billing/utils/billingEmbedDisplay";
+import {
+  formatEventCodeLabel,
+  humanizeEnumValue,
+} from "@/shared/constants/billingDisplayLabels";
 import {
   PAYMENT_TRANSACTION_STATUS_COLORS,
   PAYMENT_TRANSACTION_STATUS_LABELS,
   type BillingPaymentTransactionStatus,
 } from "@/shared/constants/billingPaymentOptions";
-import { formatPaymentContextLabel } from "@/features/billing/utils/billingEmbedDisplay";
 import type {
   StudentPayment,
   StudentPaymentTransaction,
@@ -29,8 +32,7 @@ export function formatTransactionStatus(status: string): {
 } {
   const key = status.toUpperCase() as BillingPaymentTransactionStatus;
   return {
-    label:
-      PAYMENT_TRANSACTION_STATUS_LABELS[key] ?? humanizeEnumValue(status),
+    label: PAYMENT_TRANSACTION_STATUS_LABELS[key] ?? humanizeEnumValue(status),
     color: PAYMENT_TRANSACTION_STATUS_COLORS[key] ?? "default",
   };
 }
@@ -63,7 +65,10 @@ export function resolvePollStateFromTransaction(
   if (transaction.status === "FAILED" || transaction.status === "REVERSED") {
     return "failed";
   }
-  if (transaction.status === "CONFIRMED" && getPostedPayments(transaction).length === 0) {
+  if (
+    transaction.status === "CONFIRMED" &&
+    getPostedPayments(transaction).length === 0
+  ) {
     return elapsedMs >= maxMs ? "timeout" : "processing";
   }
   if (transaction.status === "PENDING") {
@@ -80,6 +85,12 @@ export function isAbandonedCheckout(
   const created = Date.parse(transaction.createdAt);
   if (Number.isNaN(created)) return false;
   return nowMs - created >= ABANDONED_CHECKOUT_MS;
+}
+
+export function formatPaymentFeeLabel(payment: StudentPayment): string {
+  return formatEventCodeLabel(payment.feeCharge?.eventCode, {
+    displayName: payment.feeCharge?.eventName,
+  });
 }
 
 export function paymentListSubtitle(payment: StudentPayment): string {

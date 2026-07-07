@@ -3,52 +3,43 @@ import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import {
   COUNTER_PARTITION_OPTIONS,
+  MATRIC_FORMAT_SLOT_FILTER_OPTIONS,
   MATRIC_FORMAT_STATUS_OPTIONS,
   MATRIC_NUMBER_FORMAT_ITEMS_PER_PAGE,
   MATRIC_NUMBER_FORMAT_UI_COPY,
   matricFormatStatusColorByValue,
   matricFormatStatusLabelByValue,
+  matricSlotKey,
 } from "@/shared/constants/matricNumberFormatOptions";
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer, centeredBox } from "@/shared/ui/ConditionalRenderer";
 import { DataLoader } from "@/shared/ui/DataLoader";
 import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { SkeletonRows } from "@/shared/ui/SkeletonRows";
-import {
-  CopyOutlined,
-  EditOutlined,
-  EyeOutlined,
-  FilterOutlined,
-  PlusOutlined,
-  RocketOutlined,
-} from "@ant-design/icons";
-import {
-  Badge,
-  Button,
-  Col,
-  Flex,
-  Form,
-  Input,
-  Popover,
-  Row,
-  Select,
-  Tag,
-  Typography,
-} from "antd";
+import { FilterOutlined, MoreOutlined, PlusOutlined } from "@ant-design/icons";
+import { Badge, Button, Col, Dropdown, Flex, Form, Input, Popover, Row, Select, Tag, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useState } from "react";
 import { FormatBuilderDrawer } from "./FormatBuilderDrawer";
+import { MatricFormatSlotOverview } from "./MatricFormatSlotOverview";
 import { PrerequisitesBanner } from "./PrerequisitesBanner";
 import { ActivateMatricNumberFormatModal } from "./modals/ActivateMatricNumberFormatModal";
 import { CreateMatricNumberFormatModal } from "./modals/CreateMatricNumberFormatModal";
+import { DeactivateMatricNumberFormatModal } from "./modals/DeactivateMatricNumberFormatModal";
 import { DuplicateMatricNumberFormatModal } from "./modals/DuplicateMatricNumberFormatModal";
+import { ReactivateMatricNumberFormatModal } from "./modals/ReactivateMatricNumberFormatModal";
 import { useMatricNumberFormatTab } from "../hooks/useMatricNumberFormatTab";
 import type { MatricNumberFormat } from "../types/matric-number-format";
-import { formatDate, isPrerequisitesReadyForTemplate, truncateTemplateSnippet } from "../utils/templateTokenHelpers";
+import { formatDate, truncateTemplateSnippet } from "../utils/templateTokenHelpers";
 
 const partitionLabelByValue = Object.fromEntries(
   COUNTER_PARTITION_OPTIONS.map((o) => [o.value, o.label]),
 );
+
+const laneFilterOptions = MATRIC_FORMAT_SLOT_FILTER_OPTIONS.map((o) => ({
+  value: o.value === "ANY" ? "ANY" : matricSlotKey(o.value),
+  label: o.label,
+}));
 
 export function MatricNumberFormatTab() {
   const token = useToken();
@@ -61,36 +52,52 @@ export function MatricNumberFormatTab() {
     isLoading,
     isError,
     sectionError,
-    activeFormat,
+    activeSlots,
+    currentSessionId,
+    sessionLabel,
+    slotsLoading,
+    slotsSectionError,
     draftCount,
     prerequisites,
     search,
     statusFilter,
+    entryModeFilter,
     page,
     builderFormatId,
     builderReadOnly,
     builderOpen,
     createOpen,
+    createEntryMode,
     duplicateTarget,
     activateTarget,
+    deactivateTarget,
+    reactivateTarget,
+    getActivateSlotPeer,
+    matricSlotLabel,
   } = state;
 
   const {
     handleSearchChange,
     handleStatusFilterChange,
+    handleEntryModeFilterChange,
     handlePageChange,
     handleOpenCreate,
+    handleOpenCreateForSlot,
     handleCloseCreate,
-    handleOpenBuilder,
     handleCloseBuilder,
     handleOpenDuplicate,
     handleCloseDuplicate,
     handleOpenActivate,
     handleCloseActivate,
+    handleCloseDeactivate,
+    handleCloseReactivate,
+    handleOpenBuilder,
     handleCreated,
     handleDuplicated,
     clearAllFilters,
+    buildRowMenuItems,
     refetch,
+    refetchActiveSlots,
   } = actions;
 
   const { hasData, isFilterActive, isSearchActive, activeFilterCount } = flags;
@@ -98,10 +105,13 @@ export function MatricNumberFormatTab() {
   const cardState = isLoading ? "loading" : "default";
   const isSearchOrFilterActive = isSearchActive || isFilterActive;
 
+  const entryModeFilterKey =
+    entryModeFilter === "ANY" ? "ANY" : matricSlotKey(entryModeFilter);
+
   const filterContent = (
     <Flex vertical gap={16} style={{ width: 280 }}>
       <Form layout="vertical" size="middle">
-        <Form.Item label="Status" style={{ marginBottom: 0 }}>
+        <Form.Item label="Status" style={{ marginBottom: 12 }}>
           <Select
             placeholder="Any status"
             allowClear
@@ -112,6 +122,26 @@ export function MatricNumberFormatTab() {
               value: o.value,
               label: o.label,
             }))}
+          />
+        </Form.Item>
+        <Form.Item label="Lane" style={{ marginBottom: 0 }}>
+          <Select
+            placeholder="Any lane"
+            value={entryModeFilterKey}
+            onChange={(value: string) => {
+              if (value === "ANY") {
+                handleEntryModeFilterChange("ANY");
+                return;
+              }
+              const slot = MATRIC_FORMAT_SLOT_FILTER_OPTIONS.find(
+                (o) => o.value !== "ANY" && matricSlotKey(o.value) === value,
+              );
+              if (slot && slot.value !== "ANY") {
+                handleEntryModeFilterChange(slot.value);
+              }
+            }}
+            style={{ width: "100%" }}
+            options={laneFilterOptions}
           />
         </Form.Item>
       </Form>
@@ -129,6 +159,14 @@ export function MatricNumberFormatTab() {
       dataIndex: "code",
       key: "code",
       render: (code: string) => <Typography.Text strong>{code}</Typography.Text>,
+    },
+    {
+      title: "Lane",
+      dataIndex: "entryMode",
+      key: "entryMode",
+      render: (entryMode: MatricNumberFormat["entryMode"]) => (
+        <Tag>{matricSlotLabel(entryMode)}</Tag>
+      ),
     },
     {
       title: "Status",
@@ -167,48 +205,22 @@ export function MatricNumberFormatTab() {
       title: "Actions",
       key: "actions",
       align: "right",
+      width: 56,
+      fixed: "right",
       render: (_: unknown, record: MatricNumberFormat) => (
-        <Flex justify="flex-end" gap={4}>
-          <ConditionalRenderer when={record.status === "DRAFT"}>
-            <PermissionGuard permission={Permission.MatricNumberFormatsUpdate}>
-              <Button
-                type="text"
-                size="small"
-                icon={<EditOutlined />}
-                title="Edit"
-                onClick={() => handleOpenBuilder(record, false)}
-              />
-            </PermissionGuard>
-            <PermissionGuard permission={Permission.MatricNumberFormatsActivate}>
-              <Button
-                type="text"
-                size="small"
-                icon={<RocketOutlined />}
-                title="Activate"
-                disabled={!isPrerequisitesReadyForTemplate(prerequisites, record.template)}
-                onClick={() => handleOpenActivate(record)}
-              />
-            </PermissionGuard>
-          </ConditionalRenderer>
-          <ConditionalRenderer when={record.status !== "DRAFT"}>
-            <Button
-              type="text"
-              size="small"
-              icon={<EyeOutlined />}
-              title="View"
-              onClick={() => handleOpenBuilder(record, true)}
-            />
-            <PermissionGuard permission={Permission.MatricNumberFormatsCreate}>
-              <Button
-                type="text"
-                size="small"
-                icon={<CopyOutlined />}
-                title="Duplicate"
-                onClick={() => handleOpenDuplicate(record)}
-              />
-            </PermissionGuard>
-          </ConditionalRenderer>
-        </Flex>
+        <Dropdown
+          menu={{ items: buildRowMenuItems(record) }}
+          trigger={["click"]}
+          placement="bottomRight"
+        >
+          <Button
+            type="text"
+            size="small"
+            icon={<MoreOutlined />}
+            aria-label="Row actions"
+            onClick={(event) => event.stopPropagation()}
+          />
+        </Dropdown>
       ),
     },
   ];
@@ -225,17 +237,19 @@ export function MatricNumberFormatTab() {
 
       <PrerequisitesBanner prerequisites={prerequisites} />
 
+      <MatricFormatSlotOverview
+        slots={activeSlots}
+        currentSessionId={currentSessionId}
+        sessionLabel={sessionLabel}
+        isLoading={slotsLoading}
+        sectionError={slotsSectionError}
+        onViewFormat={(format) => handleOpenBuilder(format, true)}
+        onCreateForSlot={handleOpenCreateForSlot}
+        onRetry={refetchActiveSlots}
+      />
+
       <Row gutter={[16, 16]}>
-        <Col xs={24} sm={8}>
-          <DashCard
-            title="Live Format"
-            value={activeFormat?.code ?? "None"}
-            state={cardState}
-            size="md"
-            density="comfortable"
-          />
-        </Col>
-        <Col xs={24} sm={8}>
+        <Col xs={24} sm={12}>
           <DashCard
             title="Drafts"
             value={draftCount}
@@ -244,7 +258,7 @@ export function MatricNumberFormatTab() {
             density="comfortable"
           />
         </Col>
-        <Col xs={24} sm={8}>
+        <Col xs={24} sm={12}>
           <DashCard
             title="Total Formats"
             value={totalItems}
@@ -351,6 +365,8 @@ export function MatricNumberFormatTab() {
 
       <CreateMatricNumberFormatModal
         open={createOpen}
+        initialEntryMode={createEntryMode}
+        lanePresetLocked={createEntryMode !== undefined}
         onClose={handleCloseCreate}
         onCreated={handleCreated}
       />
@@ -365,8 +381,21 @@ export function MatricNumberFormatTab() {
       <ActivateMatricNumberFormatModal
         open={activateTarget !== null}
         target={activateTarget}
-        activeFormat={activeFormat}
+        slotPeer={getActivateSlotPeer(activateTarget)}
         onClose={handleCloseActivate}
+      />
+
+      <DeactivateMatricNumberFormatModal
+        open={deactivateTarget !== null}
+        target={deactivateTarget}
+        onClose={handleCloseDeactivate}
+      />
+
+      <ReactivateMatricNumberFormatModal
+        open={reactivateTarget !== null}
+        target={reactivateTarget}
+        activeSlots={activeSlots}
+        onClose={handleCloseReactivate}
       />
 
       <FormatBuilderDrawer
@@ -375,6 +404,7 @@ export function MatricNumberFormatTab() {
         open={builderOpen}
         onClose={handleCloseBuilder}
         prerequisites={prerequisites}
+        activeSlots={activeSlots}
         onActivate={() => {
           const draft = formats.find((f) => f.id === builderFormatId);
           if (draft) handleOpenActivate(draft);

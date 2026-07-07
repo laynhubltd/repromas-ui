@@ -74,8 +74,9 @@ export function getActivationBlockers(input: {
   previewError: string | null;
   hasPreviewResult: boolean;
   previewProgramSelected: boolean;
+  slotLocked?: boolean;
 }): ActivationBlocker[] {
-  return [
+  const blockers: ActivationBlocker[] = [
     {
       key: "draft",
       label: "Format is saved as a draft",
@@ -107,6 +108,16 @@ export function getActivationBlockers(input: {
       met: input.hasPreviewResult && !input.previewError,
     },
   ];
+
+  if (input.slotLocked !== undefined) {
+    blockers.push({
+      key: "slot-unlocked",
+      label: "Lane is not locked for intake in the current session",
+      met: !input.slotLocked,
+    });
+  }
+
+  return blockers;
 }
 
 export function canActivateMatricFormat(input: {

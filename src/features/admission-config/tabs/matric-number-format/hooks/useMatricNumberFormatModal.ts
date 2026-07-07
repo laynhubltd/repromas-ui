@@ -1,4 +1,5 @@
 import { useApiError } from "@/shared/hooks/useApiError";
+import { MATRIC_NUMBER_FORMAT_UI_COPY, MATRIC_DEFAULT_SLOT_KEY } from "@/shared/constants/matricNumberFormatOptions";
 import { RequestScreen } from "@/shared/types/error-ui";
 import {
   mutationSuccessMessage,
@@ -8,16 +9,20 @@ import { Form } from "antd";
 import {
   useActivateMatricNumberFormatMutation,
   useCreateMatricNumberFormatMutation,
+  useDeactivateMatricNumberFormatMutation,
   useDuplicateMatricNumberFormatMutation,
+  useReactivateMatricNumberFormatMutation,
 } from "../api/matricNumberFormatApi";
-import type { MatricNumberFormat } from "../types/matric-number-format";
+import type { MatricFormatSlot, MatricNumberFormat } from "../types/matric-number-format";
 
 const DEFAULT_TEMPLATE = "{sessionUpperYYYY}/REG/{seq:6}";
 
 // ─── Create draft ─────────────────────────────────────────────────────────────
 
 export function useCreateMatricNumberFormatModal(
-  _open: boolean,
+  open: boolean,
+  initialEntryMode: MatricFormatSlot | undefined,
+  lanePresetLocked: boolean,
   onClose: () => void,
   onCreated: (format: MatricNumberFormat) => void,
 ) {
@@ -28,8 +33,11 @@ export function useCreateMatricNumberFormatModal(
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
+      const entryMode: MatricFormatSlot =
+        values.entryMode === MATRIC_DEFAULT_SLOT_KEY ? null : values.entryMode;
       const result = await createFormat({
         code: values.code.trim(),
+        entryMode,
         template: DEFAULT_TEMPLATE,
         tokenOptions: {},
         counterPartition: "TENANT",
@@ -53,8 +61,13 @@ export function useCreateMatricNumberFormatModal(
     onClose();
   };
 
+  const defaultEntryModeKey =
+    initialEntryMode === undefined || initialEntryMode === null
+      ? MATRIC_DEFAULT_SLOT_KEY
+      : initialEntryMode;
+
   return {
-    state: { isLoading },
+    state: { isLoading, lanePresetLocked, defaultEntryModeKey, open },
     actions: { handleSubmit, handleCancel },
     form,
   };
@@ -115,7 +128,7 @@ export function useActivateMatricNumberFormatModal(
   const handleApiError = useApiError();
 
   const handleConfirm = async () => {
-    if (!target) return;
+    if (!target || target.status !== "DRAFT") return;
     try {
       await activateFormat(target.id).unwrap();
       notifyMutationSuccess("Matric number format activated successfully.");
@@ -133,6 +146,70 @@ export function useActivateMatricNumberFormatModal(
 
   return {
     state: { isLoading, activeFormat },
+    actions: { handleConfirm, handleCancel },
+  };
+}
+
+// ─── Deactivate ───────────────────────────────────────────────────────────────
+
+export function useDeactivateMatricNumberFormatModal(
+  target: MatricNumberFormat | null,
+  onClose: () => void,
+) {
+  const [deactivateFormat, { isLoading }] = useDeactivateMatricNumberFormatMutation();
+  const handleApiError = useApiError();
+
+  const handleConfirm = async () => {
+    if (!target) return;
+    try {
+      await deactivateFormat(target.id).unwrap();
+      notifyMutationSuccess(MATRIC_NUMBER_FORMAT_UI_COPY.deactivateSuccess);
+      onClose();
+    } catch (err: unknown) {
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "POST" },
+      });
+    }
+  };
+
+  const handleCancel = () => {
+    onClose();
+  };
+
+  return {
+    state: { isLoading },
+    actions: { handleConfirm, handleCancel },
+  };
+}
+
+// ─── Reactivate (INACTIVE only) ───────────────────────────────────────────────
+
+export function useReactivateMatricNumberFormatModal(
+  target: MatricNumberFormat | null,
+  onClose: () => void,
+) {
+  const [reactivateFormat, { isLoading }] = useReactivateMatricNumberFormatMutation();
+  const handleApiError = useApiError();
+
+  const handleConfirm = async () => {
+    if (!target || target.status !== "INACTIVE") return;
+    try {
+      await reactivateFormat(target.id).unwrap();
+      notifyMutationSuccess(MATRIC_NUMBER_FORMAT_UI_COPY.reactivateSuccess);
+      onClose();
+    } catch (err: unknown) {
+      handleApiError(err, {
+        context: { screen: RequestScreen.Action, method: "POST" },
+      });
+    }
+  };
+
+  const handleCancel = () => {
+    onClose();
+  };
+
+  return {
+    state: { isLoading },
     actions: { handleConfirm, handleCancel },
   };
 }

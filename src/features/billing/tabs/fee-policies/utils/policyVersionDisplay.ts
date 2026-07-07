@@ -4,18 +4,13 @@ import {
   formatEnumAsLabel,
 } from "@/features/billing/tabs/fee-events/utils/feeEventDisplay";
 import { MISSING_FEE_CHARGE_POLICY_OPTIONS } from "@/shared/constants/billableEventOptions";
+import { FEE_EVENT_CODE_LABELS } from "@/shared/constants/feeEventOptions";
 import type { BillableEventPolicy } from "../types/billable-event-policy";
 import {
   formatEffectiveRange,
   formatPolicyDate,
   formatPolicyVersionLabel,
 } from "./billingPolicyDisplay";
-
-const CODE_LABEL_FALLBACKS: Record<string, string> = {
-  ADMISSION_APPLICATION_FEE: "Application fee",
-  ADMISSION_ACCEPTANCE_FEE: "Acceptance fee",
-  SEMESTER_REGISTRATION_FEE: "Semester registration fee",
-};
 
 const TIMING_LABEL_FALLBACKS: Record<string, string> = {
   PAY_BEFORE: "Pay before",
@@ -100,7 +95,7 @@ export function getPolicyVersionDrawerDisplay(
     feeTypeLabel: formatCatalogField(
       policy.code,
       labelMaps.codeLabels,
-      CODE_LABEL_FALLBACKS,
+      FEE_EVENT_CODE_LABELS,
     ),
     code: policy.code,
     paymentTiming: formatCatalogField(

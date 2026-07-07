@@ -1,11 +1,6 @@
 import type { FeeEventsTabLabelMaps } from "../types/fee-events-tab";
 import type { BillableEvent } from "../types/billable-event";
-
-const CODE_LABEL_FALLBACKS: Record<string, string> = {
-  ADMISSION_APPLICATION_FEE: "Application fee",
-  ADMISSION_ACCEPTANCE_FEE: "Acceptance fee",
-  REGISTRATION_FEE: "Registration fee",
-};
+import { FEE_EVENT_CODE_LABELS } from "@/shared/constants/feeEventOptions";
 
 const MISSING_FIELD_LABEL = "—";
 
@@ -71,7 +66,7 @@ export function getFeeEventCardDisplay(
     feeTypeLabel: formatCatalogField(
       event.code,
       labelMaps.codeLabels,
-      CODE_LABEL_FALLBACKS,
+      FEE_EVENT_CODE_LABELS,
     ),
     description: event.description?.trim() || null,
   };

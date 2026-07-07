@@ -1,5 +1,10 @@
 /** Human-readable labels for billing enums shown in UI (not API filters). */
 
+import {
+  FEE_EVENT_CODE_LABELS,
+  type KnownFeeEventCode,
+} from "@/shared/constants/feeEventOptions";
+
 export const FEE_CHARGE_STATUS_LABELS: Record<string, string> = {
   OPEN: "Open",
   PAID: "Paid",
@@ -60,5 +65,8 @@ export function formatEventCodeLabel(
 ): string {
   if (options?.displayName?.trim()) return options.displayName.trim();
   if (!eventCode) return "—";
-  return humanizeEnumValue(eventCode);
+  return (
+    FEE_EVENT_CODE_LABELS[eventCode as KnownFeeEventCode] ??
+    humanizeEnumValue(eventCode)
+  );
 }

@@ -52,8 +52,17 @@ export type PaginatedResponse<T> = {
   totalItems: number;
 };
 
+/**
+ * Payer type used for student payment reads.
+ *
+ * For the STUDENT role we send `lifecycle` so the server resolves both the
+ * candidate and student identities and returns one combined payment timeline.
+ * Candidates continue to use `admission_candidate`.
+ */
+export type PaymentPayerType = "lifecycle" | "admission_candidate";
+
 export type MyPaymentsParams = {
-  payerType: PayerType;
+  payerType: PaymentPayerType;
   page?: number;
   itemsPerPage?: number;
   sort?: string;
@@ -61,7 +70,7 @@ export type MyPaymentsParams = {
 
 export type MyPaymentParams = {
   id: number;
-  payerType: PayerType;
+  payerType: PaymentPayerType;
   include?: string;
 };
 
