@@ -1,6 +1,7 @@
 import { DashCard } from "@/components/ui-kit";
 import { BillingWorkflowDecisionGuard } from "@/features/billing";
 import type { WorkflowPayNowPayload } from "@/features/billing/types/workflow-step-decision";
+import { FEE_EVENT_CODE } from "@/shared/constants/feeEventOptions";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
 import { MetadataRenderer } from "@/shared/ui/MetadataRenderer";
 import { Button, Card, Descriptions, Flex, Table, Typography } from "antd";
@@ -122,7 +123,7 @@ export function AdmissionApplicationDossierView({
       <ConditionalRenderer when={flags.showFeeBanner}>
         <BillingWorkflowDecisionGuard
           workflowStep="SUBMIT_APPLICATION"
-          eventCode="ADMISSION_APPLICATION_FEE"
+          eventCode={FEE_EVENT_CODE.ADMISSION_APPLICATION}
           skip={!flags.showFeeBanner}
           onPayNow={onBillingPayNow}
           isPayNowLoading={isPayNowLoading}

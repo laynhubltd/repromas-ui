@@ -1,5 +1,12 @@
 import type { Rule } from "antd/es/form";
 
+export const entryModeRules: Rule[] = [
+  {
+    required: true,
+    message: "Lane / slot is required",
+  },
+];
+
 export const formatCodeRules: Rule[] = [
   { required: true, message: "Format code is required" },
   { min: 1, message: "Format code must be at least 1 character" },

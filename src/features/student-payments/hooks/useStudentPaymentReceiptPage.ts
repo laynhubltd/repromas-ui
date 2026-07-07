@@ -1,6 +1,7 @@
 import { appPaths } from "@/app/routing/app-path";
 import useAuthState from "@/features/auth/use-auth-state";
 import { resolvePayerTypeFromScope } from "@/features/student-invoices/utils/resolvePayerType";
+import { resolvePaymentPayerType } from "../utils/resolvePaymentPayerType";
 import { RequestScreen } from "@/shared/types/error-ui";
 import { deriveSectionErrorMessage } from "@/shared/utils/error/deriveSectionErrorMessage";
 import {
@@ -16,7 +17,8 @@ export function useStudentPaymentReceiptPage() {
   const navigate = useNavigate();
   const { paymentId: paymentIdParam } = useParams<{ paymentId: string }>();
   const { activeRole } = useAuthState();
-  const payerType = resolvePayerTypeFromScope(activeRole?.scope);
+  const payerType = resolvePaymentPayerType(activeRole?.scope);
+  const invoicePayerType = resolvePayerTypeFromScope(activeRole?.scope);
 
   const paymentId = Number.parseInt(paymentIdParam ?? "", 10);
   const skip = payerType === null || Number.isNaN(paymentId);
@@ -30,10 +32,10 @@ export function useStudentPaymentReceiptPage() {
   const { data: invoiceDetail } = useGetMyInvoiceQuery(
     {
       id: payment?.invoiceId ?? 0,
-      payerType: payerType!,
+      payerType: invoicePayerType!,
       include: "lines,event",
     },
-    { skip: skip || !payment?.invoiceId || payerType === null },
+    { skip: skip || !payment?.invoiceId || invoicePayerType === null },
   );
 
   const allocationLineNames = useMemo(

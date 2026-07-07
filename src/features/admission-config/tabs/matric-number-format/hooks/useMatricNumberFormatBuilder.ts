@@ -14,8 +14,16 @@ import {
   initialMatricNumberFormatBuilderState,
   matricNumberFormatBuilderReducer,
 } from "../state/matricNumberFormatBuilderState";
-import type { MatricNumberFormat, MatricNumberFormatPrerequisites } from "../types/matric-number-format";
-import { MATRIC_NUMBER_FORMAT_MAX_LENGTH } from "@/shared/constants/matricNumberFormatOptions";
+import type {
+  MatricFormatActiveSlot,
+  MatricNumberFormat,
+  MatricNumberFormatPrerequisites,
+} from "../types/matric-number-format";
+import { canActivateDraft } from "../utils/slotLifecycleEligibility";
+import {
+  MATRIC_NUMBER_FORMAT_MAX_LENGTH,
+  MATRIC_NUMBER_FORMAT_UI_COPY,
+} from "@/shared/constants/matricNumberFormatOptions";
 import {
   canActivateMatricFormat,
   findUnknownTokens,
@@ -35,6 +43,7 @@ export function useMatricNumberFormatBuilder(
   open: boolean,
   onClose: () => void,
   prerequisites: MatricNumberFormatPrerequisites | undefined,
+  activeSlots: MatricFormatActiveSlot[],
 ) {
   const [state, dispatch] = useReducer(
     matricNumberFormatBuilderReducer,
@@ -105,6 +114,8 @@ export function useMatricNumberFormatBuilder(
 
   const prerequisitesReady = isPrerequisitesReadyForTemplate(prerequisites, template);
 
+  const slotActivationAllowed = format ? canActivateDraft(format, activeSlots) : false;
+
   const activationBlockers = getActivationBlockers({
     isDraft: format?.status === "DRAFT",
     prerequisitesReady,
@@ -113,17 +124,20 @@ export function useMatricNumberFormatBuilder(
     previewError: state.previewError,
     hasPreviewResult: state.previewResult !== null,
     previewProgramSelected: state.previewProgramId !== undefined,
+    slotLocked: format?.status === "DRAFT" && !slotActivationAllowed,
   });
 
-  const canActivate = canActivateMatricFormat({
-    isDraft: format?.status === "DRAFT",
-    prerequisitesReady,
-    unknownTokens,
-    isLengthInvalid,
-    previewError: state.previewError,
-    hasPreviewResult: state.previewResult !== null,
-    previewProgramSelected: state.previewProgramId !== undefined,
-  });
+  const canActivate =
+    slotActivationAllowed &&
+    canActivateMatricFormat({
+      isDraft: format?.status === "DRAFT",
+      prerequisitesReady,
+      unknownTokens,
+      isLengthInvalid,
+      previewError: state.previewError,
+      hasPreviewResult: state.previewResult !== null,
+      previewProgramSelected: state.previewProgramId !== undefined,
+    });
 
   const handleSave = async () => {
     if (!format || readOnly) return;
@@ -131,6 +145,7 @@ export function useMatricNumberFormatBuilder(
       await updateFormat({
         id: format.id,
         code: state.code.trim(),
+        entryMode: format.entryMode,
         template,
         tokenOptions: state.tokenOptions,
         counterPartition: state.counterPartition,
@@ -233,6 +248,8 @@ export function useMatricNumberFormatBuilder(
       canActivate,
       activationBlockers,
       prerequisitesReady,
+      slotActivationAllowed,
+      slotLockedTitle: MATRIC_NUMBER_FORMAT_UI_COPY.actionActivateSlotLocked,
     },
     actions: {
       dispatch,

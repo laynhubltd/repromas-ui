@@ -1,5 +1,33 @@
 import type { FeeEventPolicyStatusFilter } from "@/features/billing/tabs/fee-events/types/billable-event";
 
+/** Platform catalog fee event codes (SCREAMING_SNAKE). Custom tenant codes may exist at runtime. */
+export const FEE_EVENT_CODE = {
+  ADMISSION_APPLICATION: "ADMISSION_APPLICATION_FEE",
+  ADMISSION_ACCEPTANCE: "ADMISSION_ACCEPTANCE_FEE",
+  ADMISSION_REGISTRATION: "ADMISSION_REGISTRATION_FEE",
+  REGISTRATION: "REGISTRATION_FEE",
+  SEMESTER_REGISTRATION: "SEMESTER_REGISTRATION_FEE",
+} as const;
+
+export type KnownFeeEventCode =
+  (typeof FEE_EVENT_CODE)[keyof typeof FEE_EVENT_CODE];
+
+/** Curated bursar-facing labels for known catalog fee codes. */
+export const FEE_EVENT_CODE_LABELS: Record<KnownFeeEventCode, string> = {
+  [FEE_EVENT_CODE.ADMISSION_APPLICATION]: "Application fee",
+  [FEE_EVENT_CODE.ADMISSION_ACCEPTANCE]: "Acceptance fee",
+  [FEE_EVENT_CODE.ADMISSION_REGISTRATION]: "Admission registration fee",
+  [FEE_EVENT_CODE.REGISTRATION]: "Registration fee",
+  [FEE_EVENT_CODE.SEMESTER_REGISTRATION]: "Semester registration fee",
+};
+
+export function getKnownFeeEventCodeLabel(
+  eventCode: string | null | undefined,
+): string | undefined {
+  if (!eventCode) return undefined;
+  return FEE_EVENT_CODE_LABELS[eventCode as KnownFeeEventCode];
+}
+
 export const FEE_EVENT_SORT_DEFAULT = "code:asc";
 export const FEE_EVENT_ITEMS_PER_PAGE = 30;
 

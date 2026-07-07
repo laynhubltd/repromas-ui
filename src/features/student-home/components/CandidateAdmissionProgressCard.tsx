@@ -3,6 +3,7 @@ import type { WorkflowPayNowPayload } from "@/features/billing/types/workflow-st
 import { PaymentReturnAlert } from "@/features/student-payments/components/PaymentReturnAlert";
 import type { usePaymentReturnOrchestrator } from "@/features/student-payments/hooks/usePaymentReturnOrchestrator";
 import { useIsMobile } from "@/hooks/useBreakpoint";
+import { FEE_EVENT_CODE } from "@/shared/constants/feeEventOptions";
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
 import {
@@ -94,7 +95,7 @@ export function CandidateAdmissionProgressCard({
       <ConditionalRenderer when={showFeeBanner}>
         <BillingWorkflowDecisionGuard
           workflowStep="SUBMIT_APPLICATION"
-          eventCode="ADMISSION_APPLICATION_FEE"
+          eventCode={FEE_EVENT_CODE.ADMISSION_APPLICATION}
           onPayNow={onBillingPayNow}
           isPayNowLoading={isPayNowLoading}
           showBanner

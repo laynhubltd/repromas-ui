@@ -1,7 +1,9 @@
-import { ExplainerCallout } from "@/components/ui-kit";
 import { appPaths } from "@/app/routing/app-path";
+import { ExplainerCallout } from "@/components/ui-kit";
+import { formatInvoiceLabel } from "@/features/billing/utils/billingEmbedDisplay";
 import { useIsMobile } from "@/hooks/useBreakpoint";
 import { STUDENT_PAYMENT_UI_COPY } from "@/shared/constants/billingPaymentOptions";
+import { useToken } from "@/shared/hooks/useToken";
 import {
   ConditionalRenderer,
   centeredBox,
@@ -9,29 +11,17 @@ import {
 import { DataLoader } from "@/shared/ui/DataLoader";
 import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { SkeletonRows } from "@/shared/ui/SkeletonRows";
-import { useToken } from "@/shared/hooks/useToken";
 import { ArrowRightOutlined } from "@ant-design/icons";
-import {
-  Button,
-  Card,
-  Flex,
-  Pagination,
-  Table,
-  Tag,
-  Typography,
-} from "antd";
+import { Button, Card, Flex, Pagination, Table, Tag, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { Link } from "react-router-dom";
 import { useStudentPaymentsPage } from "../hooks/useStudentPaymentsPage";
 import type { StudentPayment } from "../types/student-payment";
 import {
-  formatInvoiceLabel,
-} from "@/features/billing/utils/billingEmbedDisplay";
-import {
   formatPaymentAmount,
   formatPaymentDate,
-  formatTransactionStatus,
-  paymentListSubtitle,
+  formatPaymentFeeLabel,
+  formatTransactionStatus
 } from "../utils/paymentDisplay";
 
 export function StudentPaymentsPage() {
@@ -44,9 +34,7 @@ export function StudentPaymentsPage() {
       title: "Date",
       key: "date",
       render: (_: unknown, record) =>
-        formatPaymentDate(
-          record.transaction?.paidAt ?? record.createdAt,
-        ),
+        formatPaymentDate(record.transaction?.paidAt ?? record.createdAt),
     },
     {
       title: "Bill",
@@ -59,7 +47,7 @@ export function StudentPaymentsPage() {
       title: "Fee",
       key: "fee",
       render: (_: unknown, record) => (
-        <Typography.Text>{paymentListSubtitle(record)}</Typography.Text>
+        <Typography.Text>{formatPaymentFeeLabel(record)}</Typography.Text>
       ),
     },
     {
@@ -86,7 +74,10 @@ export function StudentPaymentsPage() {
       width: 120,
       align: "right",
       render: (_: unknown, record) => (
-        <Button size="small" onClick={() => actions.handleOpenPayment(record.id)}>
+        <Button
+          size="small"
+          onClick={() => actions.handleOpenPayment(record.id)}
+        >
           {STUDENT_PAYMENT_UI_COPY.viewReceipt}
         </Button>
       ),
@@ -94,7 +85,11 @@ export function StudentPaymentsPage() {
   ];
 
   return (
-    <Flex vertical gap={24} style={{ width: "100%", maxWidth: 1100, margin: "0 auto" }}>
+    <Flex
+      vertical
+      gap={24}
+      style={{ width: "100%", maxWidth: 1100, margin: "0 auto" }}
+    >
       <ExplainerCallout
         intent="info"
         collapsible
@@ -114,7 +109,9 @@ export function StudentPaymentsPage() {
           />
         </ConditionalRenderer>
 
-        <ConditionalRenderer when={!state.sectionError && flags.hasData && !isMobile}>
+        <ConditionalRenderer
+          when={!state.sectionError && flags.hasData && !isMobile}
+        >
           <Table
             rowKey="id"
             columns={columns}
@@ -127,7 +124,9 @@ export function StudentPaymentsPage() {
           />
         </ConditionalRenderer>
 
-        <ConditionalRenderer when={!state.sectionError && flags.hasData && isMobile}>
+        <ConditionalRenderer
+          when={!state.sectionError && flags.hasData && isMobile}
+        >
           <Flex vertical gap={12}>
             {state.payments.map((payment) => {
               const status = payment.transaction?.status ?? "CONFIRMED";
@@ -146,7 +145,7 @@ export function StudentPaymentsPage() {
                           {formatInvoiceLabel(payment.invoice)}
                         </Typography.Text>
                         <Typography.Text type="secondary">
-                          {paymentListSubtitle(payment)}
+                          {formatPaymentFeeLabel(payment)}
                         </Typography.Text>
                       </Flex>
                       <Tag color={display.color}>{display.label}</Tag>
@@ -157,7 +156,10 @@ export function StudentPaymentsPage() {
                         payment.transaction?.currency ?? "NGN",
                       )}
                     </Typography.Text>
-                    <Typography.Text type="secondary" style={{ fontSize: token.fontSizeSM }}>
+                    <Typography.Text
+                      type="secondary"
+                      style={{ fontSize: token.fontSizeSM }}
+                    >
                       {formatPaymentDate(
                         payment.transaction?.paidAt ?? payment.createdAt,
                       )}

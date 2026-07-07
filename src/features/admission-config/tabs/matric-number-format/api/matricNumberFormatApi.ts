@@ -3,6 +3,7 @@ import { ApiTagTypes } from "@/shared/types/apiTagTypes";
 import { apiPlatformActionPost } from "@/shared/utils/api/apiPlatformActionPost";
 import type {
   CreateMatricNumberFormatRequest,
+  MatricFormatsActiveResponse,
   MatricNumberFormat,
   MatricNumberFormatDuplicateRequest,
   MatricNumberFormatListParams,
@@ -12,6 +13,12 @@ import type {
   PaginatedResponse,
   UpdateMatricNumberFormatRequest,
 } from "../types/matric-number-format";
+
+const matricFormatMutationInvalidation = (id?: number) => [
+  { type: ApiTagTypes.MatricNumberFormat, id: "LIST" as const },
+  { type: ApiTagTypes.MatricNumberFormat, id: "ACTIVE_SLOTS" as const },
+  ...(id !== undefined ? [{ type: ApiTagTypes.MatricNumberFormat, id }] : []),
+];
 
 const matricNumberFormatApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -48,6 +55,14 @@ const matricNumberFormatApi = baseApi.injectEndpoints({
       providesTags: [{ type: ApiTagTypes.MatricNumberFormat, id: "PREREQUISITES" }],
     }),
 
+    getMatricNumberFormatsActive: builder.query<MatricFormatsActiveResponse, void>({
+      query: () => ({
+        url: "/matric-number-formats/active",
+        method: "GET",
+      }),
+      providesTags: [{ type: ApiTagTypes.MatricNumberFormat, id: "ACTIVE_SLOTS" }],
+    }),
+
     createMatricNumberFormat: builder.mutation<
       MatricNumberFormat,
       CreateMatricNumberFormatRequest
@@ -57,7 +72,7 @@ const matricNumberFormatApi = baseApi.injectEndpoints({
         method: "POST",
         data: body,
       }),
-      invalidatesTags: [{ type: ApiTagTypes.MatricNumberFormat, id: "LIST" }],
+      invalidatesTags: matricFormatMutationInvalidation(),
     }),
 
     updateMatricNumberFormat: builder.mutation<
@@ -69,10 +84,7 @@ const matricNumberFormatApi = baseApi.injectEndpoints({
         method: "PUT",
         data: body,
       }),
-      invalidatesTags: (_result, _error, { id }) => [
-        { type: ApiTagTypes.MatricNumberFormat, id: "LIST" },
-        { type: ApiTagTypes.MatricNumberFormat, id },
-      ],
+      invalidatesTags: (_result, _error, { id }) => matricFormatMutationInvalidation(id),
     }),
 
     previewMatricNumberFormat: builder.mutation<
@@ -92,7 +104,25 @@ const matricNumberFormatApi = baseApi.injectEndpoints({
         method: "POST",
         ...apiPlatformActionPost,
       }),
-      invalidatesTags: [{ type: ApiTagTypes.MatricNumberFormat, id: "LIST" }],
+      invalidatesTags: (_result, _error, id) => matricFormatMutationInvalidation(id),
+    }),
+
+    deactivateMatricNumberFormat: builder.mutation<MatricNumberFormat, number>({
+      query: (id) => ({
+        url: `/matric-number-formats/${id}/deactivate`,
+        method: "POST",
+        ...apiPlatformActionPost,
+      }),
+      invalidatesTags: (_result, _error, id) => matricFormatMutationInvalidation(id),
+    }),
+
+    reactivateMatricNumberFormat: builder.mutation<MatricNumberFormat, number>({
+      query: (id) => ({
+        url: `/matric-number-formats/${id}/reactivate`,
+        method: "POST",
+        ...apiPlatformActionPost,
+      }),
+      invalidatesTags: (_result, _error, id) => matricFormatMutationInvalidation(id),
     }),
 
     duplicateMatricNumberFormat: builder.mutation<
@@ -104,7 +134,7 @@ const matricNumberFormatApi = baseApi.injectEndpoints({
         method: "POST",
         data: { code },
       }),
-      invalidatesTags: [{ type: ApiTagTypes.MatricNumberFormat, id: "LIST" }],
+      invalidatesTags: matricFormatMutationInvalidation(),
     }),
   }),
 });
@@ -113,10 +143,13 @@ export const {
   useGetMatricNumberFormatsQuery,
   useGetMatricNumberFormatQuery,
   useGetMatricNumberFormatPrerequisitesQuery,
+  useGetMatricNumberFormatsActiveQuery,
   useCreateMatricNumberFormatMutation,
   useUpdateMatricNumberFormatMutation,
   usePreviewMatricNumberFormatMutation,
   useActivateMatricNumberFormatMutation,
+  useDeactivateMatricNumberFormatMutation,
+  useReactivateMatricNumberFormatMutation,
   useDuplicateMatricNumberFormatMutation,
 } = matricNumberFormatApi;
 

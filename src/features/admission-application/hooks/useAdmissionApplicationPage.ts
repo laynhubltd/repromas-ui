@@ -5,6 +5,7 @@ import { useAccessControl } from "@/features/access-control/use-access-control";
 import { useBillingWorkflowDecision } from "@/features/billing";
 import type { WorkflowPayNowPayload } from "@/features/billing/types/workflow-step-decision";
 import useAuthState from "@/features/auth/use-auth-state";
+import { FEE_EVENT_CODE } from "@/shared/constants/feeEventOptions";
 import { deriveSectionErrorMessage } from "@/shared/utils/error/deriveSectionErrorMessage";
 import { RequestScreen } from "@/shared/types/error-ui";
 import { buildStudentApplyReturnTo } from "@/shared/utils/validateReturnUrl";
@@ -71,7 +72,7 @@ export function useAdmissionApplicationPage() {
   const isDraft = application ? isDraftApplication(application) : false;
 
   const { flags: billingFlags } = useBillingWorkflowDecision("SUBMIT_APPLICATION", {
-    eventCode: "ADMISSION_APPLICATION_FEE",
+    eventCode: FEE_EVENT_CODE.ADMISSION_APPLICATION,
     skip: !isCandidate || !isDraft,
   });
 

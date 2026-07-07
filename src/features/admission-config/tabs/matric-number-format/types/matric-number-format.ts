@@ -2,9 +2,14 @@ export type MatricFormatStatus = "DRAFT" | "ACTIVE" | "INACTIVE";
 
 export type CounterPartition = "TENANT" | "SESSION" | "PROGRAM_AND_SESSION";
 
+export type MatricFormatEntryMode = "UTME" | "DIRECT_ENTRY" | "TRANSFER";
+
+export type MatricFormatSlot = MatricFormatEntryMode | null;
+
 export type MatricNumberFormat = {
   id: number;
   code: string;
+  entryMode: MatricFormatSlot;
   template: string;
   tokenOptions: Record<string, unknown>;
   counterPartition: CounterPartition;
@@ -13,6 +18,18 @@ export type MatricNumberFormat = {
   status: MatricFormatStatus;
   createdAt: string;
   updatedAt: string;
+  existsIntakeStudentInSessionForFormatId?: boolean;
+};
+
+export type MatricFormatActiveSlot = {
+  entryMode: MatricFormatSlot;
+  format: MatricNumberFormat | null;
+  activationLocked: boolean;
+};
+
+export type MatricFormatsActiveResponse = {
+  currentSessionId: number | null;
+  slots: MatricFormatActiveSlot[];
 };
 
 export type TemplateSegment =
@@ -25,10 +42,12 @@ export type MatricNumberFormatListParams = {
   sort?: string;
   "search[code]"?: string;
   "exact[status]"?: MatricFormatStatus;
+  "exact[entryMode]"?: MatricFormatEntryMode | "";
 };
 
 export type CreateMatricNumberFormatRequest = {
   code: string;
+  entryMode?: MatricFormatSlot;
   template: string;
   tokenOptions?: Record<string, unknown>;
   counterPartition: CounterPartition;

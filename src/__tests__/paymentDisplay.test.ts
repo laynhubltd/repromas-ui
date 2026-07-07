@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   firstTransactionFromList,
+  formatPaymentFeeLabel,
   formatTransactionStatus,
   isTransactionSettled,
   paymentListSubtitle,
@@ -97,6 +98,41 @@ describe("resolvePollStateFromTransaction", () => {
 describe("formatTransactionStatus", () => {
   it("humanizes unknown transaction statuses", () => {
     expect(formatTransactionStatus("CUSTOM_STATE").label).toBe("Custom State");
+  });
+});
+
+describe("formatPaymentFeeLabel", () => {
+  it("resolves fee charge event code to curated label", () => {
+    expect(
+      formatPaymentFeeLabel({
+        id: 1,
+        paymentTransactionId: 1,
+        feeChargeId: 6,
+        invoiceId: null,
+        amount: "100.00",
+        createdAt: "",
+        updatedAt: "",
+        feeCharge: { eventCode: "ADMISSION_REGISTRATION_FEE" },
+      }),
+    ).toBe("Admission registration fee");
+  });
+
+  it("prefers fee charge eventName when present", () => {
+    expect(
+      formatPaymentFeeLabel({
+        id: 1,
+        paymentTransactionId: 1,
+        feeChargeId: 6,
+        invoiceId: null,
+        amount: "100.00",
+        createdAt: "",
+        updatedAt: "",
+        feeCharge: {
+          eventCode: "ADMISSION_APPLICATION_FEE",
+          eventName: "Custom application fee",
+        },
+      }),
+    ).toBe("Custom application fee");
   });
 });
 
