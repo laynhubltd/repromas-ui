@@ -182,6 +182,7 @@ function prepareHeaders(
 
   if (token && isWhitelistedPath(path)) {
     (out as Record<string, string>)["Authorization"] = `Bearer ${token}`;
+    (out as Record<string, string>)["X-Authorization"] = `Bearer ${token}`;
   }
 
   const tenant = getTenantFromHostname(window.location.hostname);
