@@ -17,7 +17,12 @@ import {
     REGISTER,
     REHYDRATE,
 } from "redux-persist";
-import storage from "redux-persist/lib/storage";
+// import storage from "redux-persist/lib/storage";
+const storage = {
+  getItem: (key: string) => Promise.resolve(localStorage.getItem(key)),
+  setItem: (key: string, value: string) => Promise.resolve(localStorage.setItem(key, value)),
+  removeItem: (key: string) => Promise.resolve(localStorage.removeItem(key)),
+};
 import { baseApi } from "./api/baseApi";
 
 import themeReducer from "@/app/state/theme-slice";
