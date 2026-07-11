@@ -1,0 +1,7 @@
+# React SPA — rewrite all requests to index.html so client-side routing
+# (react-router) works on hard refresh and direct URL navigation.
+Options -MultiViews
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.html [QSA,L]
