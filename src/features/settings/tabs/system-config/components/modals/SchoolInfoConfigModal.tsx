@@ -313,7 +313,9 @@ export function SchoolInfoConfigModal({
                 <ColorPicker
                   format="hex"
                   value={state.primaryColor}
-                  onChange={(_, hex) => actions.handlePrimaryColorChange(hex)}
+                  onChange={(color) =>
+                    actions.handlePrimaryColorChange(color.toHexString())
+                  }
                 />
                 <SchoolInfoFieldError
                   message={

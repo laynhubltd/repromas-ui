@@ -8,8 +8,8 @@ import {
   SafetyOutlined,
   SettingOutlined,
   SwapOutlined,
+  TeamOutlined,
 } from "@ant-design/icons";
-import { Typography } from "antd";
 import { useMemo } from "react";
 import { useSettingsPage } from "../hooks/useSettingsPage";
 import { AcademicCalendarTab } from "../tabs/academic-calendar";
@@ -19,6 +19,7 @@ import { RbacSettingsTab } from "../tabs/rbac-settings";
 import { TransitionStatusTab } from "../tabs/student-transition-status";
 import { SystemConfigTab } from "../tabs/system-config";
 import { SystemTimeFramesTab } from "../tabs/system-timeframes";
+import { UserManagementTab } from "../tabs/user-management";
 
 export default function Settings() {
   const { state, actions } = useSettingsPage();
@@ -26,10 +27,45 @@ export default function Settings() {
   const allTabItems = useMemo(
     () => [
       {
+        key: "roles-permissions",
+        label: (
+          <PermissionGuard
+            permission={[Permission.RolesList, Permission.PermissionsList]}
+          >
+            <span>
+              <SafetyOutlined /> Roles & Permissions
+            </span>
+          </PermissionGuard>
+        ),
+        children: <RbacSettingsTab />,
+      },
+      {
+        key: "user-management",
+        label: (
+          <PermissionGuard permission={Permission.UsersList}>
+            <span>
+              <TeamOutlined /> Users
+            </span>
+          </PermissionGuard>
+        ),
+        children: <UserManagementTab />,
+      },
+      {
+        key: "system-config",
+        label: (
+          <PermissionGuard permission={[Permission.SystemConfigsList]}>
+            <span>
+              <SettingOutlined /> System Config
+            </span>
+          </PermissionGuard>
+        ),
+        children: <SystemConfigTab />,
+      },
+      {
         key: "academic-calendar",
         label: (
           <span>
-            <CalendarOutlined /> Academic Calendar
+            <CalendarOutlined /> Calendar
           </span>
         ),
         children: <AcademicCalendarTab />,
@@ -54,39 +90,15 @@ export default function Settings() {
         children: <CurriculumVersionTab />,
       },
       {
-        key: "roles-permissions",
-        label: (
-          <PermissionGuard
-            permission={[Permission.RolesList, Permission.PermissionsList]}
-          >
-            <span>
-              <SafetyOutlined /> Roles & Permissions
-            </span>
-          </PermissionGuard>
-        ),
-        children: <RbacSettingsTab />,
-      },
-      {
         key: "system-timeframe",
         label: (
           <PermissionGuard permission={[Permission.SystemTimeFramesList]}>
             <span>
-              <CalendarOutlined /> System Time Frame
+              <CalendarOutlined /> Time Frame
             </span>
           </PermissionGuard>
         ),
         children: <SystemTimeFramesTab />,
-      },
-      {
-        key: "system-config",
-        label: (
-          <PermissionGuard permission={[Permission.SystemConfigsList]}>
-            <span>
-              <SettingOutlined /> System Config
-            </span>
-          </PermissionGuard>
-        ),
-        children: <SystemConfigTab />,
       },
       {
         key: "student-transition-status",
@@ -96,21 +108,6 @@ export default function Settings() {
           </span>
         ),
         children: <TransitionStatusTab />,
-      },
-      {
-        key: "general",
-        label: (
-          <span>
-            <SettingOutlined /> General
-          </span>
-        ),
-        children: (
-          <div style={{ padding: 24 }}>
-            <Typography.Text type="secondary">
-              General settings placeholder. Configure system-wide options here.
-            </Typography.Text>
-          </div>
-        ),
       },
     ],
     [],

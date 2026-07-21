@@ -10,6 +10,7 @@ const ALL_TAB_KEYS = [
   "system-timeframe",
   "system-config",
   "student-transition-status",
+  "user-management",
   "general",
 ] as const;
 
@@ -37,10 +38,10 @@ export function useSettingsPage() {
     ) {
       return requestedTab as SettingsTabKey;
     }
-    if ((allowedTabKeys as readonly string[]).includes("level-config")) {
-      return "level-config";
+    if ((allowedTabKeys as readonly string[]).includes("roles-permissions")) {
+      return "roles-permissions";
     }
-    return allowedTabKeys[0] ?? "curriculum-versions";
+    return allowedTabKeys[0] ?? "roles-permissions";
   }, [requestedTab, allowedTabKeys]);
 
   const handleTabChange = useCallback(

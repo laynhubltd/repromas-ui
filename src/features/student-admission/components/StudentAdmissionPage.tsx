@@ -17,7 +17,7 @@ import {
   STUDENT_ADMISSION_UI_COPY,
 } from "../constants/studentAdmissionOptions";
 import { useStudentAdmissionPage } from "../hooks/useStudentAdmissionPage";
-import { AdmissionLetter } from "./AdmissionLetter";
+import { AdmissionLetter } from "@/features/reporting/components/AdmissionLetter";
 
 const { Title, Paragraph } = Typography;
 

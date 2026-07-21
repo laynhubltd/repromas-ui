@@ -1,5 +1,30 @@
 import type { Rule } from "antd/es/form";
 
+// ── Signatory validators ──────────────────────────────────────────────────────
+
+export const signatoryTitleRules: Rule[] = [
+  { max: 150, message: "Title must be 150 characters or fewer." },
+];
+
+export const signatoryOrderRules: Rule[] = [
+  { type: "integer", min: 1, message: "Order must be a positive integer." },
+];
+
+export const signatoryNameRules: Rule[] = [
+  { required: true, message: "Name is required." },
+  { max: 200, message: "Name must be 200 characters or fewer." },
+];
+
+export const signatoryPositionRules: Rule[] = [
+  { max: 100, message: "Position must be 100 characters or fewer." },
+];
+
+export const signatoryQualificationRules: Rule[] = [
+  { max: 500, message: "Qualification must be 500 characters or fewer." },
+];
+
+// ── System config validators ──────────────────────────────────────────────────
+
 export const minCreditsRules: Rule[] = [
   { required: true, message: "Minimum credits is required" },
   { type: "integer", min: 0, message: "Minimum credits must be a non-negative integer" },

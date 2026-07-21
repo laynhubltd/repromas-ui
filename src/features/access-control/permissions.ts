@@ -345,6 +345,10 @@ export const Permission = {
   MatricNumberFormatsCreate: "system-configs:create",
   MatricNumberFormatsUpdate: "system-configs:update",
   MatricNumberFormatsActivate: "system-configs:manage",
+  // Users
+  UsersList: "user-roles:list",
+  UsersCreate: "user-roles:create",
+  UsersUpdate: "user-roles:update",
 } as const;
 
 export type Permission = (typeof Permission)[keyof typeof Permission];
