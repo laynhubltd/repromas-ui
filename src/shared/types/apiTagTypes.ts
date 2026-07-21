@@ -71,6 +71,7 @@ export const ApiTagTypes = {
   PriorQualificationType: "PriorQualificationType",
   ProgramPriorQualificationRequirement: "ProgramPriorQualificationRequirement",
   MatricNumberFormat: "MatricNumberFormat",
+  Signatories: "Signatories",
 } as const;
 
 export type ApiTagLiteral = (typeof ApiTagTypes)[keyof typeof ApiTagTypes];

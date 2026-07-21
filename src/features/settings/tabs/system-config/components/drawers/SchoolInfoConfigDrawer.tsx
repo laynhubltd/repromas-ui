@@ -74,7 +74,7 @@ export function SchoolInfoConfigDrawer({
           <Descriptions.Item label="Institution Name">
             {displayValue(state.schoolName)}
           </Descriptions.Item>
-          <Descriptions.Item label="Tenant">
+          <Descriptions.Item label="Slug/Code">
             {displayValue(state.tenantName)}
           </Descriptions.Item>
           <Descriptions.Item label="Motto">
