@@ -24,6 +24,7 @@ export type BillingPaymentTransaction = {
   payerId: number | null;
   createdAt: string;
   updatedAt: string;
+  metadataJson: Record<string, unknown> | null;
   payments?: BillingPayment[] | null;
   feeCharge?: ShallowFeeChargeEmbed | null;
   invoice?: ShallowInvoiceEmbed | null;
@@ -44,4 +45,9 @@ export type BillingPaymentTransactionListParams = {
 export type PaginatedResponse<T> = {
   member: T[];
   totalItems: number;
+};
+
+export type VerifyTransactionResponse = {
+  status: "success" | "error";
+  message: string;
 };

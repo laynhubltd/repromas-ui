@@ -14,6 +14,7 @@ import {
 import { DataLoader } from "@/shared/ui/DataLoader";
 import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { Descriptions, Drawer, Tag, Typography } from "antd";
+import { MetadataRenderer } from "@/shared/ui/MetadataRenderer";
 import { useGetBillingPaymentTransactionQuery } from "../api/billingPaymentTransactionApi";
 
 type TransactionDetailDrawerProps = {
@@ -105,6 +106,25 @@ export function TransactionDetailDrawer({
                 {postedSummary || ADMIN_PAYMENT_UI_COPY.noLinkedPayment}
               </Descriptions.Item>
             </Descriptions>
+            {tx.metadataJson != null ? (
+              <div style={{ marginTop: 20 }}>
+                <Typography.Text
+                  type="secondary"
+                  strong
+                  style={{ display: "block", marginBottom: 10, fontSize: 13 }}
+                >
+                  Gateway Data
+                </Typography.Text>
+                <MetadataRenderer
+                  value={tx.metadataJson}
+                  variant="descriptions"
+                  size="small"
+                  bordered
+                  showRawToggle
+                  showCopyJson
+                />
+              </div>
+            ) : null}
           </>
         ) : null}
       </DataLoader>

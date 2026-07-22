@@ -4,6 +4,7 @@ import type {
   BillingPaymentTransaction,
   BillingPaymentTransactionListParams,
   PaginatedResponse,
+  VerifyTransactionResponse,
 } from "../types/billing-payment-transaction";
 
 const billingPaymentTransactionApi = baseApi.injectEndpoints({
@@ -33,10 +34,19 @@ const billingPaymentTransactionApi = baseApi.injectEndpoints({
         { type: ApiTagTypes.BillingPaymentTransaction, id },
       ],
     }),
+
+    verifyTransaction: builder.mutation<VerifyTransactionResponse, string>({
+      query: (providerReference) => ({
+        url: `/billing/payment-transactions/${providerReference}/verify`,
+        method: "POST",
+      }),
+      invalidatesTags: [ApiTagTypes.BillingPaymentTransaction],
+    }),
   }),
 });
 
 export const {
   useGetBillingPaymentTransactionsQuery,
   useGetBillingPaymentTransactionQuery,
+  useVerifyTransactionMutation,
 } = billingPaymentTransactionApi;
