@@ -22,8 +22,8 @@ import { DataLoader } from "@/shared/ui/DataLoader";
 import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { SkeletonRows } from "@/shared/ui/SkeletonRows";
 import { useToken } from "@/shared/hooks/useToken";
-import { EyeOutlined } from "@ant-design/icons";
-import { Button, Flex, Pagination, Segmented, Tag, Typography } from "antd";
+import { EyeOutlined, MoreOutlined, SyncOutlined } from "@ant-design/icons";
+import { Button, Dropdown, Flex, Pagination, Segmented, Tag, Tooltip, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { usePaymentTransactionsTab } from "../hooks/usePaymentTransactionsTab";
 import type { BillingPaymentTransaction } from "../types/billing-payment-transaction";
@@ -86,14 +86,55 @@ export function PaymentTransactionsTab() {
     {
       title: "",
       key: "actions",
-      width: 80,
-      render: (_: unknown, record) => (
-        <Button
-          type="text"
-          icon={<EyeOutlined />}
-          onClick={() => actions.handleOpenDetail(record.id)}
-        />
-      ),
+      width: 56,
+      render: (_: unknown, record) => {
+        const isConfirmed = record.status === "CONFIRMED";
+        return (
+          <Dropdown
+            trigger={["click"]}
+            placement="bottomRight"
+            menu={{
+              items: [
+                {
+                  key: "view",
+                  label: "View",
+                  icon: <EyeOutlined />,
+                  onClick: () => actions.handleOpenDetail(record.id),
+                },
+                {
+                  key: "verify",
+                  label: (
+                    <Tooltip
+                      title={
+                        isConfirmed
+                          ? "Transaction already confirmed"
+                          : undefined
+                      }
+                    >
+                      Re-query Gateway
+                    </Tooltip>
+                  ),
+                  icon: <SyncOutlined />,
+                  disabled: isConfirmed || state.isVerifying,
+                  onClick: () =>
+                    void actions.handleVerify(record.providerReference),
+                },
+              ],
+            }}
+          >
+            <Button
+              type="text"
+              size="small"
+              icon={
+                <MoreOutlined
+                  style={{ fontSize: 16, color: token.colorTextTertiary }}
+                />
+              }
+              onClick={(e) => e.stopPropagation()}
+            />
+          </Dropdown>
+        );
+      },
     },
   ];
 

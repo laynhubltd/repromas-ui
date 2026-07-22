@@ -2,10 +2,15 @@ import {
   ADMIN_PAYMENT_TRANSACTION_ITEMS_PER_PAGE,
   STUDENT_PAYMENT_SORT_DEFAULT,
 } from "@/shared/constants/billingPaymentOptions";
+import { useApiError } from "@/shared/hooks/useApiError";
 import { RequestScreen } from "@/shared/types/error-ui";
 import { deriveSectionErrorMessage } from "@/shared/utils/error/deriveSectionErrorMessage";
+import { notifyMutationSuccess } from "@/shared/utils/feedback/notifyMutationSuccess";
 import { useCallback, useMemo, useReducer } from "react";
-import { useGetBillingPaymentTransactionsQuery } from "../api/billingPaymentTransactionApi";
+import {
+  useGetBillingPaymentTransactionsQuery,
+  useVerifyTransactionMutation,
+} from "../api/billingPaymentTransactionApi";
 import type { BillingPaymentTransactionStatus } from "../types/billing-payment-transaction";
 
 type State = {
@@ -45,6 +50,8 @@ function reducer(state: State, action: Action): State {
 
 export function usePaymentTransactionsTab() {
   const [state, dispatch] = useReducer(reducer, initial);
+  const handleApiError = useApiError();
+  const [verifyTransaction, { isLoading: isVerifying }] = useVerifyTransactionMutation();
 
   const queryParams = useMemo(
     () => ({
@@ -80,6 +87,7 @@ export function usePaymentTransactionsTab() {
       sectionError,
       detailId: state.detailId,
       detailOpen: state.detailOpen,
+      isVerifying,
     },
     actions: {
       handlePageChange: useCallback((page: number) => {
@@ -97,6 +105,29 @@ export function usePaymentTransactionsTab() {
       handleCloseDetail: useCallback(() => {
         dispatch({ type: "CLOSE_DETAIL" });
       }, []),
+      handleVerify: useCallback(
+        async (providerReference: string) => {
+          try {
+            const result = await verifyTransaction(providerReference).unwrap();
+
+            // The API returns status: "error" with a 200 for application-level failures.
+            // Treat these as user-facing errors rather than silent successes.
+            if (result.status === "error") {
+              handleApiError(new Error(result.message), {
+                context: { screen: RequestScreen.Action, method: "POST" },
+              });
+              return;
+            }
+
+            notifyMutationSuccess(result.message);
+          } catch (err: unknown) {
+            handleApiError(err, {
+              context: { screen: RequestScreen.Action, method: "POST" },
+            });
+          }
+        },
+        [verifyTransaction, handleApiError],
+      ),
       refetch,
     },
     flags: {
