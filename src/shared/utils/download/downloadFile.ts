@@ -39,7 +39,10 @@ export async function downloadFileFromUrl(options: DownloadHttpOptions, store: A
 
   const headers: Record<string, string> = {};
   if (accept) headers["Accept"] = accept;
-  if (token) headers["Authorization"] = `Bearer ${token}`;
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+    headers["X-Authorization"] = `Bearer ${token}`
+  };
   if (tenant) headers["X-TENANT"] = tenant;
   // extraHeaders last — caller wins on conflicts
   Object.assign(headers, extraHeaders);
