@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="500" viewBox="0 0 1500 500"><rect width="1500" height="500" fill="#2E1065"/>
+<rect x="90" y="90" width="320" height="320" rx="56" fill="#FFFFFF"/>
+<g transform="translate(107,107) scale(0.56)"><path d="M 256 76 C 342 76 398 248 398 308 C 398 394 333 437 256 437 C 179 437 114 394 114 308 C 114 248 170 76 256 76 Z" transform="rotate(135 256 256)" fill="#2E1065"/>
+<text x="252" y="256" font-family="Georgia, DejaVu Serif, serif" font-size="120" font-weight="bold" fill="#8B5CF6" text-anchor="middle">P</text>
+<text x="204" y="239" font-family="Georgia, DejaVu Serif, serif" font-size="99" font-weight="bold" fill="#FFFFFF" text-anchor="middle">R</text>
+<circle cx="306" cy="296" r="18" fill="#C4B5FD"/>
+<circle cx="336" cy="326" r="13" fill="#A78BFA"/>
+<circle cx="362" cy="352" r="8" fill="#DDD6FE"/></g>
+<text x="470" y="248" font-family="DejaVu Sans, Arial, sans-serif" font-size="112" font-weight="bold" letter-spacing="5" fill="#FFFFFF">REPROMAS</text>
+<text x="474" y="312" font-family="DejaVu Sans, Arial, sans-serif" font-size="33" letter-spacing="7" fill="#C4B5FD">ACADEMIC WORKFLOW INFRASTRUCTURE</text>
+<circle cx="470" cy="368" r="7" fill="#DDD6FE"/><circle cx="504" cy="368" r="8" fill="#C4B5FD"/><circle cx="538" cy="368" r="9" fill="#A78BFA"/><circle cx="572" cy="368" r="10" fill="#8B5CF6"/>
+<text x="620" y="380" font-family="DejaVu Sans, Arial, sans-serif" font-size="30" fill="#A78BFA">Application to transcript, one system</text>
+<rect x="1340" y="300" width="26" height="60" fill="#4C1D95"/>
+<rect x="1376" y="260" width="26" height="100" fill="#6D28D9"/>
+<rect x="1412" y="210" width="26" height="150" fill="#8B5CF6"/>
+</svg>
