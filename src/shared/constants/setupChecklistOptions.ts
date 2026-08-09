@@ -28,6 +28,7 @@ export const SETUP_STEP_LABELS: Record<SetupStepId, string> = {
   gradingConfig: "Grading Config",
   billing: "Billing",
   settings: "Settings",
+  systemConfig: "System Configuration"
 };
 
 export const SETUP_STEP_DESCRIPTIONS: Record<SetupStepId, string> = {
@@ -38,8 +39,7 @@ export const SETUP_STEP_DESCRIPTIONS: Record<SetupStepId, string> = {
   curriculumVersion: "Create a curriculum version for your programs.",
   course: "Add courses offered by your departments.",
   staff: "Register academic staff members.",
-  transitionStatusDefault:
-    "Create a transition status and mark one as default for new student enrollment.",
+  transitionStatusDefault: "Create a transition status and mark one as default for new student enrollment.",
   student: "Enroll students into programs and levels.",
   admissionConfig: "Configure admission rules for your programs.",
   admissionCandidate: "Manage candidate applications.",
@@ -48,6 +48,7 @@ export const SETUP_STEP_DESCRIPTIONS: Record<SetupStepId, string> = {
   gradingConfig: "Configure grading schemas and evaluation rules.",
   billing: "Set up fee events, policies, and pricing.",
   settings: "Configure levels, curriculum, and system options.",
+  systemConfig: "Configure system settings."
 };
 
 export const SETUP_STEP_TOOLTIP_BLOCKED: Record<SetupStepId, string> = {
@@ -61,11 +62,11 @@ export const SETUP_STEP_TOOLTIP_BLOCKED: Record<SetupStepId, string> = {
   transitionStatusDefault: "Configure the default status students receive on enrollment.",
   student: "Add a program, level, curriculum version, and default transition status first.",
   admissionConfig: "Add a program first.",
-  admissionCandidate:
-    "Configure admission settings and a default transition status first.",
+  admissionCandidate: "Configure admission settings and a default transition status first.",
   courseRegistration: "Add students and courses first.",
   assessment: "Add programs, levels, and courses first.",
   gradingConfig: "Complete the academic foundation first.",
   billing: "Complete the academic foundation first.",
   settings: "Add a department first.",
+  systemConfig: "Add a department first."
 };

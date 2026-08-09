@@ -2,6 +2,7 @@ import { appPaths } from "@/app/routing/app-path";
 import type { SetupStepDefinition, SetupStepId } from "../types/setup";
 
 const settingsLevelRoute = `${appPaths.settings}?tab=level-config`;
+const settingsSystemConfigRoute = `${appPaths.settings}?tab=system-config`;
 const settingsCurriculumRoute = `${appPaths.settings}?tab=curriculum-versions`;
 
 const settingsTransitionStatusRoute = `${appPaths.settings}?tab=student-transition-status`;
@@ -9,6 +10,7 @@ const settingsTransitionStatusRoute = `${appPaths.settings}?tab=student-transiti
 export const SETUP_STEP_ORDER: SetupStepId[] = [
   "signedIn",
   "department",
+  "systemConfig",
   "level",
   "program",
   "curriculumVersion",
@@ -27,6 +29,7 @@ export const SETUP_STEP_ORDER: SetupStepId[] = [
 export const PHASE1_CHECKLIST_STEP_IDS: SetupStepId[] = [
   "signedIn",
   "department",
+  "systemConfig",
   "level",
   "program",
   "curriculumVersion",
@@ -57,6 +60,14 @@ export const SETUP_STEP_DEFINITIONS: Record<SetupStepId, SetupStepDefinition> = 
     prerequisites: [],
     route: appPaths.academicStructure,
     menuPath: appPaths.academicStructure,
+    checklistVisible: true,
+  },
+  systemConfig: {
+    id: "systemConfig",
+    phase: 1,
+    prerequisites: ["program"],
+    route: settingsSystemConfigRoute,
+    menuPath: appPaths.settings,
     checklistVisible: true,
   },
   level: {
