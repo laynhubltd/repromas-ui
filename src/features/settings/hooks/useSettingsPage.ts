@@ -14,7 +14,7 @@ const ALL_TAB_KEYS = [
   "general",
 ] as const;
 
-const SETUP_TAB_KEYS = ["level-config", "curriculum-versions"] as const;
+const SETUP_TAB_KEYS = ["system-config", "level-config", "curriculum-versions"] as const;
 
 export type SettingsTabKey = (typeof ALL_TAB_KEYS)[number];
 

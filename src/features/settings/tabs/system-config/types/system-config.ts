@@ -1,6 +1,6 @@
 // ── Enums ─────────────────────────────────────────────────────────────────────
 
-export type ConfigKey = "CREDIT_LOAD_LIMITS" | "FORCE_CARRYOVER_FIRST";
+export type ConfigKey = "CREDIT_LOAD_LIMITS" | "FORCE_CARRYOVER_FIRST" | "HAS_LEVEL_CATEGORY";
 
 export type ConfigScope = "GLOBAL" | "PROGRAM" | "SESSION" | "SEMESTER";
 
@@ -55,6 +55,7 @@ export type SystemConfigFormValues = {
   minCredits?: number;
   maxCredits?: number;
   forceCarryover?: boolean;
+  hasLevelCategory?: boolean;
   description?: string | null;
 };
 

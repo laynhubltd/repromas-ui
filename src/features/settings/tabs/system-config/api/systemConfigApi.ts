@@ -31,6 +31,9 @@ const systemConfigApi = baseApi.injectEndpoints({
         url: `system-configurations/${id}`,
         method: "PATCH",
         data: body,
+        headers: {
+          "Content-Type": "application/merge-patch+json",
+        },
       }),
       invalidatesTags: [{ type: ApiTagTypes.SystemConfiguration, id: "LIST" }],
     }),

@@ -1,26 +1,26 @@
 import type {
-    GetQueryHookResponse,
-    UploadMutationHookResponse,
+  GetQueryHookResponse,
+  UploadMutationHookResponse,
 } from "@/shared/types/pictureUploader";
 import { notifyMutationSuccess } from "@/shared/utils/feedback/notifyMutationSuccess";
 import {
-    useCreateSystemConfigMutation,
-    useListSystemConfigsQuery,
-    useUpdateSystemConfigMutation,
+  useCreateSystemConfigMutation,
+  useListSystemConfigsQuery,
+  useUpdateSystemConfigMutation,
 } from "../api/systemConfigApi";
 import type { CreateSystemConfigRequest, SystemConfig, UpdateSystemConfigRequest } from "../types/system-config";
 import { ConfigItem } from "./ConfigItem";
 
 // ── RTK hook adapters (PictureUploader style) ─────────────────────────────────
 
-function useForceCarryoverQuery(): GetQueryHookResponse<
+function useHasLevelCategoryQuery(): GetQueryHookResponse<
   SystemConfig | undefined
 > {
   const { data, isLoading, isFetching, isError, error, refetch } =
     useListSystemConfigsQuery();
 
   const config = data?.member.find(
-    (item) => item.configKey === "FORCE_CARRYOVER_FIRST",
+    (item) => item.configKey === "HAS_LEVEL_CATEGORY",
   );
 
   return {
@@ -33,11 +33,11 @@ function useForceCarryoverQuery(): GetQueryHookResponse<
   };
 }
 
-type ForceCarryoverPayload =
+type HasLevelCategoryPayload =
   | ({ id: number } & UpdateSystemConfigRequest)
   | CreateSystemConfigRequest;
 
-function useForceCarryoverPostMutation(): UploadMutationHookResponse<ForceCarryoverPayload> {
+function useHasLevelCategoryPostMutation(): UploadMutationHookResponse<HasLevelCategoryPayload> {
   const [update, { isLoading: isUpdating, error: updateError, isSuccess: isUpdateSuccess }] =
     useUpdateSystemConfigMutation();
   const [create, { isLoading: isCreating, error: createError, isSuccess: isCreateSuccess }] =
@@ -60,21 +60,21 @@ function useForceCarryoverPostMutation(): UploadMutationHookResponse<ForceCarryo
 
 // ── Adapters ──────────────────────────────────────────────────────────────────
 
-function getForceCarryoverValue(data: SystemConfig | undefined): boolean {
+function getHasLevelCategoryValue(data: SystemConfig | undefined): boolean {
   return Boolean(data?.configValue);
 }
 
-function buildForceCarryoverPayload(
+function buildHasLevelCategoryPayload(
   value: boolean,
   data: SystemConfig | undefined,
-): ForceCarryoverPayload {
+): HasLevelCategoryPayload {
   if (data) {
     return { id: data.id, configValue: value };
   }
   return {
     scope: "GLOBAL",
     referenceId: null,
-    configKey: "FORCE_CARRYOVER_FIRST",
+    configKey: "HAS_LEVEL_CATEGORY",
     dataType: "BOOLEAN",
     configValue: value,
   };
@@ -82,22 +82,24 @@ function buildForceCarryoverPayload(
 
 // ── Component ───────────────────────────────────────────────────────────────
 
-export function ForceCarryoverConfig() {
+export function HasLevelCategoryConfig() {
   // Need query data for payload formatter — wrap in closure at render time
-  const query = useForceCarryoverQuery();
+  const query = useHasLevelCategoryQuery();
 
   return (
-    <ConfigItem<SystemConfig | undefined, ForceCarryoverPayload>
+    <ConfigItem<SystemConfig | undefined, HasLevelCategoryPayload>
       type="BOOLEAN"
-      label="Overwrite Carryover Marks"
-      useGetQuery={useForceCarryoverQuery}
-      usePostMutation={useForceCarryoverPostMutation}
-      getConfigValue={getForceCarryoverValue}
+      label="Enable Level Categories"
+      useGetQuery={useHasLevelCategoryQuery}
+      usePostMutation={useHasLevelCategoryPostMutation}
+      getConfigValue={getHasLevelCategoryValue}
       postPayloadFormatter={(value) =>
-        buildForceCarryoverPayload(value, query.data)
+        buildHasLevelCategoryPayload(value, query.data)
       }
       getSummary={(data) =>
-        getForceCarryoverValue(data) ? "Enabled" : "Disabled"
+        getHasLevelCategoryValue(data)
+          ? "Enabled: Levels must belong to a category. Rank order is per-category."
+          : "Disabled: Levels operate as a flat list."
       }
       onSuccess={() => notifyMutationSuccess("Configuration saved.")}
     />
