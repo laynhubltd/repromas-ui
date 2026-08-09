@@ -6,6 +6,7 @@ import {
 } from "@/app/routing/module-routes/onboarding";
 import { getStudentRouteEntries } from "@/app/routing/module-routes/student";
 import useAuthState from "@/features/auth/use-auth-state";
+import { useSystemConfigState } from "@/features/settings/tabs/system-config/hooks/useSystemConfig";
 import { useMemo } from "react";
 import { BrowserRouter as Router, Routes } from "react-router-dom";
 import { resolveHost } from "./host-resolver";
@@ -30,6 +31,7 @@ const registry = buildRegistry();
 
 export function HostRouter() {
   const auth = useAuthState();
+  const systemConfig = useSystemConfigState();
 
   const host = useMemo(
     () =>
@@ -75,10 +77,11 @@ export function HostRouter() {
     auth.token && !isTokenExpired(auth.token) ? "authed" : "anon",
     auth.roleSwitcherOpen ? "picking" : "settled",
     moduleRole,
+    systemConfig.isBootstrapped ? "bootstrapped" : "bootstrapping",
   ].join("|");
 
   const routes = useMemo(
-    () => moduleMounter({ auth, host, tenantSlug, tenantBootstrap, registry }),
+    () => moduleMounter({ auth, host, tenantSlug, tenantBootstrap, registry, systemConfig }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [routingKey],
   );

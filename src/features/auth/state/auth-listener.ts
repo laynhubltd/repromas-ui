@@ -1,4 +1,6 @@
 import { baseApi } from "@/app/api/baseApi";
+import systemConfigApi from "@/features/settings/tabs/system-config/api/systemConfigApi";
+import { clearSystemConfigs } from "@/features/settings/tabs/system-config/state/systemConfigSlice";
 import { clearAllSubmissionIds } from "@/features/admission-application/state/admissionApplicationSessionSlice";
 import { isTokenExpired } from "@/shared/utils/token-util";
 import { createListenerMiddleware } from "@reduxjs/toolkit";
@@ -27,6 +29,9 @@ startListening({
   effect: async (_action, listenerApi) => {
     // Drop cached API data from any prior session/user before the new tree mounts.
     listenerApi.dispatch(baseApi.util.resetApiState());
+    
+    // Bootstrap system configs
+    listenerApi.dispatch(systemConfigApi.endpoints.listSystemConfigs.initiate());
 
     const { persistor } = await import("@/app/store");
     await persistor.flush();
@@ -41,6 +46,7 @@ const clearUserScopedClientState = (
 ) => {
   listenerApi.dispatch(clearAllSubmissionIds());
   listenerApi.dispatch(baseApi.util.resetApiState());
+  listenerApi.dispatch(clearSystemConfigs());
 };
 
 startListening({
@@ -86,6 +92,8 @@ startListening({
 
     if (!token || isTokenExpired(token)) {
       listenerApi.dispatch(authCleared());
+    } else {
+      listenerApi.dispatch(systemConfigApi.endpoints.listSystemConfigs.initiate());
     }
   },
 });
