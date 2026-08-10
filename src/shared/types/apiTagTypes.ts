@@ -5,6 +5,7 @@ export const ApiTagTypes = {
   Semester: "Semester",
   SemesterType: "SemesterType",
   Level: "Level",
+  LevelCategory: "LevelCategory",
   AcademicStructure: "AcademicStructure",
   Theme: "Theme",
   CurriculumVersion: "CurriculumVersion",

@@ -1,5 +1,4 @@
 import { useGetSemesterTypesQuery } from "@/features/settings/tabs/academic-calendar/api/academicCalendarApi";
-import { useGetLevelsQuery } from "@/features/settings/tabs/level-config/api/levelApi";
 import { useApiError } from "@/shared/hooks/useApiError";
 import { RequestScreen } from "@/shared/types/error-ui";
 import {
@@ -59,12 +58,7 @@ export function useCourseConfigFormModal(
   );
   const courses = coursesData?.member ?? [];
 
-  // Fetch levels and semester types for the dropdowns
-  const { data: levelsData, isLoading: isLevelsLoading } = useGetLevelsQuery(
-    { sort: "rankOrder:asc", itemsPerPage: 100 },
-    { skip: !open },
-  );
-  const levels = levelsData?.member ?? [];
+  // Fetch semester types for the dropdown
 
   const { data: semesterTypesData, isLoading: isSemesterTypesLoading } = useGetSemesterTypesQuery(
     { sort: "sortOrder:asc", itemsPerPage: 100 },
@@ -177,8 +171,6 @@ export function useCourseConfigFormModal(
     actions: { handleSubmit, handleCancel, handleCourseChange },
     form,
     courses,
-    levels,
-    isLevelsLoading,
     semesterTypes,
     isSemesterTypesLoading,
     prerequisiteOptions,

@@ -1,6 +1,7 @@
 // Feature: course-management
 import { useToken } from "@/shared/hooks/useToken";
 import { Button, Form, InputNumber, Modal, Select } from "antd";
+import { LevelSelect } from "@/components/ui-kit/data-entry/LevelSelect";
 import { useCourseConfigFormModal } from "../../hooks/useCourseConfigModal";
 import type { CourseConfiguration } from "../../types/course-configuration";
 import { courseStatusRules, creditUnitRules } from "../../utils/validators";
@@ -33,7 +34,7 @@ export function CourseConfigFormModal({
   prefillSemesterTypeId,
 }: CourseConfigFormModalProps) {
   const token = useToken();
-  const { state, actions, form, courses, levels, isLevelsLoading, semesterTypes, isSemesterTypesLoading, prerequisiteOptions } = useCourseConfigFormModal(
+  const { state, actions, form, courses, semesterTypes, isSemesterTypesLoading, prerequisiteOptions } = useCourseConfigFormModal(
     target,
     open,
     onClose,
@@ -102,13 +103,9 @@ export function CourseConfigFormModal({
             }
             rules={[{ required: true, message: "Level is required" }]}
           >
-            <Select
+            <LevelSelect
               placeholder="Select level"
-              loading={isLevelsLoading}
-              showSearch
-              optionFilterProp="label"
               style={{ height: 40 }}
-              options={levels.map((l) => ({ value: l.id, label: l.name }))}
             />
           </Form.Item>
 

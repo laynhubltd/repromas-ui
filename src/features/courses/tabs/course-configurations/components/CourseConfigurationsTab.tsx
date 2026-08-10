@@ -6,7 +6,7 @@ import { useGetProgramsQuery } from "@/features/program/tabs/programs/api/progra
 import { useGetSemesterTypesQuery } from "@/features/settings/tabs/academic-calendar/api/academicCalendarApi";
 import type { SemesterType } from "@/features/settings/tabs/academic-calendar/types/academic-calendar";
 import { useGetCurriculumVersionsQuery } from "@/features/settings/tabs/curriculum-version/api/curriculumVersionApi";
-import { useGetLevelsQuery } from "@/features/settings/tabs/level-config/api/levelApi";
+import { LevelSelect } from "@/components/ui-kit/data-entry/LevelSelect";
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer, centeredBox } from "@/shared/ui/ConditionalRenderer";
 import { DataLoader } from "@/shared/ui/DataLoader";
@@ -76,12 +76,6 @@ export function CourseConfigurationsTab() {
   );
   const versions = versionsData?.member ?? [];
 
-  const { data: levelsData } = useGetLevelsQuery(
-    { sort: "rankOrder:asc", itemsPerPage: 100 },
-    { skip: !filterOpen && filterLevelId === undefined },
-  );
-  const levels = levelsData?.member ?? [];
-
   const { data: semesterTypesData } = useGetSemesterTypesQuery(
     { sort: "sortOrder:asc", itemsPerPage: 100 },
     { skip: !filterOpen && filterSemesterTypeId === undefined },
@@ -103,15 +97,13 @@ export function CourseConfigurationsTab() {
     <Flex vertical gap={16} style={{ width: 260 }}>
       <Form layout="vertical" size="middle">
         <Form.Item label="Level" style={{ marginBottom: 8 }}>
-          <Select
+          <LevelSelect
             placeholder="Any level"
             allowClear
             showSearch
-            optionFilterProp="label"
             value={filterLevelId}
             onChange={(val: number | undefined) => handleLevelFilterChange(val)}
             style={{ width: "100%" }}
-            options={levels.map((l) => ({ value: l.id, label: l.name }))}
           />
         </Form.Item>
         <Form.Item label="Semester Type" style={{ marginBottom: 0 }}>

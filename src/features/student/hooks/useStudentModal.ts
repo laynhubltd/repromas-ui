@@ -1,6 +1,5 @@
 import { useGetProgramsQuery } from "@/features/program/tabs/programs/api/programsApi";
 import { useGetCurriculumVersionsQuery } from "@/features/settings/tabs/curriculum-version/api/curriculumVersionApi";
-import { useGetLevelsQuery } from "@/features/settings/tabs/level-config/api/levelApi";
 import { useApiError } from "@/shared/hooks/useApiError";
 import { RequestScreen } from "@/shared/types/error-ui";
 import {
@@ -54,17 +53,12 @@ export function useStudentFormModal(
   const { data: programsData, isLoading: isProgramsLoading } =
     useGetProgramsQuery({ itemsPerPage: 200 });
 
-  const { data: levelsData, isLoading: isLevelsLoading } = useGetLevelsQuery({
-    itemsPerPage: 200,
-  });
-
   const {
     data: curriculumVersionsData,
     isLoading: isCurriculumVersionsLoading,
   } = useGetCurriculumVersionsQuery({ itemsPerPage: 200 });
 
   const programs = useMemo(() => programsData?.member ?? [], [programsData]);
-  const levels = useMemo(() => levelsData?.member ?? [], [levelsData]);
   const curriculumVersions = useMemo(
     () => curriculumVersionsData?.member ?? [],
     [curriculumVersionsData],
@@ -156,11 +150,9 @@ export function useStudentFormModal(
     form,
     data: {
       programs,
-      levels,
       curriculumVersions,
       programName,
       isProgramsLoading,
-      isLevelsLoading,
       isCurriculumVersionsLoading,
     },
   };

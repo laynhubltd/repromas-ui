@@ -1,5 +1,4 @@
 import { useGetProgramsQuery } from "@/features/program/tabs/programs/api/programsApi";
-import { useGetLevelsQuery } from "@/features/settings/tabs/level-config/api/levelApi";
 import { useGetStudentsQuery } from "@/features/student/api/studentsApi";
 import type { StudentStatus } from "@/features/student/types/student";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -75,16 +74,9 @@ export function useStudentSelectionPanel(
       sort: "name:asc",
     });
 
-  // Levels for the level filter dropdown
-  const { data: levelsData, isLoading: isLevelsLoading } = useGetLevelsQuery({
-    itemsPerPage: 100,
-    sort: "rankOrder:asc",
-  });
-
   const students = studentsData?.member ?? [];
   const totalItems = studentsData?.totalItems ?? 0;
   const programs = programsData?.member ?? [];
-  const levels = levelsData?.member ?? [];
 
   // ─── Derived Flags ────────────────────────────────────────────────────────
   const isSearchActive = debouncedMatric.trim().length > 0;
@@ -170,9 +162,7 @@ export function useStudentSelectionPanel(
       levelFilter,
       statusFilter,
       programs,
-      levels,
       isProgramsLoading,
-      isLevelsLoading,
       selectedStudentId,
     },
     actions: {

@@ -27,6 +27,7 @@ import type {
 const DATA_TYPE_MAP: Record<ConfigKey, DataType> = {
   CREDIT_LOAD_LIMITS: "JSON_OBJECT",
   FORCE_CARRYOVER_FIRST: "BOOLEAN",
+  HAS_LEVEL_CATEGORY: "BOOLEAN",
 };
 
 /**

@@ -1,21 +1,21 @@
 import { describe, expect, it } from "vitest";
-import type { SetupProbeCounts } from "../types/setup";
+import type { SetupChecklistItem } from "../types/setup";
 import {
   canAccessSetupStep,
   evaluateSetupSteps,
 } from "./evaluateSetupSteps";
 
-const emptyProbes: SetupProbeCounts = {
-  departments: 0,
-  levels: 0,
-  programs: 0,
-  curriculumVersions: 0,
-  courses: 0,
-  staff: 0,
-  transitionStatusDefaults: 0,
-  students: 0,
-  admissionConfigs: 0,
-  admissionCandidates: 0,
+const emptyProbes: Record<string, SetupChecklistItem> = {
+  department: { configured: false, count: 0 },
+  level: { configured: false, count: 0 },
+  program: { configured: false, count: 0 },
+  curriculumVersion: { configured: false, count: 0 },
+  course: { configured: false, count: 0 },
+  staff: { configured: false, count: 0 },
+  transitionStatusDefault: { configured: false, count: 0 },
+  student: { configured: false, count: 0 },
+  admissionConfig: { configured: false, count: 0 },
+  admissionCandidate: { configured: false, count: 0 },
 };
 
 describe("evaluateSetupSteps", () => {
@@ -30,7 +30,7 @@ describe("evaluateSetupSteps", () => {
   it("unlocks program after department exists", () => {
     const evaluation = evaluateSetupSteps({
       ...emptyProbes,
-      departments: 1,
+      department: { configured: true, count: 1 },
     });
     expect(evaluation.steps.program.accessible).toBe(true);
     expect(evaluation.currentStepId).toBe("level");
@@ -39,18 +39,18 @@ describe("evaluateSetupSteps", () => {
   it("blocks students until program, level, curriculum, and default transition status exist", () => {
     const evaluation = evaluateSetupSteps({
       ...emptyProbes,
-      departments: 1,
-      programs: 1,
+      department: { configured: true, count: 1 },
+      program: { configured: true, count: 1 },
     });
     expect(evaluation.steps.student.accessible).toBe(false);
 
     const ready = evaluateSetupSteps({
       ...emptyProbes,
-      departments: 1,
-      programs: 1,
-      levels: 1,
-      curriculumVersions: 1,
-      transitionStatusDefaults: 1,
+      department: { configured: true, count: 1 },
+      program: { configured: true, count: 1 },
+      level: { configured: true, count: 1 },
+      curriculumVersion: { configured: true, count: 1 },
+      transitionStatusDefault: { configured: true, count: 1 },
     });
     expect(ready.steps.student.accessible).toBe(true);
   });
@@ -58,7 +58,7 @@ describe("evaluateSetupSteps", () => {
   it("marks transitionStatusDefault complete when a default status exists", () => {
     const evaluation = evaluateSetupSteps({
       ...emptyProbes,
-      transitionStatusDefaults: 1,
+      transitionStatusDefault: { configured: true, count: 1 },
     });
     expect(evaluation.steps.transitionStatusDefault.complete).toBe(true);
   });
@@ -66,11 +66,11 @@ describe("evaluateSetupSteps", () => {
   it("marks phase 1 complete when foundation entities exist", () => {
     const evaluation = evaluateSetupSteps({
       ...emptyProbes,
-      departments: 1,
-      levels: 1,
-      programs: 1,
-      curriculumVersions: 1,
-      courses: 1,
+      department: { configured: true, count: 1 },
+      level: { configured: true, count: 1 },
+      program: { configured: true, count: 1 },
+      curriculumVersion: { configured: true, count: 1 },
+      course: { configured: true, count: 1 },
     });
     expect(evaluation.isPhase1Complete).toBe(true);
     expect(evaluation.phase1ProgressPercent).toBe(100);
@@ -79,11 +79,11 @@ describe("evaluateSetupSteps", () => {
   it("excludes staff and student from phase 2 checklist", () => {
     const evaluation = evaluateSetupSteps({
       ...emptyProbes,
-      departments: 1,
-      levels: 1,
-      programs: 1,
-      curriculumVersions: 1,
-      courses: 1,
+      department: { configured: true, count: 1 },
+      level: { configured: true, count: 1 },
+      program: { configured: true, count: 1 },
+      curriculumVersion: { configured: true, count: 1 },
+      course: { configured: true, count: 1 },
     });
     expect(evaluation.phase2StepIds).not.toContain("staff");
     expect(evaluation.phase2StepIds).not.toContain("student");
@@ -101,7 +101,7 @@ describe("evaluateSetupSteps", () => {
   it("canAccessSetupStep reflects prerequisite completion", () => {
     const evaluation = evaluateSetupSteps({
       ...emptyProbes,
-      departments: 1,
+      department: { configured: true, count: 1 },
     });
     expect(canAccessSetupStep("program", evaluation)).toBe(true);
     expect(canAccessSetupStep("student", evaluation)).toBe(false);

@@ -2,8 +2,6 @@ import { useGetCourseConfigurationsQuery } from "@/features/courses/tabs/course-
 import type { CourseConfiguration } from "@/features/courses/tabs/course-configurations/types/course-configuration";
 import { useGetProgramsQuery } from "@/features/program/tabs/programs/api/programsApi";
 import type { Program } from "@/features/program/tabs/programs/types/program";
-import { useGetLevelsQuery } from "@/features/settings/tabs/level-config/api/levelApi";
-import type { Level } from "@/features/settings/tabs/level-config/types/level";
 import { RequestScreen } from "@/shared/types/error-ui";
 import { deriveSectionErrorMessage } from "@/shared/utils/error/deriveSectionErrorMessage";
 import { useCallback, useEffect, useReducer, useRef } from "react";
@@ -78,21 +76,6 @@ export function useAssessmentFilter() {
     ? resolveListQueryError(programRawError)
     : null;
 
-  // ─── Levels query ─────────────────────────────────────────────────────────
-  const {
-    data: levelsData,
-    isLoading: levelLoading,
-    error: levelRawError,
-  } = useGetLevelsQuery({
-    sort: "rankOrder:asc",
-    itemsPerPage: 100,
-  });
-
-  const levelOptions: Level[] = levelsData?.member ?? [];
-  const levelError = levelRawError
-    ? resolveListQueryError(levelRawError)
-    : null;
-
   // ─── Course configurations query ──────────────────────────────────────────
   const {
     data: courseConfigsData,
@@ -160,13 +143,10 @@ export function useAssessmentFilter() {
       programSearch,
       courseSearch,
       programOptions,
-      levelOptions,
       courseConfigOptions,
       programLoading,
-      levelLoading,
       courseConfigLoading,
       programError,
-      levelError,
       courseConfigError,
       isCourseConfigDisabled,
     },

@@ -3,7 +3,6 @@ import {
     useGetAcademicSessionsQuery,
     useGetSemesterTypesQuery,
 } from "@/features/settings/tabs/academic-calendar/api/academicCalendarApi";
-import { useGetLevelsQuery } from "@/features/settings/tabs/level-config/api/levelApi";
 import { useGetTransitionStatusesQuery } from "@/features/settings/tabs/student-transition-status/api/studentTransitionStatusApi";
 import { useGetSemestersQuery } from "@/features/settings/tabs/system-timeframes/api/systemTimeFramesApi";
 import { useApiError } from "@/shared/hooks/useApiError";
@@ -92,12 +91,6 @@ export function useTransitionFormModal(
     id: s.id,
     name: semesterTypeMap[s.semesterTypeId] ?? `Semester #${s.id}`,
   }));
-
-  const { data: levelsData, isLoading: levelsLoading } = useGetLevelsQuery(
-    { sort: "name:asc", itemsPerPage: 100 },
-    { skip: !open },
-  );
-  const levels = (levelsData?.member ?? []).map((l) => ({ id: l.id, name: l.name }));
 
   // ── Pre-fill form in edit mode; reset on close ─────────────────────────────
 
@@ -197,11 +190,9 @@ export function useTransitionFormModal(
       statuses,
       sessions,
       semesters,
-      levels,
       statusesLoading,
       sessionsLoading,
       semestersLoading,
-      levelsLoading,
     },
   };
 }

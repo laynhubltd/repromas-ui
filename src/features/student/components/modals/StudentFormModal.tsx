@@ -1,13 +1,13 @@
 // Feature: student
 import type { Program } from "@/features/program/tabs/programs/types/program";
 import type { CurriculumVersion } from "@/features/settings/tabs/curriculum-version/types/curriculum-version";
-import type { Level } from "@/features/settings/tabs/level-config/types/level";
 import {
   ENTRY_MODE_OPTIONS,
   STUDENT_STATUS_OPTIONS,
 } from "@/shared/constants/studentOptions";
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
+import { LevelSelect } from "@/components/ui-kit/data-entry/LevelSelect";
 import {
   Alert,
   Button,
@@ -58,11 +58,9 @@ export function StudentFormModal({
   const { handleSubmit, handleCancel } = actions;
   const {
     programs,
-    levels,
     curriculumVersions,
     programName,
     isProgramsLoading,
-    isLevelsLoading,
     isCurriculumVersionsLoading,
   } = data;
 
@@ -281,16 +279,10 @@ export function StudentFormModal({
                       { required: true, message: "Entry level is required" },
                     ]}
                   >
-                    <Select
+                    <LevelSelect
                       placeholder="Select entry level"
-                      loading={isLevelsLoading}
                       showSearch
-                      optionFilterProp="label"
                       style={{ height: 40 }}
-                      options={levels.map((l: Level) => ({
-                        value: l.id,
-                        label: l.name,
-                      }))}
                       onChange={(value) => {
                         form.setFieldValue("currentLevelId", value);
                       }}
@@ -345,16 +337,10 @@ export function StudentFormModal({
                   { required: true, message: "Current level is required" },
                 ]}
               >
-                <Select
+                <LevelSelect
                   placeholder="Select current level"
-                  loading={isLevelsLoading}
                   showSearch
-                  optionFilterProp="label"
                   style={{ height: 40 }}
-                  options={levels.map((l: Level) => ({
-                    value: l.id,
-                    label: l.name,
-                  }))}
                 />
               </Form.Item>
             </Col>

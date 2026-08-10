@@ -5,6 +5,7 @@ import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
 import { Alert, Badge, Button, DatePicker, Form, Input, Modal, Select, Tag } from "antd";
 import dayjs from "dayjs";
+import { LevelSelect } from "@/components/ui-kit/data-entry/LevelSelect";
 import { useTransitionFormModal } from "../../hooks/useTransitionModal";
 import type { StudentEnrollmentTransition } from "../../types/studentTransition";
 import {
@@ -33,11 +34,9 @@ export function TransitionFormModal({ open, studentId, target, onClose }: Transi
     statuses,
     sessions,
     semesters,
-    levels,
     statusesLoading,
     sessionsLoading,
     semestersLoading,
-    levelsLoading,
   } = refs;
 
   return (
@@ -177,14 +176,10 @@ export function TransitionFormModal({ open, studentId, target, onClose }: Transi
             }
             rules={levelIdRules}
           >
-            <Select
+            <LevelSelect
               placeholder="Select level"
-              loading={levelsLoading}
-              disabled={levelsLoading}
               showSearch
-              optionFilterProp="label"
               style={{ height: 40 }}
-              options={levels.map((l) => ({ value: l.id, label: l.name }))}
             />
           </Form.Item>
 

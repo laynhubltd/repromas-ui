@@ -29,13 +29,10 @@ export function AssessmentPage() {
     programSearch,
     courseSearch,
     programOptions,
-    levelOptions,
     courseConfigOptions,
     programLoading,
-    levelLoading,
     courseConfigLoading,
     programError,
-    levelError,
     courseConfigError,
     isCourseConfigDisabled,
   } = filterState;
@@ -78,9 +75,6 @@ export function AssessmentPage() {
           programSearch={programSearch}
           onProgramSearch={handleProgramSearch}
           onProgramChange={handleProgramChange}
-          levelOptions={levelOptions}
-          levelLoading={levelLoading}
-          levelError={levelError}
           selectedLevelId={selectedLevelId}
           onLevelChange={handleLevelChange}
           courseConfigOptions={courseConfigOptions}

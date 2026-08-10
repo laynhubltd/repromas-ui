@@ -1,8 +1,5 @@
 import { useGetProgramsQuery } from "@/features/program/tabs/programs/api/programsApi";
-import {
-  useGetSetupAdmissionConfigCountQuery,
-  useGetSetupProgramCountQuery,
-} from "@/features/tenant-setup/api/setupStatusApi";
+import { useSetupStatus } from "@/features/tenant-setup/hooks/useSetupStatus";
 import { PROGRAM_ADMISSION_CONFIG_LIST_ITEMS_PER_PAGE } from "@/shared/constants/programAdmissionConfigOptions";
 import { deriveSectionErrorMessage } from "@/shared/utils/error/deriveSectionErrorMessage";
 import { RequestScreen } from "@/shared/types/error-ui";
@@ -77,10 +74,10 @@ export function useProgramAdmissionConfigTab() {
     include: "department",
   });
 
-  const { data: setupProgramCount, isLoading: isSetupProgramLoading } =
-    useGetSetupProgramCountQuery();
-  const { data: setupConfigCount, isLoading: isSetupConfigLoading } =
-    useGetSetupAdmissionConfigCountQuery();
+  const { state: setupState } = useSetupStatus();
+  const setupProgramCount = setupState.probes.programs;
+  const setupConfigCount = setupState.probes.admissionConfigs;
+  const isSetupStatusLoading = setupState.isLoading;
 
   const pageConfigs = data?.member ?? [];
   const totalItems = data?.totalItems ?? 0;
@@ -249,7 +246,7 @@ export function useProgramAdmissionConfigTab() {
       totalCapacity,
       fullQuotaProgramCount,
       isLoading:
-        isLoading || isProgramsLoading || isSetupProgramLoading || isSetupConfigLoading,
+        isLoading || isProgramsLoading || isSetupStatusLoading,
       isError,
       sectionErrorMessage,
       programNameSearch: state.programNameSearch,

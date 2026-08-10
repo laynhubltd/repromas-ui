@@ -85,6 +85,7 @@ function buildFlatColumns(
   handleOpenEdit: (p: Program) => void,
   handleOpenDelete: (p: Program) => void,
   token: ReturnType<typeof useToken>,
+  hasLevelCategory: boolean,
 ): ColumnsType<Program> {
   return [
     {
@@ -140,6 +141,17 @@ function buildFlatColumns(
       sortDirections: ["ascend", "descend"],
       render: (v: string) => formatDate(v),
     },
+    ...(hasLevelCategory
+      ? [
+          {
+            title: "Category",
+            dataIndex: "categoryId",
+            key: "category",
+            render: (_: unknown, record: Program) =>
+              record.category ? `${record.category.name} (${record.category.code})` : <Typography.Text type="secondary">—</Typography.Text>,
+          },
+        ]
+      : []),
     buildActionsColumn(handleOpenEdit, handleOpenDelete),
   ];
 }
@@ -148,6 +160,7 @@ function buildGroupColumns(
   handleOpenEdit: (p: Program) => void,
   handleOpenDelete: (p: Program) => void,
   token: ReturnType<typeof useToken>,
+  hasLevelCategory: boolean,
 ): ColumnsType<Program> {
   return [
     {
@@ -186,6 +199,17 @@ function buildGroupColumns(
       key: "createdAt",
       render: (v: string) => formatDate(v),
     },
+    ...(hasLevelCategory
+      ? [
+          {
+            title: "Category",
+            dataIndex: "categoryId",
+            key: "category",
+            render: (_: unknown, record: Program) =>
+              record.category ? `${record.category.name} (${record.category.code})` : <Typography.Text type="secondary">—</Typography.Text>,
+          },
+        ]
+      : []),
     buildActionsColumn(handleOpenEdit, handleOpenDelete),
   ];
 }
@@ -226,7 +250,7 @@ export function ProgramsTab() {
     handleToggleGroupByDepartment,
     refetch,
   } = actions;
-  const { hasData, isNameSearchActive, isCodeSearchActive, isDegreeTitleSearchActive, showDepartmentFilter } = flags;
+  const { hasData, isNameSearchActive, isCodeSearchActive, isDegreeTitleSearchActive, showDepartmentFilter, hasLevelCategory } = flags;
 
   const isSearchActive = isNameSearchActive || isCodeSearchActive || isDegreeTitleSearchActive;
   const cardState = isLoading ? "loading" : "default";
@@ -248,10 +272,10 @@ export function ProgramsTab() {
     handleSortChange(`${String(s.columnKey)}:${s.order === "ascend" ? "asc" : "desc"}`);
   };
 
-  const flatColumns = buildFlatColumns(handleOpenEdit, handleOpenDelete, token).filter(
+  const flatColumns = buildFlatColumns(handleOpenEdit, handleOpenDelete, token, hasLevelCategory).filter(
     (col) => showDepartmentFilter || col.key !== "department",
   );
-  const groupColumns = buildGroupColumns(handleOpenEdit, handleOpenDelete, token);
+  const groupColumns = buildGroupColumns(handleOpenEdit, handleOpenDelete, token, hasLevelCategory);
 
   const accordionItems: AccordionItem[] = Array.from(
     groupedPrograms.entries() as IterableIterator<[number, Program[]]>,

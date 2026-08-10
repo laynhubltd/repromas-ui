@@ -46,7 +46,6 @@ export function ProgramPriorQualRequirementTab() {
     missingProgramsCount,
     programs,
     qualificationTypes,
-    levels,
     faculties,
     departments,
     isLoading,
@@ -352,7 +351,6 @@ export function ProgramPriorQualRequirementTab() {
         onClose={handleCloseForm}
         programs={programs}
         qualificationTypes={qualificationTypes}
-        levels={levels}
         getUsedTypeIdsForProgram={getUsedTypeIdsForProgram}
       />
       <DeleteProgramPriorQualRequirementModal

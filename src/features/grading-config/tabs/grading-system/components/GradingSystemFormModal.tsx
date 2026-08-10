@@ -5,8 +5,8 @@ import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import { useGetProgramsQuery } from "@/features/program/tabs/programs/api/programsApi";
 import { useGetCurriculumVersionsQuery } from "@/features/settings/tabs/curriculum-version/api/curriculumVersionApi";
-import { useGetLevelsQuery } from "@/features/settings/tabs/level-config/api/levelApi";
 import { GRADING_SYSTEM_SCOPE_OPTIONS } from "@/shared/constants/gradingSystemOptions";
+import { LevelSelect } from "@/components/ui-kit/data-entry/LevelSelect";
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
 import {
@@ -71,18 +71,13 @@ export function GradingSystemFormModal({
       { skip: scope !== "PROGRAM" || isEditMode },
     );
 
-  // Level and curriculum version options
-  const { data: levelsData, isLoading: levelsLoading } = useGetLevelsQuery(
-    { itemsPerPage: 200 },
-    { skip: !open },
-  );
+  // Curriculum version options
   const { data: curriculumVersionsData, isLoading: cvLoading } =
     useGetCurriculumVersionsQuery({ itemsPerPage: 200 }, { skip: !open });
 
   const faculties = facultiesData?.member ?? [];
   const departments = departmentsData?.member ?? [];
   const programs = programsData?.member ?? [];
-  const levels = levelsData?.member ?? [];
   const curriculumVersions = curriculumVersionsData?.member ?? [];
 
   const isReferenceLoading =
@@ -255,17 +250,10 @@ export function GradingSystemFormModal({
 
           {/* levelId — optional */}
           <Form.Item name="levelId" label="Level (optional)">
-            <Select
-              placeholder={
-                levelsLoading ? "Loading levels..." : "Select level (optional)"
-              }
-              disabled={levelsLoading}
-              loading={levelsLoading}
+            <LevelSelect
+              placeholder="Select level (optional)"
               allowClear
-              showSearch
-              optionFilterProp="label"
               style={{ height: 40 }}
-              options={levels.map((l) => ({ value: l.id, label: l.name }))}
             />
           </Form.Item>
 

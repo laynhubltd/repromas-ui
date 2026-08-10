@@ -1,5 +1,6 @@
 // Feature: program-credit-limits
 import { DashCard, ExplainerCallout } from "@/components/ui-kit";
+import { LevelSelect } from "@/components/ui-kit/data-entry/LevelSelect";
 import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import { useToken } from "@/shared/hooks/useToken";
@@ -49,7 +50,6 @@ export function CreditLimitsTab() {
     activeFilterCount,
     pagination,
     programsLoading,
-    levelsLoading,
     sessionsLoading,
     semesterTypesLoading,
     statusesLoading,
@@ -85,14 +85,13 @@ export function CreditLimitsTab() {
           />
         </Form.Item>
         <Form.Item label="Level" style={{ marginBottom: 0 }}>
-          <Select
+          <LevelSelect
             placeholder="Any level"
             allowClear
             onChange={(val: number | undefined) =>
               handleFilterChange("levelId", val)
             }
             style={{ width: "100%" }}
-            options={levels.map((l) => ({ value: l.id, label: l.name }))}
           />
         </Form.Item>
         <Form.Item label="Session" style={{ marginBottom: 0 }}>
@@ -296,12 +295,10 @@ export function CreditLimitsTab() {
         open={formModalOpen}
         target={formTarget}
         programs={programs}
-        levels={levels}
         sessions={sessions}
         semesterTypes={semesterTypes}
         statuses={statuses}
         programsLoading={programsLoading}
-        levelsLoading={levelsLoading}
         sessionsLoading={sessionsLoading}
         semesterTypesLoading={semesterTypesLoading}
         statusesLoading={statusesLoading}

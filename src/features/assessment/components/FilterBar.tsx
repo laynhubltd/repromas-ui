@@ -3,7 +3,7 @@ import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import type { CourseConfiguration } from "@/features/courses/tabs/course-configurations/types/course-configuration";
 import type { Program } from "@/features/program/tabs/programs/types/program";
-import type { Level } from "@/features/settings/tabs/level-config/types/level";
+import { LevelSelect } from "@/components/ui-kit/data-entry/LevelSelect";
 import { useToken } from "@/shared/hooks/useToken";
 import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import {
@@ -24,9 +24,6 @@ export type FilterBarProps = {
   onProgramSearch: (value: string) => void;
   onProgramChange: (id: number | null) => void;
   // Level selector
-  levelOptions: Level[];
-  levelLoading: boolean;
-  levelError: string | null;
   selectedLevelId: number | null;
   onLevelChange: (id: number | null) => void;
   // Course config selector
@@ -53,9 +50,6 @@ export function FilterBar({
   programSearch,
   onProgramSearch,
   onProgramChange,
-  levelOptions,
-  levelLoading,
-  levelError,
   selectedLevelId,
   onLevelChange,
   courseConfigOptions,
@@ -117,9 +111,8 @@ export function FilterBar({
           />
 
           {/* Level Selector */}
-          <Select
+          <LevelSelect
             placeholder="Select level"
-            loading={levelLoading}
             value={selectedLevelId ?? undefined}
             onChange={(val: number | undefined) => onLevelChange(val ?? null)}
             allowClear
@@ -127,13 +120,7 @@ export function FilterBar({
             style={{
               minWidth: 180,
               flex: 1,
-              borderColor: levelError ? token.colorError : undefined,
             }}
-            status={levelError ? "error" : undefined}
-            options={levelOptions.map((l) => ({
-              value: l.id,
-              label: `${l.name}`,
-            }))}
           />
 
           {/* Course Config Selector */}
@@ -184,7 +171,6 @@ export function FilterBar({
       {/* Error alerts */}
       <ConditionalErrorAlerts
         programError={programError}
-        levelError={levelError}
         courseConfigError={courseConfigError}
         token={token}
       />
@@ -196,24 +182,21 @@ export function FilterBar({
 
 type ConditionalErrorAlertsProps = {
   programError: string | null;
-  levelError: string | null;
   courseConfigError: string | null;
   token: ReturnType<typeof useToken>;
 };
 
 function ConditionalErrorAlerts({
   programError,
-  levelError,
   courseConfigError,
   token,
 }: ConditionalErrorAlertsProps) {
-  const hasError = programError || levelError || courseConfigError;
+  const hasError = programError || courseConfigError;
   if (!hasError) return null;
 
   return (
     <div style={{ marginTop: token.marginSM }}>
       {programError && <ErrorAlert error={programError} />}
-      {levelError && <ErrorAlert error={levelError} />}
       {courseConfigError && <ErrorAlert error={courseConfigError} />}
     </div>
   );

@@ -3,7 +3,6 @@ import {
     useGetAcademicSessionsQuery,
     useGetSemesterTypesQuery,
 } from "@/features/settings/tabs/academic-calendar/api/academicCalendarApi";
-import { useGetLevelsQuery } from "@/features/settings/tabs/level-config/api/levelApi";
 import { useGetTransitionStatusesQuery } from "@/features/settings/tabs/student-transition-status/api/studentTransitionStatusApi";
 import { useGetSemestersQuery } from "@/features/settings/tabs/system-timeframes/api/systemTimeFramesApi";
 import { useApiError } from "@/shared/hooks/useApiError";
@@ -151,15 +150,6 @@ export function useBulkEnrollModal(open: boolean, onClose: () => void) {
     name: semesterTypeMap[s.semesterTypeId] ?? `Semester #${s.id}`,
   }));
 
-  const { data: levelsData, isLoading: levelsLoading } = useGetLevelsQuery(
-    { sort: "name:asc", itemsPerPage: 100 },
-    { skip: !open },
-  );
-  const levels = (levelsData?.member ?? []).map((l) => ({
-    id: l.id,
-    name: l.name,
-  }));
-
   // ── Actions ────────────────────────────────────────────────────────────────
 
   const handleStudentSearchChange = useCallback((value: string) => {
@@ -277,10 +267,8 @@ export function useBulkEnrollModal(open: boolean, onClose: () => void) {
       statuses,
       sessions,
       semesters,
-      levels,
       sessionsLoading,
       semestersLoading,
-      levelsLoading,
     },
   };
 }

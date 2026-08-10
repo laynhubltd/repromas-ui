@@ -21,7 +21,7 @@ export function useLevelFormModal(
   onClose: () => void
 ) {
   const isEditMode = target !== null;
-  const [form] = Form.useForm<{ name: string; rankOrder: number; description?: string }>();
+  const [form] = Form.useForm<{ name: string; rankOrder: number; description?: string; categoryId?: number }>();
   const [createLevel, { isLoading: isCreating }] = useCreateLevelMutation();
   const [updateLevel, { isLoading: isUpdating }] = useUpdateLevelMutation();
   const handleApiError = useApiError();
@@ -35,6 +35,7 @@ export function useLevelFormModal(
         name: target.name,
         rankOrder: target.rankOrder,
         description: target.description ?? undefined,
+        categoryId: target.categoryId ?? undefined,
       });
     }
   }, [open, target, form]);
@@ -49,12 +50,14 @@ export function useLevelFormModal(
           name: values.name.trim(),
           rankOrder: values.rankOrder,
           description: values.description?.trim() ?? null,
+          categoryId: values.categoryId,
         }).unwrap();
       } else {
         await createLevel({
           name: values.name.trim(),
           rankOrder: values.rankOrder,
           description: values.description?.trim() ?? null,
+          categoryId: values.categoryId,
         }).unwrap();
       }
 

@@ -2,6 +2,7 @@
 import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import { useToken } from "@/shared/hooks/useToken";
+import { LevelSelect } from "@/components/ui-kit/data-entry/LevelSelect";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
 import {
   Button,
@@ -64,10 +65,8 @@ export function BulkEnrollModal({ open, onClose }: BulkEnrollModalProps) {
     statuses,
     sessions,
     semesters,
-    levels,
     sessionsLoading,
     semestersLoading,
-    levelsLoading,
   } = refs;
 
   // ── Student table columns ──────────────────────────────────────────────────
@@ -233,13 +232,10 @@ export function BulkEnrollModal({ open, onClose }: BulkEnrollModalProps) {
 
             {/* levelId */}
             <Form.Item name="levelId" label="Level" rules={levelIdRules}>
-              <Select
+              <LevelSelect
                 placeholder="Select level"
-                loading={levelsLoading}
-                disabled={levelsLoading}
                 showSearch
                 style={{ height: 40 }}
-                options={levels.map((l) => ({ value: l.id, label: l.name }))}
                 onChange={(value) =>
                   handleLevelChange(value as number | undefined)
                 }

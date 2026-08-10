@@ -7,74 +7,67 @@ import {
 import { Form } from "antd";
 import { useEffect } from "react";
 import {
-    useCreateProgramMutation,
-    useDeleteProgramMutation,
-    useUpdateProgramMutation,
-} from "../api/programsApi";
-import type { Program } from "../types/program";
+    useCreateLevelCategoryMutation,
+    useDeleteLevelCategoryMutation,
+    useUpdateLevelCategoryMutation,
+} from "../api/levelApi";
+import type { LevelCategory } from "../types/levelCategory";
 
 // ─── Upsert (Create / Edit) ───────────────────────────────────────────────────
 
-/**
- * Upsert hook for Program form modal.
- * - target === null  → create mode
- * - target !== null  → edit mode
- */
-export function useProgramFormModal(
-  target: Program | null,
+export function useLevelCategoryFormModal(
+  target: LevelCategory | null,
   open: boolean,
-  onClose: () => void,
+  onClose: () => void
 ) {
   const isEditMode = target !== null;
-  const [form] = Form.useForm();
-  const [createProgram, { isLoading: isCreating }] = useCreateProgramMutation();
-  const [updateProgram, { isLoading: isUpdating }] = useUpdateProgramMutation();
+  const [form] = Form.useForm<{ name: string; code: string; description?: string; semestersPerLevel?: number }>();
+  const [createCategory, { isLoading: isCreating }] = useCreateLevelCategoryMutation();
+  const [updateCategory, { isLoading: isUpdating }] = useUpdateLevelCategoryMutation();
   const handleApiError = useApiError();
 
   const isLoading = isCreating || isUpdating;
 
-  // Pre-fill form in edit mode
+  // Pre-fill form fields from target when open becomes true
   useEffect(() => {
     if (open && target) {
       form.setFieldsValue({
-        departmentId: target.departmentId,
-        code: target.code,
         name: target.name,
-        degreeTitle: target.degreeTitle,
-        durationInYears: target.durationInYears,
-        maxResidencyYears: target.maxResidencyYears,
-        categoryId: target.categoryId,
+        code: target.code,
+        description: target.description ?? undefined,
+        semestersPerLevel: target.semestersPerLevel,
       });
+    } else if (open && !target) {
+        // default value
+        form.setFieldsValue({
+            semestersPerLevel: 2
+        });
     }
   }, [open, target, form]);
 
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
+
       if (isEditMode) {
-        await updateProgram({
+        await updateCategory({
           id: target.id,
-          departmentId: values.departmentId,
-          code: values.code.trim(),
           name: values.name.trim(),
-          degreeTitle: values.degreeTitle.trim(),
-          durationInYears: values.durationInYears,
-          maxResidencyYears: values.maxResidencyYears,
-          categoryId: values.categoryId,
+          code: values.code.trim(),
+          description: values.description?.trim() ?? null,
+          semestersPerLevel: values.semestersPerLevel,
         }).unwrap();
       } else {
-        await createProgram({
-          departmentId: values.departmentId,
-          code: values.code.trim(),
+        await createCategory({
           name: values.name.trim(),
-          degreeTitle: values.degreeTitle.trim(),
-          durationInYears: values.durationInYears,
-          maxResidencyYears: values.maxResidencyYears,
-          categoryId: values.categoryId,
+          code: values.code.trim(),
+          description: values.description?.trim() ?? null,
+          semestersPerLevel: values.semestersPerLevel,
         }).unwrap();
       }
+
       notifyMutationSuccess(
-        mutationSuccessMessage("Program", isEditMode ? "updated" : "created"),
+        mutationSuccessMessage("Level Category", isEditMode ? "updated" : "created"),
       );
       form.resetFields();
       onClose();
@@ -106,15 +99,15 @@ export function useProgramFormModal(
 
 // ─── Delete ───────────────────────────────────────────────────────────────────
 
-export function useDeleteProgramModal(target: Program | null, onClose: () => void) {
-  const [deleteProgram, { isLoading }] = useDeleteProgramMutation();
+export function useDeleteLevelCategoryModal(target: LevelCategory | null, onClose: () => void) {
+  const [deleteCategory, { isLoading }] = useDeleteLevelCategoryMutation();
   const handleApiError = useApiError();
 
   const handleConfirm = async () => {
     if (!target) return;
     try {
-      await deleteProgram(target.id).unwrap();
-      notifyMutationSuccess(mutationSuccessMessage("Program", "deleted"));
+      await deleteCategory(target.id).unwrap();
+      notifyMutationSuccess(mutationSuccessMessage("Level Category", "deleted"));
       onClose();
     } catch (err: unknown) {
       handleApiError(err, {

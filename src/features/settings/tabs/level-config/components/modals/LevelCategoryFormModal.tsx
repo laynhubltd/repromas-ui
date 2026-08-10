@@ -1,49 +1,29 @@
 // Feature: level-config
 import { useToken } from "@/shared/hooks/useToken";
-import { Button, Form, Input, InputNumber, Modal, Select } from "antd";
-import { useEffect } from "react";
-import { useLevelFormModal } from "../../hooks/useLevelModal";
-import type { Level } from "../../types/level";
+import { Button, Form, Input, InputNumber, Modal } from "antd";
+import { useLevelCategoryFormModal } from "../../hooks/useLevelCategoryModal";
 import type { LevelCategory } from "../../types/levelCategory";
 import {
     descriptionRules,
     nameRules,
-    rankOrderRules,
 } from "../../utils/validators";
 
-export type LevelFormModalProps = {
+export type LevelCategoryFormModalProps = {
   open: boolean;
-  /** null = create mode, Level = edit mode */
-  target: Level | null;
+  /** null = create mode, LevelCategory = edit mode */
+  target: LevelCategory | null;
   onClose: () => void;
-  hasLevelCategory?: boolean;
-  selectedCategoryId?: number | null;
-  categories?: LevelCategory[];
 };
 
-export function LevelFormModal({ 
-  open, 
-  target, 
-  onClose,
-  hasLevelCategory,
-  selectedCategoryId,
-  categories = []
-}: LevelFormModalProps) {
+export function LevelCategoryFormModal({ open, target, onClose }: LevelCategoryFormModalProps) {
   const token = useToken();
-  const { state, actions, form } = useLevelFormModal(target, open, onClose);
+  const { state, actions, form } = useLevelCategoryFormModal(target, open, onClose);
   const { isLoading, isEditMode } = state;
   const { handleSubmit, handleCancel } = actions;
 
-  // Pre-select categoryId for create mode if one is selected in the UI
-  useEffect(() => {
-    if (open && !isEditMode && hasLevelCategory && selectedCategoryId) {
-      form.setFieldsValue({ categoryId: selectedCategoryId });
-    }
-  }, [open, isEditMode, hasLevelCategory, selectedCategoryId, form]);
-
   return (
     <Modal
-      title={isEditMode ? "Edit Level" : "Create Level"}
+      title={isEditMode ? "Edit Level Category" : "Create Level Category"}
       open={open}
       onCancel={handleCancel}
       footer={null}
@@ -61,26 +41,6 @@ export function LevelFormModal({
     >
       <div style={{ padding: 24 }}>
         <Form form={form} layout="vertical" requiredMark={false} onFinish={handleSubmit}>
-          {hasLevelCategory && (
-            <Form.Item
-              name="categoryId"
-              label={
-                <span>
-                  Level Category <span style={{ color: token.colorError, fontWeight: 700 }}>*</span>
-                </span>
-              }
-              rules={[{ required: true, message: "Level category is required" }]}
-            >
-              <Select
-                placeholder="Select a category"
-                options={categories.map((c) => ({ value: c.id, label: c.name }))}
-                style={{ height: 40 }}
-                showSearch
-                optionFilterProp="label"
-              />
-            </Form.Item>
-          )}
-
           <Form.Item
             name="name"
             label={
@@ -90,22 +50,32 @@ export function LevelFormModal({
             }
             rules={nameRules}
           >
-            <Input placeholder="e.g. 100 Level" style={{ height: 40 }} />
+            <Input placeholder="e.g. National Diploma" style={{ height: 40 }} />
           </Form.Item>
 
           <Form.Item
-            name="rankOrder"
+            name="code"
             label={
               <span>
-                Rank Order <span style={{ color: token.colorError, fontWeight: 700 }}>*</span>
+                Code <span style={{ color: token.colorError, fontWeight: 700 }}>*</span>
               </span>
             }
-            rules={rankOrderRules}
+            rules={[
+                { required: true, message: "Code is required" },
+                { max: 20, message: "Code cannot exceed 20 characters" }
+            ]}
+          >
+            <Input placeholder="e.g. ND" style={{ height: 40 }} />
+          </Form.Item>
+
+          <Form.Item
+            name="semestersPerLevel"
+            label="Semesters Per Level"
           >
             <InputNumber
               min={1}
               style={{ width: "100%", height: 40 }}
-              placeholder="e.g. 1"
+              placeholder="e.g. 2"
             />
           </Form.Item>
 
@@ -143,7 +113,7 @@ export function LevelFormModal({
           block
           style={{ height: 48, fontWeight: 600 }}
         >
-          {isEditMode ? "Save Changes" : "Create Level"}
+          {isEditMode ? "Save Changes" : "Create Category"}
         </Button>
         <Button
           type="text"

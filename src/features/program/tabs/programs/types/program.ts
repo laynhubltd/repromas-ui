@@ -9,6 +9,8 @@ export type Program = {
   createdAt: string;
   updatedAt: string;
   department?: { id: number; name: string } | null;
+  categoryId?: number | null;
+  category?: { id: number; name: string; code: string } | null;
 };
 
 export type ProgramListParams = {
@@ -29,6 +31,7 @@ export type CreateProgramRequest = {
   degreeTitle: string;
   durationInYears: number;
   maxResidencyYears: number;
+  categoryId?: number;
 };
 
 export type UpdateProgramRequest = {
@@ -38,6 +41,7 @@ export type UpdateProgramRequest = {
   degreeTitle: string;
   durationInYears: number;
   maxResidencyYears: number;
+  categoryId?: number;
 };
 
 export type PaginatedResponse<T> = {
