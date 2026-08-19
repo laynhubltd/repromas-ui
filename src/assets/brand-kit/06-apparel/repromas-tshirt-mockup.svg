@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" viewBox="0 0 1200 1200"><rect width="1200" height="1200" fill="#F4F1FA"/>
+<path d="M 400 250 L 280 330 L 170 560 L 320 630 L 360 520 L 360 1050 L 840 1050 L 840 520 L 880 630 L 1030 560 L 920 330 L 800 250 C 760 320 680 350 600 350 C 520 350 440 320 400 250 Z" fill="#2E1065"/>
+<path d="M 400 250 C 440 320 520 350 600 350 C 680 350 760 320 800 250 C 760 300 680 322 600 322 C 520 322 440 300 400 250 Z" fill="#4C1D95"/>
+<g transform="translate(487,470) scale(0.44)"><path d="M 256 76 C 342 76 398 248 398 308 C 398 394 333 437 256 437 C 179 437 114 394 114 308 C 114 248 170 76 256 76 Z" transform="rotate(135 256 256)" fill="#EDE9FE"/>
+<text x="252" y="256" font-family="Georgia, DejaVu Serif, serif" font-size="120" font-weight="bold" fill="#C4B5FD" text-anchor="middle">P</text>
+<text x="204" y="239" font-family="Georgia, DejaVu Serif, serif" font-size="99" font-weight="bold" fill="#2E1065" text-anchor="middle">R</text>
+<circle cx="306" cy="296" r="18" fill="#6D28D9"/>
+<circle cx="336" cy="326" r="13" fill="#8B5CF6"/>
+<circle cx="362" cy="352" r="8" fill="#C4B5FD"/></g>
+<text x="600" y="780" font-family="DejaVu Sans, Arial, sans-serif" font-size="52" font-weight="bold" letter-spacing="4" fill="#FFFFFF" text-anchor="middle">REPROMAS</text>
+<text x="600" y="820" font-family="DejaVu Sans, Arial, sans-serif" font-size="17" letter-spacing="4" fill="#C4B5FD" text-anchor="middle">ACADEMIC WORKFLOW INFRASTRUCTURE</text>
+</svg>

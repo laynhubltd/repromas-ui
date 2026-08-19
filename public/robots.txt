@@ -1,0 +1,25 @@
+# REPROMAS Robots.txt Configuration
+User-agent: *
+Allow: /
+Allow: /admission-application
+Allow: /admission-application/*
+Allow: /auth/login
+Allow: /auth/signup
+Allow: /auth/forgot-password
+Allow: /auth/candidate-signup
+
+# Disallow private and administrative portals from search indexing
+Disallow: /admin/
+Disallow: /admin/*
+Disallow: /settings/
+Disallow: /settings/*
+Disallow: /staff/
+Disallow: /staff/*
+Disallow: /billing/
+Disallow: /billing/*
+Disallow: /student/
+Disallow: /student/*
+Disallow: /api/
+Disallow: /api/*
+
+Sitemap: https://repromas.app/sitemap.xml

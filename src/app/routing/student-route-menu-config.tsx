@@ -1,14 +1,6 @@
 import { StudentPortalScope } from "@/features/access-control/student-portal-scopes";
 import { useAccessControl } from "@/features/access-control/use-access-control";
-import {
-  DollarOutlined,
-  FileOutlined,
-  FileTextOutlined,
-  FormOutlined,
-  HomeOutlined,
-  TrophyOutlined,
-  UserOutlined,
-} from "@ant-design/icons";
+import { AppIcon } from "@/shared/ui/AppIcon";
 import type { ItemType } from "antd/es/menu/interface";
 import { useMemo } from "react";
 import { appPaths } from "./app-path";
@@ -21,55 +13,55 @@ export type StudentRouteMenuItem = ItemType & {
 export const studentRoutesMenuList: StudentRouteMenuItem[] = [
   {
     key: appPaths.studentHome,
-    icon: <HomeOutlined />,
+    icon: <AppIcon name="home" size="md" />,
     label: "Home",
     allowedScopes: [StudentPortalScope.Student, StudentPortalScope.Candidate],
   },
   {
     key: appPaths.StudentApply,
-    icon: <FormOutlined />,
+    icon: <AppIcon name="file-edit" size="md" />,
     label: "Apply",
     allowedScopes: [StudentPortalScope.Candidate],
   },
   {
     key: appPaths.StudentInvoices,
-    icon: <FileOutlined />,
+    icon: <AppIcon name="invoice" size="md" />,
     label: "Invoices",
     allowedScopes: [StudentPortalScope.Student, StudentPortalScope.Candidate],
   },
   {
     key: appPaths.StudentPayments,
-    icon: <DollarOutlined />,
+    icon: <AppIcon name="credit-card" size="md" />,
     label: "Payments",
     allowedScopes: [StudentPortalScope.Student, StudentPortalScope.Candidate],
   },
   {
     key: appPaths.courseRegistration,
-    icon: <FormOutlined />,
+    icon: <AppIcon name="book-03" size="md" />,
     label: "Course Registration",
     allowedScopes: [StudentPortalScope.Student],
   },
   {
     key: appPaths.StudentResults,
-    icon: <TrophyOutlined />,
+    icon: <AppIcon name="award" size="md" />,
     label: "Results",
     allowedScopes: [StudentPortalScope.Student],
   },
   {
     key: appPaths.StudentApplication,
-    icon: <FileOutlined />,
+    icon: <AppIcon name="checkmark-badge" size="md" />,
     label: "Application",
     allowedScopes: [StudentPortalScope.Candidate],
   },
   {
     key: appPaths.StudentAdmission,
-    icon: <FileTextOutlined />,
+    icon: <AppIcon name="diploma" size="md" />,
     label: "Admission",
     allowedScopes: [StudentPortalScope.Candidate],
   },
   {
     key: appPaths.StudentBioData,
-    icon: <UserOutlined />,
+    icon: <AppIcon name="user-circle" size="md" />,
     label: "Bio Data",
     allowedScopes: [StudentPortalScope.Student],
   },
