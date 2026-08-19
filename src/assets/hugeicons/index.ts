@@ -100,6 +100,15 @@ import IdVerified from "./svg/stroke/security/id-verified.svg?react";
 import SecurityLock from "./svg/stroke/security/security-lock.svg?react";
 import UserLockOne from "./svg/stroke/users/user-lock-01.svg?react";
 import UserShield01 from "./svg/stroke/users/user-shield-01.svg?react";
+import AwardTwo from "./svg/stroke/award-reward/award-02.svg?react";
+import CreditCardPos from "./svg/stroke/business-and-finance/credit-card-pos.svg?react";
+import Diploma from "./svg/stroke/education/diploma.svg?react";
+import Task01 from "./svg/stroke/note-and-task/task-01.svg?react";
+import BookBookmark02 from "./svg/stroke/education/book-bookmark-02.svg?react";
+import FolderLibrary from "./svg/stroke/files-folders/folder-library.svg?react";
+import UserAccount from "./svg/stroke/users/user-account.svg?react";
+import UserCheck from "./svg/stroke/users/user-check-01.svg?react";
+import UserGroup from "./svg/stroke/users/user-group.svg?react";
 
 export const icons = {
     arrange: Arrange,
@@ -147,6 +156,7 @@ export const icons = {
     "arrow-all-direction-round": ArrowAllDirectionRound,
     "sorting-up": SortingUp,
     "house-01": House01,
+    home: House01,
     "floppy-disk": FloppyDisk,
     "link-square-one": LinkSquareOne,
     "sorting-down": SortingDown,
@@ -205,6 +215,17 @@ export const icons = {
     "user-lock-one": UserLockOne,
     "house-02": House02,
     "user-shield-01": UserShield01,
+    award: AwardTwo,
+    "award-02": AwardTwo,
+    "credit-card": CreditCardPos,
+    "credit-card-pos": CreditCardPos,
+    diploma: Diploma,
+    task: Task01,
+    "book-bookmark": BookBookmark02,
+    "folder-library": FolderLibrary,
+    "user-account": UserAccount,
+    "user-check": UserCheck,
+    "user-group": UserGroup,
 };
 
 export type HugeiconsIcon = keyof typeof icons;
