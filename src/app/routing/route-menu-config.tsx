@@ -1,5 +1,6 @@
 import { Permission } from "@/features/access-control/permissions";
 import { useAccessControl } from "@/features/access-control/use-access-control";
+import { useInstitutionTerminology } from "@/shared/hooks/useInstitutionTerminology";
 import { AppIcon } from "@/shared/ui/AppIcon";
 import type { ItemType } from "antd/es/menu/interface";
 import { useMemo } from "react";
@@ -75,6 +76,18 @@ export const routesMenuList: RouteMenuItem[] = [
     setupStepId: "assessment",
   },
   {
+    key: appPaths.resultBroadsheet,
+    icon: <AppIcon name="award" size="md" />,
+    label: "Result Broadsheet",
+    permission: Permission.ResultBroadsheetRead,
+  },
+  {
+    key: appPaths.studentTransitions,
+    icon: <AppIcon name="task" size="md" />,
+    label: "Student Transitions",
+    permission: Permission.StudentEnrollmentTransitionsList,
+  },
+  {
     key: appPaths.billing,
     icon: <AppIcon name="coins" size="md" />,
     label: "Billing",
@@ -110,15 +123,27 @@ export const bottomMenuList: RouteMenuItem[] = [
 
 export function useRestrictedRouteMenuItem(): RouteMenuItem[] {
   const { hasAnyPermission } = useAccessControl();
+  const { academicUnit } = useInstitutionTerminology();
+
   return useMemo(() => {
-    return routesMenuList.filter((item) => {
-      if (!item.permission) return true;
-      const perms = Array.isArray(item.permission)
-        ? item.permission
-        : [item.permission];
-      return hasAnyPermission(perms);
-    });
-  }, [hasAnyPermission]);
+    return routesMenuList
+      .filter((item) => {
+        if (!item.permission) return true;
+        const perms = Array.isArray(item.permission)
+          ? item.permission
+          : [item.permission];
+        return hasAnyPermission(perms);
+      })
+      .map((item) => {
+        if (item.key === appPaths.academicStructure) {
+          return {
+            ...item,
+            label: academicUnit.combinedMenuLabel,
+          };
+        }
+        return item;
+      });
+  }, [hasAnyPermission, academicUnit.combinedMenuLabel]);
 }
 
 export function useRestrictedBottomMenuItem(): RouteMenuItem[] {

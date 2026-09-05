@@ -78,10 +78,12 @@ export function usePolicyFormModal(
     );
   const programs = programsData?.member ?? [];
 
-  // Curriculum versions list (all versions, no program filter)
+  // Curriculum versions list (scoped to program if selected)
   const { data: versionsData, isLoading: isVersionsLoading } =
     useGetCurriculumVersionsQuery(
-      { sort: "name:asc", itemsPerPage: 100 },
+      selectedProgramId
+        ? { forProgramId: selectedProgramId, include: "program", sort: "name:asc", itemsPerPage: 100 }
+        : { sort: "name:asc", itemsPerPage: 100 },
       { skip: !open },
     );
   const versions = versionsData?.member ?? [];

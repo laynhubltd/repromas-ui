@@ -6,6 +6,8 @@ import { useSemesterTypeSelector } from "../hooks/useSemesterTypeSelector";
 export type SemesterTypeSelectorProps = {
   /** Currently selected semester type ID, or null if none selected. */
   semesterTypeId: number | null;
+  /** Optional rankOrder of the student's current level (1 for Year 1, 2 for Year 2, etc.) */
+  levelRankOrder?: number | null;
   /** Called when the user selects a semester type. */
   onSemesterTypeChange: (semesterTypeId: number) => void;
 };
@@ -18,18 +20,18 @@ export type SemesterTypeSelectorProps = {
  * Responsibilities:
  * - Load semester types from the API (Requirement 8.1, 8.2)
  * - Display semester types sorted by sortOrder (Requirement 8.2)
+ * - Format continuous ordinal titles (e.g. "Third Semester") when levelRankOrder is supplied
  * - Handle semester type selection (Requirement 8.5)
  * - Show the selected semester type clearly in the interface (Requirement 8.5)
  * - Show an empty/error state when no semester types are available
- *
- * Requirements: 8.1, 8.2, 8.5
  */
 export function SemesterTypeSelector({
   semesterTypeId,
+  levelRankOrder,
   onSemesterTypeChange,
 }: SemesterTypeSelectorProps) {
   const token = useToken();
-  const { state } = useSemesterTypeSelector(semesterTypeId);
+  const { state } = useSemesterTypeSelector(semesterTypeId, levelRankOrder);
 
   return (
     <div

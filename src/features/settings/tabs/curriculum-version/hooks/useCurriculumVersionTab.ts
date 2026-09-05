@@ -5,12 +5,13 @@ import { notification } from "antd";
 import type { SorterResult } from "antd/es/table/interface";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-    useActivateCurriculumVersionMutation,
-    useGetCurriculumVersionsQuery,
+  useActivateCurriculumVersionMutation,
+  useGetCurriculumVersionsQuery,
 } from "../api/curriculumVersionApi";
-import type { CurriculumVersion } from "../types/curriculum-version";
+import type { CurriculumScope, CurriculumVersion } from "../types/curriculum-version";
 
 export type StatusFilter = "all" | "active" | "inactive";
+export type ScopeFilter = "all" | CurriculumScope;
 
 export const ITEMS_PER_PAGE = 30;
 
@@ -36,6 +37,7 @@ export function getMenuItems(
 ): Array<{ key: string; label: string; disabled?: boolean; danger?: boolean }> {
   return [
     { key: "edit", label: "Edit" },
+    { key: "clone", label: "Clone / Branch" },
     { key: "activate", label: "Activate", disabled: isActiveForAdmission },
     { key: "delete", label: "Delete", danger: true },
   ];
@@ -57,9 +59,11 @@ export function useCurriculumVersionTab() {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [scopeFilter, setScopeFilter] = useState<ScopeFilter>("all");
   const [sort, setSort] = useState("createdAt:desc");
   const [page, setPage] = useState(1);
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [cloneTarget, setCloneTarget] = useState<CurriculumVersion | null>(null);
   const [editTarget, setEditTarget] = useState<CurriculumVersion | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<CurriculumVersion | null>(null);
 
@@ -83,13 +87,20 @@ export function useCurriculumVersionTab() {
     setPage(1);
   };
 
+  const handleScopeFilterChange = (value: ScopeFilter) => {
+    setScopeFilter(value);
+    setPage(1);
+  };
+
   const isActiveParam = statusFilterToQueryParam(statusFilter);
   const queryParams = {
     page,
     itemsPerPage: ITEMS_PER_PAGE,
     sort,
+    include: "program",
     ...(debouncedSearch ? { "search[name]": debouncedSearch } : {}),
     ...(isActiveParam !== undefined ? { "boolean[isActiveForAdmission]": isActiveParam } : {}),
+    ...(scopeFilter !== "all" ? { "exact[scope]": scopeFilter } : {}),
   };
 
   const { data, isLoading, isError, error: queryError, refetch } = useGetCurriculumVersionsQuery(queryParams);
@@ -110,7 +121,11 @@ export function useCurriculumVersionTab() {
   const handleActivate = async (record: CurriculumVersion) => {
     try {
       await activateCurriculumVersion({ id: record.id }).unwrap();
-      notification.success({ message: "Version activated successfully" });
+      const scopeLabel =
+        record.scope === "PROGRAM"
+          ? `${record.program?.name ?? "Program"} admission`
+          : "Global admission";
+      notification.success({ message: `Version activated for ${scopeLabel}` });
       window.dispatchEvent(new CustomEvent("curriculumVersionActivated"));
     } catch (err: unknown) {
       handleApiError(err, {
@@ -136,9 +151,11 @@ export function useCurriculumVersionTab() {
     state: {
       search,
       statusFilter,
+      scopeFilter,
       sort,
       page,
       createModalOpen,
+      cloneTarget,
       editTarget,
       deleteTarget,
       versions,
@@ -151,9 +168,11 @@ export function useCurriculumVersionTab() {
     actions: {
       handleSearchChange,
       handleFilterChange,
+      handleScopeFilterChange,
       handleActivate,
       handleSortChange,
       setCreateModalOpen,
+      setCloneTarget,
       setEditTarget,
       setDeleteTarget,
       setPage,
@@ -161,3 +180,4 @@ export function useCurriculumVersionTab() {
     },
   };
 }
+

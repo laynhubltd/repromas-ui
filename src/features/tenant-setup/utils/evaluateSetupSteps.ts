@@ -31,7 +31,8 @@ function isPhase1CompleteByChecklist(
     (checklist.level?.configured ?? false) &&
     (checklist.program?.configured ?? false) &&
     (checklist.curriculumVersion?.configured ?? false) &&
-    (checklist.course?.configured ?? false)
+    (checklist.course?.configured ?? false) &&
+    (checklist.systemConfig?.configured ?? false)
   );
 }
 

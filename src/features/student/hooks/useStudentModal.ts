@@ -1,4 +1,5 @@
 import { useGetProgramsQuery } from "@/features/program/tabs/programs/api/programsApi";
+import { useGetAcademicSessionsQuery } from "@/features/settings/tabs/academic-calendar/api/academicCalendarApi";
 import { useGetCurriculumVersionsQuery } from "@/features/settings/tabs/curriculum-version/api/curriculumVersionApi";
 import { useApiError } from "@/shared/hooks/useApiError";
 import { RequestScreen } from "@/shared/types/error-ui";
@@ -26,8 +27,8 @@ type StudentFormValues = {
   programId: number;
   entryLevelId: number;
   currentLevelId: number;
+  entrySessionId?: number;
   curriculumVersionId: number;
-  status: string;
   metaData?: string | null;
 };
 
@@ -50,19 +51,70 @@ export function useStudentFormModal(
   const isLoading = isCreating || isUpdating;
 
   // ─── Reference data ───────────────────────────────────────────────────────
+  const selectedProgramId = Form.useWatch("programId", form);
+
   const { data: programsData, isLoading: isProgramsLoading } =
-    useGetProgramsQuery({ itemsPerPage: 200 });
+    useGetProgramsQuery({ itemsPerPage: 200 }, { skip: !open });
 
   const {
     data: curriculumVersionsData,
     isLoading: isCurriculumVersionsLoading,
-  } = useGetCurriculumVersionsQuery({ itemsPerPage: 200 });
+  } = useGetCurriculumVersionsQuery(
+    selectedProgramId
+      ? { forProgramId: selectedProgramId, include: "program", itemsPerPage: 200 }
+      : { itemsPerPage: 200 },
+    { skip: !open },
+  );
+
+  const { data: sessionsData, isLoading: isAcademicSessionsLoading } =
+    useGetAcademicSessionsQuery(
+      { itemsPerPage: 100, sort: "rankOrder:desc" },
+      { skip: !open },
+    );
 
   const programs = useMemo(() => programsData?.member ?? [], [programsData]);
   const curriculumVersions = useMemo(
     () => curriculumVersionsData?.member ?? [],
     [curriculumVersionsData],
   );
+  const academicSessions = useMemo(
+    () => sessionsData?.member ?? [],
+    [sessionsData],
+  );
+
+  // Auto-select active version following priority cascade (Program Active -> Global Active)
+  useEffect(() => {
+    if (!isEditMode && selectedProgramId && curriculumVersions.length > 0) {
+      const currentVal = form.getFieldValue("curriculumVersionId");
+      const exists = curriculumVersions.some((v) => v.id === currentVal);
+      if (!exists) {
+        const programActive = curriculumVersions.find(
+          (v) => v.scope === "PROGRAM" && v.isActiveForAdmission,
+        );
+        const globalActive = curriculumVersions.find(
+          (v) => v.scope === "GLOBAL" && v.isActiveForAdmission,
+        );
+        const defaultVersion = programActive ?? globalActive ?? curriculumVersions[0];
+        if (defaultVersion) {
+          form.setFieldValue("curriculumVersionId", defaultVersion.id);
+        }
+      }
+    }
+  }, [isEditMode, selectedProgramId, curriculumVersions, form]);
+
+  // Auto-select current academic session for entrySessionId in create mode
+  useEffect(() => {
+    if (!isEditMode && academicSessions.length > 0) {
+      const currentVal = form.getFieldValue("entrySessionId");
+      if (!currentVal) {
+        const currentSession =
+          academicSessions.find((s) => s.isCurrent) ?? academicSessions[0];
+        if (currentSession) {
+          form.setFieldValue("entrySessionId", currentSession.id);
+        }
+      }
+    }
+  }, [isEditMode, academicSessions, form]);
 
   /** Display name of the student's program (edit mode read-only display). */
   const programName = useMemo(
@@ -80,7 +132,6 @@ export function useStudentFormModal(
         lastName: target.lastName,
         email: target.email ?? undefined,
         currentLevelId: target.currentLevelId,
-        status: target.status,
         metaData: target.metaData
           ? JSON.stringify(target.metaData, null, 2)
           : undefined,
@@ -99,8 +150,6 @@ export function useStudentFormModal(
           lastName: values.lastName.trim(),
           email: values.email?.trim() || null,
           currentLevelId: values.currentLevelId,
-          // status is always included in the PUT body, even if unchanged
-          status: (values.status as Student["status"]) ?? target.status,
           metaData: values.metaData
             ? JSON.parse(values.metaData as string)
             : null,
@@ -115,8 +164,8 @@ export function useStudentFormModal(
           programId: values.programId,
           entryLevelId: values.entryLevelId,
           currentLevelId: values.currentLevelId,
+          entrySessionId: values.entrySessionId,
           curriculumVersionId: values.curriculumVersionId,
-          status: (values.status as Student["status"]) || "ACTIVE",
           metaData: values.metaData
             ? JSON.parse(values.metaData as string)
             : null,
@@ -151,9 +200,11 @@ export function useStudentFormModal(
     data: {
       programs,
       curriculumVersions,
+      academicSessions,
       programName,
       isProgramsLoading,
       isCurriculumVersionsLoading,
+      isAcademicSessionsLoading,
     },
   };
 }

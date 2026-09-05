@@ -10,11 +10,11 @@ const settingsTransitionStatusRoute = `${appPaths.settings}?tab=student-transiti
 export const SETUP_STEP_ORDER: SetupStepId[] = [
   "signedIn",
   "department",
-  "systemConfig",
   "level",
   "program",
   "curriculumVersion",
   "course",
+  "systemConfig",
   "staff",
   "transitionStatusDefault",
   "student",
@@ -29,17 +29,15 @@ export const SETUP_STEP_ORDER: SetupStepId[] = [
 export const PHASE1_CHECKLIST_STEP_IDS: SetupStepId[] = [
   "signedIn",
   "department",
-  "systemConfig",
   "level",
   "program",
   "curriculumVersion",
   "course",
+  "systemConfig",
 ];
 
 export const PHASE2_CHECKLIST_STEP_IDS: SetupStepId[] = [
   "transitionStatusDefault",
-  "admissionConfig",
-  "admissionCandidate",
   "courseRegistration",
   "assessment",
   "gradingConfig",
@@ -132,15 +130,15 @@ export const SETUP_STEP_DEFINITIONS: Record<SetupStepId, SetupStepDefinition> = 
     prerequisites: ["program"],
     route: appPaths.admissionConfig,
     menuPath: appPaths.admissionConfig,
-    checklistVisible: true,
+    checklistVisible: false,
   },
   admissionCandidate: {
     id: "admissionCandidate",
     phase: 2,
-    prerequisites: ["admissionConfig", "transitionStatusDefault"],
+    prerequisites: ["program", "transitionStatusDefault"],
     route: appPaths.admissionCandidates,
     menuPath: appPaths.admissionCandidates,
-    checklistVisible: true,
+    checklistVisible: false,
   },
   courseRegistration: {
     id: "courseRegistration",

@@ -158,7 +158,7 @@ export function PricingRuleFormModal({
 
   const { data: sessionsData, isLoading: isSessionsLoading } =
     useGetAcademicSessionsQuery(
-      { sort: "name:desc", itemsPerPage: 100 },
+      { sort: "rankOrder:desc", itemsPerPage: 100 },
       { skip: !open || !showDimensions },
     );
 

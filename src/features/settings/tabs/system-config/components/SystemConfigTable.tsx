@@ -14,6 +14,7 @@ import {
 import { Badge, Button, Dropdown, Flex, Popover, Select, Tag, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useState } from "react";
+import { getInstitutionTypeLabel } from "@/shared/constants/institutionTypeOptions";
 import type {
     ConfigKey,
     ConfigScope,
@@ -33,8 +34,16 @@ export function formatValueSummary(config: SystemConfig): string {
     const val = config.configValue as CreditLoadLimitsValue;
     return `Min: ${val.min_credits} | Max: ${val.max_credits}`;
   }
-  if (config.configKey === "FORCE_CARRYOVER_FIRST") {
+  if (
+    config.configKey === "FORCE_CARRYOVER_FIRST" ||
+    config.configKey === "HAS_LEVEL_CATEGORY" ||
+    config.configKey === "OVERRIDE_CARRYOVER" ||
+    config.configKey === "USE_SEMESTER_ORDINAL"
+  ) {
     return config.configValue === true ? "Enabled" : "Disabled";
+  }
+  if (config.configKey === "INSTITUTION_TYPE") {
+    return getInstitutionTypeLabel(config.configValue as string);
   }
   return String(config.configValue);
 }
@@ -64,6 +73,10 @@ const SCOPE_COLORS: Record<ConfigScope, string> = {
 const CONFIG_KEY_OPTIONS: { value: ConfigKey; label: string }[] = [
   { value: "CREDIT_LOAD_LIMITS", label: "Credit Load Limits" },
   { value: "FORCE_CARRYOVER_FIRST", label: "Force Carryover First" },
+  { value: "HAS_LEVEL_CATEGORY", label: "Has Level Category" },
+  { value: "INSTITUTION_TYPE", label: "Institution Type" },
+  { value: "OVERRIDE_CARRYOVER", label: "Override Carryover" },
+  { value: "USE_SEMESTER_ORDINAL", label: "Use Semester Ordinal" },
 ];
 
 const SCOPE_OPTIONS: { value: ConfigScope; label: string }[] = [

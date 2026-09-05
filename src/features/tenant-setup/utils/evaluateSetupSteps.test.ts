@@ -11,11 +11,10 @@ const emptyProbes: Record<string, SetupChecklistItem> = {
   program: { configured: false, count: 0 },
   curriculumVersion: { configured: false, count: 0 },
   course: { configured: false, count: 0 },
+  systemConfig: { configured: false, count: 0 },
   staff: { configured: false, count: 0 },
   transitionStatusDefault: { configured: false, count: 0 },
   student: { configured: false, count: 0 },
-  admissionConfig: { configured: false, count: 0 },
-  admissionCandidate: { configured: false, count: 0 },
 };
 
 describe("evaluateSetupSteps", () => {
@@ -71,6 +70,7 @@ describe("evaluateSetupSteps", () => {
       program: { configured: true, count: 1 },
       curriculumVersion: { configured: true, count: 1 },
       course: { configured: true, count: 1 },
+      systemConfig: { configured: true, count: 1 },
     });
     expect(evaluation.isPhase1Complete).toBe(true);
     expect(evaluation.phase1ProgressPercent).toBe(100);
@@ -87,10 +87,10 @@ describe("evaluateSetupSteps", () => {
     });
     expect(evaluation.phase2StepIds).not.toContain("staff");
     expect(evaluation.phase2StepIds).not.toContain("student");
+    expect(evaluation.phase2StepIds).not.toContain("admissionConfig");
+    expect(evaluation.phase2StepIds).not.toContain("admissionCandidate");
     expect(evaluation.phase2StepIds).toEqual([
       "transitionStatusDefault",
-      "admissionConfig",
-      "admissionCandidate",
       "courseRegistration",
       "assessment",
       "gradingConfig",

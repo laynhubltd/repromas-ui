@@ -3,6 +3,7 @@ import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import { useToken } from "@/shared/hooks/useToken";
 import { LevelSelect } from "@/components/ui-kit/data-entry/LevelSelect";
+import { LevelSemesterSelect } from "@/shared/ui/LevelSemesterSelect";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
 import {
   Button,
@@ -48,6 +49,7 @@ export function BulkEnrollModal({ open, onClose }: BulkEnrollModalProps) {
     isSubmitting,
     result,
     selectedLevelId,
+    selectedSessionId,
   } = state;
 
   const {
@@ -64,9 +66,7 @@ export function BulkEnrollModal({ open, onClose }: BulkEnrollModalProps) {
   const {
     statuses,
     sessions,
-    semesters,
     sessionsLoading,
-    semestersLoading,
   } = refs;
 
   // ── Student table columns ──────────────────────────────────────────────────
@@ -279,13 +279,10 @@ export function BulkEnrollModal({ open, onClose }: BulkEnrollModalProps) {
               label="Semester"
               rules={semesterIdRules}
             >
-              <Select
-                placeholder="Select semester"
-                loading={semestersLoading}
-                disabled={semestersLoading || !form.getFieldValue("sessionId")}
-                showSearch
+              <LevelSemesterSelect
+                levelId={selectedLevelId}
+                sessionId={selectedSessionId}
                 style={{ height: 40 }}
-                options={semesters.map((s) => ({ value: s.id, label: s.name }))}
               />
             </Form.Item>
 

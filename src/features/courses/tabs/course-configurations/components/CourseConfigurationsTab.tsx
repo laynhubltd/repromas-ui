@@ -1,24 +1,29 @@
-// Feature: course-management
 import { DashCard, ExplainerCallout } from "@/components/ui-kit";
+import { CurriculumSelect } from "@/components/ui-kit/data-entry/CurriculumSelect";
+import { LevelSelect } from "@/components/ui-kit/data-entry/LevelSelect";
 import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import { useGetProgramsQuery } from "@/features/program/tabs/programs/api/programsApi";
 import { useGetSemesterTypesQuery } from "@/features/settings/tabs/academic-calendar/api/academicCalendarApi";
 import type { SemesterType } from "@/features/settings/tabs/academic-calendar/types/academic-calendar";
+import { CloneVersionModal } from "@/features/settings/tabs/curriculum-version";
 import { useGetCurriculumVersionsQuery } from "@/features/settings/tabs/curriculum-version/api/curriculumVersionApi";
-import { LevelSelect } from "@/components/ui-kit/data-entry/LevelSelect";
+import type { CurriculumVersion } from "@/features/settings/tabs/curriculum-version/types/curriculum-version";
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer, centeredBox } from "@/shared/ui/ConditionalRenderer";
 import { DataLoader } from "@/shared/ui/DataLoader";
 import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { SkeletonRows } from "@/shared/ui/SkeletonRows";
-import { FilterOutlined, PlusOutlined } from "@ant-design/icons";
+import { getOrdinalSemesterName } from "@/shared/utils/semesterOrdinal";
+import { CopyOutlined, FilterOutlined, PlusOutlined } from "@ant-design/icons";
 import { Badge, Button, Col, Flex, Form, Pagination, Popover, Row, Select, Space, Typography } from "antd";
 import { useMemo, useState } from "react";
 import { useCourseConfigurationsTab } from "../hooks/useCourseConfigurationsTab";
+import type { FormattedSemester } from "../types/course-configuration";
 import { CurriculumGrid } from "./CurriculumGrid";
 import { CourseConfigFormModal } from "./modals/CourseConfigFormModal";
 import { DeleteCourseConfigModal } from "./modals/DeleteCourseConfigModal";
+
 
 export function CourseConfigurationsTab() {
   const token = useToken();
@@ -26,6 +31,7 @@ export function CourseConfigurationsTab() {
   const {
     configs,
     totalItems,
+    levels,
     isLoading,
     isError,
     sectionError,
@@ -70,11 +76,20 @@ export function CourseConfigurationsTab() {
   });
   const programs = programsData?.member ?? [];
 
-  const { data: versionsData, isLoading: isVersionsLoading } = useGetCurriculumVersionsQuery(
-    { sort: "name:asc", itemsPerPage: 100 },
+  const { data: versionsData } = useGetCurriculumVersionsQuery(
+    selectedProgramId
+      ? { forProgramId: selectedProgramId, include: "program", sort: "name:asc", itemsPerPage: 100 }
+      : { sort: "name:asc", itemsPerPage: 100 },
     { skip: !isProgramSelected },
   );
   const versions = versionsData?.member ?? [];
+
+  const selectedVersion = useMemo(
+    () => versions.find((v) => v.id === selectedVersionId),
+    [versions, selectedVersionId],
+  );
+
+  const [branchTarget, setBranchTarget] = useState<CurriculumVersion | null>(null);
 
   const { data: semesterTypesData } = useGetSemesterTypesQuery(
     { sort: "sortOrder:asc", itemsPerPage: 100 },
@@ -82,12 +97,36 @@ export function CourseConfigurationsTab() {
   );
   const semesterTypesForFilter = semesterTypesData?.member ?? [];
 
-  // Derive unique semester types from loaded configs for the grid columns
+  const selectedFilterLevel = useMemo(
+    () => levels.find((l) => l.id === filterLevelId),
+    [levels, filterLevelId],
+  );
+
+  const filterSemesterTypeOptions = useMemo(
+    () =>
+      semesterTypesForFilter.map((s) => ({
+        value: s.id,
+        label: getOrdinalSemesterName(s.sortOrder, selectedFilterLevel?.rankOrder),
+      })),
+    [semesterTypesForFilter, selectedFilterLevel],
+  );
+
+  // Derive unique semester types and formatted semesters from loaded configs for the grid columns
   const semesterTypes = useMemo<SemesterType[]>(() => {
     const map = new Map<number, SemesterType>();
     for (const config of configs) {
       if (config.semesterType && !map.has(config.semesterTypeId)) {
         map.set(config.semesterTypeId, config.semesterType);
+      }
+    }
+    return Array.from(map.values());
+  }, [configs]);
+
+  const semesters = useMemo<FormattedSemester[]>(() => {
+    const map = new Map<number, FormattedSemester>();
+    for (const config of configs) {
+      if (config.semester && !map.has(config.semesterTypeId)) {
+        map.set(config.semesterTypeId, config.semester);
       }
     }
     return Array.from(map.values());
@@ -100,6 +139,7 @@ export function CourseConfigurationsTab() {
           <LevelSelect
             placeholder="Any level"
             allowClear
+            layout="vertical"
             showSearch
             value={filterLevelId}
             onChange={(val: number | undefined) => handleLevelFilterChange(val)}
@@ -115,7 +155,7 @@ export function CourseConfigurationsTab() {
             value={filterSemesterTypeId}
             onChange={(val: number | undefined) => handleSemesterTypeFilterChange(val)}
             style={{ width: "100%" }}
-            options={semesterTypesForFilter.map((s) => ({ value: s.id, label: s.name }))}
+            options={filterSemesterTypeOptions}
           />
         </Form.Item>
       </Form>
@@ -155,21 +195,24 @@ export function CourseConfigurationsTab() {
             value={selectedProgramId}
             onChange={(val: number | undefined) => handleProgramChange(val)}
             loading={isProgramsLoading}
-            style={{ minWidth: 220 }}
+            style={{ minWidth: 220, height: 40 }}
             options={programs.map((p) => ({ value: p.id, label: p.name }))}
           />
-          <Select
-            placeholder="Select curriculum version"
-            allowClear
-            showSearch
-            optionFilterProp="label"
+          <CurriculumSelect
+            programId={selectedProgramId}
             value={selectedVersionId}
-            onChange={(val: number | undefined) => handleVersionChange(val)}
-            loading={isVersionsLoading}
+            onChange={(val) => handleVersionChange(val ?? undefined)}
             disabled={!isProgramSelected}
-            style={{ minWidth: 220 }}
-            options={versions.map((v) => ({ value: v.id, label: v.name }))}
+            style={{ minWidth: 260, height: 40 }}
           />
+          <ConditionalRenderer when={bothSelected && selectedVersion?.scope === "GLOBAL"}>
+            <Button
+              icon={<CopyOutlined />}
+              onClick={() => setBranchTarget(selectedVersion ?? null)}
+            >
+              Branch for this Program
+            </Button>
+          </ConditionalRenderer>
           <ConditionalRenderer when={bothSelected}>
             <Popover
               content={filterPopoverContent}
@@ -273,6 +316,7 @@ export function CourseConfigurationsTab() {
             <CurriculumGrid
               gridRows={gridRows}
               semesterTypes={semesterTypes}
+              semesters={semesters}
               onEdit={handleOpenEdit}
               onDelete={handleOpenDelete}
             />
@@ -300,6 +344,11 @@ export function CourseConfigurationsTab() {
         prefillLevelId={prefillLevelId}
         prefillSemesterTypeId={prefillSemesterTypeId}
       />
+      <CloneVersionModal
+        open={branchTarget !== null}
+        target={branchTarget}
+        onClose={() => setBranchTarget(null)}
+      />
       <DeleteCourseConfigModal
         open={deleteModalOpen}
         target={deleteTarget}
@@ -308,3 +357,4 @@ export function CourseConfigurationsTab() {
     </Flex>
   );
 }
+

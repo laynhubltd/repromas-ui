@@ -1,4 +1,5 @@
 import { useIsMobile } from "@/hooks/useBreakpoint";
+import { useInstitutionTerminology } from "@/shared/hooks/useInstitutionTerminology";
 import { useToken } from "@/shared/hooks/useToken";
 import { Button, Form, Input, Modal } from "antd";
 
@@ -23,6 +24,7 @@ export function AddFacultyModal({
   const [form] = Form.useForm<AddFacultyFormValues>();
   const token = useToken();
   const isMobile = useIsMobile();
+  const { academicUnit } = useInstitutionTerminology();
 
   const handleOk = async () => {
     try {
@@ -42,7 +44,7 @@ export function AddFacultyModal({
 
   return (
     <Modal
-      title="Add New Faculty"
+      title={academicUnit.addModalTitle}
       open={open}
       onCancel={handleCancel}
       footer={null}
@@ -65,23 +67,23 @@ export function AddFacultyModal({
           name="code"
           label={
             <span>
-              Faculty code <span style={{ color: token.colorError }}>*</span>
+              {academicUnit.singular} code <span style={{ color: token.colorError }}>*</span>
             </span>
           }
-          rules={[{ required: true, message: "Please enter faculty code" }]}
+          rules={[{ required: true, message: `Please enter ${academicUnit.singular.toLowerCase()} code` }]}
         >
-          <Input placeholder="e.g., SCI" />
+          <Input placeholder={academicUnit.codePlaceholder} />
         </Form.Item>
         <Form.Item
           name="name"
           label={
             <span>
-              Faculty name <span style={{ color: token.colorError }}>*</span>
+              {academicUnit.singular} name <span style={{ color: token.colorError }}>*</span>
             </span>
           }
-          rules={[{ required: true, message: "Please enter faculty name" }]}
+          rules={[{ required: true, message: `Please enter ${academicUnit.singular.toLowerCase()} name` }]}
         >
-          <Input placeholder="e.g., Faculty of Science" />
+          <Input placeholder={academicUnit.namePlaceholder} />
         </Form.Item>
       </Form>
       <div
@@ -104,7 +106,7 @@ export function AddFacultyModal({
           loading={loading}
           onClick={() => form.submit()}
         >
-          Create Faculty
+          {academicUnit.createButtonLabel}
         </Button>
       </div>
     </Modal>

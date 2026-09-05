@@ -28,12 +28,3 @@ export const entryModeRules: Rule[] = [
     message: "Entry mode must be one of UTME, DIRECT_ENTRY, or TRANSFER",
   },
 ];
-
-export const statusRules: Rule[] = [
-  { required: true, message: "Status is required" },
-  {
-    type: "enum",
-    enum: ["ACTIVE", "SUSPENDED", "GRADUATED", "WITHDRAWN", "RUSTICATED"],
-    message: "Status must be one of ACTIVE, SUSPENDED, GRADUATED, WITHDRAWN, or RUSTICATED",
-  },
-];

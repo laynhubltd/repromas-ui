@@ -5,6 +5,8 @@ import { LevelSelect } from "@/components/ui-kit/data-entry/LevelSelect";
 import { useCourseConfigFormModal } from "../../hooks/useCourseConfigModal";
 import type { CourseConfiguration } from "../../types/course-configuration";
 import { courseStatusRules, creditUnitRules } from "../../utils/validators";
+import { getOrdinalSemesterName } from "@/shared/utils/semesterOrdinal";
+import { useMemo } from "react";
 
 export type CourseConfigFormModalProps = {
   open: boolean;
@@ -34,7 +36,7 @@ export function CourseConfigFormModal({
   prefillSemesterTypeId,
 }: CourseConfigFormModalProps) {
   const token = useToken();
-  const { state, actions, form, courses, semesterTypes, isSemesterTypesLoading, prerequisiteOptions } = useCourseConfigFormModal(
+  const { state, actions, form, courses, semesterTypes, levels, isSemesterTypesLoading, prerequisiteOptions } = useCourseConfigFormModal(
     target,
     open,
     onClose,
@@ -43,6 +45,18 @@ export function CourseConfigFormModal({
   );
   const { isLoading, isEditMode } = state;
   const { handleSubmit, handleCancel, handleCourseChange } = actions;
+
+  const watchedLevelId = Form.useWatch("levelId", form);
+  const selectedLevel = levels.find((l) => l.id === watchedLevelId);
+
+  const semesterTypeOptions = useMemo(
+    () =>
+      semesterTypes.map((s) => ({
+        value: s.id,
+        label: getOrdinalSemesterName(s.sortOrder, selectedLevel?.rankOrder),
+      })),
+    [semesterTypes, selectedLevel],
+  );
 
   return (
     <Modal
@@ -124,7 +138,7 @@ export function CourseConfigFormModal({
               showSearch
               optionFilterProp="label"
               style={{ height: 40 }}
-              options={semesterTypes.map((s) => ({ value: s.id, label: s.name }))}
+              options={semesterTypeOptions}
             />
           </Form.Item>
 

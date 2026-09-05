@@ -17,8 +17,12 @@ export const TIMEFRAME_EVENT_TYPE_LABELS: Record<string, string> = {
   RESULT_UPLOAD: "Result Upload",
 };
 
-export function getTimeframeScopeLabel(scope: string | null | undefined): string {
+export function getTimeframeScopeLabel(
+  scope: string | null | undefined,
+  facultyLabel?: string,
+): string {
   if (!scope) return "—";
+  if (scope === "FACULTY" && facultyLabel) return facultyLabel;
   return TIMEFRAME_SCOPE_LABELS[scope] ?? humanizeEnumValue(scope);
 }
 

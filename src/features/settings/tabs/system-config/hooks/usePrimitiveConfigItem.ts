@@ -80,7 +80,7 @@ export function usePrimitiveConfigItem<TData, TPayload>(
 
   const handleChange = useCallback(
     async (next: PrimitiveConfigValue) => {
-      if (type === "BOOLEAN") {
+      if (type === "BOOLEAN" || props.options) {
         setDraftValue(next);
         const saved = await persistValue(next);
         if (!saved) {
@@ -91,14 +91,14 @@ export function usePrimitiveConfigItem<TData, TPayload>(
 
       setDraftValue(next);
     },
-    [type, persistValue, serverValue],
+    [type, props.options, persistValue, serverValue],
   );
 
   const handleBlurPersist = useCallback(() => {
-    if (type === "BOOLEAN") return;
+    if (type === "BOOLEAN" || props.options) return;
     if (draftValue === serverValue) return;
     void persistValue(draftValue);
-  }, [type, draftValue, serverValue, persistValue]);
+  }, [type, props.options, draftValue, serverValue, persistValue]);
 
   return {
     state: {

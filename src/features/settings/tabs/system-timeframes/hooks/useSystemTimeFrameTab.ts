@@ -114,7 +114,7 @@ export function useSystemTimeFrameTab() {
   const groupedTimeFrames = groupByEventType(timeFrames);
 
   const { data: sessionsData } = useGetAcademicSessionsQuery({
-    sort: "name:desc",
+    sort: "rankOrder:desc",
     itemsPerPage: 100,
   });
   const sessions: AcademicSession[] = sessionsData?.member ?? [];

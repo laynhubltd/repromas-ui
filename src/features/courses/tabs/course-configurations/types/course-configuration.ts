@@ -6,6 +6,15 @@ import type { Course } from "../../courses/types/course";
 
 export type CourseStatus = "CORE" | "ELECTIVE" | "REQUIRED" | "PREREQUISITE";
 
+export interface FormattedSemester {
+  semesterTypeId: number;
+  semesterTypeName: string;
+  position: number | null;
+  semesterTitle: string | null;
+  ordinalName: string;
+  displayLabel: string;
+}
+
 export type CourseConfiguration = {
   id: number;
   // Flat IDs — always present on the root object
@@ -17,6 +26,7 @@ export type CourseConfiguration = {
   courseStatus: CourseStatus;
   creditUnit: number;
   prerequisiteIds: number[];
+  semester?: FormattedSemester | null;
   createdAt: string;
   updatedAt: string;
   // Relation objects — only present when requested via include=

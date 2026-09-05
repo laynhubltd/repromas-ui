@@ -69,6 +69,7 @@ export function CourseRegistrationPage() {
       >
         <RegistrationInterface
           studentId={state.studentId}
+          studentLevelId={state.studentLevelId}
           semesterTypeId={state.semesterTypeId}
           onSemesterTypeChange={actions.handleSemesterTypeChange}
           studentInfo={state.studentHeaderInfo}
@@ -145,6 +146,7 @@ export function CourseRegistrationPage() {
         >
           <RegistrationInterface
             studentId={state.selectedStudentId}
+            studentLevelId={state.studentLevelId}
             semesterTypeId={state.semesterTypeId}
             onSemesterTypeChange={actions.handleSemesterTypeChange}
             useMobileLayout={layout.useCourseCards}

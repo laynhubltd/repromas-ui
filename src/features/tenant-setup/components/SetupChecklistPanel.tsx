@@ -25,7 +25,7 @@ export function SetupChecklistPanel({
       placement="right"
       open={open}
       onClose={onClose}
-      width={360}
+      size={360}
     >
       <DataLoader loading={state.isLoading} minHeight="120px">
         <Flex vertical gap={token.marginMD}>

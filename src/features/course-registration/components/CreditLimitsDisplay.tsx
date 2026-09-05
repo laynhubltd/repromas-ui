@@ -31,8 +31,6 @@ export function CreditLimitsDisplay({
 }: CreditLimitsDisplayProps) {
   const token = useToken();
 
-  console.log({ creditLimits, selectedCredits, registeredCredits });
-
   const {
     totalCredits,
     isUnlimited,

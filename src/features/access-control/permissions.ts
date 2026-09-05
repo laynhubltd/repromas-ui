@@ -167,6 +167,13 @@ export const Permission = {
   GradingSchemaConfigsUpdate: "grading-schema-configs:update",
   GradingSchemaConfigsDelete: "grading-schema-configs:delete",
   GradingSchemaConfigsManage: "grading-schema-configs:manage",
+  // Academic Standings
+  AcademicStandingsList: "grading-schema-configs:list",
+  AcademicStandingsRead: "grading-schema-configs:read",
+  AcademicStandingsCreate: "grading-schema-configs:create",
+  AcademicStandingsUpdate: "grading-schema-configs:update",
+  AcademicStandingsDelete: "grading-schema-configs:delete",
+  AcademicStandingsManage: "grading-schema-configs:manage",
   // Grading
   GradingList: "grading:list",
   GradingRead: "grading:read",
@@ -174,6 +181,9 @@ export const Permission = {
   GradingUpdate: "grading:update",
   GradingDelete: "grading:delete",
   GradingManage: "grading:manage",
+  // Result Broadsheet
+  ResultBroadsheetRead: "grading:read",
+  ResultBroadsheetExport: "grading:read",
   // Score Evaluation Statuses
   ScoreEvaluationStatusesList: "grading:list",
   ScoreEvaluationStatusesCreate: "grading:create",

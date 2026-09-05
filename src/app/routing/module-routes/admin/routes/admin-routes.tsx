@@ -66,6 +66,18 @@ const AssessmentPage = lazy(() =>
   })),
 );
 
+const StudentTransitionsPage = lazy(() =>
+  import("@/features/student-transitions").then((m) => ({
+    default: m.StudentTransitionsPage,
+  })),
+);
+
+const ResultBroadsheetPage = lazy(() =>
+  import("@/features/result-broadsheet").then((m) => ({
+    default: m.ResultBroadsheetPage,
+  })),
+);
+
 const BillingPage = lazy(() =>
   import("@/features/billing").then((m) => ({
     default: m.BillingPage,
@@ -108,6 +120,14 @@ export function getAdminRouteEntries() {
               element={<AdmissionCandidatePage />}
             />
             <Route path="assessment" element={<AssessmentPage />} />
+            <Route
+              path="results/broadsheet"
+              element={<ResultBroadsheetPage />}
+            />
+            <Route
+              path="student-transitions"
+              element={<StudentTransitionsPage />}
+            />
             <Route path="billing" element={<BillingPage />} />
           </Route>
         </Route>

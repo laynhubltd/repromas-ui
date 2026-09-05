@@ -6,6 +6,7 @@ import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
 import { Alert, Badge, Button, DatePicker, Form, Input, Modal, Select, Tag } from "antd";
 import dayjs from "dayjs";
 import { LevelSelect } from "@/components/ui-kit/data-entry/LevelSelect";
+import { LevelSemesterSelect } from "@/shared/ui/LevelSemesterSelect";
 import { useTransitionFormModal } from "../../hooks/useTransitionModal";
 import type { StudentEnrollmentTransition } from "../../types/studentTransition";
 import {
@@ -33,10 +34,8 @@ export function TransitionFormModal({ open, studentId, target, onClose }: Transi
   const {
     statuses,
     sessions,
-    semesters,
     statusesLoading,
     sessionsLoading,
-    semestersLoading,
   } = refs;
 
   return (
@@ -143,29 +142,6 @@ export function TransitionFormModal({ open, studentId, target, onClose }: Transi
             />
           </Form.Item>
 
-          {/* semesterId — create mode only (immutable after creation) */}
-          <ConditionalRenderer when={!isEditMode}>
-            <Form.Item
-              name="semesterId"
-              label={
-                <span>
-                  Semester <span style={{ color: token.colorError, fontWeight: 700 }}>*</span>
-                </span>
-              }
-              rules={semesterIdRules}
-            >
-              <Select
-                placeholder="Select semester"
-                loading={semestersLoading}
-                disabled={semestersLoading}
-                showSearch
-                optionFilterProp="label"
-                style={{ height: 40 }}
-                options={semesters.map((s) => ({ value: s.id, label: s.name }))}
-              />
-            </Form.Item>
-          </ConditionalRenderer>
-
           {/* levelId */}
           <Form.Item
             name="levelId"
@@ -180,8 +156,28 @@ export function TransitionFormModal({ open, studentId, target, onClose }: Transi
               placeholder="Select level"
               showSearch
               style={{ height: 40 }}
+              onChange={(value) => actions.handleLevelChange(value as number | undefined)}
             />
           </Form.Item>
+
+          {/* semesterId — create mode only (immutable after creation) */}
+          <ConditionalRenderer when={!isEditMode}>
+            <Form.Item
+              name="semesterId"
+              label={
+                <span>
+                  Semester <span style={{ color: token.colorError, fontWeight: 700 }}>*</span>
+                </span>
+              }
+              rules={semesterIdRules}
+            >
+              <LevelSemesterSelect
+                levelId={state.selectedLevelId}
+                sessionId={state.selectedSessionId}
+                style={{ height: 40 }}
+              />
+            </Form.Item>
+          </ConditionalRenderer>
 
           {/* startDate */}
           <Form.Item

@@ -1,12 +1,8 @@
-// Feature: student
 import type { Program } from "@/features/program/tabs/programs/types/program";
-import type { CurriculumVersion } from "@/features/settings/tabs/curriculum-version/types/curriculum-version";
-import {
-  ENTRY_MODE_OPTIONS,
-  STUDENT_STATUS_OPTIONS,
-} from "@/shared/constants/studentOptions";
+import { ENTRY_MODE_OPTIONS } from "@/shared/constants/studentOptions";
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
+import { CurriculumSelect } from "@/components/ui-kit/data-entry/CurriculumSelect";
 import { LevelSelect } from "@/components/ui-kit/data-entry/LevelSelect";
 import {
   Alert,
@@ -27,7 +23,6 @@ import {
   firstNameRules,
   lastNameRules,
   matricNumberRules,
-  statusRules,
 } from "../../utils/validators";
 
 export type StudentFormModalProps = {
@@ -58,10 +53,10 @@ export function StudentFormModal({
   const { handleSubmit, handleCancel } = actions;
   const {
     programs,
-    curriculumVersions,
     programName,
     isProgramsLoading,
-    isCurriculumVersionsLoading,
+    academicSessions,
+    isAcademicSessionsLoading,
   } = data;
 
   return (
@@ -188,9 +183,9 @@ export function StudentFormModal({
             </Col>
           </Row>
 
-          {/* ── Row 2: Email + Status ── */}
+          {/* ── Row 2: Email (+ Entry Session in create mode) ── */}
           <Row gutter={16}>
-            <Col xs={24} sm={12}>
+            <Col xs={24} sm={isEditMode ? 24 : 12}>
               <Form.Item name="email" label="Email" rules={emailRules}>
                 <Input
                   placeholder="e.g. john.doe@example.com"
@@ -198,24 +193,33 @@ export function StudentFormModal({
                 />
               </Form.Item>
             </Col>
-            <Col xs={24} sm={12}>
-              <Form.Item
-                name="status"
-                label={
-                  <span>
-                    Status <Req />
-                  </span>
-                }
-                rules={statusRules}
-                initialValue={!isEditMode ? "ACTIVE" : undefined}
-              >
-                <Select
-                  placeholder="Select status"
-                  style={{ height: 40 }}
-                  options={STUDENT_STATUS_OPTIONS}
-                />
-              </Form.Item>
-            </Col>
+            <ConditionalRenderer when={!isEditMode}>
+              <Col xs={24} sm={12}>
+                <Form.Item
+                  name="entrySessionId"
+                  label={
+                    <span>
+                      Entry Session <Req />
+                    </span>
+                  }
+                  rules={[
+                    { required: true, message: "Entry session is required" },
+                  ]}
+                >
+                  <Select
+                    placeholder="Select entry session"
+                    loading={isAcademicSessionsLoading}
+                    showSearch
+                    optionFilterProp="label"
+                    style={{ height: 40 }}
+                    options={academicSessions.map((s) => ({
+                      value: s.id,
+                      label: s.isCurrent ? `${s.name} (Current)` : s.name,
+                    }))}
+                  />
+                </Form.Item>
+              </Col>
+            </ConditionalRenderer>
           </Row>
 
           {/* ── Create-only fields ── */}
@@ -265,7 +269,7 @@ export function StudentFormModal({
                 </Col>
               </Row>
 
-              {/* Row 4: Entry Level + Curriculum Version */}
+              {/* Row 4: Entry Level + Current Level */}
               <Row gutter={16}>
                 <Col xs={24} sm={12}>
                   <Form.Item
@@ -282,6 +286,7 @@ export function StudentFormModal({
                     <LevelSelect
                       placeholder="Select entry level"
                       showSearch
+                      layout="vertical"
                       style={{ height: 40 }}
                       onChange={(value) => {
                         form.setFieldValue("currentLevelId", value);
@@ -290,6 +295,30 @@ export function StudentFormModal({
                   </Form.Item>
                 </Col>
                 <Col xs={24} sm={12}>
+                  <Form.Item
+                    name="currentLevelId"
+                    label={
+                      <span>
+                        Current Level <Req />
+                      </span>
+                    }
+                    rules={[
+                      { required: true, message: "Current level is required" },
+                    ]}
+                  >
+                    <LevelSelect
+                      placeholder="Select current level"
+                      showSearch
+                      layout="vertical"
+                      style={{ height: 40 }}
+                    />
+                  </Form.Item>
+                </Col>
+              </Row>
+
+              {/* Row 5: Curriculum Version (full width in create) */}
+              <Row gutter={16}>
+                <Col xs={24}>
                   <Form.Item
                     name="curriculumVersionId"
                     label={
@@ -304,18 +333,11 @@ export function StudentFormModal({
                       },
                     ]}
                   >
-                    <Select
-                      placeholder="Select curriculum version"
-                      loading={isCurriculumVersionsLoading}
-                      showSearch
-                      optionFilterProp="label"
+                    <CurriculumSelect
+                      programId={Form.useWatch("programId", form)}
+                      autoSelectActive={!isEditMode}
+                      skip={!open}
                       style={{ height: 40 }}
-                      options={curriculumVersions.map(
-                        (v: CurriculumVersion) => ({
-                          value: v.id,
-                          label: v.name,
-                        }),
-                      )}
                     />
                   </Form.Item>
                 </Col>
@@ -323,28 +345,30 @@ export function StudentFormModal({
             </>
           </ConditionalRenderer>
 
-          {/* ── Current Level — full width in edit, half in create (stacks on mobile) ── */}
-          <Row gutter={16}>
-            <Col xs={24} sm={isEditMode ? 24 : 12}>
-              <Form.Item
-                name="currentLevelId"
-                label={
-                  <span>
-                    Current Level <Req />
-                  </span>
-                }
-                rules={[
-                  { required: true, message: "Current level is required" },
-                ]}
-              >
-                <LevelSelect
-                  placeholder="Select current level"
-                  showSearch
-                  style={{ height: 40 }}
-                />
-              </Form.Item>
-            </Col>
-          </Row>
+          {/* ── Edit-only: Current Level ── */}
+          <ConditionalRenderer when={isEditMode}>
+            <Row gutter={16}>
+              <Col xs={24}>
+                <Form.Item
+                  name="currentLevelId"
+                  label={
+                    <span>
+                      Current Level <Req />
+                    </span>
+                  }
+                  rules={[
+                    { required: true, message: "Current level is required" },
+                  ]}
+                >
+                  <LevelSelect
+                    placeholder="Select current level"
+                    showSearch
+                    style={{ height: 40 }}
+                  />
+                </Form.Item>
+              </Col>
+            </Row>
+          </ConditionalRenderer>
 
           {/* ── Metadata (full width) ── */}
           <Form.Item

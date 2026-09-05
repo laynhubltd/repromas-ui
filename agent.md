@@ -674,6 +674,107 @@ When adding a new reusable constant, add it to the appropriate file in src/share
 
 ---
 
+# Institutional Terminology Rule (MANDATORY)
+
+Repromas serves multiple higher education institution types (`CONVENTIONAL` universities, `TECHNOLOGY` universities, `POLYTECHNIC`, `COLLEGE` of education, `MONOTECHNIC`, `VOCATIONAL` colleges). Each institution type uses its own academic vocabulary (e.g. *"Faculty"* vs *"School"* vs *"Division"*, *"Degree"* vs *"National Diploma"* vs *"NCE"*, *"Dean"* vs *"Director"*, *"Vice-Chancellor"* vs *"Rector"* vs *"Provost"*).
+
+**NEVER hardcode academic unit names or award types in user-facing JSX/TSX.** Always use `useInstitutionTerminology()` from `@/shared/hooks/useInstitutionTerminology`.
+
+## Location & Hook
+
+```ts
+import { useInstitutionTerminology } from "@/shared/hooks/useInstitutionTerminology";
+```
+
+## Hook Properties Available
+
+```ts
+const { academicUnit, program, headOfInstitution, institutionType } = useInstitutionTerminology();
+
+// Academic Unit (Faculty / School / Division):
+academicUnit.singular            // "Faculty" | "School" | "Division"
+academicUnit.plural              // "Faculties" | "Schools" | "Divisions"
+academicUnit.codePlaceholder     // "e.g., SCI" | "e.g., SCIT" | "e.g., SAS"
+academicUnit.namePlaceholder     // "e.g., Faculty of Science" | "e.g., School of Computing"
+academicUnit.selectPlaceholder   // "Select Faculty" | "Select School"
+academicUnit.searchPlaceholder   // "Search faculties..." | "Search schools..."
+academicUnit.allFilterLabel      // "All Faculties" | "All Schools"
+academicUnit.addModalTitle       // "Add New Faculty" | "Add New School"
+academicUnit.editModalTitle      // "Edit Faculty" | "Edit School"
+academicUnit.deleteModalTitle    // "Delete Faculty" | "Delete School"
+academicUnit.createButtonLabel   // "Create Faculty" | "Create School"
+academicUnit.addButtonLabel      // "+ Add Faculty" | "+ Add School"
+academicUnit.combinedMenuLabel   // "Faculty & Departments" | "Schools & Departments"
+academicUnit.headOfUnitTitle     // "Dean of Faculty" | "Dean of School"
+
+// Program & Awards:
+program.awardSingular            // "Degree" | "National Diploma (ND / HND)" | "NCE"
+program.awardPlural              // "Degrees" | "Diplomas & Certificates"
+program.programSample            // "e.g., B.Sc. Computer Science" | "e.g., ND Computer Science"
+
+// Institution Head:
+headOfInstitution                // "Vice-Chancellor" | "Rector" | "Provost" | "Principal"
+```
+
+## Examples
+
+### 1. Form Modals & Input Placeholders
+
+```tsx
+// Modal title & field placeholders
+const { academicUnit } = useInstitutionTerminology();
+
+return (
+  <Modal title={isEditMode ? academicUnit.editModalTitle : academicUnit.addModalTitle}>
+    <Form.Item
+      label={`${academicUnit.singular} name`}
+      rules={[{ required: true, message: `Please enter ${academicUnit.singular.toLowerCase()} name` }]}
+    >
+      <Input placeholder={academicUnit.namePlaceholder} />
+    </Form.Item>
+    <Form.Item
+      label={`${academicUnit.singular} code`}
+      rules={[{ required: true, message: `Please enter ${academicUnit.singular.toLowerCase()} code` }]}
+    >
+      <Input placeholder={academicUnit.codePlaceholder} />
+    </Form.Item>
+    <Button type="primary">{isEditMode ? "Save Changes" : academicUnit.createButtonLabel}</Button>
+  </Modal>
+);
+```
+
+### 2. Parent Unit Select Dropdown
+
+```tsx
+// Department or Program form selecting parent academic unit
+const { academicUnit } = useInstitutionTerminology();
+
+<Form.Item label={academicUnit.singular}>
+  <Select placeholder={academicUnit.selectPlaceholder} options={options} />
+</Form.Item>
+```
+
+### 3. Navigation & Dashboard Headers
+
+```tsx
+// Menu navigation items & metric card titles
+const { academicUnit } = useInstitutionTerminology();
+
+<DashCard title={academicUnit.plural} meta={`Across all ${academicUnit.plural.toLowerCase()}`} />
+```
+
+## Rules
+
+```
+MUST use useInstitutionTerminology() whenever rendering academic unit labels, placeholders, or modal titles
+MUST NOT hardcode "Faculty", "Faculties", or "Faculty of Science" in user-facing JSX/TSX
+MUST use academicUnit.codePlaceholder and academicUnit.namePlaceholder in form inputs
+MUST use academicUnit.selectPlaceholder in parent unit selector dropdowns
+MUST use academicUnit.combinedMenuLabel in navigation menus and header titles
+MUST use academicUnit.addModalTitle, editModalTitle, and deleteModalTitle for modal headers
+MUST use program.awardSingular and program.awardPlural when displaying credential/degree requirements
+```
+
 # Types Strategy
 
 Feature types:

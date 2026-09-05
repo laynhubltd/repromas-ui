@@ -1,8 +1,12 @@
 import { useToken } from "@/shared/hooks/useToken";
-import { Button, DatePicker, Form, Input, Modal, Switch } from "antd";
+import { Button, DatePicker, Form, Input, InputNumber, Modal, Switch } from "antd";
 import { useSessionFormModal } from "../../hooks/useSessionModal";
 import type { AcademicSession } from "../../types/academic-calendar";
-import { sessionEndDateRules, sessionNameRules } from "../../utils/validators";
+import {
+  sessionEndDateRules,
+  sessionNameRules,
+  sessionRankOrderRules,
+} from "../../utils/validators";
 
 export type SessionFormModalProps = {
   open: boolean;
@@ -39,6 +43,34 @@ export function SessionFormModal({ open, target, onClose }: SessionFormModalProp
         <Form form={form} layout="vertical" requiredMark={false} onFinish={handleSubmit}>
           <Form.Item name="name" label="Name" rules={sessionNameRules}>
             <Input placeholder="e.g. 2025/2026" style={{ height: 40 }} />
+          </Form.Item>
+
+          <Form.Item
+            name="rankOrder"
+            label={
+              <span>
+                Rank / Order{" "}
+                {isEditMode && (
+                  <span style={{ color: token.colorError, fontWeight: 700 }}>*</span>
+                )}
+              </span>
+            }
+            rules={
+              isEditMode
+                ? [{ required: true, message: "Rank order is required" }, ...sessionRankOrderRules]
+                : sessionRankOrderRules
+            }
+            extra={
+              !isEditMode
+                ? "Optional: leave blank to auto-assign the next sequence number."
+                : undefined
+            }
+          >
+            <InputNumber
+              min={1}
+              placeholder={isEditMode ? "e.g. 1" : "Auto-assigned if left blank"}
+              style={{ width: "100%", height: 40 }}
+            />
           </Form.Item>
 
           <Form.Item name="startDate" label="Start Date">

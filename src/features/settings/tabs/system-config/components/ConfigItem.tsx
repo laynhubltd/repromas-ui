@@ -7,6 +7,7 @@ import {
   Dropdown,
   Input,
   InputNumber,
+  Select,
   Switch,
   Typography,
 } from "antd";
@@ -133,12 +134,24 @@ function PrimitiveConfigItem<TData, TPayload>(
         );
 
       case "STRING":
+        if (props.options) {
+          return (
+            <Select
+              value={state.value as string}
+              placeholder={props.placeholder}
+              disabled={disabled}
+              options={props.options}
+              style={{ minWidth: 240, ...props.style }}
+              onChange={(value) => void actions.handleChange(value)}
+            />
+          );
+        }
         return (
           <Input
             value={state.value as string}
             placeholder={props.placeholder}
             disabled={disabled}
-            style={{ width: 220 }}
+            style={{ width: 220, ...props.style }}
             onChange={(e) => void actions.handleChange(e.target.value)}
             onBlur={actions.handleBlurPersist}
           />

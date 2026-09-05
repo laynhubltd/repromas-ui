@@ -1,6 +1,7 @@
 // Feature: faculty-department-management
 import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
+import { useInstitutionTerminology } from "@/shared/hooks/useInstitutionTerminology";
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer, centeredBox } from "@/shared/ui/ConditionalRenderer";
 import { DataLoader } from "@/shared/ui/DataLoader";
@@ -17,6 +18,7 @@ import { FacultyFormModal } from "./modals/FacultyFormModal";
 
 export function HierarchyView() {
   const token = useToken();
+  const { academicUnit } = useInstitutionTerminology();
   const { state, actions, flags } = useHierarchyView();
   const {
     faculties,
@@ -55,7 +57,7 @@ export function HierarchyView() {
 
   return (
     <div>
-      {/* Header row: title + Create Faculty button */}
+      {/* Header row: title + Create button */}
       <div
         style={{
           display: "flex",
@@ -67,7 +69,7 @@ export function HierarchyView() {
         }}
       >
         <Typography.Title level={5} style={{ margin: 0 }}>
-          Faculties
+          {academicUnit.plural}
         </Typography.Title>
         <PermissionGuard permission={Permission.FacultiesCreate}>
           <Button
@@ -76,7 +78,7 @@ export function HierarchyView() {
             onClick={handleOpenCreate}
             style={{ fontWeight: 600 }}
           >
-            Create Faculty
+            {academicUnit.createButtonLabel}
           </Button>
         </PermissionGuard>
       </div>
@@ -101,7 +103,7 @@ export function HierarchyView() {
           <ConditionalRenderer when={isError}>
             <ErrorAlert
               variant="section"
-              error={sectionError ?? "Failed to load faculties"}
+              error={sectionError ?? `Failed to load ${academicUnit.plural.toLowerCase()}`}
               onRetry={refetch}
             />
           </ConditionalRenderer>
@@ -116,7 +118,7 @@ export function HierarchyView() {
             })}
           >
             <Typography.Text type="secondary" style={{ display: "block", marginBottom: 16 }}>
-              No faculties yet. Create your first faculty to get started.
+              No {academicUnit.plural.toLowerCase()} yet. Create your first {academicUnit.singular.toLowerCase()} to get started.
             </Typography.Text>
             <PermissionGuard permission={Permission.FacultiesCreate}>
               <Button
@@ -125,7 +127,7 @@ export function HierarchyView() {
                 onClick={handleOpenCreate}
                 style={{ fontWeight: 600 }}
               >
-                Create Faculty
+                {academicUnit.createButtonLabel}
               </Button>
             </PermissionGuard>
           </ConditionalRenderer>
@@ -140,7 +142,7 @@ export function HierarchyView() {
             })}
           >
             <Typography.Text type="secondary" style={{ display: "block", marginBottom: 8 }}>
-              No faculties found matching your search.
+              No {academicUnit.plural.toLowerCase()} found matching your search.
             </Typography.Text>
             <Button
               type="link"

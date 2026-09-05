@@ -85,7 +85,7 @@ export function useCreditLimitsTab() {
   });
 
   const { data: sessionsData, isLoading: sessionsLoading } =
-    useGetAcademicSessionsQuery({ itemsPerPage: 100, sort: "name:asc" });
+    useGetAcademicSessionsQuery({ itemsPerPage: 100, sort: "rankOrder:desc" });
 
   const { data: semesterTypesData, isLoading: semesterTypesLoading } =
     useGetSemesterTypesQuery({ itemsPerPage: 100, sort: "sortOrder:asc" });

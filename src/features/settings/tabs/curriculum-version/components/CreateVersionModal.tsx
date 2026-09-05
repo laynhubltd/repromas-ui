@@ -1,5 +1,5 @@
 import { useToken } from "@/shared/hooks/useToken";
-import { Button, Form, Input, Modal } from "antd";
+import { Button, Form, Input, Modal, Radio, Select, Space, Typography } from "antd";
 import { useCreateVersionModal } from "../hooks/useCreateVersionModal";
 
 interface CreateVersionModalProps {
@@ -9,9 +9,11 @@ interface CreateVersionModalProps {
 
 export function CreateVersionModal({ open, onClose }: CreateVersionModalProps) {
   const token = useToken();
-  const { state, actions, form } = useCreateVersionModal(onClose);
-  const { isLoading } = state;
+  const { state, actions, form } = useCreateVersionModal(open, onClose);
+  const { isLoading, isProgramsLoading, programs } = state;
   const { handleSubmit, handleCancel } = actions;
+
+  const scope = Form.useWatch("scope", form) ?? "GLOBAL";
 
   return (
     <Modal
@@ -19,7 +21,7 @@ export function CreateVersionModal({ open, onClose }: CreateVersionModalProps) {
       open={open}
       onCancel={handleCancel}
       footer={null}
-      width={480}
+      width={520}
       destroyOnClose
       closable
       styles={{
@@ -32,18 +34,91 @@ export function CreateVersionModal({ open, onClose }: CreateVersionModalProps) {
       }}
     >
       <div style={{ padding: 24 }}>
-        <Form form={form} layout="vertical" requiredMark={false} onFinish={handleSubmit}>
+        <Form
+          form={form}
+          layout="vertical"
+          requiredMark={false}
+          initialValues={{ scope: "GLOBAL" }}
+          onFinish={handleSubmit}
+        >
+          <Form.Item
+            name="scope"
+            label={
+              <span>
+                Scope <span style={{ color: token.colorError, fontWeight: 700 }}>*</span>
+              </span>
+            }
+            rules={[{ required: true, message: "Please select a scope" }]}
+          >
+            <Radio.Group style={{ width: "100%" }}>
+              <Space direction="vertical" style={{ width: "100%" }}>
+                <Radio value="GLOBAL">
+                  <Space orientation="vertical" size={0}>
+                    <Typography.Text strong>Global Standard (Institution-wide)</Typography.Text>
+                    <Typography.Text type="secondary" style={{ fontSize: token.fontSizeSM }}>
+                      Baseline handbook or regulatory benchmark applying to all programs.
+                    </Typography.Text>
+                  </Space>
+                </Radio>
+                <Radio value="PROGRAM">
+                  <Space orientation="vertical" size={0}>
+                    <Typography.Text strong>Program Specific</Typography.Text>
+                    <Typography.Text type="secondary" style={{ fontSize: token.fontSizeSM }}>
+                      Custom curriculum standard tailored to a single degree program.
+                    </Typography.Text>
+                  </Space>
+                </Radio>
+              </Space>
+            </Radio.Group>
+          </Form.Item>
+
+          {scope === "PROGRAM" && (
+            <Form.Item
+              name="referenceId"
+              label={
+                <span>
+                  Target Program <span style={{ color: token.colorError, fontWeight: 700 }}>*</span>
+                </span>
+              }
+              rules={[{ required: true, message: "Please select a program" }]}
+            >
+              <Select
+                placeholder="Search and select program"
+                loading={isProgramsLoading}
+                showSearch
+                optionFilterProp="label"
+                filterOption={(input, option) =>
+                  String(option?.label ?? "")
+                    .toLowerCase()
+                    .includes(input.toLowerCase())
+                }
+                style={{ height: 40 }}
+                options={programs.map((p) => ({
+                  value: p.id,
+                  label: p.code ? `${p.name} (${p.code})` : p.name,
+                }))}
+              />
+            </Form.Item>
+          )}
+
           <Form.Item
             name="name"
             label={
               <span>
-                Name <span style={{ color: token.colorError, fontWeight: 700 }}>*</span>
+                Version Name <span style={{ color: token.colorError, fontWeight: 700 }}>*</span>
               </span>
             }
             rules={[{ required: true, message: "Please enter a version name" }]}
             style={{ marginBottom: 0 }}
           >
-            <Input placeholder="e.g. 2026 CCMAS Standard" style={{ height: 40 }} />
+            <Input
+              placeholder={
+                scope === "GLOBAL"
+                  ? "e.g. 2026 CCMAS Standard"
+                  : "e.g. 2026 Software Engineering Special Standard"
+              }
+              style={{ height: 40 }}
+            />
           </Form.Item>
         </Form>
       </div>
@@ -81,3 +156,4 @@ export function CreateVersionModal({ open, onClose }: CreateVersionModalProps) {
     </Modal>
   );
 }
+

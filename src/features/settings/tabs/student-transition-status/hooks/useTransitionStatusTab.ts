@@ -7,6 +7,8 @@ import {
   useLazyGetEnrollmentTransitionsQuery,
 } from "../api/studentTransitionStatusApi";
 import type {
+  ManagedBy,
+  SemanticKind,
   StateCategory,
   StudentTransitionStatus,
   TransitionStatusListParams,
@@ -21,6 +23,12 @@ export function useTransitionStatusTab() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<
     StateCategory | undefined
+  >(undefined);
+  const [semanticKindFilter, setSemanticKindFilter] = useState<
+    SemanticKind | undefined
+  >(undefined);
+  const [managedByFilter, setManagedByFilter] = useState<
+    ManagedBy | undefined
   >(undefined);
   const [isDefaultFilter, setIsDefaultFilter] = useState<boolean | undefined>(
     undefined,
@@ -58,6 +66,8 @@ export function useTransitionStatusTab() {
     sort,
     ...(debouncedSearch ? { "search[name]": debouncedSearch } : {}),
     ...(categoryFilter ? { "exact[stateCategory]": categoryFilter } : {}),
+    ...(semanticKindFilter ? { "exact[semanticKind]": semanticKindFilter } : {}),
+    ...(managedByFilter ? { "exact[managedBy]": managedByFilter } : {}),
     ...(isDefaultFilter !== undefined
       ? { "boolean[isDefault]": isDefaultFilter }
       : {}),
@@ -82,7 +92,7 @@ export function useTransitionStatusTab() {
     [isError, queryError],
   );
 
-  const statuses = data?.member ?? [];
+  const statuses = useMemo(() => data?.member ?? [], [data?.member]);
   const displayStatuses = useMemo(
     () => sortDisplayStatuses(statuses, sort),
     [statuses, sort],
@@ -90,11 +100,35 @@ export function useTransitionStatusTab() {
   const totalItems = data?.totalItems ?? 0;
   const hasDefaultConfigured = (defaultProbeData?.totalItems ?? 0) > 0;
 
+  const unclassifiedCount = useMemo(
+    () =>
+      statuses.filter(
+        (s) => !s.semanticKind || s.semanticKind === "OTHER",
+      ).length,
+    [statuses],
+  );
+
   const [triggerUsageCheck] = useLazyGetEnrollmentTransitionsQuery();
 
   const handleCategoryFilterChange = useCallback(
     (value: StateCategory | undefined) => {
       setCategoryFilter(value);
+      setPage(1);
+    },
+    [],
+  );
+
+  const handleSemanticKindFilterChange = useCallback(
+    (value: SemanticKind | undefined) => {
+      setSemanticKindFilter(value);
+      setPage(1);
+    },
+    [],
+  );
+
+  const handleManagedByFilterChange = useCallback(
+    (value: ManagedBy | undefined) => {
+      setManagedByFilter(value);
       setPage(1);
     },
     [],
@@ -110,6 +144,8 @@ export function useTransitionStatusTab() {
 
   const handleClearFilters = useCallback(() => {
     setCategoryFilter(undefined);
+    setSemanticKindFilter(undefined);
+    setManagedByFilter(undefined);
     setIsDefaultFilter(undefined);
     setPage(1);
   }, []);
@@ -183,9 +219,12 @@ export function useTransitionStatusTab() {
     setDeleteTarget(null);
   }, []);
 
-  const activeFilterCount = [categoryFilter, isDefaultFilter].filter(
-    (v) => v !== undefined,
-  ).length;
+  const activeFilterCount = [
+    categoryFilter,
+    semanticKindFilter,
+    managedByFilter,
+    isDefaultFilter,
+  ].filter((v) => v !== undefined).length;
 
   return {
     state: {
@@ -198,6 +237,8 @@ export function useTransitionStatusTab() {
       itemsPerPage,
       search,
       categoryFilter,
+      semanticKindFilter,
+      managedByFilter,
       isDefaultFilter,
       sort,
       formTarget,
@@ -206,10 +247,13 @@ export function useTransitionStatusTab() {
       deleteModalOpen,
       usageCheckLoading,
       usageCount,
+      unclassifiedCount,
     },
     actions: {
       handleSearchChange,
       handleCategoryFilterChange,
+      handleSemanticKindFilterChange,
+      handleManagedByFilterChange,
       handleIsDefaultFilterChange,
       handleClearFilters,
       handleSortChange,

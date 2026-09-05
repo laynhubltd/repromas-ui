@@ -1,35 +1,16 @@
 // Feature: grading-config
-import { Tabs } from "@/components/ui-kit";
-import { EvaluationStatusTab } from "../tabs/evaluation-status";
-import { GradingSystemTab } from "../tabs/grading-system";
-import { GradingSystemBoundaryTab } from "../tabs/grading-system-boundary";
+import { GroupedConfigTabs } from "@/components/ui-kit";
+import { GRADING_CONFIG_TAB_GROUPS } from "../gradingConfigTabRegistry";
 
 export function GradingConfigPage() {
   return (
     <div style={{ maxWidth: 1280, margin: "0 auto" }}>
-      <Tabs
-        items={[
-          {
-            key: "grading-system",
-            label: "Grading Systems",
-            children: <GradingSystemTab />,
-          },
-          {
-            key: "grading-system-boundary",
-            label: "Grade Boundaries",
-            children: <GradingSystemBoundaryTab />,
-          },
-          {
-            key: "evaluation-status",
-            label: "Evaluation Status",
-            children: <EvaluationStatusTab />,
-          },
-        ]}
-        defaultActiveKey="grading-system"
-        size="md"
-        density="spacious"
-        variant="default"
-        aria-label="Grading configuration navigation"
+      <GroupedConfigTabs
+        groups={GRADING_CONFIG_TAB_GROUPS}
+        defaultGroupKey="grading-system"
+        defaultTabKey="grading-systems"
+        ariaLabel="Grading configuration navigation"
+        syncWithUrl
       />
     </div>
   );

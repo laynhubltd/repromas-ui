@@ -1,11 +1,5 @@
-// Student status and entry mode enums
-
-export type StudentStatus =
-  | "ACTIVE"
-  | "SUSPENDED"
-  | "GRADUATED"
-  | "WITHDRAWN"
-  | "RUSTICATED";
+// Student status (dynamic tenant-configured string from StudentTransitionStatus) and entry mode
+export type StudentStatus = string;
 
 export type EntryMode = "UTME" | "DIRECT_ENTRY" | "TRANSFER";
 
@@ -21,8 +15,9 @@ export type Student = {
   programId: number;
   entryLevelId: number;
   currentLevelId: number;
+  entrySessionId?: number;
   curriculumVersionId: number;
-  status: StudentStatus;
+  status: string;
   metaData: Record<string, unknown> | null;
   createdAt: string;
   updatedAt: string;
@@ -38,6 +33,7 @@ export type Student = {
   } | null;
   entryLevel?: { id: number; name: string } | null;
   currentLevel?: { id: number; name: string } | null;
+  entrySession?: { id: number; name: string } | null;
   curriculumVersion?: { id: number; name: string } | null;
   currentEnrollmentTransition?: Record<string, unknown> | null;
 };
@@ -60,10 +56,11 @@ export type StudentListParams = {
   "search[firstName]"?: string;
   "search[lastName]"?: string;
   "search[matricNumber]"?: string;
-  "exact[status]"?: StudentStatus;
+  "exact[status]"?: string;
   "exact[entryMode]"?: EntryMode;
   "exact[programId]"?: number;
   "exact[currentLevelId]"?: number;
+  "exact[entrySessionId]"?: number;
 };
 
 // Request bodies
@@ -77,8 +74,8 @@ export type CreateStudentRequest = {
   programId: number;
   entryLevelId: number;
   currentLevelId: number;
+  entrySessionId?: number;
   curriculumVersionId: number;
-  status?: StudentStatus;
   metaData?: Record<string, unknown> | null;
 };
 
@@ -87,7 +84,6 @@ export type UpdateStudentRequest = {
   lastName: string;
   email?: string | null;
   currentLevelId: number;
-  status: StudentStatus;
   metaData?: Record<string, unknown> | null;
 };
 

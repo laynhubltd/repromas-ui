@@ -1,6 +1,20 @@
 // ── Enums ─────────────────────────────────────────────────────────────────────
 
-export type ConfigKey = "CREDIT_LOAD_LIMITS" | "FORCE_CARRYOVER_FIRST" | "HAS_LEVEL_CATEGORY";
+export type ConfigKey =
+  | "CREDIT_LOAD_LIMITS"
+  | "FORCE_CARRYOVER_FIRST"
+  | "HAS_LEVEL_CATEGORY"
+  | "INSTITUTION_TYPE"
+  | "OVERRIDE_CARRYOVER"
+  | "USE_SEMESTER_ORDINAL";
+
+export type InstitutionType =
+  | "CONVENTIONAL"
+  | "TECHNOLOGY"
+  | "POLYTECHNIC"
+  | "COLLEGE"
+  | "MONOTECHNIC"
+  | "VOCATIONAL";
 
 export type ConfigScope = "GLOBAL" | "PROGRAM" | "SESSION" | "SEMESTER";
 
@@ -13,6 +27,14 @@ export type CreditLoadLimitsValue = {
   max_credits: number;
 };
 
+export type SystemConfigValue =
+  | string
+  | number
+  | boolean
+  | CreditLoadLimitsValue
+  | Record<string, unknown>
+  | unknown[];
+
 // ── API response shape ────────────────────────────────────────────────────────
 
 export type SystemConfig = {
@@ -22,7 +44,7 @@ export type SystemConfig = {
   referenceId: number | null;
   configKey: ConfigKey;
   dataType: DataType;
-  configValue: CreditLoadLimitsValue | boolean | unknown;
+  configValue: SystemConfigValue;
   description: string | null;
   configVersion: number | null;
 };
@@ -34,7 +56,7 @@ export type CreateSystemConfigRequest = {
   referenceId: number | null;
   configKey: ConfigKey;
   dataType: DataType;
-  configValue: CreditLoadLimitsValue | boolean;
+  configValue: SystemConfigValue;
   configVersion?: number | null;
   description?: string | null;
 };
@@ -42,7 +64,7 @@ export type CreateSystemConfigRequest = {
 export type UpdateSystemConfigRequest = {
   scope?: ConfigScope;
   referenceId?: number | null;
-  configValue?: CreditLoadLimitsValue | boolean;
+  configValue?: SystemConfigValue;
   description?: string | null;
 };
 
