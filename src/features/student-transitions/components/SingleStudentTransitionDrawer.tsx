@@ -205,7 +205,7 @@ export function SingleStudentTransitionDrawer({
             </Descriptions.Item>
           </Descriptions>
 
-          <Divider orientation="start" style={{ margin: "8px 0" }}>
+          <Divider titlePlacement="start" style={{ margin: "8px 0" }}>
             Historical Enrollment Ledger
           </Divider>
 
