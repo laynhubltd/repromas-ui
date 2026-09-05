@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { getOrdinalSemesterName } from "@/shared/utils/semesterOrdinal";
 import { useGetSemesterTypesQuery } from "../api/semesterTypesApi";
 import type { SemesterType } from "../types/course-registration";
 
@@ -7,17 +8,18 @@ import type { SemesterType } from "../types/course-registration";
  *
  * Responsibilities:
  * - Fetch semester types from the API (GET /api/semester-types)
- * - Sort semester types by sortOrder (handled by the API via query params)
+ * - Sort semester types by sortOrder
+ * - Format ordinal labels (e.g. "Third Semester" for ND II) when level rank order is provided
  * - Derive loading, error, and empty states
  * - Build the options list for the AntD Select component
- *
- * Requirements: 8.1, 8.2
  */
-export function useSemesterTypeSelector(semesterTypeId: number | null) {
+export function useSemesterTypeSelector(
+  semesterTypeId: number | null,
+  levelRankOrder?: number | null,
+) {
   const { data, isLoading, isError } = useGetSemesterTypesQuery();
 
-  /** Semester types sorted by sortOrder (the API already sorts them, but we
-   *  keep the sort here as a safety net in case the API order changes). */
+  /** Semester types sorted by sortOrder */
   const semesterTypes = useMemo((): SemesterType[] => {
     if (!data?.member) return [];
     return [...data.member].sort((a, b) => a.sortOrder - b.sortOrder);
@@ -28,9 +30,9 @@ export function useSemesterTypeSelector(semesterTypeId: number | null) {
     () =>
       semesterTypes.map((st) => ({
         value: st.id,
-        label: st.name,
+        label: levelRankOrder ? getOrdinalSemesterName(st.sortOrder, levelRankOrder) : st.name,
       })),
-    [semesterTypes],
+    [semesterTypes, levelRankOrder],
   );
 
   /** The currently selected SemesterType object (or null if none selected). */

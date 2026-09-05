@@ -3,6 +3,7 @@ import type { StudentStatus } from "@/features/student/types/student";
 import { useIsMobile } from "@/hooks/useBreakpoint";
 import { STUDENT_STATUS_OPTIONS } from "@/shared/constants/studentOptions";
 import { useToken } from "@/shared/hooks/useToken";
+import { LevelSelect } from "@/components/ui-kit/data-entry/LevelSelect";
 import {
     ConditionalRenderer,
     centeredBox,
@@ -63,9 +64,7 @@ export function StudentSelectionPanel({
     levelFilter,
     statusFilter,
     programs,
-    levels,
     isProgramsLoading,
-    isLevelsLoading,
   } = state;
 
   const {
@@ -106,16 +105,14 @@ export function StudentSelectionPanel({
           />
         </Form.Item>
         <Form.Item label="Level" style={{ marginBottom: 12 }}>
-          <Select
+          <LevelSelect
             placeholder="Any level"
             allowClear
-            loading={isLevelsLoading}
             value={levelFilter}
             onChange={(val) =>
               handleLevelFilterChange(val as number | undefined)
             }
             style={{ width: "100%" }}
-            options={levels.map((l) => ({ value: l.id, label: l.name }))}
           />
         </Form.Item>
         <Form.Item label="Enrollment Status" style={{ marginBottom: 0 }}>

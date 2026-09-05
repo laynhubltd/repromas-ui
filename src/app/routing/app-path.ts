@@ -18,6 +18,8 @@ export const appPaths = {
   admissionConfig: "/admission-config",
   admissionCandidates: "/admission-candidates",
   assessment: "/assessment",
+  resultBroadsheet: "/results/broadsheet",
+  studentTransitions: "/student-transitions",
   billing: "/billing",
 
   // Student Module Paths

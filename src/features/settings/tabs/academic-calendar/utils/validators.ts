@@ -44,6 +44,10 @@ export const sessionNameRules: Rule[] = [
   { max: 50, message: "Name must be 50 characters or fewer" },
 ];
 
+export const sessionRankOrderRules: Rule[] = [
+  { type: "number", min: 1, message: "Rank order must be at least 1" },
+];
+
 export const sessionEndDateRules: Rule[] = [
   ({ getFieldValue }) => ({
     validator(_, value) {

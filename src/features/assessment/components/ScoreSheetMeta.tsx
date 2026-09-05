@@ -18,6 +18,8 @@ export function ScoreSheetMeta({ meta, studentCount }: ScoreSheetMetaProps) {
   const token = useToken();
   const isMobile = useIsMobile();
 
+  const semesterDisplay = meta.ordinalName ?? meta.semesterTitle ?? meta.semesterName;
+
   return (
     <div
       style={{
@@ -99,7 +101,7 @@ export function ScoreSheetMeta({ meta, studentCount }: ScoreSheetMetaProps) {
                 <StatPill
                   icon={<ScheduleOutlined />}
                   label="Semester"
-                  value={meta.semesterName}
+                  value={semesterDisplay}
                   token={token}
                 />
               </Flex>
@@ -124,7 +126,7 @@ export function ScoreSheetMeta({ meta, studentCount }: ScoreSheetMetaProps) {
             <StatChip
               icon={<ScheduleOutlined />}
               label="Semester"
-              value={meta.semesterName}
+              value={semesterDisplay}
               token={token}
             />
             <Divider

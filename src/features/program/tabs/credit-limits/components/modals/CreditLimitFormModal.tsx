@@ -3,6 +3,7 @@ import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
+import { LevelSelect } from "@/components/ui-kit/data-entry/LevelSelect";
 import {
     Button,
     Form,
@@ -14,7 +15,6 @@ import {
 } from "antd";
 import { useCreditLimitFormModal } from "../../hooks/useCreditLimitModal";
 import type {
-    LevelOption,
     ProgramOption,
     RegistrationCreditLimit,
     SemesterTypeOption,
@@ -32,12 +32,10 @@ export type CreditLimitFormModalProps = {
   open: boolean;
   target: RegistrationCreditLimit | null;
   programs: ProgramOption[];
-  levels: LevelOption[];
   sessions: SessionOption[];
   semesterTypes: SemesterTypeOption[];
   statuses: StatusOption[];
   programsLoading: boolean;
-  levelsLoading: boolean;
   sessionsLoading: boolean;
   semesterTypesLoading: boolean;
   statusesLoading: boolean;
@@ -48,12 +46,10 @@ export function CreditLimitFormModal({
   open,
   target,
   programs,
-  levels,
   sessions,
   semesterTypes,
   statuses,
   programsLoading,
-  levelsLoading,
   sessionsLoading,
   semesterTypesLoading,
   statusesLoading,
@@ -123,18 +119,12 @@ export function CreditLimitFormModal({
 
           {/* levelId */}
           <Form.Item name="levelId" label="Level">
-            <Select
+            <LevelSelect
               placeholder="Any level"
               allowClear
-              disabled={isEditMode || levelsLoading}
-              loading={levelsLoading}
+              disabled={isEditMode}
               showSearch
-              optionFilterProp="label"
               style={{ height: 40 }}
-              options={[
-                { value: null, label: "Any level" },
-                ...levels.map((l) => ({ value: l.id, label: l.name })),
-              ]}
             />
           </Form.Item>
 

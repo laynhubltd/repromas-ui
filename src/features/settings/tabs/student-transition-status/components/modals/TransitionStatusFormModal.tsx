@@ -9,10 +9,29 @@ import {
 } from "@/shared/constants/studentTransitionStatusOptions";
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
-import { Alert, Button, Form, Input, Modal, Select, Switch, Typography } from "antd";
-import { useEffect } from "react";
+import {
+  Alert,
+  Button,
+  Flex,
+  Form,
+  Input,
+  Modal,
+  Select,
+  Switch,
+  Typography,
+} from "antd";
+import React, { useEffect } from "react";
 import { useTransitionStatusFormModal } from "../../hooks/useTransitionStatusModal";
-import type { StudentTransitionStatus } from "../../types/student-transition-status";
+import type {
+  SemanticKind,
+  StudentTransitionStatus,
+} from "../../types/student-transition-status";
+import {
+  ALL_SEMANTIC_KINDS,
+  MANAGED_BY_OPTIONS,
+  SEMANTIC_KIND_LABELS,
+  getSemanticKindIcon,
+} from "../../utils/semanticKindPresentation";
 import { nameRules } from "../../utils/transitionStatusValidators";
 
 export type TransitionStatusFormModalProps = {
@@ -22,6 +41,16 @@ export type TransitionStatusFormModalProps = {
   hasNoDefaultInTenant: boolean;
   onClose: () => void;
 };
+
+const SEMANTIC_KIND_OPTIONS = ALL_SEMANTIC_KINDS.map((kind) => ({
+  value: kind,
+  label: (
+    <Flex align="center" gap={8}>
+      {getSemanticKindIcon(kind)}
+      <span>{SEMANTIC_KIND_LABELS[kind]}</span>
+    </Flex>
+  ),
+}));
 
 export function TransitionStatusFormModal({
   open,
@@ -43,10 +72,15 @@ export function TransitionStatusFormModal({
     showCourseRegWarning,
     isDefault,
     isDefaultSwitchDisabled,
+    presetNote,
+    coherenceWarnings,
   } = state;
   const {
     handleSubmit,
     handleCancel,
+    handleSemanticKindChange,
+    handleManagedByChange,
+    dismissPresetNote,
     handleCanRegisterCoursesChange,
     handleIsDefaultChange,
     setIsInUse,
@@ -109,14 +143,31 @@ export function TransitionStatusFormModal({
           </div>
         </ConditionalRenderer>
 
+        <ConditionalRenderer when={presetNote !== null}>
+          <div style={{ marginBottom: 16 }}>
+            <Alert
+              type="info"
+              showIcon
+              closable
+              onClose={dismissPresetNote}
+              message={presetNote}
+            />
+          </div>
+        </ConditionalRenderer>
+
         <Form
           form={form}
           layout="vertical"
           requiredMark={false}
           onFinish={handleSubmit}
           initialValues={{
+            semanticKind: "OTHER",
+            managedBy: "BOTH",
             stateCategory: "NEUTRAL",
+            levelProgression: "RETAIN",
             isTerminal: false,
+            exemptFromEvaluation: false,
+            countsTowardCareerCap: true,
             countsTowardsResidency: true,
             appearsOnBroadsheet: true,
             canRegisterCourses: false,
@@ -124,6 +175,20 @@ export function TransitionStatusFormModal({
             isDefault: false,
           }}
         >
+          {/* Surface 1: Status Type selector — FIRST FIELD */}
+          <Form.Item
+            name="semanticKind"
+            label="Status Type (Universal Academic Classification)"
+            extra="What this status represents in universal academic terms. Used for reports, badges, and accreditation returns — it never changes engine behavior."
+          >
+            <Select
+              style={{ height: 40 }}
+              options={SEMANTIC_KIND_OPTIONS}
+              onChange={handleSemanticKindChange}
+              placeholder="Select universal status type"
+            />
+          </Form.Item>
+
           <Form.Item
             name="name"
             label={
@@ -139,6 +204,20 @@ export function TransitionStatusFormModal({
             <Input placeholder="e.g. Active Enrollment" style={{ height: 40 }} />
           </Form.Item>
 
+          {/* Managed By */}
+          <Form.Item
+            name="managedBy"
+            label="Managed By"
+            extra="Admin only: Only staff can place or remove this status (e.g. Deferment, Suspension). The academic standing engine will refuse to assign it, and policy screens won't offer it."
+          >
+            <Select
+              style={{ height: 40 }}
+              options={MANAGED_BY_OPTIONS}
+              onChange={handleManagedByChange}
+              placeholder="Select management authority"
+            />
+          </Form.Item>
+
           <Form.Item name="stateCategory" label="State Category">
             <Select
               style={{ height: 40 }}
@@ -147,10 +226,40 @@ export function TransitionStatusFormModal({
             />
           </Form.Item>
 
+          <Form.Item name="levelProgression" label="Level Progression Intent">
+            <Select
+              style={{ height: 40 }}
+              options={[
+                { value: "PROMOTE", label: "Promote (Advance to Next Level)" },
+                { value: "RETAIN", label: "Retain (Remain in Current Level)" },
+              ]}
+              placeholder="Select progression intent"
+            />
+          </Form.Item>
+
           <Form.Item
             name="isTerminal"
             label="Terminal Status"
             valuePropName="checked"
+            extra="Concludes the student's academic career (e.g. Graduated, Withdrawn, Expelled)."
+          >
+            <Switch />
+          </Form.Item>
+
+          <Form.Item
+            name="exemptFromEvaluation"
+            label="Exempt From Evaluation"
+            valuePropName="checked"
+            extra="Skip students holding this status during batch academic standing evaluation (e.g. Official Leave of Absence, Deferred Admission)."
+          >
+            <Switch />
+          </Form.Item>
+
+          <Form.Item
+            name="countsTowardCareerCap"
+            label="Counts Toward Career Probation Cap"
+            valuePropName="checked"
+            extra="Count occurrences of NEGATIVE outcomes against policy probation career limit (maxProbationsPerCareer)."
           >
             <Switch />
           </Form.Item>
@@ -218,8 +327,22 @@ export function TransitionStatusFormModal({
               type="warning"
               showIcon
               message={TRANSITION_STATUS_DEFAULT_WARNING}
-              style={{ marginBottom: 0 }}
+              style={{ marginBottom: 16 }}
             />
+          </ConditionalRenderer>
+
+          {/* Coherence Lint Warnings */}
+          <ConditionalRenderer when={coherenceWarnings.length > 0}>
+            <Flex vertical gap={8} style={{ marginTop: 16 }}>
+              {coherenceWarnings.map((warning) => (
+                <Alert
+                  key={warning}
+                  type="warning"
+                  showIcon
+                  message={warning}
+                />
+              ))}
+            </Flex>
           </ConditionalRenderer>
         </Form>
       </div>

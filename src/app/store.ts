@@ -29,12 +29,13 @@ import themeReducer from "@/app/state/theme-slice";
 import admissionApplicationSessionReducer from "@/features/admission-application/state/admissionApplicationSessionSlice";
 import { authReducer } from "@/features/auth/state/auth-slice";
 import setupUiReducer from "@/features/tenant-setup/state/setupUiSlice";
+import { systemConfigReducer } from "@/features/settings/tabs/system-config/state/systemConfigSlice";
 import "@/features/tenant-setup/api/setupStatusApi";
 
 const persistConfig = {
   key: "root",
   storage,
-  whitelist: ["auth", "admissionApplicationSession"],
+  whitelist: ["auth", "admissionApplicationSession", "systemConfig"],
 };
 
 const rootReducer = combineReducers({
@@ -44,6 +45,7 @@ const rootReducer = combineReducers({
   admissionApplicationSession: admissionApplicationSessionReducer,
   theme: themeReducer,
   setupUi: setupUiReducer,
+  systemConfig: systemConfigReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

@@ -4,7 +4,6 @@ import { useGetDepartmentsQuery } from "@/features/academic-structure/api/depart
 import { useGetFacultiesQuery } from "@/features/academic-structure/api/facultiesApi";
 import { useGetPriorQualificationTypesQuery } from "@/features/admission-config/tabs/qualification-type/api/priorQualificationTypeApi";
 import { useGetProgramsQuery } from "@/features/program/tabs/programs/api/programsApi";
-import { useGetLevelsQuery } from "@/features/settings/tabs/level-config/api/levelApi";
 import {
   PROGRAM_PRIOR_QUAL_REQUIREMENT_INCLUDE,
   PROGRAM_PRIOR_QUAL_REQUIREMENT_LIST_ITEMS_PER_PAGE,
@@ -74,11 +73,6 @@ export function useProgramPriorQualRequirementTab() {
     "exact[isActive]": true,
   });
 
-  const { data: levelsData } = useGetLevelsQuery({
-    itemsPerPage: 100,
-    sort: "rankOrder:asc",
-  });
-
   const { data: facultiesData } = useGetFacultiesQuery({
     itemsPerPage: 100,
     sort: "name:asc",
@@ -127,7 +121,6 @@ export function useProgramPriorQualRequirementTab() {
 
   const programs = programsData?.member ?? [];
   const qualificationTypes = typesData?.member ?? [];
-  const levels = levelsData?.member ?? [];
   const faculties = facultiesData?.member ?? [];
   const departments = departmentsData?.member ?? [];
 
@@ -305,7 +298,6 @@ export function useProgramPriorQualRequirementTab() {
       missingProgramsCount: missingPrograms.length,
       programs,
       qualificationTypes,
-      levels,
       faculties,
       departments,
       isLoading: isRequirementsLoading || isProgramsLoading,

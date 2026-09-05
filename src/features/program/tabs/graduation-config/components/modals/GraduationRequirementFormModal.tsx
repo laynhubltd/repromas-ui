@@ -1,6 +1,5 @@
-// Feature: program-graduation-config
+import { CurriculumSelect } from "@/components/ui-kit/data-entry/CurriculumSelect";
 import { useGetProgramsQuery } from "@/features/program/tabs/programs/api/programsApi";
-import { useGetCurriculumVersionsQuery } from "@/features/settings/tabs/curriculum-version/api/curriculumVersionApi";
 import { ENTRY_MODE_OPTIONS } from "@/shared/constants/studentOptions";
 import { useToken } from "@/shared/hooks/useToken";
 import { Button, Form, InputNumber, Modal, Select, Typography } from "antd";
@@ -34,16 +33,14 @@ export function GraduationRequirementFormModal({
   const { handleSubmit, handleCancel } = actions;
 
   const { data: programsData, isLoading: isProgramsLoading } =
-    useGetProgramsQuery({
-      itemsPerPage: 200,
-    });
+    useGetProgramsQuery(
+      { itemsPerPage: 200 },
+      { skip: !open },
+    );
   const programs = programsData?.member ?? [];
 
-  const {
-    data: curriculumVersionsData,
-    isLoading: isCurriculumVersionsLoading,
-  } = useGetCurriculumVersionsQuery({ itemsPerPage: 200 });
-  const curriculumVersions = curriculumVersionsData?.member ?? [];
+  const watchedProgramId = Form.useWatch("programId", form);
+  const effectiveProgramId = target?.programId ?? watchedProgramId;
 
   // Credit invariant validator factory
   const makeCreditInvariantValidator = () => ({
@@ -94,7 +91,7 @@ export function GraduationRequirementFormModal({
           requiredMark={false}
           onFinish={handleSubmit}
         >
-          {/* Program — editable in create, read-only in edit */}
+          {/* Program — Read-only in edit mode, Select in create mode */}
           {isEditMode ? (
             <Form.Item label="Program">
               <Typography.Text>
@@ -126,7 +123,6 @@ export function GraduationRequirementFormModal({
             </Form.Item>
           )}
 
-          {/* Curriculum Version — Select in both create and edit mode */}
           <Form.Item
             name="curriculumVersionId"
             label={
@@ -141,16 +137,10 @@ export function GraduationRequirementFormModal({
               { required: true, message: "Curriculum version is required" },
             ]}
           >
-            <Select
-              placeholder="Select curriculum version"
-              loading={isCurriculumVersionsLoading}
-              showSearch
-              optionFilterProp="label"
+            <CurriculumSelect
+              programId={effectiveProgramId}
+              skip={!open}
               style={{ height: 40 }}
-              options={curriculumVersions.map((v) => ({
-                value: v.id,
-                label: v.name,
-              }))}
             />
           </Form.Item>
 

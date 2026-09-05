@@ -5,6 +5,8 @@ import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
 import { Alert, Badge, Button, DatePicker, Form, Input, Modal, Select, Tag } from "antd";
 import dayjs from "dayjs";
+import { LevelSelect } from "@/components/ui-kit/data-entry/LevelSelect";
+import { LevelSemesterSelect } from "@/shared/ui/LevelSemesterSelect";
 import { useTransitionFormModal } from "../../hooks/useTransitionModal";
 import type { StudentEnrollmentTransition } from "../../types/studentTransition";
 import {
@@ -32,12 +34,8 @@ export function TransitionFormModal({ open, studentId, target, onClose }: Transi
   const {
     statuses,
     sessions,
-    semesters,
-    levels,
     statusesLoading,
     sessionsLoading,
-    semestersLoading,
-    levelsLoading,
   } = refs;
 
   return (
@@ -144,6 +142,24 @@ export function TransitionFormModal({ open, studentId, target, onClose }: Transi
             />
           </Form.Item>
 
+          {/* levelId */}
+          <Form.Item
+            name="levelId"
+            label={
+              <span>
+                Level <span style={{ color: token.colorError, fontWeight: 700 }}>*</span>
+              </span>
+            }
+            rules={levelIdRules}
+          >
+            <LevelSelect
+              placeholder="Select level"
+              showSearch
+              style={{ height: 40 }}
+              onChange={(value) => actions.handleLevelChange(value as number | undefined)}
+            />
+          </Form.Item>
+
           {/* semesterId — create mode only (immutable after creation) */}
           <ConditionalRenderer when={!isEditMode}>
             <Form.Item
@@ -155,38 +171,13 @@ export function TransitionFormModal({ open, studentId, target, onClose }: Transi
               }
               rules={semesterIdRules}
             >
-              <Select
-                placeholder="Select semester"
-                loading={semestersLoading}
-                disabled={semestersLoading}
-                showSearch
-                optionFilterProp="label"
+              <LevelSemesterSelect
+                levelId={state.selectedLevelId}
+                sessionId={state.selectedSessionId}
                 style={{ height: 40 }}
-                options={semesters.map((s) => ({ value: s.id, label: s.name }))}
               />
             </Form.Item>
           </ConditionalRenderer>
-
-          {/* levelId */}
-          <Form.Item
-            name="levelId"
-            label={
-              <span>
-                Level <span style={{ color: token.colorError, fontWeight: 700 }}>*</span>
-              </span>
-            }
-            rules={levelIdRules}
-          >
-            <Select
-              placeholder="Select level"
-              loading={levelsLoading}
-              disabled={levelsLoading}
-              showSearch
-              optionFilterProp="label"
-              style={{ height: 40 }}
-              options={levels.map((l) => ({ value: l.id, label: l.name }))}
-            />
-          </Form.Item>
 
           {/* startDate */}
           <Form.Item

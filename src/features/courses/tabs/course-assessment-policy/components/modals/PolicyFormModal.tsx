@@ -1,4 +1,4 @@
-// Feature: course-assessment-policy
+import { CurriculumSelect } from "@/components/ui-kit/data-entry/CurriculumSelect";
 import { useToken } from "@/shared/hooks/useToken";
 import {
   Button,
@@ -58,8 +58,6 @@ export function PolicyFormModal({
     form,
     programs,
     isProgramsLoading,
-    versions,
-    isVersionsLoading,
     courseConfigs,
     isCourseConfigsLoading,
   } = usePolicyFormModal(target, open, onClose);
@@ -200,22 +198,12 @@ export function PolicyFormModal({
                   </span>
                 }
               >
-                <Select
-                  placeholder="Select curriculum version"
-                  allowClear
-                  showSearch
-                  optionFilterProp="label"
-                  loading={isVersionsLoading}
+                <CurriculumSelect
+                  programId={selectedProgramId}
                   disabled={selectedProgramId === undefined}
                   value={selectedVersionId}
-                  onChange={(val: number | undefined) =>
-                    handleVersionChange(val)
-                  }
+                  onChange={(val) => handleVersionChange(val ?? undefined)}
                   style={{ height: 40 }}
-                  options={versions.map((v) => ({
-                    value: v.id,
-                    label: v.name,
-                  }))}
                 />
               </Form.Item>
 

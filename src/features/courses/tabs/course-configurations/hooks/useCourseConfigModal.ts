@@ -59,18 +59,20 @@ export function useCourseConfigFormModal(
   );
   const courses = coursesData?.member ?? [];
 
-  // Fetch levels and semester types for the dropdowns
-  const { data: levelsData, isLoading: isLevelsLoading } = useGetLevelsQuery(
-    { sort: "rankOrder:asc", itemsPerPage: 100 },
-    { skip: !open },
-  );
-  const levels = levelsData?.member ?? [];
+  // Fetch semester types for the dropdown
 
   const { data: semesterTypesData, isLoading: isSemesterTypesLoading } = useGetSemesterTypesQuery(
     { sort: "sortOrder:asc", itemsPerPage: 100 },
     { skip: !open },
   );
   const semesterTypes = semesterTypesData?.member ?? [];
+
+  // Fetch levels to resolve rankOrder for ordinal naming
+  const { data: levelsData } = useGetLevelsQuery(
+    { itemsPerPage: 100 },
+    { skip: !open },
+  );
+  const levels = levelsData?.member ?? [];
 
   // Prerequisites: all courses excluding self (by courseId)
   const prerequisiteOptions = (target
@@ -178,7 +180,6 @@ export function useCourseConfigFormModal(
     form,
     courses,
     levels,
-    isLevelsLoading,
     semesterTypes,
     isSemesterTypesLoading,
     prerequisiteOptions,

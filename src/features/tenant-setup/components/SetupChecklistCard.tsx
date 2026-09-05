@@ -1,7 +1,7 @@
 import { StepCard } from "@/components/ui-kit";
-import { DataLoader } from "@/shared/ui/DataLoader";
-import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
 import { useToken } from "@/shared/hooks/useToken";
+import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
+import { DataLoader } from "@/shared/ui/DataLoader";
 import {
   ApartmentOutlined,
   BookOutlined,
@@ -17,8 +17,8 @@ import {
 } from "@ant-design/icons";
 import { Button, Flex, Progress, Space, Typography } from "antd";
 import type { ReactNode } from "react";
-import type { SetupStepId } from "../types/setup";
 import { useSetupChecklist } from "../hooks/useSetupChecklist";
+import type { SetupStepId } from "../types/setup";
 
 const STEP_ICONS: Record<SetupStepId, ReactNode> = {
   signedIn: <UserOutlined />,
@@ -37,6 +37,7 @@ const STEP_ICONS: Record<SetupStepId, ReactNode> = {
   gradingConfig: <TrophyOutlined />,
   billing: <DollarOutlined />,
   settings: <SettingOutlined />,
+  systemConfig: <SettingOutlined />
 };
 
 export function SetupChecklistCard() {

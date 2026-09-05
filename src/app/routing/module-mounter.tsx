@@ -37,6 +37,7 @@ export type ModuleMounterProps = {
   tenantSlug: string;
   tenantBootstrap: ReturnType<typeof useValidateTenantQuery>;
   registry: ModuleRegistry;
+  systemConfig?: { isBootstrapped: boolean };
 };
 
 // ─── Role resolution ──────────────────────────────────────────────────────────
@@ -122,6 +123,7 @@ export function moduleMounter({
   tenantSlug,
   tenantBootstrap,
   registry,
+  systemConfig,
 }: ModuleMounterProps) {
   // 1. Apex — public marketing site, no tenant context needed
   if (host.kind === "apex") {
@@ -154,6 +156,11 @@ export function moduleMounter({
   // 6. Unauthenticated or expired token — show auth routes
   if (!auth.token || isTokenExpired(auth.token)) {
     return withRootShell(registry.authentication.getRouteEntries());
+  }
+
+  // 6.5 System configuration bootstrap in progress
+  if (systemConfig && !systemConfig.isBootstrapped) {
+    return fullScreenRoute(<FullscreenLoader label="Loading configuration..." />);
   }
 
   // 7. Tenant claim mismatch

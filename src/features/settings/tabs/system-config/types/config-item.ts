@@ -37,6 +37,8 @@ export type PrimitiveConfigItemProps<
   onError?: (error: unknown) => void;
   disabled?: boolean;
   placeholder?: string;
+  options?: { value: string; label: string; description?: string }[];
+  style?: React.CSSProperties;
   min?: number;
   max?: number;
   step?: number;

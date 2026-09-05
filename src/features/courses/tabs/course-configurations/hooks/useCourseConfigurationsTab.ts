@@ -1,3 +1,4 @@
+import { useGetLevelsQuery } from "@/features/settings/tabs/level-config/api/levelApi";
 import type { Level } from "@/features/settings/tabs/level-config/types/level";
 import { RequestScreen } from "@/shared/types/error-ui";
 import { deriveSectionErrorMessage } from "@/shared/utils/error/deriveSectionErrorMessage";
@@ -34,6 +35,13 @@ export function useCourseConfigurationsTab() {
   const bothSelected = isProgramSelected && isVersionSelected;
   const activeFilterCount =
     (filterLevelId !== undefined ? 1 : 0) + (filterSemesterTypeId !== undefined ? 1 : 0);
+
+  // ─── Levels Query ─────────────────────────────────────────────────────────
+  const { data: levelsData } = useGetLevelsQuery(
+    { itemsPerPage: 100 },
+    { skip: !bothSelected },
+  );
+  const levels = levelsData?.member ?? [];
 
   // ─── Query ────────────────────────────────────────────────────────────────
   const queryParams = bothSelected
@@ -172,6 +180,7 @@ export function useCourseConfigurationsTab() {
     state: {
       configs,
       totalItems,
+      levels,
       isLoading,
       isError,
       sectionError,

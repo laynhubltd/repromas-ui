@@ -211,7 +211,9 @@ export function StudentPage() {
   );
 
   const activeStudentsCount = students.filter(
-    (s) => s.status === "ACTIVE",
+    (s) =>
+      s.status?.toLowerCase().includes("active") ||
+      s.status?.toLowerCase().includes("enrolled"),
   ).length;
 
   const handleTableChange = (
@@ -257,9 +259,7 @@ export function StudentPage() {
       title: "Status",
       dataIndex: "status",
       key: "status",
-      sorter: true,
-      sortDirections: ["ascend", "descend"],
-      render: (status: StudentStatus) => <StatusBadge status={status} />,
+      render: (status: string) => <StatusBadge status={status} />,
     },
     {
       title: "Entry Mode",

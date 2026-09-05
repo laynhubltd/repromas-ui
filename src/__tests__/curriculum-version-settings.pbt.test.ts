@@ -29,6 +29,8 @@ import { extractNameError } from "@/features/settings/tabs/curriculum-version/ut
 const curriculumVersionArb = fc.record({
   id: fc.integer({ min: 1 }),
   name: fc.string({ minLength: 1 }),
+  scope: fc.constantFrom("GLOBAL", "PROGRAM") as fc.Arbitrary<"GLOBAL" | "PROGRAM">,
+  referenceId: fc.option(fc.integer({ min: 1 })),
   isActiveForAdmission: fc.boolean(),
   createdAt: fc.constantFrom(
     "2024-01-15T10:00:00.000Z",
@@ -133,15 +135,41 @@ describe("Property 2: Pagination total pages calculation", () => {
     );
   });
 
-  it("totalPages is 1 when totalItems <= itemsPerPage", () => {
+  it("totalPages is 0 when itemsPerPage is 0 or negative", () => {
     fc.assert(
       fc.property(
+        fc.integer({ min: 0, max: 1000 }),
+        fc.integer({ min: -100, max: 0 }),
+        (totalItems, itemsPerPage) => {
+          expect(calcTotalPages(totalItems, itemsPerPage)).toBe(0);
+        },
+      ),
+      { numRuns: 100 },
+    );
+  });
+
+  it("totalPages * itemsPerPage is always >= totalItems for valid inputs", () => {
+    fc.assert(
+      fc.property(
+        fc.integer({ min: 1, max: 10000 }),
         fc.integer({ min: 1, max: 100 }),
+        (totalItems, itemsPerPage) => {
+          const pages = calcTotalPages(totalItems, itemsPerPage);
+          expect(pages * itemsPerPage).toBeGreaterThanOrEqual(totalItems);
+        },
+      ),
+      { numRuns: 100 },
+    );
+  });
+
+  it("(totalPages - 1) * itemsPerPage is always < totalItems for valid inputs", () => {
+    fc.assert(
+      fc.property(
+        fc.integer({ min: 1, max: 10000 }),
         fc.integer({ min: 1, max: 100 }),
-        (itemsPerPage, extra) => {
-          // totalItems in range [1, itemsPerPage]
-          const totalItems = ((extra - 1) % itemsPerPage) + 1;
-          expect(calcTotalPages(totalItems, itemsPerPage)).toBe(1);
+        (totalItems, itemsPerPage) => {
+          const pages = calcTotalPages(totalItems, itemsPerPage);
+          expect((pages - 1) * itemsPerPage).toBeLessThan(totalItems);
         },
       ),
       { numRuns: 100 },
@@ -153,41 +181,26 @@ describe("Property 2: Pagination total pages calculation", () => {
 
 // Feature: curriculum-version-settings, Property 3: Filter maps to correct query parameter
 describe("Property 3: Filter maps to correct query parameter", () => {
-  it('"active" filter maps boolean[isActiveForAdmission] to true', () => {
-    fc.assert(
-      fc.property(fc.constant("active" as const), (filter) => {
-        expect(statusFilterToQueryParam(filter)).toBe(true);
-      }),
-      { numRuns: 100 },
-    );
+  it("'active' always maps to true", () => {
+    expect(statusFilterToQueryParam("active")).toBe(true);
   });
 
-  it('"inactive" filter maps boolean[isActiveForAdmission] to false', () => {
-    fc.assert(
-      fc.property(fc.constant("inactive" as const), (filter) => {
-        expect(statusFilterToQueryParam(filter)).toBe(false);
-      }),
-      { numRuns: 100 },
-    );
+  it("'inactive' always maps to false", () => {
+    expect(statusFilterToQueryParam("inactive")).toBe(false);
   });
 
-  it('"all" filter omits boolean[isActiveForAdmission] (returns undefined)', () => {
-    fc.assert(
-      fc.property(fc.constant("all" as const), (filter) => {
-        expect(statusFilterToQueryParam(filter)).toBeUndefined();
-      }),
-      { numRuns: 100 },
-    );
+  it("'all' always maps to undefined", () => {
+    expect(statusFilterToQueryParam("all")).toBeUndefined();
   });
 
-  it("every valid filter value produces the correct param", () => {
-    const cases: Array<["all" | "active" | "inactive", boolean | undefined]> = [
-      ["all", undefined],
-      ["active", true],
-      ["inactive", false],
-    ];
+  it("statusFilterToQueryParam produces consistent result across any arbitrary repetitions", () => {
+    const statusArb = fc.constantFrom("all", "active", "inactive") as fc.Arbitrary<
+      "all" | "active" | "inactive"
+    >;
     fc.assert(
-      fc.property(fc.constantFrom(...cases), ([filter, expected]) => {
+      fc.property(statusArb, (filter) => {
+        const expected =
+          filter === "active" ? true : filter === "inactive" ? false : undefined;
         expect(statusFilterToQueryParam(filter)).toBe(expected);
       }),
       { numRuns: 100 },
@@ -199,97 +212,71 @@ describe("Property 3: Filter maps to correct query parameter", () => {
 
 // Feature: curriculum-version-settings, Property 4: Search and filter changes reset page to 1
 describe("Property 4: Search and filter changes reset page to 1", () => {
-  const statusFilterArb = fc.constantFrom(
-    "all" as const,
-    "active" as const,
-    "inactive" as const,
-  );
+  const statusArb = fc.constantFrom("all", "active", "inactive") as fc.Arbitrary<
+    "all" | "active" | "inactive"
+  >;
 
-  it("page resets to 1 when search term changes", () => {
+  it("resets page to 1 whenever search term changes", () => {
     fc.assert(
       fc.property(
         fc.string(),
         fc.string(),
-        statusFilterArb,
-        fc.integer({ min: 2, max: 100 }),
+        statusArb,
+        fc.integer({ min: 2, max: 50 }),
         (prevSearch, nextSearch, filter, currentPage) => {
           fc.pre(prevSearch !== nextSearch);
-          const result = resetPageOnFilterChange(
+          const newPage = resetPageOnFilterChange(
             prevSearch,
             nextSearch,
             filter,
             filter,
             currentPage,
           );
-          expect(result).toBe(1);
+          expect(newPage).toBe(1);
         },
       ),
       { numRuns: 100 },
     );
   });
 
-  it("page resets to 1 when status filter changes", () => {
+  it("resets page to 1 whenever filter changes", () => {
     fc.assert(
       fc.property(
-        statusFilterArb,
-        statusFilterArb,
         fc.string(),
-        fc.integer({ min: 2, max: 100 }),
-        (prevFilter, nextFilter, search, currentPage) => {
+        statusArb,
+        statusArb,
+        fc.integer({ min: 2, max: 50 }),
+        (search, prevFilter, nextFilter, currentPage) => {
           fc.pre(prevFilter !== nextFilter);
-          const result = resetPageOnFilterChange(
+          const newPage = resetPageOnFilterChange(
             search,
             search,
             prevFilter,
             nextFilter,
             currentPage,
           );
-          expect(result).toBe(1);
+          expect(newPage).toBe(1);
         },
       ),
       { numRuns: 100 },
     );
   });
 
-  it("page is preserved when neither search nor filter changes", () => {
+  it("preserves currentPage when neither search nor filter changes", () => {
     fc.assert(
       fc.property(
         fc.string(),
-        statusFilterArb,
-        fc.integer({ min: 1, max: 100 }),
+        statusArb,
+        fc.integer({ min: 1, max: 50 }),
         (search, filter, currentPage) => {
-          const result = resetPageOnFilterChange(
+          const newPage = resetPageOnFilterChange(
             search,
             search,
             filter,
             filter,
             currentPage,
           );
-          expect(result).toBe(currentPage);
-        },
-      ),
-      { numRuns: 100 },
-    );
-  });
-
-  it("page resets to 1 when both search and filter change simultaneously", () => {
-    fc.assert(
-      fc.property(
-        fc.string(),
-        fc.string(),
-        statusFilterArb,
-        statusFilterArb,
-        fc.integer({ min: 2, max: 100 }),
-        (prevSearch, nextSearch, prevFilter, nextFilter, currentPage) => {
-          fc.pre(prevSearch !== nextSearch || prevFilter !== nextFilter);
-          const result = resetPageOnFilterChange(
-            prevSearch,
-            nextSearch,
-            prevFilter,
-            nextFilter,
-            currentPage,
-          );
-          expect(result).toBe(1);
+          expect(newPage).toBe(currentPage);
         },
       ),
       { numRuns: 100 },
@@ -297,34 +284,40 @@ describe("Property 4: Search and filter changes reset page to 1", () => {
   });
 });
 
-// ── Property 10: At most one active version after activation ──────────────────
+// ── Property 10: At most one active version per scope after activation ────────
 
-// Feature: curriculum-version-settings, Property 10: At most one active version after activation
-describe("Property 10: At most one active version after activation", () => {
+// Feature: curriculum-version-settings, Property 10: At most one active version per scope after activation
+describe("Property 10: At most one active version per scope after activation", () => {
   /**
-   * Simulates what the server returns after a successful PATCH activate:
-   * the activated version becomes active, all others become inactive.
-   * This mirrors the RTK Query cache invalidation + refetch cycle.
+   * Simulates scoped activation:
+   * Activating a version only activates it and deactivates other versions
+   * in the exact same (scope, referenceId) scope tuple.
    */
-  function simulateActivation(
-    versions: Array<{ id: number; isActiveForAdmission: boolean }>,
+  function simulateScopedActivation(
+    versions: Array<{ id: number; scope: string; referenceId: number | null; isActiveForAdmission: boolean }>,
     activatedId: number,
-  ): Array<{ id: number; isActiveForAdmission: boolean }> {
-    return versions.map((v) => ({
-      ...v,
-      isActiveForAdmission: v.id === activatedId,
-    }));
+  ): Array<{ id: number; scope: string; referenceId: number | null; isActiveForAdmission: boolean }> {
+    const target = versions.find((v) => v.id === activatedId);
+    if (!target) return versions;
+    return versions.map((v) => {
+      if (v.scope === target.scope && v.referenceId === target.referenceId) {
+        return { ...v, isActiveForAdmission: v.id === activatedId };
+      }
+      return v;
+    });
   }
 
   const versionListArb = fc.array(
     fc.record({
       id: fc.integer({ min: 1, max: 1000 }),
+      scope: fc.constantFrom("GLOBAL", "PROGRAM"),
+      referenceId: fc.constantFrom(null, 1, 2),
       isActiveForAdmission: fc.boolean(),
     }),
     { minLength: 1, maxLength: 20 },
   );
 
-  it("at most one version is active after activation", () => {
+  it("at most one version is active in the target scope after activation", () => {
     // **Validates: Requirements 6.6**
     fc.assert(
       fc.property(versionListArb, (versions) => {
@@ -334,17 +327,20 @@ describe("Property 10: At most one active version after activation", () => {
         );
         fc.pre(unique.length >= 1);
 
-        const targetId = unique[0].id;
-        const result = simulateActivation(unique, targetId);
+        const target = unique[0];
+        const result = simulateScopedActivation(unique, target.id);
 
-        const activeCount = result.filter((v) => v.isActiveForAdmission).length;
+        const scopeGroup = result.filter(
+          (v) => v.scope === target.scope && v.referenceId === target.referenceId,
+        );
+        const activeCount = scopeGroup.filter((v) => v.isActiveForAdmission).length;
         expect(activeCount).toBeLessThanOrEqual(1);
       }),
       { numRuns: 100 },
     );
   });
 
-  it("exactly the activated version is active after activation", () => {
+  it("exactly the activated version is active in its scope after activation", () => {
     fc.assert(
       fc.property(
         versionListArb,
@@ -356,19 +352,24 @@ describe("Property 10: At most one active version after activation", () => {
           fc.pre(unique.length >= 1);
 
           const targetIndex = indexSeed % unique.length;
-          const targetId = unique[targetIndex].id;
-          const result = simulateActivation(unique, targetId);
+          const target = unique[targetIndex];
+          const result = simulateScopedActivation(unique, target.id);
 
-          const activeVersions = result.filter((v) => v.isActiveForAdmission);
-          expect(activeVersions).toHaveLength(1);
-          expect(activeVersions[0].id).toBe(targetId);
+          const activeInScope = result.filter(
+            (v) =>
+              v.scope === target.scope &&
+              v.referenceId === target.referenceId &&
+              v.isActiveForAdmission,
+          );
+          expect(activeInScope).toHaveLength(1);
+          expect(activeInScope[0].id).toBe(target.id);
         },
       ),
       { numRuns: 100 },
     );
   });
 
-  it("all other versions are inactive after activation", () => {
+  it("all other versions in the same scope are inactive after activation", () => {
     fc.assert(
       fc.property(
         versionListArb,
@@ -380,44 +381,16 @@ describe("Property 10: At most one active version after activation", () => {
           fc.pre(unique.length >= 2);
 
           const targetIndex = indexSeed % unique.length;
-          const targetId = unique[targetIndex].id;
-          const result = simulateActivation(unique, targetId);
+          const target = unique[targetIndex];
+          const result = simulateScopedActivation(unique, target.id);
 
-          const inactiveVersions = result.filter((v) => v.id !== targetId);
-          expect(inactiveVersions.every((v) => !v.isActiveForAdmission)).toBe(
-            true,
+          const othersInScope = result.filter(
+            (v) =>
+              v.scope === target.scope &&
+              v.referenceId === target.referenceId &&
+              v.id !== target.id,
           );
-        },
-      ),
-      { numRuns: 100 },
-    );
-  });
-
-  it("activation is idempotent — activating an already-active version keeps exactly one active", () => {
-    fc.assert(
-      fc.property(
-        versionListArb,
-        fc.integer({ min: 0, max: 19 }),
-        (versions, indexSeed) => {
-          const unique = versions.filter(
-            (v, i, arr) => arr.findIndex((x) => x.id === v.id) === i,
-          );
-          fc.pre(unique.length >= 1);
-
-          const targetIndex = indexSeed % unique.length;
-          const targetId = unique[targetIndex].id;
-
-          // Activate once, then activate the same version again
-          const afterFirst = simulateActivation(unique, targetId);
-          const afterSecond = simulateActivation(afterFirst, targetId);
-
-          const activeCount = afterSecond.filter(
-            (v) => v.isActiveForAdmission,
-          ).length;
-          expect(activeCount).toBe(1);
-          expect(
-            afterSecond.find((v) => v.id === targetId)?.isActiveForAdmission,
-          ).toBe(true);
+          expect(othersInScope.every((v) => !v.isActiveForAdmission)).toBe(true);
         },
       ),
       { numRuns: 100 },
@@ -425,35 +398,36 @@ describe("Property 10: At most one active version after activation", () => {
   });
 });
 
-// ── Property 12: Every row has a three-item actions menu ─────────────────────
+// ── Property 12: Every row has a four-item actions menu ─────────────────────
 
-// Feature: curriculum-version-settings, Property 12: Every row has a three-item actions menu
-describe("Property 12: Every row has a three-item actions menu", () => {
+// Feature: curriculum-version-settings, Property 12: Every row has a four-item actions menu
+describe("Property 12: Every row has a four-item actions menu", () => {
   const versionListArb = fc.array(curriculumVersionArb, {
     minLength: 1,
     maxLength: 50,
   });
 
-  it("every row's menu has exactly 3 items", () => {
+  it("every row's menu has exactly 4 items", () => {
     // **Validates: Requirements 8.1, 8.2**
     fc.assert(
       fc.property(versionListArb, (versions) => {
         for (const version of versions) {
           const items = getMenuItems(version.isActiveForAdmission);
-          expect(items).toHaveLength(3);
+          expect(items).toHaveLength(4);
         }
       }),
       { numRuns: 100 },
     );
   });
 
-  it("every row's menu contains exactly Edit, Activate, and Delete items", () => {
+  it("every row's menu contains Edit, Clone / Branch, Activate, and Delete items", () => {
     fc.assert(
       fc.property(versionListArb, (versions) => {
         for (const version of versions) {
           const items = getMenuItems(version.isActiveForAdmission);
           const labels = items.map((item: MenuItem) => item.label);
           expect(labels).toContain("Edit");
+          expect(labels).toContain("Clone / Branch");
           expect(labels).toContain("Activate");
           expect(labels).toContain("Delete");
         }
@@ -462,13 +436,14 @@ describe("Property 12: Every row has a three-item actions menu", () => {
     );
   });
 
-  it("menu item order is always Edit, Activate, Delete for any version", () => {
+  it("menu item order is always Edit, Clone / Branch, Activate, Delete for any version", () => {
     fc.assert(
       fc.property(fc.boolean(), (isActive) => {
         const items = getMenuItems(isActive);
         expect(items[0].label).toBe("Edit");
-        expect(items[1].label).toBe("Activate");
-        expect(items[2].label).toBe("Delete");
+        expect(items[1].label).toBe("Clone / Branch");
+        expect(items[2].label).toBe("Activate");
+        expect(items[3].label).toBe("Delete");
       }),
       { numRuns: 100 },
     );

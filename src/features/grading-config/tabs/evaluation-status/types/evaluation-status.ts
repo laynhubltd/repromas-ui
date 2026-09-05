@@ -7,6 +7,7 @@ export type ScoreEvaluationStatus = {
   earnsCredit: boolean;
   requiresRetake: boolean;
   isDefault: boolean;
+  indicatesAbsence: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -22,6 +23,7 @@ export type ScoreEvaluationStatusListParams = {
   "boolean[computesInGpa]"?: boolean;
   "boolean[earnsCredit]"?: boolean;
   "boolean[requiresRetake]"?: boolean;
+  "boolean[indicatesAbsence]"?: boolean;
 };
 
 export type CreateScoreEvaluationStatusRequest = {
@@ -32,6 +34,7 @@ export type CreateScoreEvaluationStatusRequest = {
   earnsCredit: boolean;
   requiresRetake: boolean;
   isDefault: boolean;
+  indicatesAbsence?: boolean;
 };
 
 export type UpdateScoreEvaluationStatusRequest = {
@@ -43,6 +46,7 @@ export type UpdateScoreEvaluationStatusRequest = {
   earnsCredit: boolean;
   requiresRetake: boolean;
   isDefault: boolean;
+  indicatesAbsence?: boolean;
 };
 
 export type ScoreEvaluationStatusCollection = {

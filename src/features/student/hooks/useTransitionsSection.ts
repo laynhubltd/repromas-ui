@@ -40,7 +40,7 @@ export function useTransitionsSection(studentId: number) {
   });
 
   const { data: sessionsData } = useGetAcademicSessionsQuery({
-    sort: "name:asc",
+    sort: "rankOrder:desc",
     itemsPerPage: 100,
   });
 

@@ -57,7 +57,12 @@ export function useGroupedConfigTabs({
     (groupKey: string, tabKey: string) => {
       if (syncWithUrl) {
         setSearchParams(
-          { [urlGroupParam]: groupKey, [urlTabParam]: tabKey },
+          (prev) => {
+            const next = new URLSearchParams(prev);
+            next.set(urlGroupParam, groupKey);
+            next.set(urlTabParam, tabKey);
+            return next;
+          },
           { replace: true },
         );
         return;

@@ -1,11 +1,10 @@
-// Feature: grading-config
+import { CurriculumSelect } from "@/components/ui-kit/data-entry/CurriculumSelect";
+import { LevelSelect } from "@/components/ui-kit/data-entry/LevelSelect";
 import { useGetDepartmentsQuery } from "@/features/academic-structure/api/departmentsApi";
 import { useGetFacultiesQuery } from "@/features/academic-structure/api/facultiesApi";
 import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import { useGetProgramsQuery } from "@/features/program/tabs/programs/api/programsApi";
-import { useGetCurriculumVersionsQuery } from "@/features/settings/tabs/curriculum-version/api/curriculumVersionApi";
-import { useGetLevelsQuery } from "@/features/settings/tabs/level-config/api/levelApi";
 import { GRADING_SYSTEM_SCOPE_OPTIONS } from "@/shared/constants/gradingSystemOptions";
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
@@ -31,6 +30,7 @@ import {
 
 type GradingSystemFormModalProps = {
   open: boolean;
+  /** null = create mode, GradingSystem = edit mode */
   target: GradingSystem | null;
   onClose: () => void;
 };
@@ -71,19 +71,12 @@ export function GradingSystemFormModal({
       { skip: scope !== "PROGRAM" || isEditMode },
     );
 
-  // Level and curriculum version options
-  const { data: levelsData, isLoading: levelsLoading } = useGetLevelsQuery(
-    { itemsPerPage: 200 },
-    { skip: !open },
-  );
-  const { data: curriculumVersionsData, isLoading: cvLoading } =
-    useGetCurriculumVersionsQuery({ itemsPerPage: 200 }, { skip: !open });
+  const referenceId = Form.useWatch("referenceId", form);
+  const selectedProgramId = scope === "PROGRAM" ? referenceId : undefined;
 
   const faculties = facultiesData?.member ?? [];
   const departments = departmentsData?.member ?? [];
   const programs = programsData?.member ?? [];
-  const levels = levelsData?.member ?? [];
-  const curriculumVersions = curriculumVersionsData?.member ?? [];
 
   const isReferenceLoading =
     facultiesLoading || departmentsLoading || programsLoading;
@@ -255,56 +248,26 @@ export function GradingSystemFormModal({
 
           {/* levelId — optional */}
           <Form.Item name="levelId" label="Level (optional)">
-            <Select
-              placeholder={
-                levelsLoading ? "Loading levels..." : "Select level (optional)"
-              }
-              disabled={levelsLoading}
-              loading={levelsLoading}
+            <LevelSelect
+              placeholder="Select level (optional)"
               allowClear
-              showSearch
-              optionFilterProp="label"
               style={{ height: 40 }}
-              options={levels.map((l) => ({ value: l.id, label: l.name }))}
             />
           </Form.Item>
 
-          {/* curriculumVersionId — required on create, optional on edit */}
+          {/* curriculumVersionId — optional */}
           <Form.Item
             name="curriculumVersionId"
-            label={
-              isEditMode ? (
-                "Curriculum Version (optional)"
-              ) : (
-                <span>
-                  Curriculum Version{" "}
-                  <span style={{ color: token.colorError, fontWeight: 700 }}>
-                    *
-                  </span>
-                </span>
-              )
-            }
-            rules={isEditMode ? undefined : curriculumVersionIdRules}
+            label="Curriculum Version (optional)"
+            rules={curriculumVersionIdRules}
             style={{ marginBottom: 0 }}
           >
-            <Select
-              placeholder={
-                cvLoading
-                  ? "Loading..."
-                  : isEditMode
-                    ? "Select curriculum version (optional)"
-                    : "Select curriculum version"
-              }
-              disabled={cvLoading}
-              loading={cvLoading}
-              allowClear={isEditMode}
-              showSearch
-              optionFilterProp="label"
+            <CurriculumSelect
+              programId={selectedProgramId}
+              skip={!open}
+              allowClear
+              placeholder="Select curriculum version (optional)"
               style={{ height: 40 }}
-              options={curriculumVersions.map((cv) => ({
-                value: cv.id,
-                label: cv.name,
-              }))}
             />
           </Form.Item>
         </Form>

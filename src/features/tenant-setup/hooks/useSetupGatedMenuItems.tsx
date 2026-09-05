@@ -1,5 +1,5 @@
-import type { RouteMenuItem } from "@/app/routing/route-menu-config";
 import { appPaths } from "@/app/routing/app-path";
+import type { RouteMenuItem } from "@/app/routing/route-menu-config";
 import {
   SETUP_STEP_LABELS,
   SETUP_STEP_TOOLTIP_BLOCKED,
@@ -7,7 +7,6 @@ import {
 import { Tooltip } from "antd";
 import type { ItemType } from "antd/es/menu/interface";
 import { useMemo, type ReactNode } from "react";
-import type { SetupStepId } from "../types/setup";
 import { useSetupStatus } from "./useSetupStatus";
 
 function wrapLabelWithTooltip(
@@ -40,24 +39,27 @@ export function useSetupGatedMenuItems(items: RouteMenuItem[]): ItemType[] {
 
   return useMemo(() => {
     if (!flags.shouldGateMenus) {
-      return items;
+      return items.map((item) => {
+        if (!item || typeof item !== "object") return item as ItemType;
+        const { setupStepId: _s, permission: _p, ...rest } = item;
+        return rest as ItemType;
+      });
     }
 
     return items.map((item) => {
       if (!item || typeof item !== "object" || !("key" in item)) {
-        return item;
+        return item as ItemType;
       }
 
       const key = String(item.key);
+      const { setupStepId, permission: _p, ...restItem } = item;
 
       if (key === appPaths.dashboard) {
-        return item;
+        return restItem as ItemType;
       }
 
-      const setupStepId = item.setupStepId as SetupStepId | undefined;
-
       if (!setupStepId) {
-        return item;
+        return restItem as ItemType;
       }
 
       let accessible = actions.canAccess(setupStepId);
@@ -74,21 +76,21 @@ export function useSetupGatedMenuItems(items: RouteMenuItem[]): ItemType[] {
           : ""
         : SETUP_STEP_TOOLTIP_BLOCKED[setupStepId];
 
-      const itemLabel = "label" in item ? item.label : null;
+      const itemLabel = "label" in restItem ? restItem.label : null;
 
       if (accessible) {
         return {
-          ...item,
+          ...restItem,
           disabled: false,
           label: wrapLabelWithTooltip(itemLabel, blockedTooltip, isCurrentStep),
-        };
+        } as ItemType;
       }
 
       return {
-        ...item,
+        ...restItem,
         disabled: true,
         label: wrapLabelWithTooltip(itemLabel, blockedTooltip, false),
-      };
+      } as ItemType;
     });
   }, [items, state.evaluation, actions, flags.shouldGateMenus]);
 }

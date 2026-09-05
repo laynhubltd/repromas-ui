@@ -4,10 +4,11 @@ import type {
 } from "@/shared/types/pictureUploader";
 import { notifyMutationSuccess } from "@/shared/utils/feedback/notifyMutationSuccess";
 import {
+    useCreateSystemConfigMutation,
     useListSystemConfigsQuery,
     useUpdateSystemConfigMutation,
 } from "../api/systemConfigApi";
-import type { SystemConfig } from "../types/system-config";
+import type { CreateSystemConfigRequest, SystemConfig, UpdateSystemConfigRequest } from "../types/system-config";
 import { ConfigItem } from "./ConfigItem";
 
 // ── RTK hook adapters (PictureUploader style) ─────────────────────────────────
@@ -32,14 +33,29 @@ function useForceCarryoverQuery(): GetQueryHookResponse<
   };
 }
 
-function useForceCarryoverPostMutation(): UploadMutationHookResponse<{
-  id: number;
-  configValue: boolean;
-}> {
-  const [update, { isLoading, error, isSuccess }] =
-    useUpdateSystemConfigMutation();
+type ForceCarryoverPayload =
+  | ({ id: number } & UpdateSystemConfigRequest)
+  | CreateSystemConfigRequest;
 
-  return [(payload) => update(payload), { isLoading, error, isSuccess }];
+function useForceCarryoverPostMutation(): UploadMutationHookResponse<ForceCarryoverPayload> {
+  const [update, { isLoading: isUpdating, error: updateError, isSuccess: isUpdateSuccess }] =
+    useUpdateSystemConfigMutation();
+  const [create, { isLoading: isCreating, error: createError, isSuccess: isCreateSuccess }] =
+    useCreateSystemConfigMutation();
+
+  return [
+    (payload) => {
+      if ("id" in payload) {
+        return update(payload as { id: number } & UpdateSystemConfigRequest);
+      }
+      return create(payload as CreateSystemConfigRequest);
+    },
+    {
+      isLoading: isUpdating || isCreating,
+      error: updateError || createError,
+      isSuccess: isUpdateSuccess || isCreateSuccess,
+    },
+  ];
 }
 
 // ── Adapters ──────────────────────────────────────────────────────────────────
@@ -51,9 +67,17 @@ function getForceCarryoverValue(data: SystemConfig | undefined): boolean {
 function buildForceCarryoverPayload(
   value: boolean,
   data: SystemConfig | undefined,
-): { id: number; configValue: boolean } {
-  if (!data) throw new Error("Configuration not found.");
-  return { id: data.id, configValue: value };
+): ForceCarryoverPayload {
+  if (data) {
+    return { id: data.id, configValue: value };
+  }
+  return {
+    scope: "GLOBAL",
+    referenceId: null,
+    configKey: "FORCE_CARRYOVER_FIRST",
+    dataType: "BOOLEAN",
+    configValue: value,
+  };
 }
 
 // ── Component ───────────────────────────────────────────────────────────────
@@ -63,7 +87,7 @@ export function ForceCarryoverConfig() {
   const query = useForceCarryoverQuery();
 
   return (
-    <ConfigItem<SystemConfig | undefined, { id: number; configValue: boolean }>
+    <ConfigItem<SystemConfig | undefined, ForceCarryoverPayload>
       type="BOOLEAN"
       label="Overwrite Carryover Marks"
       useGetQuery={useForceCarryoverQuery}

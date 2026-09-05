@@ -1,3 +1,4 @@
+import { useInstitutionTerminology } from "@/shared/hooks/useInstitutionTerminology";
 import { Tag } from "antd";
 import { deriveScopeLabel, type RoleScope } from "../types/rbac";
 
@@ -14,5 +15,7 @@ const SCOPE_COLOUR: Record<RoleScope, string> = {
 };
 
 export function ScopeBadge({ scope }: ScopeBadgeProps) {
-  return <Tag color={SCOPE_COLOUR[scope]}>{deriveScopeLabel(scope)}</Tag>;
+  const { academicUnit } = useInstitutionTerminology();
+  const label = scope === "FACULTY" ? academicUnit.singular : deriveScopeLabel(scope);
+  return <Tag color={SCOPE_COLOUR[scope]}>{label}</Tag>;
 }

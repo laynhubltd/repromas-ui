@@ -43,6 +43,7 @@ export function useProgramFormModal(
         degreeTitle: target.degreeTitle,
         durationInYears: target.durationInYears,
         maxResidencyYears: target.maxResidencyYears,
+        categoryId: target.categoryId,
       });
     }
   }, [open, target, form]);
@@ -59,6 +60,7 @@ export function useProgramFormModal(
           degreeTitle: values.degreeTitle.trim(),
           durationInYears: values.durationInYears,
           maxResidencyYears: values.maxResidencyYears,
+          categoryId: values.categoryId,
         }).unwrap();
       } else {
         await createProgram({
@@ -68,6 +70,7 @@ export function useProgramFormModal(
           degreeTitle: values.degreeTitle.trim(),
           durationInYears: values.durationInYears,
           maxResidencyYears: values.maxResidencyYears,
+          categoryId: values.categoryId,
         }).unwrap();
       }
       notifyMutationSuccess(

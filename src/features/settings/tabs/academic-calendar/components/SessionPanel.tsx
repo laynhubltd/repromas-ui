@@ -9,10 +9,10 @@ import { DataLoader } from "@/shared/ui/DataLoader";
 import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { SkeletonRows } from "@/shared/ui/SkeletonRows";
 import {
-    DeleteOutlined,
-    EditOutlined,
-    PlusOutlined,
-    StarOutlined,
+  DeleteOutlined,
+  EditOutlined,
+  PlusOutlined,
+  StarOutlined,
 } from "@ant-design/icons";
 import { Button, Grid, Tag, Tooltip, Typography } from "antd";
 import type { AcademicSession, Semester, SemesterType } from "../types/academic-calendar";

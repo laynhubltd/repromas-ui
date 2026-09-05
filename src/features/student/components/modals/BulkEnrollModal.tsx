@@ -2,6 +2,8 @@
 import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import { useToken } from "@/shared/hooks/useToken";
+import { LevelSelect } from "@/components/ui-kit/data-entry/LevelSelect";
+import { LevelSemesterSelect } from "@/shared/ui/LevelSemesterSelect";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
 import {
   Button,
@@ -47,6 +49,7 @@ export function BulkEnrollModal({ open, onClose }: BulkEnrollModalProps) {
     isSubmitting,
     result,
     selectedLevelId,
+    selectedSessionId,
   } = state;
 
   const {
@@ -63,11 +66,7 @@ export function BulkEnrollModal({ open, onClose }: BulkEnrollModalProps) {
   const {
     statuses,
     sessions,
-    semesters,
-    levels,
     sessionsLoading,
-    semestersLoading,
-    levelsLoading,
   } = refs;
 
   // ── Student table columns ──────────────────────────────────────────────────
@@ -233,13 +232,10 @@ export function BulkEnrollModal({ open, onClose }: BulkEnrollModalProps) {
 
             {/* levelId */}
             <Form.Item name="levelId" label="Level" rules={levelIdRules}>
-              <Select
+              <LevelSelect
                 placeholder="Select level"
-                loading={levelsLoading}
-                disabled={levelsLoading}
                 showSearch
                 style={{ height: 40 }}
-                options={levels.map((l) => ({ value: l.id, label: l.name }))}
                 onChange={(value) =>
                   handleLevelChange(value as number | undefined)
                 }
@@ -283,13 +279,10 @@ export function BulkEnrollModal({ open, onClose }: BulkEnrollModalProps) {
               label="Semester"
               rules={semesterIdRules}
             >
-              <Select
-                placeholder="Select semester"
-                loading={semestersLoading}
-                disabled={semestersLoading || !form.getFieldValue("sessionId")}
-                showSearch
+              <LevelSemesterSelect
+                levelId={selectedLevelId}
+                sessionId={selectedSessionId}
                 style={{ height: 40 }}
-                options={semesters.map((s) => ({ value: s.id, label: s.name }))}
               />
             </Form.Item>
 

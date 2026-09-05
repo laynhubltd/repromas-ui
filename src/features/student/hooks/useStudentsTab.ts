@@ -51,7 +51,7 @@ export function useStudentsTab() {
     page,
     itemsPerPage,
     sort,
-    include: "currentLevel" as const,
+    include: "currentLevel,entrySession" as const,
     ...(debouncedFirstName ? { "search[firstName]": debouncedFirstName } : {}),
     ...(debouncedLastName ? { "search[lastName]": debouncedLastName } : {}),
     ...(debouncedMatric ? { "search[matricNumber]": debouncedMatric } : {}),

@@ -25,6 +25,7 @@ type EvaluationStatusFormValues = {
   earnsCredit: boolean;
   requiresRetake: boolean;
   isDefault: boolean;
+  indicatesAbsence: boolean;
 };
 
 // ─── Upsert (Create / Edit) ───────────────────────────────────────────────────
@@ -61,6 +62,7 @@ export function useEvaluationStatusFormModal(
         earnsCredit: target.earnsCredit,
         requiresRetake: target.requiresRetake,
         isDefault: target.isDefault,
+        indicatesAbsence: target.indicatesAbsence ?? false,
       });
       dispatch({
         type: EvaluationStatusFormActionType.SetIsDefault,
@@ -138,6 +140,7 @@ export function useEvaluationStatusFormModal(
           earnsCredit: values.earnsCredit,
           requiresRetake: values.requiresRetake,
           isDefault: values.isDefault,
+          indicatesAbsence: values.indicatesAbsence,
         }).unwrap();
         notification.success({
           message: "Evaluation status updated successfully.",
@@ -151,6 +154,7 @@ export function useEvaluationStatusFormModal(
           earnsCredit: values.earnsCredit,
           requiresRetake: values.requiresRetake,
           isDefault: values.isDefault,
+          indicatesAbsence: values.indicatesAbsence,
         }).unwrap();
         notification.success({
           message: "Evaluation status created successfully.",

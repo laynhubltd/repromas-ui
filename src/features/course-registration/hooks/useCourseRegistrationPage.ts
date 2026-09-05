@@ -31,7 +31,7 @@ export type StudentHeaderInfo = {
  * - Semester type selection state
  * - Permission validation
  * - Responsive breakpoint handling
- * - Student profile fetching for header display (student users only)
+ * - Student profile & level fetching for header display and level-scoped semesters
  */
 export function useCourseRegistrationPage() {
   const { activeRole, entity } = useAuthState();
@@ -86,41 +86,52 @@ export function useCourseRegistrationPage() {
     return null;
   }, [isStudent, activeRole, studentIdFromAuth]);
 
-  // ─── Student Record Fetch (student users only) ────────────────────────────
-  // Fetch the full student record to get name and program information for the
-  // interface header (Requirements 13.5, 14.6).
-  // Only fetches when the user is a student with a valid ID.
+  // ─── Student Record Fetch ────────────────────────────────────────────────
+  // Fetch the full student record (with currentLevel and program) to power
+  // level-scoped semester dropdowns and header displays.
 
   const { data: studentRecord } = useGetStudentQuery(
     {
       id: studentIdFromAuth ?? 0,
-      include: "program",
+      include: "program,currentLevel",
     },
     { skip: !isStudent || studentIdFromAuth === null },
   );
 
+  const { data: selectedStudentRecord } = useGetStudentQuery(
+    {
+      id: selectedStudentId ?? 0,
+      include: "program,currentLevel",
+    },
+    { skip: isStudent || selectedStudentId === null },
+  );
+
+  const effectiveStudentRecord = isStudent ? studentRecord : selectedStudentRecord;
+
+  const studentLevelId = useMemo((): number | null => {
+    if (!effectiveStudentRecord) return null;
+    return (
+      effectiveStudentRecord.currentLevelId ??
+      effectiveStudentRecord.currentLevel?.id ??
+      null
+    );
+  }, [effectiveStudentRecord]);
+
   /**
    * Student header info derived from the fetched student record.
    * Provides name and program for display in the registration interface header.
-   * null when the user is not a student or the record has not loaded yet.
-   *
-   * Requirements: 13.5, 14.6
    */
   const studentHeaderInfo = useMemo((): StudentHeaderInfo | null => {
-    if (!isStudent || !studentRecord) return null;
+    if (!effectiveStudentRecord) return null;
     return {
-      fullName: `${studentRecord.firstName} ${studentRecord.lastName}`.trim(),
-      programName: studentRecord.program?.name ?? null,
-      matricNumber: studentRecord.matricNumber,
+      fullName: `${effectiveStudentRecord.firstName} ${effectiveStudentRecord.lastName}`.trim(),
+      programName: effectiveStudentRecord.program?.name ?? null,
+      matricNumber: effectiveStudentRecord.matricNumber,
     };
-  }, [isStudent, studentRecord]);
+  }, [effectiveStudentRecord]);
 
   // ─── Responsive Layout Config ─────────────────────────────────────────────
 
-  /**
-   * Layout configuration derived from the current breakpoint.
-   * On mobile (< 768px) the two-column admin layout stacks vertically.
-   */
   const layoutConfig = useMemo(
     () => ({
       /** Stack columns vertically on mobile/tablet. */
@@ -144,7 +155,7 @@ export function useCourseRegistrationPage() {
    * The semester type selection is intentionally kept in this hook so it
    * persists across student changes (Requirement 8.4).
    */
-  const handleSemesterTypeChange = useCallback((id: number) => {
+  const handleSemesterTypeChange = useCallback((id: number | null) => {
     setSemesterTypeId(id);
   }, []);
 
@@ -159,10 +170,11 @@ export function useCourseRegistrationPage() {
       isStudent,
       studentId: effectiveStudentId,
       selectedStudentId,
+      studentLevelId,
       semesterTypeId,
       hasPermission: hasPermissionToAccess,
       studentProfileError,
-      /** Student name and program info for the interface header (student users only). */
+      /** Student name and program info for the interface header. */
       studentHeaderInfo,
     },
     actions: {

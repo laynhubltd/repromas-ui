@@ -3,11 +3,12 @@ import { MoreOutlined, PlusOutlined } from "@ant-design/icons";
 import { Button, Dropdown, Flex, Input, Select, Tag } from "antd";
 import type { ColumnsType } from "antd/es/table/interface";
 import {
-    ITEMS_PER_PAGE,
-    getStatusTag,
-    useCurriculumVersionTab,
+  ITEMS_PER_PAGE,
+  getStatusTag,
+  useCurriculumVersionTab,
 } from "../hooks/useCurriculumVersionTab";
 import type { CurriculumVersion } from "../types/curriculum-version";
+import { CloneVersionModal } from "./CloneVersionModal";
 import { CreateVersionModal } from "./CreateVersionModal";
 import { CurriculumVersionBanner } from "./CurriculumVersionBanner";
 import { DeleteVersionModal } from "./DeleteVersionModal";
@@ -15,11 +16,11 @@ import { EditVersionModal } from "./EditVersionModal";
 
 // Re-export pure helpers so tests can import them from this module
 export {
-    calcTotalPages,
-    getMenuItems,
-    getStatusTag,
-    resetPageOnFilterChange,
-    statusFilterToQueryParam
+  calcTotalPages,
+  getMenuItems,
+  getStatusTag,
+  resetPageOnFilterChange,
+  statusFilterToQueryParam,
 } from "../hooks/useCurriculumVersionTab";
 
 function formatDate(iso: string): string {
@@ -35,12 +36,14 @@ export function CurriculumVersionTab() {
   const {
     search,
     statusFilter,
+    scopeFilter,
     page,
     versions,
     totalItems,
     isLoading,
     isError,
     createModalOpen,
+    cloneTarget,
     editTarget,
     deleteTarget,
     debounceTimer,
@@ -48,9 +51,11 @@ export function CurriculumVersionTab() {
   const {
     handleSearchChange,
     handleFilterChange,
+    handleScopeFilterChange,
     handleActivate,
     handleSortChange,
     setCreateModalOpen,
+    setCloneTarget,
     setEditTarget,
     setDeleteTarget,
     refetch,
@@ -63,6 +68,20 @@ export function CurriculumVersionTab() {
       key: "name",
       sorter: true,
       sortDirections: ["ascend", "descend"],
+    },
+    {
+      title: "Scope",
+      key: "scope",
+      render: (_: unknown, record: CurriculumVersion) => {
+        if (record.scope === "PROGRAM") {
+          return (
+            <Tag color="purple">
+              {record.program ? `${record.program.code} - ${record.program.name}` : `Program #${record.referenceId}`}
+            </Tag>
+          );
+        }
+        return <Tag color="cyan">Global Standard</Tag>;
+      },
     },
     {
       title: "Status",
@@ -95,6 +114,11 @@ export function CurriculumVersionTab() {
                 key: "edit",
                 label: "Edit",
                 onClick: () => setEditTarget(record),
+              },
+              {
+                key: "clone",
+                label: "Clone / Branch",
+                onClick: () => setCloneTarget(record),
               },
               {
                 key: "activate",
@@ -140,11 +164,21 @@ export function CurriculumVersionTab() {
           style={{ maxWidth: 320 }}
         />
         <Select
+          value={scopeFilter}
+          onChange={handleScopeFilterChange}
+          style={{ width: 160 }}
+          options={[
+            { value: "all", label: "All Scopes" },
+            { value: "GLOBAL", label: "Global Standards" },
+            { value: "PROGRAM", label: "Program Specific" },
+          ]}
+        />
+        <Select
           value={statusFilter}
           onChange={handleFilterChange}
           style={{ width: 140 }}
           options={[
-            { value: "all", label: "All" },
+            { value: "all", label: "All Statuses" },
             { value: "active", label: "Active" },
             { value: "inactive", label: "Inactive" },
           ]}
@@ -215,6 +249,11 @@ export function CurriculumVersionTab() {
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
       />
+      <CloneVersionModal
+        open={cloneTarget !== null}
+        target={cloneTarget}
+        onClose={() => setCloneTarget(null)}
+      />
       <EditVersionModal
         open={editTarget !== null}
         target={editTarget}
@@ -228,3 +267,4 @@ export function CurriculumVersionTab() {
     </Flex>
   );
 }
+

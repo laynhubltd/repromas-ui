@@ -1,11 +1,6 @@
 // Feature: student-transition
-import {
-    useGetAcademicSessionsQuery,
-    useGetSemesterTypesQuery,
-} from "@/features/settings/tabs/academic-calendar/api/academicCalendarApi";
-import { useGetLevelsQuery } from "@/features/settings/tabs/level-config/api/levelApi";
+import { useGetAcademicSessionsQuery } from "@/features/settings/tabs/academic-calendar/api/academicCalendarApi";
 import { useGetTransitionStatusesQuery } from "@/features/settings/tabs/student-transition-status/api/studentTransitionStatusApi";
-import { useGetSemestersQuery } from "@/features/settings/tabs/system-timeframes/api/systemTimeFramesApi";
 import { useApiError } from "@/shared/hooks/useApiError";
 import { RequestScreen } from "@/shared/types/error-ui";
 import { notifyMutationSuccess } from "@/shared/utils/feedback/notifyMutationSuccess";
@@ -120,44 +115,13 @@ export function useBulkEnrollModal(open: boolean, onClose: () => void) {
 
   const { data: sessionsData, isLoading: sessionsLoading } =
     useGetAcademicSessionsQuery(
-      { sort: "name:asc", itemsPerPage: 100 },
+      { sort: "rankOrder:desc", itemsPerPage: 100 },
       { skip: !open },
     );
   const sessions = (sessionsData?.member ?? []).map((s) => ({
     id: s.id,
     name: s.name,
     isCurrent: s.isCurrent,
-  }));
-
-  const { data: semestersData, isLoading: semestersLoading } =
-    useGetSemestersQuery(
-      {
-        "exact[session]": selectedSessionId,
-        sort: "createdAt:asc",
-        itemsPerPage: 100,
-      },
-      { skip: !selectedSessionId },
-    );
-
-  const { data: semesterTypesData } = useGetSemesterTypesQuery(
-    { sort: "sortOrder:asc", itemsPerPage: 100 },
-    { skip: !open },
-  );
-  const semesterTypeMap = Object.fromEntries(
-    (semesterTypesData?.member ?? []).map((st) => [st.id, st.name]),
-  );
-  const semesters = (semestersData?.member ?? []).map((s) => ({
-    id: s.id,
-    name: semesterTypeMap[s.semesterTypeId] ?? `Semester #${s.id}`,
-  }));
-
-  const { data: levelsData, isLoading: levelsLoading } = useGetLevelsQuery(
-    { sort: "name:asc", itemsPerPage: 100 },
-    { skip: !open },
-  );
-  const levels = (levelsData?.member ?? []).map((l) => ({
-    id: l.id,
-    name: l.name,
   }));
 
   // ── Actions ────────────────────────────────────────────────────────────────
@@ -188,18 +152,22 @@ export function useBulkEnrollModal(open: boolean, onClose: () => void) {
     [form],
   );
 
-  const handleLevelChange = useCallback((levelId: number | undefined) => {
-    setSelectedLevelId(levelId);
-    // Clear student selection when level changes
-    setSelectedStudentIds([]);
-    setStudentPage(1);
-  }, []);
+  const handleLevelChange = useCallback(
+    (levelId: number | undefined) => {
+      setSelectedLevelId(levelId);
+      form.setFieldValue("semesterId", undefined);
+      // Clear student selection when level changes
+      setSelectedStudentIds([]);
+      setStudentPage(1);
+    },
+    [form],
+  );
 
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
 
-      // Deduplicate studentIds before submission (Requirement 13.6)
+      // Deduplicate studentIds before submission
       const uniqueStudentIds = [...new Set(selectedStudentIds)];
 
       const response = await bulkCreateTransition({
@@ -232,6 +200,8 @@ export function useBulkEnrollModal(open: boolean, onClose: () => void) {
     }
   };
 
+  // ── Retry failed students ──────────────────────────────────────────────────
+
   const handleRetryFailed = useCallback(() => {
     if (!result) return;
     const failedIds = Object.keys(result.failed).map(Number);
@@ -261,6 +231,7 @@ export function useBulkEnrollModal(open: boolean, onClose: () => void) {
       isSubmitting,
       result,
       selectedLevelId,
+      selectedSessionId,
     },
     actions: {
       handleStudentSearchChange,
@@ -276,11 +247,7 @@ export function useBulkEnrollModal(open: boolean, onClose: () => void) {
     refs: {
       statuses,
       sessions,
-      semesters,
-      levels,
       sessionsLoading,
-      semestersLoading,
-      levelsLoading,
     },
   };
 }

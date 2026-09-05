@@ -17,6 +17,7 @@ import type { AcademicSession } from "../types/academic-calendar";
 
 type SessionFormValues = {
   name: string;
+  rankOrder?: number;
   startDate?: string | null;
   endDate?: string | null;
   isCurrent?: boolean;
@@ -45,6 +46,7 @@ export function useSessionFormModal(
     if (open && target) {
       form.setFieldsValue({
         name: target.name,
+        rankOrder: target.rankOrder,
         startDate: target.startDate ?? undefined,
         endDate: target.endDate ?? undefined,
         isCurrent: target.isCurrent,
@@ -67,6 +69,7 @@ export function useSessionFormModal(
         await updateAcademicSession({
           id: target.id,
           name: values.name.trim(),
+          rankOrder: values.rankOrder ?? target.rankOrder,
           startDate: values.startDate ?? null,
           endDate: values.endDate ?? null,
           isCurrent: values.isCurrent ?? target.isCurrent,
@@ -74,6 +77,7 @@ export function useSessionFormModal(
       } else {
         await createAcademicSession({
           name: values.name.trim(),
+          ...(values.rankOrder != null && { rankOrder: values.rankOrder }),
           ...(values.startDate != null && { startDate: values.startDate }),
           ...(values.endDate != null && { endDate: values.endDate }),
         }).unwrap();

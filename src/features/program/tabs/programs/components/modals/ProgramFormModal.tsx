@@ -1,5 +1,7 @@
 // Feature: program-graduation-config
+import { useAppSelector } from "@/app/hooks";
 import { useGetDepartmentsQuery } from "@/features/academic-structure/api/departmentsApi";
+import { useGetLevelCategoriesQuery } from "@/features/settings/tabs/level-config/api/levelApi";
 import { useToken } from "@/shared/hooks/useToken";
 import { Button, Form, Input, InputNumber, Modal, Select } from "antd";
 import { useEffect, useState } from "react";
@@ -53,6 +55,16 @@ export function ProgramFormModal({ open, target, onClose, defaultDepartmentId }:
   });
   const departments = departmentsData?.member ?? [];
 
+  const hasLevelCategory = useAppSelector(
+    (state) => state.systemConfig.configs.HAS_LEVEL_CATEGORY === true
+  );
+
+  const { data: levelCategoriesData, isLoading: isLevelCategoriesLoading } = useGetLevelCategoriesQuery(
+    { itemsPerPage: 200 },
+    { skip: !hasLevelCategory }
+  );
+  const levelCategories = levelCategoriesData?.member ?? [];
+
   const maxResidencyCeiling = Math.floor(durationInYears * 1.5 + 1);
   const maxResidencyHelperText = `Max residency must be between ${durationInYears + 1} and ${maxResidencyCeiling} years`;
 
@@ -94,6 +106,27 @@ export function ProgramFormModal({ open, target, onClose, defaultDepartmentId }:
               options={departments.map((d) => ({ value: d.id, label: d.name }))}
             />
           </Form.Item>
+
+          {hasLevelCategory && (
+            <Form.Item
+              name="categoryId"
+              label={
+                <span>
+                  Level Category <span style={{ color: token.colorError, fontWeight: 700 }}>*</span>
+                </span>
+              }
+              rules={[{ required: true, message: "Level category is required" }]}
+            >
+              <Select
+                placeholder="Select level category"
+                loading={isLevelCategoriesLoading}
+                showSearch
+                optionFilterProp="label"
+                style={{ height: 40 }}
+                options={levelCategories.map((c) => ({ value: c.id, label: `${c.name} (${c.code})` }))}
+              />
+            </Form.Item>
+          )}
 
           <Form.Item
             name="code"

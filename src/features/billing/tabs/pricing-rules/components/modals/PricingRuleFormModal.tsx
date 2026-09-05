@@ -4,7 +4,6 @@ import { useGetDepartmentsQuery } from "@/features/academic-structure/api/depart
 import { useGetFacultiesQuery } from "@/features/academic-structure/api/facultiesApi";
 import { useGetProgramsQuery } from "@/features/program/tabs/programs/api/programsApi";
 import { useGetAcademicSessionsQuery } from "@/features/settings/tabs/academic-calendar/api/academicCalendarApi";
-import { useGetLevelsQuery } from "@/features/settings/tabs/level-config/api/levelApi";
 import {
   INDIGENE_STATUS_OPTIONS,
   PRICING_RULE_SCOPE_OPTIONS,
@@ -14,6 +13,7 @@ import {
 } from "@/shared/constants/pricingRuleOptions";
 import { useToken } from "@/shared/hooks/useToken";
 import { ErrorAlert } from "@/shared/ui/ErrorAlert";
+import { LevelSelect } from "@/components/ui-kit/data-entry/LevelSelect";
 import { Alert, Button, Flex, Form, Input, InputNumber, Modal, Select, Steps, Switch, Typography } from "antd";
 import { useMemo } from "react";
 import {
@@ -158,14 +158,10 @@ export function PricingRuleFormModal({
 
   const { data: sessionsData, isLoading: isSessionsLoading } =
     useGetAcademicSessionsQuery(
-      { sort: "name:desc", itemsPerPage: 100 },
+      { sort: "rankOrder:desc", itemsPerPage: 100 },
       { skip: !open || !showDimensions },
     );
 
-  const { data: levelsData, isLoading: isLevelsLoading } = useGetLevelsQuery(
-    { sort: "rankOrder:asc", itemsPerPage: 100 },
-    { skip: !open || !showDimensions },
-  );
 
   const referenceOptions = useMemo(() => {
     if (scopeValue === "FACULTY") {
@@ -196,15 +192,6 @@ export function PricingRuleFormModal({
         label: s.name,
       })),
     [sessionsData],
-  );
-
-  const levelOptions = useMemo(
-    () =>
-      (levelsData?.member ?? []).map((l) => ({
-        value: l.id,
-        label: l.name,
-      })),
-    [levelsData],
   );
 
   const isLoadingRefs =
@@ -476,11 +463,9 @@ export function PricingRuleFormModal({
                 label="Level (optional)"
                 style={{ flex: "1 1 200px" }}
               >
-                <Select
+                <LevelSelect
                   allowClear
                   placeholder="Any level"
-                  options={levelOptions}
-                  loading={isLevelsLoading}
                   disabled={isLocked && !retireReplaceMode}
                 />
               </Form.Item>

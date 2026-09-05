@@ -1,4 +1,5 @@
 import { useIsMobile } from "@/hooks/useBreakpoint";
+import { useInstitutionTerminology } from "@/shared/hooks/useInstitutionTerminology";
 import { useToken } from "@/shared/hooks/useToken";
 import { LockOutlined } from "@ant-design/icons";
 import { Button, Form, Input, Modal } from "antd";
@@ -12,7 +13,7 @@ export interface AddDepartmentModalProps {
   open: boolean;
   onClose: () => void;
   onSubmit: (values: AddDepartmentFormValues) => void | Promise<void>;
-  /** Faculty under which the department will be added (shown as read-only target). */
+  /** Academic unit under which the department will be added (shown as read-only target). */
   faculty: { id: number; name: string; code: string };
   loading?: boolean;
 }
@@ -27,6 +28,7 @@ export function AddDepartmentModal({
   const [form] = Form.useForm<AddDepartmentFormValues>();
   const token = useToken();
   const isMobile = useIsMobile();
+  const { academicUnit } = useInstitutionTerminology();
 
   const handleOk = async () => {
     try {
@@ -78,7 +80,7 @@ export function AddDepartmentModal({
                 letterSpacing: "0.1em",
               }}
             >
-              Target Faculty
+              Target {academicUnit.singular}
             </span>
           }
         >

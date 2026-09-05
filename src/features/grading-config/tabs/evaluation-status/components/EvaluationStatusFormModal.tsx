@@ -151,6 +151,26 @@ export function EvaluationStatusFormModal({
             <Switch onChange={handleRequiresRetakeChange} />
           </Form.Item>
 
+          {/* indicatesAbsence */}
+          <Form.Item
+            name="indicatesAbsence"
+            label="Indicates Unexcused Absence (Participation Guard)"
+            valuePropName="checked"
+          >
+            <Switch />
+          </Form.Item>
+          <Typography.Text
+            type="secondary"
+            style={{
+              fontSize: token.fontSizeSM,
+              display: "block",
+              marginTop: -16,
+              marginBottom: 16,
+            }}
+          >
+            When enabled, score sheets marked with this status represent unexcused non-attendance. Students with 100% absence across all registered courses trigger Lapsed Registration status.
+          </Typography.Text>
+
           {/* Cross-validation warning: requiresRetake + earnsCredit */}
           <ConditionalRenderer when={requiresRetake && earnsCredit}>
             <Alert

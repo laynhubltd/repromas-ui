@@ -3,6 +3,8 @@ export type ScoreSheetMeta = {
   courseName: string;
   sessionName: string;
   semesterName: string;
+  ordinalName?: string | null;
+  semesterTitle?: string | null;
 };
 
 export type ScoreSubComponent = {

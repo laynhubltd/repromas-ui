@@ -1,4 +1,5 @@
 // Feature: faculty-department-management
+import { useInstitutionTerminology } from "@/shared/hooks/useInstitutionTerminology";
 import { useToken } from "@/shared/hooks/useToken";
 import { Button, Form, Input, Modal } from "antd";
 import { useFacultyFormModal } from "../../hooks/useFacultyModal";
@@ -14,13 +15,14 @@ export type FacultyFormModalProps = {
 
 export function FacultyFormModal({ open, target, onClose }: FacultyFormModalProps) {
   const token = useToken();
+  const { academicUnit } = useInstitutionTerminology();
   const { state, actions, form } = useFacultyFormModal(target, open, onClose);
   const { isLoading, isEditMode } = state;
   const { handleSubmit, handleCancel } = actions;
 
   return (
     <Modal
-      title={isEditMode ? "Edit Faculty" : "Create Faculty"}
+      title={isEditMode ? academicUnit.editModalTitle : academicUnit.addModalTitle}
       open={open}
       onCancel={handleCancel}
       footer={null}
@@ -45,9 +47,9 @@ export function FacultyFormModal({ open, target, onClose }: FacultyFormModalProp
                 Name <span style={{ color: token.colorError, fontWeight: 700 }}>*</span>
               </span>
             }
-            rules={nameRule("Please enter a faculty name")}
+            rules={nameRule(`Please enter a ${academicUnit.singular.toLowerCase()} name`)}
           >
-            <Input placeholder="e.g. Faculty of Science" style={{ height: 40 }} />
+            <Input placeholder={academicUnit.namePlaceholder} style={{ height: 40 }} />
           </Form.Item>
           <Form.Item
             name="code"
@@ -56,10 +58,10 @@ export function FacultyFormModal({ open, target, onClose }: FacultyFormModalProp
                 Code <span style={{ color: token.colorError, fontWeight: 700 }}>*</span>
               </span>
             }
-            rules={codeRule("Please enter a faculty code")}
+            rules={codeRule(`Please enter a ${academicUnit.singular.toLowerCase()} code`)}
             style={{ marginBottom: 0 }}
           >
-            <Input placeholder="e.g. SCI" style={{ height: 40 }} />
+            <Input placeholder={academicUnit.codePlaceholder} style={{ height: 40 }} />
           </Form.Item>
         </Form>
       </div>
@@ -82,7 +84,7 @@ export function FacultyFormModal({ open, target, onClose }: FacultyFormModalProp
           block
           style={{ height: 48, fontWeight: 600 }}
         >
-          {isEditMode ? "Save Changes" : "Create Faculty"}
+          {isEditMode ? "Save Changes" : academicUnit.createButtonLabel}
         </Button>
         <Button
           type="text"

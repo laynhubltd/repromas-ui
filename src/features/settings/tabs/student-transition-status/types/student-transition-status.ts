@@ -1,10 +1,31 @@
 export type StateCategory = "POSITIVE" | "NEGATIVE" | "NEUTRAL";
+export type LevelProgression = "PROMOTE" | "RETAIN";
+
+export type SemanticKind =
+  | "GOOD_STANDING"
+  | "PROBATION"
+  | "REPEAT"
+  | "SUSPENDED"
+  | "DEFERRED"
+  | "SPILLOVER"
+  | "ABSENT"
+  | "WITHDRAWN"
+  | "DISMISSED"
+  | "GRADUATED"
+  | "OTHER";
+
+export type ManagedBy = "ADMIN" | "ENGINE" | "BOTH";
 
 export type StudentTransitionStatus = {
   id: number;
   name: string;
   isTerminal: boolean;
   stateCategory: StateCategory;
+  semanticKind?: SemanticKind;
+  managedBy?: ManagedBy;
+  levelProgression?: LevelProgression;
+  exemptFromEvaluation?: boolean;
+  countsTowardCareerCap?: boolean;
   countsTowardsResidency: boolean;
   appearsOnBroadsheet: boolean;
   canRegisterCourses: boolean;
@@ -20,6 +41,8 @@ export type TransitionStatusListParams = {
   sort?: string;
   "search[name]"?: string;
   "exact[stateCategory]"?: StateCategory;
+  "exact[semanticKind]"?: SemanticKind;
+  "exact[managedBy]"?: ManagedBy;
   "boolean[isTerminal]"?: boolean;
   "boolean[canRegisterCourses]"?: boolean;
   "boolean[canAccessPortal]"?: boolean;
@@ -28,8 +51,13 @@ export type TransitionStatusListParams = {
 
 export type CreateTransitionStatusRequest = {
   name: string;
+  semanticKind?: SemanticKind;
+  managedBy?: ManagedBy;
   isTerminal?: boolean;
   stateCategory?: StateCategory;
+  levelProgression?: LevelProgression;
+  exemptFromEvaluation?: boolean;
+  countsTowardCareerCap?: boolean;
   countsTowardsResidency?: boolean;
   appearsOnBroadsheet?: boolean;
   canRegisterCourses?: boolean;
@@ -37,11 +65,16 @@ export type CreateTransitionStatusRequest = {
   isDefault?: boolean;
 };
 
-// PUT requires all 8 writable fields
+// PUT requires all writable fields
 export type UpdateTransitionStatusRequest = {
   name: string;
+  semanticKind?: SemanticKind;
+  managedBy?: ManagedBy;
   isTerminal: boolean;
   stateCategory: StateCategory;
+  levelProgression?: LevelProgression;
+  exemptFromEvaluation?: boolean;
+  countsTowardCareerCap?: boolean;
   countsTowardsResidency: boolean;
   appearsOnBroadsheet: boolean;
   canRegisterCourses: boolean;

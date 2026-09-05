@@ -1,4 +1,5 @@
 // Feature: settings-timeframe
+import { useInstitutionTerminology } from "@/shared/hooks/useInstitutionTerminology";
 import { Select, Spin } from "antd";
 import { useEffect, useState } from "react";
 import { useReferencePickerOptions } from "../hooks/useReferencePickerOptions";
@@ -23,6 +24,7 @@ type ReferencePickerFieldProps = {
  */
 export function ReferencePickerField({ scope, value = null, onChange }: ReferencePickerFieldProps) {
   const [search, setSearch] = useState("");
+  const { academicUnit } = useInstitutionTerminology();
 
   // Clear search and value when scope changes
   useEffect(() => {
@@ -38,8 +40,11 @@ export function ReferencePickerField({ scope, value = null, onChange }: Referenc
   }
 
   const isStudent = scope === "STUDENT";
+  const isFaculty = scope === "FACULTY";
   const placeholder = isStudent
     ? "Type matric number to search…"
+    : isFaculty
+    ? academicUnit.searchPlaceholder
     : `Search ${scope.charAt(0) + scope.slice(1).toLowerCase()}…`;
 
   const selectOptions = options.map((opt) => ({ value: opt.id, label: opt.label }));

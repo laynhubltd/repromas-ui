@@ -70,7 +70,7 @@ export function useUpsertTimeFrameModal(
 
   // ── Sessions ───────────────────────────────────────────────────────────────
   const { data: sessionsData, isLoading: sessionsLoading } = useGetAcademicSessionsQuery({
-    sort: "name:desc",
+    sort: "rankOrder:desc",
     itemsPerPage: 100,
   });
   const sessions: AcademicSession[] = sessionsData?.member ?? [];

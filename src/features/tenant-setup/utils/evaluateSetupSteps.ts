@@ -8,57 +8,31 @@ import {
 } from "../config/setupSteps";
 import type {
   SetupEvaluation,
-  SetupProbeCounts,
   SetupStepId,
   SetupStepState,
+  SetupChecklistResponse,
 } from "../types/setup";
 
-function isStepComplete(id: SetupStepId, probes: SetupProbeCounts): boolean {
-  switch (id) {
-    case "signedIn":
-      return true;
-    case "department":
-      return probes.departments > 0;
-    case "level":
-      return probes.levels > 0;
-    case "program":
-      return probes.programs > 0;
-    case "curriculumVersion":
-      return probes.curriculumVersions > 0;
-    case "course":
-      return probes.courses > 0;
-    case "staff":
-      return probes.staff > 0;
-    case "transitionStatusDefault":
-      return probes.transitionStatusDefaults > 0;
-    case "student":
-      return probes.students > 0;
-    case "admissionConfig":
-      return probes.admissionConfigs > 0;
-    case "admissionCandidate":
-      return probes.admissionCandidates > 0;
-    case "courseRegistration":
-      return probes.students > 0 && probes.courses > 0;
-    case "assessment":
-      return probes.courses > 0 && probes.programs > 0 && probes.levels > 0;
-    case "gradingConfig":
-      return isPhase1CompleteByProbes(probes);
-    case "billing":
-      return isPhase1CompleteByProbes(probes);
-    case "settings":
-      return probes.departments > 0;
-    default:
-      return false;
+function isStepComplete(
+  id: SetupStepId,
+  checklist: SetupChecklistResponse["checklist"],
+): boolean {
+  if (id === "settings") {
+    return checklist.department?.configured ?? false;
   }
+  return checklist[id]?.configured ?? false;
 }
 
-function isPhase1CompleteByProbes(probes: SetupProbeCounts): boolean {
+function isPhase1CompleteByChecklist(
+  checklist: SetupChecklistResponse["checklist"],
+): boolean {
   return (
-    probes.departments > 0 &&
-    probes.levels > 0 &&
-    probes.programs > 0 &&
-    probes.curriculumVersions > 0 &&
-    probes.courses > 0
+    (checklist.department?.configured ?? false) &&
+    (checklist.level?.configured ?? false) &&
+    (checklist.program?.configured ?? false) &&
+    (checklist.curriculumVersion?.configured ?? false) &&
+    (checklist.course?.configured ?? false) &&
+    (checklist.systemConfig?.configured ?? false)
   );
 }
 
@@ -70,10 +44,12 @@ function arePrerequisitesComplete(
   return prerequisites.every((prereq) => completion[prereq]);
 }
 
-export function evaluateSetupSteps(probes: SetupProbeCounts): SetupEvaluation {
+export function evaluateSetupSteps(
+  checklist: SetupChecklistResponse["checklist"],
+): SetupEvaluation {
   const completion = SETUP_STEP_ORDER.reduce(
     (acc, id) => {
-      acc[id] = isStepComplete(id, probes);
+      acc[id] = isStepComplete(id, checklist);
       return acc;
     },
     {} as Record<SetupStepId, boolean>,
@@ -112,7 +88,7 @@ export function evaluateSetupSteps(probes: SetupProbeCounts): SetupEvaluation {
   const phase1ProgressPercent = Math.round(
     (phase1CompletedCount / phase1TotalCount) * 100,
   );
-  const isPhase1Complete = isPhase1CompleteByProbes(probes);
+  const isPhase1Complete = isPhase1CompleteByChecklist(checklist);
   const isSetupComplete = getAllOnboardingChecklistStepIds().every(
     (id) => completion[id],
   );

@@ -32,7 +32,7 @@ export function useAcademicCalendarTab() {
     isError: sessionsError,
     error: sessionsQueryError,
     refetch: refetchSessions,
-  } = useGetAcademicSessionsQuery({ sort: "name:desc", include: "semesters", itemsPerPage: 100 });
+  } = useGetAcademicSessionsQuery({ sort: "rankOrder:desc", include: "semesters", itemsPerPage: 100 });
 
   const semesterTypesSectionError = useMemo(
     () =>

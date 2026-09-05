@@ -1,4 +1,5 @@
 // Feature: faculty-department-management
+import { useInstitutionTerminology } from "@/shared/hooks/useInstitutionTerminology";
 import { useToken } from "@/shared/hooks/useToken";
 import { Button, Form, Input, Modal, Select } from "antd";
 import { useDepartmentFormModal } from "../../hooks/useDepartmentModal";
@@ -23,6 +24,7 @@ export function DepartmentFormModal({
   facultyName,
 }: DepartmentFormModalProps) {
   const token = useToken();
+  const { academicUnit } = useInstitutionTerminology();
   const { state, actions, form } = useDepartmentFormModal(target, open, onClose, { facultyId });
   const { isLoading, isEditMode, faculties, facultiesLoading, showFacultySelector } =
     state;
@@ -57,13 +59,13 @@ export function DepartmentFormModal({
               name="facultyId"
               label={
                 <span>
-                  Faculty <span style={{ color: token.colorError, fontWeight: 700 }}>*</span>
+                  {academicUnit.singular} <span style={{ color: token.colorError, fontWeight: 700 }}>*</span>
                 </span>
               }
-              rules={[{ required: true, message: "Please select a faculty" }]}
+              rules={[{ required: true, message: `Please select a ${academicUnit.singular.toLowerCase()}` }]}
             >
               <Select
-                placeholder="Select a faculty"
+                placeholder={academicUnit.selectPlaceholder}
                 loading={facultiesLoading}
                 style={{ height: 40 }}
                 options={faculties.map((f) => ({ value: f.id, label: f.name }))}

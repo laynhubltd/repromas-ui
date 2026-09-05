@@ -1,8 +1,10 @@
 // Feature: level-config
 import { useToken } from "@/shared/hooks/useToken";
-import { Button, Form, Input, InputNumber, Modal } from "antd";
+import { Button, Form, Input, InputNumber, Modal, Select } from "antd";
+import { useEffect } from "react";
 import { useLevelFormModal } from "../../hooks/useLevelModal";
 import type { Level } from "../../types/level";
+import type { LevelCategory } from "../../types/levelCategory";
 import {
     descriptionRules,
     nameRules,
@@ -14,13 +16,30 @@ export type LevelFormModalProps = {
   /** null = create mode, Level = edit mode */
   target: Level | null;
   onClose: () => void;
+  hasLevelCategory?: boolean;
+  selectedCategoryId?: number | null;
+  categories?: LevelCategory[];
 };
 
-export function LevelFormModal({ open, target, onClose }: LevelFormModalProps) {
+export function LevelFormModal({ 
+  open, 
+  target, 
+  onClose,
+  hasLevelCategory,
+  selectedCategoryId,
+  categories = []
+}: LevelFormModalProps) {
   const token = useToken();
   const { state, actions, form } = useLevelFormModal(target, open, onClose);
   const { isLoading, isEditMode } = state;
   const { handleSubmit, handleCancel } = actions;
+
+  // Pre-select categoryId for create mode if one is selected in the UI
+  useEffect(() => {
+    if (open && !isEditMode && hasLevelCategory && selectedCategoryId) {
+      form.setFieldsValue({ categoryId: selectedCategoryId });
+    }
+  }, [open, isEditMode, hasLevelCategory, selectedCategoryId, form]);
 
   return (
     <Modal
@@ -42,6 +61,26 @@ export function LevelFormModal({ open, target, onClose }: LevelFormModalProps) {
     >
       <div style={{ padding: 24 }}>
         <Form form={form} layout="vertical" requiredMark={false} onFinish={handleSubmit}>
+          {hasLevelCategory && (
+            <Form.Item
+              name="categoryId"
+              label={
+                <span>
+                  Level Category <span style={{ color: token.colorError, fontWeight: 700 }}>*</span>
+                </span>
+              }
+              rules={[{ required: true, message: "Level category is required" }]}
+            >
+              <Select
+                placeholder="Select a category"
+                options={categories.map((c) => ({ value: c.id, label: c.name }))}
+                style={{ height: 40 }}
+                showSearch
+                optionFilterProp="label"
+              />
+            </Form.Item>
+          )}
+
           <Form.Item
             name="name"
             label={

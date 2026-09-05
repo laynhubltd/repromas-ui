@@ -1,4 +1,5 @@
 // Feature: faculty-department-management
+import { useInstitutionTerminology } from "@/shared/hooks/useInstitutionTerminology";
 import { useToken } from "@/shared/hooks/useToken";
 import { Alert, Button, Modal, Typography } from "antd";
 import { useDeleteFacultyModal } from "../../hooks/useFacultyModal";
@@ -12,13 +13,14 @@ export type DeleteFacultyModalProps = {
 
 export function DeleteFacultyModal({ open, target, onClose }: DeleteFacultyModalProps) {
   const token = useToken();
+  const { academicUnit } = useInstitutionTerminology();
   const { state, actions } = useDeleteFacultyModal(target, onClose);
   const { isLoading } = state;
   const { handleConfirm, handleCancel } = actions;
 
   return (
     <Modal
-      title="Delete Faculty"
+      title={academicUnit.deleteModalTitle}
       open={open}
       onCancel={handleCancel}
       footer={null}
@@ -43,7 +45,7 @@ export function DeleteFacultyModal({ open, target, onClose }: DeleteFacultyModal
             type="warning"
             showIcon
             message="Cascade deletion warning"
-            description="Deleting this faculty will permanently delete all its departments and all programs under those departments. This cannot be undone."
+            description={`Deleting this ${academicUnit.singular.toLowerCase()} will permanently delete all its departments and all programs under those departments. This cannot be undone.`}
           />
         </div>
       </div>
@@ -67,7 +69,7 @@ export function DeleteFacultyModal({ open, target, onClose }: DeleteFacultyModal
           block
           style={{ height: 48, fontWeight: 600 }}
         >
-          Delete Faculty
+          {academicUnit.deleteModalTitle}
         </Button>
         <Button
           type="text"

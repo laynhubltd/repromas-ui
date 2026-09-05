@@ -5,6 +5,7 @@ export const ApiTagTypes = {
   Semester: "Semester",
   SemesterType: "SemesterType",
   Level: "Level",
+  LevelCategory: "LevelCategory",
   AcademicStructure: "AcademicStructure",
   Theme: "Theme",
   CurriculumVersion: "CurriculumVersion",
@@ -72,6 +73,11 @@ export const ApiTagTypes = {
   ProgramPriorQualificationRequirement: "ProgramPriorQualificationRequirement",
   MatricNumberFormat: "MatricNumberFormat",
   Signatories: "Signatories",
+  AcademicStanding: "AcademicStanding",
+  AcademicStandingBoundary: "AcademicStandingBoundary",
+  AcademicStandingEscalationStep: "AcademicStandingEscalationStep",
+  AcademicStandingDegreeClassification: "AcademicStandingDegreeClassification",
+  BroadsheetReport: "BroadsheetReport",
 } as const;
 
 export type ApiTagLiteral = (typeof ApiTagTypes)[keyof typeof ApiTagTypes];

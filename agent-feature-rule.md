@@ -15,6 +15,7 @@ This document defines **standard UI/UX rules and principles** for building consi
 ### 2. Consistency
 - Reuse patterns across features
 - Maintain uniform spacing, typography, and actions
+- Always use `useInstitutionTerminology()` for dynamic academic unit, program award, and modal labeling (never hardcode "Faculty")
 
 ### 3. Feedback & Responsiveness
 - Always show:

@@ -1,11 +1,6 @@
 // Feature: student-transition
-import {
-    useGetAcademicSessionsQuery,
-    useGetSemesterTypesQuery,
-} from "@/features/settings/tabs/academic-calendar/api/academicCalendarApi";
-import { useGetLevelsQuery } from "@/features/settings/tabs/level-config/api/levelApi";
+import { useGetAcademicSessionsQuery } from "@/features/settings/tabs/academic-calendar/api/academicCalendarApi";
 import { useGetTransitionStatusesQuery } from "@/features/settings/tabs/student-transition-status/api/studentTransitionStatusApi";
-import { useGetSemestersQuery } from "@/features/settings/tabs/system-timeframes/api/systemTimeFramesApi";
 import { useApiError } from "@/shared/hooks/useApiError";
 import { RequestScreen } from "@/shared/types/error-ui";
 import {
@@ -16,9 +11,9 @@ import { Form } from "antd";
 import dayjs from "dayjs";
 import { useEffect, useState } from "react";
 import {
-    useCreateTransitionMutation,
-    useDeleteTransitionMutation,
-    useUpdateTransitionMutation,
+  useCreateTransitionMutation,
+  useDeleteTransitionMutation,
+  useUpdateTransitionMutation,
 } from "../api/studentTransitionsApi";
 import type { StudentEnrollmentTransition } from "../types/studentTransition";
 
@@ -54,6 +49,9 @@ export function useTransitionFormModal(
   const [selectedSessionId, setSelectedSessionId] = useState<number | undefined>(
     target?.sessionId ?? undefined,
   );
+  const [selectedLevelId, setSelectedLevelId] = useState<number | undefined>(
+    target?.levelId ?? undefined,
+  );
   const handleApiError = useApiError();
 
   const isLoading = isCreating || isUpdating;
@@ -71,39 +69,17 @@ export function useTransitionFormModal(
   }));
 
   const { data: sessionsData, isLoading: sessionsLoading } = useGetAcademicSessionsQuery(
-    { sort: "name:asc", itemsPerPage: 100 },
+    { sort: "rankOrder:desc", itemsPerPage: 100 },
     { skip: !open },
   );
   const sessions = (sessionsData?.member ?? []).map((s) => ({ id: s.id, name: s.name, startDate: s.startDate }));
-
-  const { data: semestersData, isLoading: semestersLoading } = useGetSemestersQuery(
-    { "exact[session]": selectedSessionId, sort: "createdAt:asc", itemsPerPage: 100 },
-    { skip: !selectedSessionId },
-  );
-
-  const { data: semesterTypesData } = useGetSemesterTypesQuery(
-    { sort: "sortOrder:asc", itemsPerPage: 100 },
-    { skip: !open },
-  );
-  const semesterTypeMap = Object.fromEntries(
-    (semesterTypesData?.member ?? []).map((st) => [st.id, st.name]),
-  );
-  const semesters = (semestersData?.member ?? []).map((s) => ({
-    id: s.id,
-    name: semesterTypeMap[s.semesterTypeId] ?? `Semester #${s.id}`,
-  }));
-
-  const { data: levelsData, isLoading: levelsLoading } = useGetLevelsQuery(
-    { sort: "name:asc", itemsPerPage: 100 },
-    { skip: !open },
-  );
-  const levels = (levelsData?.member ?? []).map((l) => ({ id: l.id, name: l.name }));
 
   // ── Pre-fill form in edit mode; reset on close ─────────────────────────────
 
   useEffect(() => {
     if (open && target) {
       setSelectedSessionId(target.sessionId);
+      setSelectedLevelId(target.levelId);
       form.setFieldsValue({
         statusId: target.statusId,
         sessionId: target.sessionId,
@@ -116,6 +92,7 @@ export function useTransitionFormModal(
     if (!open) {
       form.resetFields();
       setSelectedSessionId(undefined);
+      setSelectedLevelId(undefined);
     }
   }, [open, target, form]);
 
@@ -131,6 +108,13 @@ export function useTransitionFormModal(
         form.setFieldValue("startDate", dayjs(session.startDate));
       }
     }
+  };
+
+  // ── Level change handler ───────────────────────────────────────────────────
+
+  const handleLevelChange = (levelId: number | undefined) => {
+    setSelectedLevelId(levelId);
+    form.setFieldValue("semesterId", undefined);
   };
 
   // ── Submit ─────────────────────────────────────────────────────────────────
@@ -186,22 +170,19 @@ export function useTransitionFormModal(
   const handleCancel = () => {
     form.resetFields();
     setSelectedSessionId(undefined);
+    setSelectedLevelId(undefined);
     onClose();
   };
 
   return {
-    state: { isLoading, isEditMode },
-    actions: { handleSubmit, handleCancel, handleSessionChange },
+    state: { isLoading, isEditMode, selectedSessionId, selectedLevelId },
+    actions: { handleSubmit, handleCancel, handleSessionChange, handleLevelChange },
     form,
     refs: {
       statuses,
       sessions,
-      semesters,
-      levels,
       statusesLoading,
       sessionsLoading,
-      semestersLoading,
-      levelsLoading,
     },
   };
 }

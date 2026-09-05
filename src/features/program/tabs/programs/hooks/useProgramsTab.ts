@@ -1,6 +1,7 @@
 import { useAccessControl } from "@/features/access-control";
 import { RequestScreen } from "@/shared/types/error-ui";
 import { deriveSectionErrorMessage } from "@/shared/utils/error/deriveSectionErrorMessage";
+import { useAppSelector } from "@/app/hooks";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useGetProgramsQuery } from "../api/programsApi";
 import type { Program } from "../types/program";
@@ -10,6 +11,10 @@ const GROUP_BY_ITEMS_PER_PAGE = 100;
 
 export function useProgramsTab() {
   const { activeRole } = useAccessControl();
+  
+  const hasLevelCategory = useAppSelector(
+    (state) => state.systemConfig.configs.HAS_LEVEL_CATEGORY === true
+  );
 
   // ─── Pagination & Sort ────────────────────────────────────────────────────
   const [page, setPage] = useState(1);
@@ -56,6 +61,10 @@ export function useProgramsTab() {
   // ─── Query Params ─────────────────────────────────────────────────────────
   const effectiveItemsPerPage = groupByDepartment ? GROUP_BY_ITEMS_PER_PAGE : itemsPerPage;
 
+  const includes = [];
+  if (showDepartmentFilter) includes.push("department");
+  if (hasLevelCategory) includes.push("category");
+
   const queryParams = {
     page,
     itemsPerPage: effectiveItemsPerPage,
@@ -64,7 +73,7 @@ export function useProgramsTab() {
     ...(debouncedCode ? { "search[code]": debouncedCode } : {}),
     ...(debouncedDegreeTitle ? { "search[degreeTitle]": debouncedDegreeTitle } : {}),
     ...(departmentFilter !== undefined ? { "exact[department]": departmentFilter } : {}),
-    ...(showDepartmentFilter ? { include: "department" } : {}),
+    ...(includes.length > 0 ? { include: includes.join(",") } : {}),
   };
 
   const { data, isLoading, isError, error: queryError, refetch } = useGetProgramsQuery(queryParams);
@@ -207,6 +216,7 @@ export function useProgramsTab() {
       isDegreeTitleSearchActive,
       showDepartmentFilter,
       showGroupByToggle,
+      hasLevelCategory,
     },
   };
 }

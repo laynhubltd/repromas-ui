@@ -27,6 +27,4 @@ export const referenceIdRules: Rule[] = [
   { required: true, message: "Reference entity is required" },
 ];
 
-export const curriculumVersionIdRules: Rule[] = [
-  { required: true, message: "Curriculum version is required" },
-];
+export const curriculumVersionIdRules: Rule[] = [];

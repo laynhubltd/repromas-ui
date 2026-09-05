@@ -2,6 +2,7 @@ import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import type { PriorQualificationType } from "@/features/admission-config/tabs/qualification-type/types/prior-qualification-type";
 import { getAssessmentFormatLabel } from "@/shared/constants/priorQualificationTypeOptions";
+import { LevelSelect } from "@/components/ui-kit/data-entry/LevelSelect";
 import { useToken } from "@/shared/hooks/useToken";
 import { Button, Form, Modal, Select, Tag, Typography } from "antd";
 import { useMemo } from "react";
@@ -21,7 +22,6 @@ type ProgramPriorQualRequirementFormModalProps = {
   onClose: () => void;
   programs: { id: number; name: string; department?: { name: string } | null }[];
   qualificationTypes: PriorQualificationType[];
-  levels: { id: number; name: string }[];
   getUsedTypeIdsForProgram: (programId: number | undefined) => number[];
 };
 
@@ -32,7 +32,6 @@ export function ProgramPriorQualRequirementFormModal({
   onClose,
   programs,
   qualificationTypes,
-  levels,
   getUsedTypeIdsForProgram,
 }: ProgramPriorQualRequirementFormModalProps) {
   const token = useToken();
@@ -82,11 +81,6 @@ export function ProgramPriorQualRequirementFormModal({
       disabled: disabledIds.has(type.id),
     }));
   }, [qualificationTypes, programId, isEditMode, usedTypeIdsForProgram]);
-
-  const levelOptions = useMemo(
-    () => levels.map((level) => ({ value: level.id, label: level.name })),
-    [levels],
-  );
 
   return (
     <Modal
@@ -156,17 +150,27 @@ export function ProgramPriorQualRequirementFormModal({
           />
         </Form.Item>
 
+        <Form.Item
+          name="levelId"
+          label="Applies to Level (Optional)"
+          extra="Leave blank if requirement applies to all levels of the program."
+        >
+          <LevelSelect
+            placeholder="Select a specific level (Optional)"
+            allowClear
+            showSearch
+          />
+        </Form.Item>
+
         <RequirementRuleIntentField />
 
         <RequirementThresholdFields selectedType={selectedType} />
 
         <Form.Item name="entryLevelId" label="Entry level (optional)">
-          <Select
+          <LevelSelect
             placeholder="Select entry level"
-            options={levelOptions}
             allowClear
             showSearch
-            optionFilterProp="label"
           />
         </Form.Item>
 

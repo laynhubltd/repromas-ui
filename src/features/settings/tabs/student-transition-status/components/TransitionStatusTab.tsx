@@ -19,6 +19,7 @@ import {
   EditOutlined,
   FilterOutlined,
   PlusOutlined,
+  QuestionCircleOutlined,
 } from "@ant-design/icons";
 import {
   Badge,
@@ -32,15 +33,26 @@ import {
   Select,
   Space,
   Tag,
+  Tooltip,
   Typography,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import type { SorterResult } from "antd/es/table/interface";
-import { useState } from "react";
+import React, { useState } from "react";
 import { useTransitionStatusTab } from "../hooks/useTransitionStatusTab";
-import type { StateCategory, StudentTransitionStatus } from "../types/student-transition-status";
-import { getStateCategoryColor } from "../utils/stateCategoryColor";
+import type {
+  ManagedBy,
+  SemanticKind,
+  StateCategory,
+  StudentTransitionStatus,
+} from "../types/student-transition-status";
+import {
+  ALL_SEMANTIC_KINDS,
+  SEMANTIC_KIND_LABELS,
+  getSemanticKindIcon,
+} from "../utils/semanticKindPresentation";
 import { isSortFieldAllowed } from "../utils/sortFieldAllowlist";
+import { getStateCategoryColor } from "../utils/stateCategoryColor";
 import { DeleteTransitionStatusModal } from "./modals/DeleteTransitionStatusModal";
 import { TransitionStatusFormModal } from "./modals/TransitionStatusFormModal";
 
@@ -51,6 +63,22 @@ function formatDate(iso: string): string {
     day: "numeric",
   });
 }
+
+const SEMANTIC_KIND_FILTER_OPTIONS = ALL_SEMANTIC_KINDS.map((kind) => ({
+  value: kind,
+  label: (
+    <Flex align="center" gap={6}>
+      {getSemanticKindIcon(kind)}
+      <span>{SEMANTIC_KIND_LABELS[kind]}</span>
+    </Flex>
+  ),
+}));
+
+const MANAGED_BY_FILTER_OPTIONS: { value: ManagedBy; label: string }[] = [
+  { value: "BOTH", label: "Both" },
+  { value: "ADMIN", label: "Admin only" },
+  { value: "ENGINE", label: "Engine only" },
+];
 
 export function TransitionStatusTab() {
   const token = useToken();
@@ -64,6 +92,8 @@ export function TransitionStatusTab() {
     itemsPerPage,
     search,
     categoryFilter,
+    semanticKindFilter,
+    managedByFilter,
     isDefaultFilter,
     sort,
     formTarget,
@@ -71,10 +101,13 @@ export function TransitionStatusTab() {
     formModalOpen,
     deleteModalOpen,
     usageCount,
+    unclassifiedCount,
   } = state;
   const {
     handleSearchChange,
     handleCategoryFilterChange,
+    handleSemanticKindFilterChange,
+    handleManagedByFilterChange,
     handleIsDefaultFilterChange,
     handleClearFilters,
     handleSortChange,
@@ -146,6 +179,61 @@ export function TransitionStatusTab() {
       ),
     },
     {
+      title: "Status Type",
+      dataIndex: "semanticKind",
+      key: "semanticKind",
+      sorter: false,
+      render: (_: unknown, record: StudentTransitionStatus) => {
+        const catColor = getStateCategoryColor(record.stateCategory, token);
+        const hasKind = record.semanticKind && record.semanticKind !== "OTHER";
+
+        return (
+          <Flex align="center" gap={6} wrap="wrap">
+            {hasKind ? (
+              <Tag
+                style={{
+                  color: catColor,
+                  borderColor: catColor,
+                  background: "transparent",
+                  fontWeight: 600,
+                  fontSize: token.fontSizeSM,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                }}
+              >
+                {getSemanticKindIcon(record.semanticKind)}
+                <span>{SEMANTIC_KIND_LABELS[record.semanticKind!]}</span>
+              </Tag>
+            ) : (
+              <Tooltip title="Assign a Status Type so this status appears correctly in reports.">
+                <Tag
+                  color="warning"
+                  style={{
+                    fontWeight: 600,
+                    fontSize: token.fontSizeSM,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 4,
+                    cursor: "help",
+                  }}
+                >
+                  <QuestionCircleOutlined />
+                  <span>Unclassified</span>
+                </Tag>
+              </Tooltip>
+            )}
+
+            {record.managedBy === "ADMIN" && (
+              <Tag color="purple" style={{ fontSize: 10, margin: 0, fontWeight: 700 }}>
+                ADMIN-MANAGED
+              </Tag>
+            )}
+          </Flex>
+        );
+      },
+    },
+    {
       title: "Category",
       dataIndex: "stateCategory",
       key: "stateCategory",
@@ -168,6 +256,17 @@ export function TransitionStatusTab() {
           </Tag>
         );
       },
+    },
+    {
+      title: "Progression",
+      dataIndex: "levelProgression",
+      key: "levelProgression",
+      sorter: false,
+      render: (progression?: string) => (
+        <Tag color={progression === "PROMOTE" ? "blue" : "default"}>
+          {progression === "PROMOTE" ? "Promote" : "Retain"}
+        </Tag>
+      ),
     },
     {
       title: "Can Register",
@@ -194,6 +293,30 @@ export function TransitionStatusTab() {
         ) : (
           <CloseCircleOutlined style={{ color: token.colorTextTertiary, fontSize: 16 }} />
         ),
+    },
+    {
+      title: "Evaluation Flags",
+      key: "flags",
+      sorter: false,
+      render: (_: unknown, r: StudentTransitionStatus) => (
+        <Flex wrap="wrap" gap={4}>
+          {r.exemptFromEvaluation && (
+            <Tag color="orange" style={{ fontSize: 11, margin: 0 }}>
+              Exempt
+            </Tag>
+          )}
+          {r.countsTowardCareerCap && (
+            <Tag color="cyan" style={{ fontSize: 11, margin: 0 }}>
+              Career Cap
+            </Tag>
+          )}
+          {r.countsTowardsResidency && (
+            <Tag style={{ fontSize: 11, margin: 0 }}>
+              Residency
+            </Tag>
+          )}
+        </Flex>
+      ),
     },
     {
       title: "Created At",
@@ -236,8 +359,34 @@ export function TransitionStatusTab() {
   ];
 
   const filterPopoverContent = (
-    <Flex vertical gap={16} style={{ width: 260 }}>
+    <Flex vertical gap={16} style={{ width: 280 }}>
       <Form layout="vertical" size="middle">
+        <Form.Item label="Status Type" style={{ marginBottom: 12 }}>
+          <Select
+            placeholder="All Status Types"
+            allowClear
+            value={semanticKindFilter}
+            onChange={(val: SemanticKind | undefined) => {
+              handleSemanticKindFilterChange(val);
+            }}
+            style={{ width: "100%" }}
+            options={SEMANTIC_KIND_FILTER_OPTIONS}
+          />
+        </Form.Item>
+
+        <Form.Item label="Managed By" style={{ marginBottom: 12 }}>
+          <Select
+            placeholder="All Authorities"
+            allowClear
+            value={managedByFilter}
+            onChange={(val: ManagedBy | undefined) => {
+              handleManagedByFilterChange(val);
+            }}
+            style={{ width: "100%" }}
+            options={MANAGED_BY_FILTER_OPTIONS}
+          />
+        </Form.Item>
+
         <Form.Item label="State Category" style={{ marginBottom: 12 }}>
           <Select
             placeholder="All Categories"
@@ -250,6 +399,7 @@ export function TransitionStatusTab() {
             options={STATE_CATEGORY_OPTIONS}
           />
         </Form.Item>
+
         <Form.Item label="Default Status" style={{ marginBottom: 0 }}>
           <Select
             placeholder="Any"
@@ -285,12 +435,18 @@ export function TransitionStatusTab() {
     </Flex>
   );
 
+  const explainerBody =
+    "Define the academic states that students can be assigned to. Each status controls what students are permitted to do — including course registration, portal access, broadsheet appearance, and residency counting. Exactly one status must be marked as default for new student enrollment." +
+    (unclassifiedCount > 0
+      ? `\n\n⚠ ${unclassifiedCount} status${unclassifiedCount === 1 ? " is" : "es are"} unclassified — assign Status Types for accurate reporting.`
+      : "");
+
   return (
     <Flex vertical gap={24} style={{ width: "100%" }}>
       <ExplainerCallout
         intent="info"
         title="Student Transition Statuses"
-        body="Define the academic states that students can be assigned to. Each status controls what students are permitted to do — including course registration, portal access, broadsheet appearance, and residency counting. Exactly one status must be marked as default for new student enrollment."
+        body={explainerBody}
         dismissible
         collapsible
       />
@@ -413,44 +569,25 @@ export function TransitionStatusTab() {
               onClick={handleOpenCreate}
               style={{ fontWeight: 600 }}
             >
-              Create Status
+              Create default status
             </Button>
           </PermissionGuard>
         </ConditionalRenderer>
 
-        <ConditionalRenderer
-          when={!isError && !hasData && isSearchActive}
-          wrapper={centeredBox({
-            border: `1px dashed ${token.colorBorder}`,
-            borderRadius: token.borderRadius,
-            background: token.colorBgContainer,
-          })}
-        >
-          <Typography.Text type="secondary" style={{ display: "block", marginBottom: 8 }}>
-            No transition statuses found matching your search.
-          </Typography.Text>
-          <Button type="link" onClick={() => handleSearchChange("")}>
-            Clear search
-          </Button>
-        </ConditionalRenderer>
-
         <ConditionalRenderer when={!isError && hasData}>
           <Table<StudentTransitionStatus>
-            rowKey="id"
             dataSource={statuses}
             columns={columns}
-            size="md"
-            density="comfortable"
-            scroll={{ x: true }}
-            onChange={handleTableChange}
+            rowKey="id"
             pagination={{
               current: page,
               pageSize: itemsPerPage,
               total: totalItems,
               showSizeChanger: true,
+              pageSizeOptions: ["10", "20", "50"],
               onChange: handlePageChange,
-              onShowSizeChange: handlePageChange,
             }}
+            onChange={handleTableChange}
           />
         </ConditionalRenderer>
       </DataLoader>
@@ -462,6 +599,7 @@ export function TransitionStatusTab() {
         hasNoDefaultInTenant={!hasDefaultConfigured}
         onClose={handleCloseForm}
       />
+
       <DeleteTransitionStatusModal
         open={deleteModalOpen}
         target={deleteTarget}

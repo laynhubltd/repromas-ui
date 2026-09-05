@@ -24,7 +24,7 @@ const defaultLoader = (
       padding: "32px 0",
     }}
   >
-    <Spin size="default" />
+    <Spin />
   </div>
 );
 

@@ -3,9 +3,12 @@ import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import type { SemesterType } from "@/features/settings/tabs/academic-calendar/types/academic-calendar";
 import { useToken } from "@/shared/hooks/useToken";
+import { getOrdinalSemesterName } from "@/shared/utils/semesterOrdinal";
 import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
 import { Button, Flex, Tag, Tooltip, Typography } from "antd";
 import type { CourseConfiguration, CurriculumGridRow } from "../types/course-configuration";
+
+import type { FormattedSemester } from "../types/course-configuration";
 
 const COURSE_STATUS_COLOR: Record<string, string> = {
   CORE: "blue",
@@ -14,16 +17,18 @@ const COURSE_STATUS_COLOR: Record<string, string> = {
   PREREQUISITE: "purple",
 };
 
-type CurriculumGridProps = {
+export type CurriculumGridProps = {
   gridRows: CurriculumGridRow[];
-  semesterTypes: SemesterType[];
+  semesterTypes?: SemesterType[];
+  semesters?: FormattedSemester[];
   onEdit: (config: CourseConfiguration) => void;
   onDelete: (config: CourseConfiguration) => void;
 };
 
 export function CurriculumGrid({
   gridRows,
-  semesterTypes,
+  semesterTypes = [],
+  semesters = [],
   onEdit,
   onDelete,
 }: CurriculumGridProps) {
@@ -32,9 +37,19 @@ export function CurriculumGrid({
   const sortedRows = [...gridRows].sort(
     (a, b) => (a.level.rankOrder ?? 0) - (b.level.rankOrder ?? 0),
   );
-  const sortedSemesterTypes = [...semesterTypes].sort(
-    (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0),
-  );
+
+  // Derive column list from semesterTypes or fallback to semesters
+  const columns = semesterTypes.length > 0
+    ? [...semesterTypes].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+    : semesters.map((s) => ({
+        id: s.semesterTypeId,
+        name: s.ordinalName || s.semesterTypeName,
+        code: s.semesterTitle ?? `SEM${s.semesterTypeId}`,
+        sortOrder: s.position ?? s.semesterTypeId,
+        semesters: null,
+        createdAt: "",
+        updatedAt: "",
+      }));
 
   return (
     <div style={{ overflowX: "auto" }}>
@@ -60,7 +75,7 @@ export function CurriculumGrid({
             >
               Level
             </th>
-            {sortedSemesterTypes.map((st) => (
+            {columns.map((st) => (
               <th
                 key={st.id}
                 style={{
@@ -91,8 +106,12 @@ export function CurriculumGrid({
               >
                 <Typography.Text strong>{row.level.name}</Typography.Text>
               </td>
-              {sortedSemesterTypes.map((st) => {
+              {columns.map((st) => {
                 const cellConfigs = row.cells.get(st.id) ?? [];
+                const cellOrdinal =
+                  cellConfigs[0]?.semester?.ordinalName ??
+                  getOrdinalSemesterName(st.sortOrder ?? 1, row.level.rankOrder);
+
                 return (
                   <td
                     key={st.id}
@@ -103,6 +122,17 @@ export function CurriculumGrid({
                       verticalAlign: "top",
                     }}
                   >
+                    <Flex justify="space-between" align="center" style={{ marginBottom: 8 }}>
+                      <Typography.Text
+                        type="secondary"
+                        style={{ fontSize: 11, fontWeight: 600, color: token.colorPrimary }}
+                      >
+                        {cellOrdinal}
+                      </Typography.Text>
+                      <Typography.Text type="secondary" style={{ fontSize: 10 }}>
+                        {cellConfigs.length} course{cellConfigs.length !== 1 ? "s" : ""}
+                      </Typography.Text>
+                    </Flex>
                     <Flex vertical gap={8}>
                       {cellConfigs.map((config) => (
                         <div

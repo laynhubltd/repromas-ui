@@ -13,6 +13,7 @@ export type SemesterType = {
 export type AcademicSession = {
   id: number;
   name: string;
+  rankOrder: number;
   startDate: string | null;
   endDate: string | null;
   isCurrent: boolean;
@@ -42,6 +43,7 @@ export type PaginatedResponse<T> = {
 
 export type CreateSessionRequest = {
   name: string;
+  rankOrder?: number;
   startDate?: string | null;
   endDate?: string | null;
 };
@@ -49,6 +51,7 @@ export type CreateSessionRequest = {
 export type UpdateSessionRequest = {
   id: number;
   name: string;
+  rankOrder: number;
   startDate?: string | null;
   endDate?: string | null;
   isCurrent: boolean;

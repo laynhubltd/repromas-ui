@@ -1,6 +1,7 @@
 export type SetupStepId =
   | "signedIn"
   | "department"
+  | "systemConfig"
   | "level"
   | "program"
   | "curriculumVersion"
@@ -58,4 +59,13 @@ export type SetupEvaluation = {
   isPhase1Complete: boolean;
   isSetupComplete: boolean;
   remainingStepCount: number;
+};
+
+export type SetupChecklistItem = {
+  configured: boolean;
+  count: number;
+};
+
+export type SetupChecklistResponse = {
+  checklist: Record<string, SetupChecklistItem>;
 };

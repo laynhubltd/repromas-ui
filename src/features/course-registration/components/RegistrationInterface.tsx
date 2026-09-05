@@ -13,14 +13,15 @@ import { BookOutlined, ReloadOutlined, UserOutlined } from "@ant-design/icons";
 import { Alert, Button, Card, Flex, Tag, Typography } from "antd";
 import type { StudentHeaderInfo } from "../hooks/useCourseRegistrationPage";
 import { useRegistrationInterface } from "../hooks/useRegistrationInterface";
+import { LevelSemesterSelect } from "@/components/ui-kit/data-entry/LevelSemesterSelect";
 import { CoursePoolDisplay } from "./CoursePoolDisplay";
 import { CreditLimitsDisplay } from "./CreditLimitsDisplay";
-import { SemesterTypeSelector } from "./SemesterTypeSelector";
 
 export type RegistrationInterfaceProps = {
   studentId: number | null;
+  studentLevelId?: number | null;
   semesterTypeId: number | null;
-  onSemesterTypeChange: (semesterTypeId: number) => void;
+  onSemesterTypeChange: (semesterTypeId: number | null) => void;
   /**
    * Student name and program info for display in the interface header.
    * Provided for student users (from auth + student record fetch).
@@ -47,7 +48,7 @@ export type RegistrationInterfaceProps = {
  * - Loading state while course data is fetched (Requirement 3.3)
  * - Eligibility error display with recovery guidance (Requirement 3.4, 7.2, 7.3)
  * - Course registration form when data loads successfully (Requirement 3.5)
- * - Semester type selection (Requirement 8.5)
+ * - Semester type selection via LevelSemesterSelect (Requirement 8.5)
  * - Comprehensive error display with recovery guidance (Requirements 7.1–7.5)
  * - Conflict error display for concurrent submissions (Requirement 7.1)
  * - Stale data notification after automatic refetch (Requirement 7.1)
@@ -60,6 +61,7 @@ export type RegistrationInterfaceProps = {
  */
 export function RegistrationInterface({
   studentId,
+  studentLevelId,
   semesterTypeId,
   onSemesterTypeChange,
   studentInfo,
@@ -73,8 +75,6 @@ export function RegistrationInterface({
     semesterTypeId,
     skipBillingGuard,
   );
-
-  console.log({ student: state.studentContext });
 
   // Combine client-side and server-side missing mandatory course IDs for
   // highlighting in the course pool display (Requirement 7.4)
@@ -150,12 +150,16 @@ export function RegistrationInterface({
           )}
         </Flex>
 
-        {/* Semester type selector — always visible so admin can pick before
-            selecting a student (Requirement 8.5) */}
+        {/* Level-scoped semester selector */}
         <div style={{ flexShrink: 0 }}>
-          <SemesterTypeSelector
-            semesterTypeId={semesterTypeId}
-            onSemesterTypeChange={onSemesterTypeChange}
+          <LevelSemesterSelect
+            levelId={studentLevelId}
+            value={semesterTypeId}
+            valueField="semesterTypeId"
+            autoSelectCurrent
+            onChange={(val) => onSemesterTypeChange(val ?? null)}
+            placeholder="Select semester"
+            style={{ minWidth: 200 }}
           />
         </div>
       </Flex>

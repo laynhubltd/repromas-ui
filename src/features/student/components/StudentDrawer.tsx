@@ -125,6 +125,11 @@ export function StudentDrawer({
               bordered
               styles={{ label: { width: 140 } }}
             >
+              <Descriptions.Item label="Entry Session">
+                {student.entrySession?.name ?? (
+                  <Typography.Text type="secondary">—</Typography.Text>
+                )}
+              </Descriptions.Item>
               <Descriptions.Item label="Entry Level">
                 {student.entryLevel?.name ?? (
                   <Typography.Text type="secondary">—</Typography.Text>
