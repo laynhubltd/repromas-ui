@@ -1,4 +1,3 @@
-import { useToken } from "@/shared/hooks/useToken";
 import { Card, Flex, InputNumber, Tag, Typography } from "antd";
 import { useMemo, useState } from "react";
 import type { DegreeClassificationBandDTO } from "../types/academic-standing-degree-classification";
@@ -15,7 +14,6 @@ export function DegreeClassificationSimulatorCard({
   policyMaxCgpa,
   policyName = "Selected Policy",
 }: DegreeClassificationSimulatorCardProps) {
-  const token = useToken();
   const [testCgpa, setTestCgpa] = useState<number | null>(
     bands.length > 0 ? bands[0].minCgpa : 3.5,
   );

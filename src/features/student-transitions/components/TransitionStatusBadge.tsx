@@ -10,7 +10,6 @@ import { getStateCategoryColor } from "@/features/settings/tabs/student-transiti
 import { useToken } from "@/shared/hooks/useToken";
 import { InfoCircleOutlined } from "@ant-design/icons";
 import { Flex, Popover, Tag, Typography } from "antd";
-import React from "react";
 import type { TransitionReason } from "../types/student-transition-evaluation";
 
 export interface TransitionStatusBadgeProps {

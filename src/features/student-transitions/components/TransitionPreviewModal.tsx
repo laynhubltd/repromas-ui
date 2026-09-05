@@ -45,7 +45,7 @@ export function TransitionPreviewModal({
 
   if (!simulationResult) return null;
 
-  const { summary, created, skipped, failed } = simulationResult;
+  const { summary, skipped, failed } = simulationResult;
 
   const handleFinish = (values: { approvalReference: string }) => {
     onCommit(values.approvalReference);

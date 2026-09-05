@@ -42,7 +42,6 @@ export function StudentTransitionsPage() {
     semesterTypeOptions,
     programOptions,
     levelOptions,
-    isLoadingOptions,
   } = filterState;
 
   // 2. Overrides Hook

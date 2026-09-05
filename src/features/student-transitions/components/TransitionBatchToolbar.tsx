@@ -1,10 +1,10 @@
 import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import type { Program } from "@/features/program/tabs/programs/types/program";
-import type { AcademicSession, SemesterType } from "@/features/settings/tabs/academic-calendar/types/academicCalendar";
+import type { AcademicSession, SemesterType } from "@/features/settings/tabs/academic-calendar/types/academic-calendar";
 import type { Level } from "@/features/settings/tabs/level-config/types/level";
 import { useToken } from "@/shared/hooks/useToken";
-import { CheckCircleOutlined, ExperimentOutlined } from "@ant-design/icons";
+import { ExperimentOutlined } from "@ant-design/icons";
 import { Button, Card, Flex, Select, Switch, Typography } from "antd";
 
 export interface TransitionBatchToolbarProps {
