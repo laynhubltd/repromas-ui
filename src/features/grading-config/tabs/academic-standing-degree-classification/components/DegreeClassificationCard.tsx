@@ -2,7 +2,7 @@ import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import { useToken } from "@/shared/hooks/useToken";
 import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
-import { Badge, Button, Card, Flex, Space, Tag, Typography } from "antd";
+import { Button, Card, Flex, Space, Tag, Typography } from "antd";
 import type { DegreeClassificationBand } from "../types/academic-standing-degree-classification";
 
 export interface DegreeClassificationCardProps {

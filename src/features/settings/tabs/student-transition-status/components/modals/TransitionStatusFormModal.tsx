@@ -20,12 +20,9 @@ import {
   Switch,
   Typography,
 } from "antd";
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { useTransitionStatusFormModal } from "../../hooks/useTransitionStatusModal";
-import type {
-  SemanticKind,
-  StudentTransitionStatus,
-} from "../../types/student-transition-status";
+import type { StudentTransitionStatus } from "../../types/student-transition-status";
 import {
   ALL_SEMANTIC_KINDS,
   MANAGED_BY_OPTIONS,

@@ -1,6 +1,5 @@
 import { render, screen } from "@testing-library/react";
 import { Form } from "antd";
-import React from "react";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { AcademicStandingBoundaryFormModal } from "./AcademicStandingBoundaryFormModal";
 

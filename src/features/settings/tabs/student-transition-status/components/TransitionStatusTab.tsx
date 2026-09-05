@@ -38,7 +38,7 @@ import {
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import type { SorterResult } from "antd/es/table/interface";
-import React, { useState } from "react";
+import { useState } from "react";
 import { useTransitionStatusTab } from "../hooks/useTransitionStatusTab";
 import type {
   ManagedBy,

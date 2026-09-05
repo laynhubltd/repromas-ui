@@ -1,6 +1,6 @@
 import type { StudentTransitionStatus } from "@/features/settings/tabs/student-transition-status/types/student-transition-status";
 import { useToken } from "@/shared/hooks/useToken";
-import { EditOutlined, UndoOutlined } from "@ant-design/icons";
+import { UndoOutlined } from "@ant-design/icons";
 import { Button, Flex, Select, Space, Tag, Typography } from "antd";
 import { useMemo } from "react";
 import type { StagedOverride } from "../types/student-transition-evaluation";
