@@ -69,6 +69,7 @@ export function SpecialHighlightsTable({
         size="sm"
         loading={isLoading}
         pagination={false}
+        scroll={{ x: 500 }}
         columns={columns}
         dataSource={specialHighlights}
         rowKey="matricNumber"

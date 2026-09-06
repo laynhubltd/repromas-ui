@@ -1,7 +1,8 @@
 import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import { FilePdfOutlined, ReloadOutlined } from "@ant-design/icons";
-import { Button, Card, Flex, Select, Space, Typography } from "antd";
+import { Button, Card, Divider, Flex, Select, Space } from "antd";
+import type { BroadsheetCellMode } from "@/components/ui-kit";
 import type { Program } from "@/features/program/tabs/programs/types/program";
 import type {
   AcademicSession,
@@ -19,6 +20,7 @@ export interface BroadsheetFilterBarProps {
   levelId?: number;
   curriculumVersionId?: number;
   visibleCourseCodes?: string[];
+  cellMode?: BroadsheetCellMode;
   courses: BroadsheetCourseColumn[];
   sessions: AcademicSession[];
   semesterTypes: SemesterType[];
@@ -34,6 +36,7 @@ export interface BroadsheetFilterBarProps {
   onLevelChange: (id: number | undefined) => void;
   onCurriculumVersionChange: (id: number | undefined) => void;
   onVisibleCourseCodesChange: (codes: string[] | undefined) => void;
+  onCellModeChange?: (mode: BroadsheetCellMode) => void;
   onRefresh: () => void;
   onExportPdf: () => void;
 }
@@ -45,6 +48,7 @@ export function BroadsheetFilterBar({
   levelId,
   curriculumVersionId,
   visibleCourseCodes,
+  cellMode = "score-gp-np",
   courses,
   sessions,
   semesterTypes,
@@ -60,139 +64,149 @@ export function BroadsheetFilterBar({
   onLevelChange,
   onCurriculumVersionChange,
   onVisibleCourseCodesChange,
+  onCellModeChange,
   onRefresh,
   onExportPdf,
 }: BroadsheetFilterBarProps) {
   return (
-    <Card size="small" styles={{ body: { padding: "12px 16px" } }}>
-      <Flex wrap="wrap" gap={12} justify="space-between" align="center">
-        {/* Dropdown Filters */}
-        <Flex wrap="wrap" gap={12} align="center" flex={1}>
-          {/* Session */}
-          <div style={{ minWidth: 140 }}>
-            <Typography.Text type="secondary" style={{ fontSize: 12, display: "block", marginBottom: 2 }}>
-              Academic Session
-            </Typography.Text>
-            <Select
-              placeholder="Select Session"
-              value={sessionId}
-              onChange={onSessionChange}
-              loading={isLoadingOptions}
-              style={{ width: "100%" }}
-              options={sessions.map((s) => ({
-                value: s.id,
-                label: `${s.name}${s.isCurrent ? " (Current)" : ""}`,
-              }))}
-            />
-          </div>
+    <Card size="small" styles={{ body: { padding: "10px 14px" } }}>
+      <Flex vertical gap={8} style={{ width: "100%", minWidth: 0 }}>
+        {/* Row 1: Academic Cohort Scope Filters */}
+        <Flex
+          wrap="wrap"
+          gap={8}
+          align="center"
+          style={{ width: "100%", minWidth: 0 }}
+        >
+          {/* Academic Session */}
+          <Select
+            placeholder="Academic Session"
+            value={sessionId}
+            onChange={onSessionChange}
+            loading={isLoadingOptions}
+            style={{ flex: "1 1 140px", minWidth: 130 }}
+            options={sessions.map((s) => ({
+              value: s.id,
+              label: `${s.name}${s.isCurrent ? " (Current)" : ""}`,
+            }))}
+          />
 
           {/* Semester Type */}
-          <div style={{ minWidth: 140 }}>
-            <Typography.Text type="secondary" style={{ fontSize: 12, display: "block", marginBottom: 2 }}>
-              Semester Type
-            </Typography.Text>
-            <Select
-              placeholder="Select Semester"
-              value={semesterTypeId}
-              onChange={onSemesterTypeChange}
-              loading={isLoadingOptions}
-              style={{ width: "100%" }}
-              options={semesterTypes.map((st) => ({
-                value: st.id,
-                label: st.name,
-              }))}
-            />
-          </div>
+          <Select
+            placeholder="Semester Type"
+            value={semesterTypeId}
+            onChange={onSemesterTypeChange}
+            loading={isLoadingOptions}
+            style={{ flex: "1 1 130px", minWidth: 120 }}
+            options={semesterTypes.map((st) => ({
+              value: st.id,
+              label: st.name,
+            }))}
+          />
 
           {/* Program */}
-          <div style={{ minWidth: 200, flex: 1 }}>
-            <Typography.Text type="secondary" style={{ fontSize: 12, display: "block", marginBottom: 2 }}>
-              Program
-            </Typography.Text>
-            <Select
-              placeholder="Select Program"
-              value={programId}
-              onChange={onProgramChange}
-              loading={isLoadingOptions}
-              showSearch
-              optionFilterProp="label"
-              style={{ width: "100%" }}
-              options={programs.map((p) => ({
-                value: p.id,
-                label: p.name,
-              }))}
-            />
-          </div>
+          <Select
+            placeholder="Select Program"
+            value={programId}
+            onChange={onProgramChange}
+            loading={isLoadingOptions}
+            showSearch
+            optionFilterProp="label"
+            style={{ flex: "2 1 200px", minWidth: 180 }}
+            options={programs.map((p) => ({
+              value: p.id,
+              label: p.name,
+            }))}
+          />
 
           {/* Level */}
-          <div style={{ minWidth: 130 }}>
-            <Typography.Text type="secondary" style={{ fontSize: 12, display: "block", marginBottom: 2 }}>
-              Level
-            </Typography.Text>
-            <Select
-              placeholder="Select Level"
-              value={levelId}
-              onChange={onLevelChange}
-              loading={isLoadingOptions}
-              style={{ width: "100%" }}
-              options={levels.map((l) => ({
-                value: l.id,
-                label: l.name,
-              }))}
-            />
-          </div>
+          <Select
+            placeholder="Level"
+            value={levelId}
+            onChange={onLevelChange}
+            loading={isLoadingOptions}
+            style={{ flex: "1 1 100px", minWidth: 95 }}
+            options={levels.map((l) => ({
+              value: l.id,
+              label: l.name,
+            }))}
+          />
 
           {/* Optional Curriculum Version */}
           {curriculumVersions.length > 0 && (
-            <div style={{ minWidth: 160 }}>
-              <Typography.Text type="secondary" style={{ fontSize: 12, display: "block", marginBottom: 2 }}>
-                Curriculum Version
-              </Typography.Text>
-              <Select
-                placeholder="All Versions"
-                allowClear
-                value={curriculumVersionId}
-                onChange={onCurriculumVersionChange}
-                loading={isLoadingOptions}
-                style={{ width: "100%" }}
-                options={curriculumVersions.map((cv) => ({
-                  value: cv.id,
-                  label: cv.name,
-                }))}
-              />
-            </div>
+            <Select
+              placeholder="Curriculum Version"
+              allowClear
+              value={curriculumVersionId}
+              onChange={onCurriculumVersionChange}
+              loading={isLoadingOptions}
+              style={{ flex: "1 1 140px", minWidth: 130 }}
+              options={curriculumVersions.map((cv) => ({
+                value: cv.id,
+                label: cv.name,
+              }))}
+            />
           )}
         </Flex>
 
-        {/* Action Controls */}
-        <Space size="middle" wrap>
-          <CourseVisibilityPicker
-            courses={courses}
-            visibleCourseCodes={visibleCourseCodes}
-            onChange={onVisibleCourseCodesChange}
-            disabled={courses.length === 0}
-          />
+        {/* Subtle Horizontal Divider */}
+        <Divider style={{ margin: "2px 0" }} />
 
-          <Button
-            icon={<ReloadOutlined spin={isFetching} />}
-            onClick={onRefresh}
-            disabled={!programId || !levelId}
-          >
-            Refresh
-          </Button>
+        {/* Row 2: View Controls (Left) & Primary Actions (Right) */}
+        <Flex
+          justify="space-between"
+          align="center"
+          wrap="wrap"
+          gap={8}
+          style={{ width: "100%", minWidth: 0 }}
+        >
+          {/* Left: Display Options */}
+          <Space size="small" wrap>
+            {onCellModeChange && (
+              <Select<BroadsheetCellMode>
+                value={cellMode}
+                onChange={onCellModeChange}
+                style={{ width: 175 }}
+                options={[
+                  { value: "score-gp-np", label: "Full Ledger (SC/GR/GP/NP)" },
+                  { value: "score-grade-gp", label: "Standard (SC/GR/GP)" },
+                  { value: "score-grade", label: "Compact (SC/Grade)" },
+                  { value: "score-only", label: "Scores Only (SC)" },
+                ]}
+              />
+            )}
 
-          <PermissionGuard permission={Permission.ResultBroadsheetExport}>
+            <CourseVisibilityPicker
+              courses={courses}
+              visibleCourseCodes={visibleCourseCodes}
+              onChange={onVisibleCourseCodesChange}
+              disabled={courses.length === 0}
+            />
+          </Space>
+
+          {/* Right: Actions */}
+          <Space size="small" wrap>
             <Button
-              type="primary"
-              icon={<FilePdfOutlined />}
-              onClick={onExportPdf}
-              loading={isExporting}
-              disabled={!programId || !levelId || courses.length === 0}
+              icon={<ReloadOutlined spin={isFetching} />}
+              onClick={onRefresh}
+              disabled={!programId || !levelId}
             >
-              Export PDF
+              Refresh
             </Button>
-          </PermissionGuard>
-        </Space>
+
+            <PermissionGuard permission={Permission.ResultBroadsheetExport}>
+              <Button
+                type="primary"
+                icon={<FilePdfOutlined />}
+                onClick={onExportPdf}
+                loading={isExporting}
+                disabled={!programId || !levelId || courses.length === 0}
+              >
+                Export PDF
+              </Button>
+            </PermissionGuard>
+          </Space>
+        </Flex>
       </Flex>
     </Card>
   );

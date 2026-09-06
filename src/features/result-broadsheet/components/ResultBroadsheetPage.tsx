@@ -3,7 +3,8 @@ import { Permission } from "@/features/access-control/permissions";
 import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { SkeletonRows } from "@/shared/ui/SkeletonRows";
 import { Alert, Card, Empty, Flex, Tabs, Typography } from "antd";
-import { useState } from "react";
+import { type BroadsheetCellMode } from "@/components/ui-kit";
+import { useCallback, useState } from "react";
 import { useBroadsheetFilters } from "../hooks/useBroadsheetFilters";
 import { usePdfExport } from "../hooks/usePdfExport";
 import { useBroadsheetReport } from "../hooks/useBroadsheetReport";
@@ -16,8 +17,37 @@ import { GradeDistributionMatrix } from "./GradeDistributionMatrix";
 import { GraduatesTable } from "./GraduatesTable";
 import { SpecialHighlightsTable } from "./SpecialHighlightsTable";
 
+const CELL_MODE_STORAGE_KEY = "repromas_broadsheet_cell_mode";
+
+function getInitialCellMode(): BroadsheetCellMode {
+  try {
+    const saved = localStorage.getItem(CELL_MODE_STORAGE_KEY);
+    if (
+      saved === "score-gp-np" ||
+      saved === "score-grade-gp" ||
+      saved === "score-grade" ||
+      saved === "score-only"
+    ) {
+      return saved;
+    }
+  } catch {
+    // localStorage may be unavailable in some browser settings
+  }
+  return "score-gp-np";
+}
+
 export function ResultBroadsheetPage() {
   const [activeTabKey, setActiveTabKey] = useState<string>("matrix");
+  const [cellMode, setCellMode] = useState<BroadsheetCellMode>(getInitialCellMode);
+
+  const handleCellModeChange = useCallback((mode: BroadsheetCellMode) => {
+    setCellMode(mode);
+    try {
+      localStorage.setItem(CELL_MODE_STORAGE_KEY, mode);
+    } catch {
+      // localStorage may be unavailable
+    }
+  }, []);
 
   const {
     state: filterState,
@@ -44,7 +74,9 @@ export function ResultBroadsheetPage() {
           courses={reportState.courses}
           rows={reportState.rows}
           visibleCourseCodes={filterState.visibleCourseCodes}
+          cellMode={cellMode}
           isLoading={reportState.isFetching}
+          watermarkText={reportState.meta?.institutionName}
         />
       ),
     },
@@ -102,7 +134,17 @@ export function ResultBroadsheetPage() {
         />
       }
     >
-      <Flex vertical gap={20} style={{ padding: "16px 24px" }}>
+      <Flex
+        vertical
+        gap={16}
+        style={{
+          padding: "16px 12px",
+          width: "100%",
+          maxWidth: "100%",
+          boxSizing: "border-box",
+          overflowX: "hidden",
+        }}
+      >
         {/* Explainer Callout */}
         <BroadsheetExplainer />
 
@@ -120,6 +162,7 @@ export function ResultBroadsheetPage() {
           levelId={filterState.levelId}
           curriculumVersionId={filterState.curriculumVersionId}
           visibleCourseCodes={filterState.visibleCourseCodes}
+          cellMode={cellMode}
           courses={reportState.courses}
           sessions={filterData.sessions}
           semesterTypes={filterData.semesterTypes}
@@ -135,6 +178,7 @@ export function ResultBroadsheetPage() {
           onLevelChange={filterActions.setLevelId}
           onCurriculumVersionChange={filterActions.setCurriculumVersionId}
           onVisibleCourseCodesChange={filterActions.setVisibleCourseCodes}
+          onCellModeChange={handleCellModeChange}
           onRefresh={reportActions.refetch}
           onExportPdf={handleExportPdf}
         />
@@ -180,11 +224,15 @@ export function ResultBroadsheetPage() {
             />
           </Card>
         ) : (
-          <Card styles={{ body: { padding: "12px 16px" } }}>
+          <Card
+            styles={{ body: { padding: "12px 14px" } }}
+            style={{ width: "100%", maxWidth: "100%", minWidth: 0 }}
+          >
             <Tabs
               activeKey={activeTabKey}
               onChange={setActiveTabKey}
               items={tabItems}
+              style={{ width: "100%", maxWidth: "100%", minWidth: 0 }}
             />
           </Card>
         )}

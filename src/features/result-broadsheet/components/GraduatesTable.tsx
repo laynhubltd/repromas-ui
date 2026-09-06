@@ -83,6 +83,7 @@ export function GraduatesTable({
         size="sm"
         loading={isLoading}
         pagination={{ pageSize: 20, showSizeChanger: true }}
+        scroll={{ x: 700 }}
         columns={columns}
         dataSource={graduatedStudents}
         rowKey="matricNumber"
