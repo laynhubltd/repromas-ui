@@ -25,35 +25,38 @@ export function BroadsheetMetricsRow({
   const atRiskTotal = probationCount + repeatCount + withdrawnCount;
 
   return (
-    <Row gutter={[16, 16]}>
-      <Col xs={24} sm={12} md={8} lg={4} style={{ flex: 1 }}>
+    <Row gutter={[12, 12]}>
+      <Col xs={12} sm={12} md={8} lg={8} xl={4.8} style={{ display: "flex" }}>
         <DashCard
           title="Registered"
           value={totalRegistered}
           state={cardState}
           size="md"
           density="comfortable"
+          style={{ width: "100%" }}
         />
       </Col>
-      <Col xs={24} sm={12} md={8} lg={4} style={{ flex: 1 }}>
+      <Col xs={12} sm={12} md={8} lg={8} xl={4.8} style={{ display: "flex" }}>
         <DashCard
           title="Sat for Exam"
           value={totalSat}
           state={cardState}
           size="md"
           density="comfortable"
+          style={{ width: "100%" }}
         />
       </Col>
-      <Col xs={24} sm={12} md={8} lg={4} style={{ flex: 1 }}>
+      <Col xs={12} sm={12} md={8} lg={8} xl={4.8} style={{ display: "flex" }}>
         <DashCard
           title="Passed (Good Standing)"
           value={totalPassed}
           state={cardState}
           size="md"
           density="comfortable"
+          style={{ width: "100%" }}
         />
       </Col>
-      <Col xs={24} sm={12} md={8} lg={4} style={{ flex: 1 }}>
+      <Col xs={12} sm={12} md={8} lg={8} xl={4.8} style={{ display: "flex" }}>
         <DashCard
           title="Probation & Interventions"
           value={atRiskTotal}
@@ -61,15 +64,17 @@ export function BroadsheetMetricsRow({
           state={cardState}
           size="md"
           density="comfortable"
+          style={{ width: "100%" }}
         />
       </Col>
-      <Col xs={24} sm={12} md={8} lg={4} style={{ flex: 1 }}>
+      <Col xs={24} sm={12} md={8} lg={8} xl={4.8} style={{ display: "flex" }}>
         <DashCard
           title="Success Rate"
           value={formatPercentage(successRate)}
           state={cardState}
           size="md"
           density="comfortable"
+          style={{ width: "100%" }}
         />
       </Col>
     </Row>

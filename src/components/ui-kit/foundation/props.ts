@@ -1,7 +1,7 @@
 import type { AriaRole, CSSProperties } from "react";
 
 export type UIComponentSize = "sm" | "md" | "lg";
-export type UIComponentDensity = "compact" | "comfortable" | "spacious";
+export type UIComponentDensity = "compact" | "comfortable" | "spacious" | "ledger";
 export type UIComponentVariant = "default" | "filled" | "outlined" | "ghost";
 export type UIComponentState =
   | "default"

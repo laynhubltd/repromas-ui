@@ -9,6 +9,7 @@ export const UI_SIZE_TO_ANTD_SIZE: Record<UIComponentSize, AntdSize> = {
 };
 
 export const UI_DENSITY_SPACING: Record<UIComponentDensity, number> = {
+  ledger: 4,
   compact: 8,
   comfortable: 12,
   spacious: 16,

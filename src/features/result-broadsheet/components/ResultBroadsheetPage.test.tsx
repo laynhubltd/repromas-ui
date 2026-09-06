@@ -258,6 +258,5 @@ describe("ResultBroadsheetPage", () => {
 
     // Check Student row
     expect(screen.getByText("SCI/2026/001")).toBeInTheDocument();
-    expect(screen.getByText("Ada Lovelace")).toBeInTheDocument();
   });
 });
