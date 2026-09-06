@@ -252,7 +252,7 @@ export function BroadsheetTable<RecordType extends object = BroadsheetRowBase>({
         dataIndex: "serialNumber",
         key: "serialNumber",
         width: 40,
-        fixed: freezeLeftCount >= 1 ? "left" : undefined,
+        fixed: freezeLeftCount >= 1 ? ("left" as const) : undefined,
         align: "right",
         render: (val: number | undefined, _row: RecordType, idx: number) => (
           <span style={{ fontVariantNumeric: "tabular-nums" }}>
@@ -265,7 +265,7 @@ export function BroadsheetTable<RecordType extends object = BroadsheetRowBase>({
         dataIndex: "matricNumber",
         key: "matricNumber",
         width: showStudentName ? 116 : 200,
-        fixed: freezeLeftCount >= 2 ? "left" : undefined,
+        fixed: freezeLeftCount >= 2 ? ("left" as const) : undefined,
         align: "left",
         ...regSearchProps,
         onHeaderCell: () => ({
@@ -292,7 +292,7 @@ export function BroadsheetTable<RecordType extends object = BroadsheetRowBase>({
               dataIndex: "fullName",
               key: "fullName",
               width: 190,
-              fixed: freezeLeftCount >= 3 ? "left" : undefined,
+              fixed: freezeLeftCount >= 3 ? ("left" as const) : undefined,
               align: "left" as const,
               ellipsis: { showTitle: true },
               ...nameSearchProps,
@@ -893,7 +893,7 @@ export function BroadsheetTable<RecordType extends object = BroadsheetRowBase>({
           <span>
             Search filter active:{" "}
             {activeQueries
-              .map(([key, q]) => `"${q}"`)
+              .map(([, q]) => `"${q}"`)
               .join(", ")}
           </span>
           <Button
