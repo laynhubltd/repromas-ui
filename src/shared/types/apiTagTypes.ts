@@ -78,6 +78,7 @@ export const ApiTagTypes = {
   AcademicStandingEscalationStep: "AcademicStandingEscalationStep",
   AcademicStandingDegreeClassification: "AcademicStandingDegreeClassification",
   BroadsheetReport: "BroadsheetReport",
+  Dashboard: "Dashboard",
 } as const;
 
 export type ApiTagLiteral = (typeof ApiTagTypes)[keyof typeof ApiTagTypes];
