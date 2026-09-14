@@ -103,7 +103,7 @@ export function useWorkflowFormModal(
 
 export function useDeleteWorkflowModal(
   target: WorkflowDefinitionDto | null,
-  open: boolean,
+  _open: boolean,
   onClose: () => void,
 ) {
   const handleApiError = useApiError();

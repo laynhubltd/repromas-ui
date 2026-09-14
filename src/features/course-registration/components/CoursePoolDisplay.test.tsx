@@ -11,7 +11,6 @@ const mockCoursePool: CoursePool = {
       courseTitle: "Introduction to Computer Science",
       creditUnits: 3,
       isMandatory: true,
-      category: "REGISTERED",
     },
   ],
   carryovers: [
@@ -21,7 +20,6 @@ const mockCoursePool: CoursePool = {
       courseTitle: "Elementary Mathematics",
       creditUnits: 3,
       isMandatory: true,
-      category: "CARRYOVER",
     },
     {
       configId: 3,
@@ -29,7 +27,6 @@ const mockCoursePool: CoursePool = {
       courseTitle: "General Physics",
       creditUnits: 2,
       isMandatory: false,
-      category: "CARRYOVER",
     },
   ],
   arrears: [],
@@ -40,7 +37,6 @@ const mockCoursePool: CoursePool = {
       courseTitle: "Data Structures",
       creditUnits: 3,
       isMandatory: true,
-      category: "CORE",
     },
     {
       configId: 5,
@@ -48,7 +44,6 @@ const mockCoursePool: CoursePool = {
       courseTitle: "Algorithms",
       creditUnits: 3,
       isMandatory: false,
-      category: "CORE",
     },
   ],
   electives: [
@@ -58,7 +53,6 @@ const mockCoursePool: CoursePool = {
       courseTitle: "Web Development",
       creditUnits: 2,
       isMandatory: false,
-      category: "ELECTIVE",
     },
     {
       configId: 7,
@@ -66,7 +60,6 @@ const mockCoursePool: CoursePool = {
       courseTitle: "Mobile App Development",
       creditUnits: 2,
       isMandatory: false,
-      category: "ELECTIVE",
     },
   ],
 };

@@ -66,7 +66,6 @@ export function useUserRoleFormModal(
 
       notification.success({ message: "Role assigned successfully." });
       form.resetFields();
-      setSelectedScope(null);
       onSuccess?.();
       onClose();
     } catch (err: unknown) {
@@ -79,7 +78,6 @@ export function useUserRoleFormModal(
 
   const handleCancel = () => {
     form.resetFields();
-    setSelectedScope(null);
     onClose();
   };
 
