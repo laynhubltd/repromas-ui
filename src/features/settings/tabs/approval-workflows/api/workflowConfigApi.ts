@@ -9,6 +9,8 @@ import type {
   UpsertWorkflowTransitionRequest,
   WorkflowDefinitionDetailDto,
   WorkflowDefinitionDto,
+  WorkflowStepConfigDto,
+  WorkflowTransitionConfigDto,
 } from "../types/workflow-config";
 
 export const workflowConfigApi = baseApi.injectEndpoints({

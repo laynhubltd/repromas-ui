@@ -379,10 +379,11 @@ export function useManageUserRolesModal(
       (staffData?.member ?? []).find(
         (s) =>
           s.userId === target.id ||
-          (target.email &&
-            ((s.profile?.email &&
-              s.profile.email.toLowerCase() === target.email.toLowerCase()) ||
-              (s.email && s.email.toLowerCase() === target.email.toLowerCase()))),
+          Boolean(
+            target.email &&
+              s.profile?.email &&
+              s.profile.email.toLowerCase() === target.email.toLowerCase(),
+          ),
       ) ?? null
     );
   }, [target, selectedRole?.scope, staffData?.member]);
@@ -485,10 +486,11 @@ export function useManageUserRolesModal(
         const matched = (staffData?.member ?? []).find(
           (s) =>
             s.userId === target?.id ||
-            (target?.email &&
-              ((s.profile?.email &&
-                s.profile.email.toLowerCase() === target.email.toLowerCase()) ||
-                (s.email && s.email.toLowerCase() === target.email.toLowerCase()))),
+            Boolean(
+              target?.email &&
+                s.profile?.email &&
+                s.profile.email.toLowerCase() === target.email.toLowerCase(),
+            ),
         );
         dispatch({
           type: UserRoleAssignmentActionType.SetSelectedScopeRefId,

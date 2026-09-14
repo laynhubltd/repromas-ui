@@ -10,9 +10,11 @@ describe("ManageUserRolesModal", () => {
     firstName: "Adeyemi",
     lastName: "Okonkwo",
     phoneNumber: "+2348012345678",
-    createdAt: "2026-01-01T00:00:00Z",
-    updatedAt: "2026-01-01T00:00:00Z",
-    isActive: true,
+    roles: ["ROLE_USER"],
+    profileId: null,
+    profilePictureUrl: null,
+    dateOfBirth: null,
+    userRoles: [],
   };
 
   it("renders auto-resolved disabled staff field when Lecturer role is selected and staff is matched", () => {
