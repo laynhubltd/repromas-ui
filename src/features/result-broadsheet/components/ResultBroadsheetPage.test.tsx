@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import React from "react";
-import { beforeAll, describe, expect, it, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { ResultBroadsheetPage } from "./ResultBroadsheetPage";
 
 beforeAll(() => {
@@ -14,6 +14,7 @@ beforeAll(() => {
 const mockUseBroadsheetFilters = vi.fn();
 const mockUseBroadsheetReport = vi.fn();
 const mockUsePdfExport = vi.fn();
+const mockUseBroadsheetSource = vi.fn();
 
 vi.mock("@/features/access-control", () => ({
   PermissionGuard: ({ children }: { children: React.ReactNode }) => <>{children}</>,
@@ -42,7 +43,20 @@ vi.mock("../hooks/usePdfExport", () => ({
   usePdfExport: (...args: unknown[]) => mockUsePdfExport(...args),
 }));
 
+vi.mock("../hooks/useBroadsheetSource", () => ({
+  useBroadsheetSource: (...args: unknown[]) => mockUseBroadsheetSource(...args),
+}));
+
 describe("ResultBroadsheetPage", () => {
+  beforeEach(() => {
+    mockUseBroadsheetSource.mockReturnValue({
+      sourceModel: { source: "LIVE" },
+      approval: null,
+      isApprovalLoading: false,
+      toggleSourceMode: vi.fn(),
+    });
+  });
+
   it("renders empty state prompt when filter is incomplete", () => {
     mockUseBroadsheetFilters.mockReturnValue({
       state: {

@@ -1,12 +1,14 @@
-// Feature: assessment
 import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
+import { WorkflowStatusBar } from "@/features/approval-workflow";
+import { ApiTagTypes } from "@/shared/types/apiTagTypes";
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
 import { DataLoader } from "@/shared/ui/DataLoader";
 import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { SkeletonRows } from "@/shared/ui/SkeletonRows";
 import { Flex } from "antd";
+import { useMemo } from "react";
 import { useAssessmentFilter } from "../hooks/useAssessmentFilter";
 import { useScoreSheet } from "../hooks/useScoreSheet";
 import { useScoreSheetBulkOperations } from "../hooks/useScoreSheetBulkOperations";
@@ -16,6 +18,7 @@ import { ScoreSheetUploadSummaryModal } from "./modals/ScoreSheetUploadSummaryMo
 import { ScoreSheetGuide } from "./ScoreSheetGuide";
 import { ScoreSheetMeta } from "./ScoreSheetMeta";
 import { ScoreSheetTable } from "./ScoreSheetTable";
+import type { CourseConfigurationGroupOption } from "@/features/courses";
 
 export function AssessmentPage() {
   const token = useToken();
@@ -29,7 +32,7 @@ export function AssessmentPage() {
     programSearch,
     courseSearch,
     programOptions,
-    courseConfigOptions,
+    courseConfigGroupedOptions,
     programLoading,
     courseConfigLoading,
     programError,
@@ -50,8 +53,21 @@ export function AssessmentPage() {
     sheetState;
   const { refetch } = sheetActions;
 
-  const selectedConfig =
-    courseConfigOptions.find((c) => c.id === selectedConfigId) ?? null;
+  const selectedConfigOption = useMemo(() => {
+    if (selectedConfigId === null) return null;
+    const safeGroups: CourseConfigurationGroupOption[] = Array.isArray(
+      courseConfigGroupedOptions,
+    )
+      ? courseConfigGroupedOptions
+      : ((courseConfigGroupedOptions as any)?.member ?? []);
+    for (const group of safeGroups) {
+      const found = (group.options ?? []).find(
+        (opt) => opt.value === selectedConfigId,
+      );
+      if (found) return found;
+    }
+    return null;
+  }, [courseConfigGroupedOptions, selectedConfigId]);
 
   const {
     state: bulkState,
@@ -59,8 +75,8 @@ export function AssessmentPage() {
     flags: bulkFlags,
   } = useScoreSheetBulkOperations({
     courseConfigId: selectedConfigId,
-    courseCode: selectedConfig?.course?.code ?? null,
-    courseTitle: selectedConfig?.course?.title ?? null,
+    courseCode: selectedConfigOption?.code ?? meta?.courseCode ?? null,
+    courseTitle: selectedConfigOption?.title ?? meta?.courseName ?? null,
   });
 
   return (
@@ -77,7 +93,7 @@ export function AssessmentPage() {
           onProgramChange={handleProgramChange}
           selectedLevelId={selectedLevelId}
           onLevelChange={handleLevelChange}
-          courseConfigOptions={courseConfigOptions}
+          courseConfigGroupedOptions={courseConfigGroupedOptions}
           courseConfigLoading={courseConfigLoading}
           courseConfigError={courseConfigError}
           selectedConfigId={selectedConfigId}
@@ -129,9 +145,14 @@ export function AssessmentPage() {
             )}
 
             {/* Score sheet content */}
-            {!error404 && !error500 && !genericError && meta && (
+            {!error404 && !error500 && !genericError && meta && selectedConfigId !== null && (
               <>
                 <ScoreSheetMeta meta={meta} studentCount={rows.length} />
+                <WorkflowStatusBar
+                  targetEntity="COURSE_SCORE_SHEET"
+                  targetId={selectedConfigId}
+                  targetTag={ApiTagTypes.StudentScoreSheetData}
+                />
                 <ScoreSheetTable columns={columns} rows={rows} />
               </>
             )}

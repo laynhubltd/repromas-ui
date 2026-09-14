@@ -5,7 +5,9 @@ export type RoleScope =
   | "FACULTY"
   | "DEPARTMENT"
   | "PROGRAM"
-  | "CANDIDATE";
+  | "STUDENT"
+  | "CANDIDATE"
+  | "LECTURER";
 
 // ─── Domain Types ─────────────────────────────────────────────────────────────
 
@@ -184,12 +186,19 @@ export const ROLE_SCOPE_OPTIONS: { value: RoleScope; label: string }[] = [
   { value: "FACULTY", label: "Faculty" },
   { value: "DEPARTMENT", label: "Department" },
   { value: "PROGRAM", label: "Program" },
+  { value: "STUDENT", label: "Student" },
   { value: "CANDIDATE", label: "Candidate" },
+  { value: "LECTURER", label: "Lecturer" },
 ];
 
 /** Scopes that do not require a scopeReferenceId when assigning a role to a user. */
 export function roleScopeOmitsReference(scope: RoleScope): boolean {
-  return scope === "GLOBAL" || scope === "CANDIDATE";
+  return (
+    scope === "GLOBAL" ||
+    scope === "CANDIDATE" ||
+    scope === "STUDENT" ||
+    scope === "LECTURER"
+  );
 }
 
 export function deriveScopeLabel(scope: RoleScope): string {

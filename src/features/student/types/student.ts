@@ -61,6 +61,7 @@ export type StudentListParams = {
   "exact[programId]"?: number;
   "exact[currentLevelId]"?: number;
   "exact[entrySessionId]"?: number;
+  "exact[currentTransition.status_id]"?: number;
 };
 
 // Request bodies

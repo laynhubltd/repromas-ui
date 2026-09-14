@@ -82,18 +82,20 @@ export async function downloadScoreSheet({
   store,
 }: {
   courseConfigId: number;
-  courseCode: string;
-  courseTitle: string;
+  courseCode?: string | null;
+  courseTitle?: string | null;
   store: AppStore;
 }): Promise<void> {
-  const safeName = `${courseCode}-${courseTitle}`
+  const code = courseCode?.trim() || "course";
+  const title = courseTitle?.trim() || String(courseConfigId);
+  const safeName = `${code}-${title}`
     .replace(/[^a-zA-Z0-9-_]/g, "-")
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "");
   await downloadFileFromUrl(
     {
       url: `student-score-sheets/download/by-config/${courseConfigId}`,
-      filename: `score-sheet-${safeName}.xlsx`,
+      filename: `score-sheet-${safeName || `config-${courseConfigId}`}.xlsx`,
     },
     store,
   );

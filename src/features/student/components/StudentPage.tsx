@@ -4,10 +4,7 @@ import { DashCard, ExplainerCallout, Table } from "@/components/ui-kit";
 import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import { useGetProgramsQuery } from "@/features/program/tabs/programs/api/programsApi";
-import {
-  ENTRY_MODE_OPTIONS,
-  STUDENT_STATUS_OPTIONS,
-} from "@/shared/constants/studentOptions";
+import { ENTRY_MODE_OPTIONS } from "@/shared/constants/studentOptions";
 import { useToken } from "@/shared/hooks/useToken";
 import {
   ConditionalRenderer,
@@ -46,7 +43,7 @@ import type { ColumnsType } from "antd/es/table";
 import type { SorterResult } from "antd/es/table/interface";
 import { useState } from "react";
 import { useStudentsTab } from "../hooks/useStudentsTab";
-import type { Student, StudentStatus } from "../types/student";
+import type { Student } from "../types/student";
 import { BulkEnrollModal } from "./modals/BulkEnrollModal";
 import { BulkUploadModal } from "./modals/BulkUploadModal";
 import { BulkUploadSummaryModal } from "./modals/BulkUploadSummaryModal";
@@ -79,6 +76,8 @@ export function StudentPage() {
     statusFilter,
     entryModeFilter,
     programFilter,
+    transitionStatuses,
+    isTransitionStatusesLoading,
     formTarget,
     deleteTarget,
     formModalOpen,
@@ -155,6 +154,12 @@ export function StudentPage() {
   const { data: programsData } = useGetProgramsQuery({ itemsPerPage: 200 });
   const programs = programsData?.member ?? [];
 
+  const transitionStatusOptions =
+    transitionStatuses.map((s) => ({
+      value: s.id,
+      label: s.isDefault ? `${s.name} (Default)` : s.name,
+    }));
+
   const filterPopoverContent = (
     <Flex vertical gap={16} style={{ width: 280 }}>
       <Form layout="vertical" size="middle">
@@ -162,12 +167,13 @@ export function StudentPage() {
           <Select
             placeholder="Any status"
             allowClear
+            loading={isTransitionStatusesLoading}
             value={statusFilter}
             onChange={(val) =>
-              handleStatusFilterChange(val as StudentStatus | undefined)
+              handleStatusFilterChange(val as number | undefined)
             }
             style={{ width: "100%" }}
-            options={STUDENT_STATUS_OPTIONS}
+            options={transitionStatusOptions}
           />
         </Form.Item>
         <Form.Item label="Entry Mode" style={{ marginBottom: 12 }}>
@@ -223,7 +229,7 @@ export function StudentPage() {
   ) => {
     const s = Array.isArray(sorter) ? sorter[0] : sorter;
     if (!s.columnKey || !s.order) {
-      handleSortChange("lastName:asc");
+      handleSortChange("matricNumber:desc");
       return;
     }
     handleSortChange(
@@ -237,6 +243,7 @@ export function StudentPage() {
       dataIndex: "matricNumber",
       key: "matricNumber",
       sorter: true,
+      defaultSortOrder: "descend",
       sortDirections: ["ascend", "descend"],
       render: (v: string) => <Typography.Text copyable>{v}</Typography.Text>,
     },

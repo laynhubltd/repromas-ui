@@ -79,6 +79,10 @@ export const ApiTagTypes = {
   AcademicStandingDegreeClassification: "AcademicStandingDegreeClassification",
   BroadsheetReport: "BroadsheetReport",
   Dashboard: "Dashboard",
+  CourseAllocation: "CourseAllocation",
+  WorkflowDefinition: "WorkflowDefinition",
+  WorkflowTransitions: "WorkflowTransitions",
+  WorkflowAudit: "WorkflowAudit",
 } as const;
 
 export type ApiTagLiteral = (typeof ApiTagTypes)[keyof typeof ApiTagTypes];

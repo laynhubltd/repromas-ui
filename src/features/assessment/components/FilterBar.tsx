@@ -1,7 +1,7 @@
 // Feature: assessment
 import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
-import type { CourseConfiguration } from "@/features/courses/tabs/course-configurations/types/course-configuration";
+import type { CourseConfigurationGroupOption } from "@/features/courses/tabs/course-configurations/types/course-configuration";
 import type { Program } from "@/features/program/tabs/programs/types/program";
 import { LevelSelect } from "@/components/ui-kit/data-entry/LevelSelect";
 import { useToken } from "@/shared/hooks/useToken";
@@ -12,7 +12,7 @@ import {
   UploadOutlined,
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
-import { Button, Dropdown, Flex, Select } from "antd";
+import { Button, Dropdown, Flex, Select, Spin } from "antd";
 
 export type FilterBarProps = {
   // Program selector
@@ -27,7 +27,7 @@ export type FilterBarProps = {
   selectedLevelId: number | null;
   onLevelChange: (id: number | null) => void;
   // Course config selector
-  courseConfigOptions: CourseConfiguration[];
+  courseConfigGroupedOptions: CourseConfigurationGroupOption[];
   courseConfigLoading: boolean;
   courseConfigError: string | null;
   selectedConfigId: number | null;
@@ -52,7 +52,7 @@ export function FilterBar({
   onProgramChange,
   selectedLevelId,
   onLevelChange,
-  courseConfigOptions,
+  courseConfigGroupedOptions,
   courseConfigLoading,
   courseConfigError,
   selectedConfigId,
@@ -81,6 +81,12 @@ export function FilterBar({
       onClick: onOpenUpload,
     },
   ];
+
+  const safeGroupedOptions: CourseConfigurationGroupOption[] = Array.isArray(
+    courseConfigGroupedOptions,
+  )
+    ? courseConfigGroupedOptions
+    : ((courseConfigGroupedOptions as any)?.member ?? []);
 
   return (
     <>
@@ -123,10 +129,14 @@ export function FilterBar({
             }}
           />
 
-          {/* Course Config Selector */}
+          {/* Course Config Selector (Grouped Options by Curriculum Version) */}
           <Select
             showSearch
-            placeholder="Search course…"
+            placeholder={
+              isCourseConfigDisabled
+                ? "Select program & level first"
+                : "Search course by code or title…"
+            }
             filterOption={false}
             loading={courseConfigLoading}
             value={selectedConfigId ?? undefined}
@@ -136,17 +146,26 @@ export function FilterBar({
               onCourseConfigChange(val ?? null)
             }
             allowClear
-            onClear={() => onCourseConfigChange(null)}
+            onClear={() => {
+              onCourseSearch("");
+              onCourseConfigChange(null);
+            }}
             disabled={isCourseConfigDisabled}
+            notFoundContent={
+              courseConfigLoading ? <Spin size="small" /> : "No courses found"
+            }
             style={{
               minWidth: 280,
               flex: 2,
               borderColor: courseConfigError ? token.colorError : undefined,
             }}
             status={courseConfigError ? "error" : undefined}
-            options={courseConfigOptions.map((cc) => ({
-              value: cc.id,
-              label: `${cc.course?.code ?? ""} ${cc.course?.title ?? ""}`,
+            options={safeGroupedOptions.map((group) => ({
+              label: `${group.label ?? ""}${group.isActiveForAdmission ? " (Active)" : ""}`,
+              options: (group.options ?? []).map((opt) => ({
+                value: opt.value,
+                label: opt.label,
+              })),
             }))}
           />
         </Flex>

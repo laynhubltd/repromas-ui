@@ -1,15 +1,24 @@
+import { useGetTransitionStatusesQuery } from "@/features/settings/tabs/student-transition-status/api/studentTransitionStatusApi";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useGetStudentsQuery } from "../api/studentsApi";
-import type { EntryMode, Student, StudentStatus } from "../types/student";
+import type { EntryMode, Student } from "../types/student";
 import { useStudentBulkUpload } from "./useStudentBulkUpload";
 
 const ITEMS_PER_PAGE = 10;
 
 export function useStudentsTab() {
+  // ─── Reference Data (Transition Statuses) ──────────────────────────────────
+  const {
+    data: transitionStatusesData,
+    isLoading: isTransitionStatusesLoading,
+  } = useGetTransitionStatusesQuery({ itemsPerPage: 100, sort: "name:asc" });
+  const transitionStatuses = transitionStatusesData?.member ?? [];
+  const defaultStatusInitialized = useRef(false);
+
   // ─── Pagination & Sort ────────────────────────────────────────────────────
   const [page, setPage] = useState(1);
-  const [itemsPerPage] = useState(ITEMS_PER_PAGE);
-  const [sort, setSort] = useState("lastName:asc");
+  const [itemsPerPage, setItemsPerPage] = useState(ITEMS_PER_PAGE);
+  const [sort, setSort] = useState("matricNumber:desc");
 
   // ─── Search ───────────────────────────────────────────────────────────────
   const [firstNameSearch, setFirstNameSearch] = useState("");
@@ -26,9 +35,20 @@ export function useStudentsTab() {
   const matricDebounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ─── Filters ──────────────────────────────────────────────────────────────
-  const [statusFilter, setStatusFilter] = useState<StudentStatus | undefined>(undefined);
+  const [statusFilter, setStatusFilter] = useState<number | undefined>(undefined);
   const [entryModeFilter, setEntryModeFilter] = useState<EntryMode | undefined>(undefined);
   const [programFilter, setProgramFilter] = useState<number | undefined>(undefined);
+
+  // ─── Auto-initialize default transition status on initial load ─────────────
+  useEffect(() => {
+    if (!defaultStatusInitialized.current && transitionStatuses.length > 0) {
+      const defaultStatus = transitionStatuses.find((s) => s.isDefault);
+      if (defaultStatus) {
+        setStatusFilter(defaultStatus.id);
+      }
+      defaultStatusInitialized.current = true;
+    }
+  }, [transitionStatuses]);
 
   // ─── Modal / Drawer State ─────────────────────────────────────────────────
   const [bulkUploadModalOpen, setBulkUploadModalOpen] = useState(false);
@@ -37,7 +57,7 @@ export function useStudentsTab() {
   const [formModalOpen, setFormModalOpen] = useState(false);
   const [drawerStudentId, setDrawerStudentId] = useState<number | null>(null);
 
-  // ─── Cleanup timers on unmount ────────────────────────────────────────────
+  // ─── Cleanup timers on unmount ────────────────────────────────────
   useEffect(() => {
     return () => {
       if (firstNameDebounceTimer.current) clearTimeout(firstNameDebounceTimer.current);
@@ -55,7 +75,9 @@ export function useStudentsTab() {
     ...(debouncedFirstName ? { "search[firstName]": debouncedFirstName } : {}),
     ...(debouncedLastName ? { "search[lastName]": debouncedLastName } : {}),
     ...(debouncedMatric ? { "search[matricNumber]": debouncedMatric } : {}),
-    ...(statusFilter !== undefined ? { "exact[status]": statusFilter } : {}),
+    ...(statusFilter !== undefined
+      ? { "exact[currentTransition.status_id]": statusFilter }
+      : {}),
     ...(entryModeFilter !== undefined ? { "exact[entryMode]": entryModeFilter } : {}),
     ...(programFilter !== undefined ? { "exact[programId]": programFilter } : {}),
   };
@@ -98,7 +120,7 @@ export function useStudentsTab() {
     matricDebounceTimer.current = setTimeout(() => setDebouncedMatric(value), 300);
   }, []);
 
-  const handleStatusFilterChange = useCallback((value: StudentStatus | undefined) => {
+  const handleStatusFilterChange = useCallback((value: number | undefined) => {
     setStatusFilter(value);
     setPage(1);
   }, []);
@@ -117,8 +139,11 @@ export function useStudentsTab() {
     setSort(newSort);
   }, []);
 
-  const handlePageChange = useCallback((newPage: number) => {
+  const handlePageChange = useCallback((newPage: number, newPageSize?: number) => {
     setPage(newPage);
+    if (newPageSize) {
+      setItemsPerPage(newPageSize);
+    }
   }, []);
 
   const handleOpenBulkUpload = useCallback(() => {
@@ -177,6 +202,8 @@ export function useStudentsTab() {
       statusFilter,
       entryModeFilter,
       programFilter,
+      transitionStatuses,
+      isTransitionStatusesLoading,
       sort,
       formTarget,
       deleteTarget,

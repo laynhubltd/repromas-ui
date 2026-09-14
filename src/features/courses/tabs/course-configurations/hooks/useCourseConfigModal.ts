@@ -7,12 +7,13 @@ import {
   notifyMutationSuccess,
 } from "@/shared/utils/feedback/notifyMutationSuccess";
 import { Form } from "antd";
-import { useEffect } from "react";
-import { useGetCoursesQuery } from "../../courses/api/coursesApi";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useGetCourseQuery, useGetCoursesQuery } from "../../courses/api/coursesApi";
+import type { Course } from "../../courses/types/course";
 import {
-    useCreateCourseConfigurationMutation,
-    useDeleteCourseConfigurationMutation,
-    useUpdateCourseConfigurationMutation,
+  useCreateCourseConfigurationMutation,
+  useDeleteCourseConfigurationMutation,
+  useUpdateCourseConfigurationMutation,
 } from "../api/courseConfigurationsApi";
 import type { CourseConfiguration, CourseStatus } from "../types/course-configuration";
 
@@ -52,15 +53,76 @@ export function useCourseConfigFormModal(
 
   const isLoading = isCreating || isUpdating;
 
-  // Fetch active courses for the course selector (create mode auto-fill)
-  const { data: coursesData } = useGetCoursesQuery(
-    { "boolean[isActive]": true, sort: "code:asc", itemsPerPage: 100 },
+  // ─── Course Search State ──────────────────────────────────────────────────
+  const [courseSearch, setCourseSearch] = useState("");
+  const [debouncedCourseSearch, setDebouncedCourseSearch] = useState("");
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const courseSearchDebounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleCourseSearch = useCallback((value: string) => {
+    setCourseSearch(value);
+    if (courseSearchDebounceTimer.current) clearTimeout(courseSearchDebounceTimer.current);
+    courseSearchDebounceTimer.current = setTimeout(() => {
+      setDebouncedCourseSearch(value);
+    }, 300);
+  }, []);
+
+  // Cleanup debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (courseSearchDebounceTimer.current) clearTimeout(courseSearchDebounceTimer.current);
+    };
+  }, []);
+
+  // Fetch active courses with server-side filtering
+  const { data: coursesData, isLoading: isCoursesLoading, isFetching: isCoursesFetching } = useGetCoursesQuery(
+    {
+      "boolean[isActive]": true,
+      sort: "code:asc",
+      itemsPerPage: 50,
+      ...(debouncedCourseSearch ? { "search[code]": debouncedCourseSearch } : {}),
+    },
     { skip: !open },
   );
   const courses = coursesData?.member ?? [];
 
-  // Fetch semester types for the dropdown
+  // If in edit mode and target has courseId not in returned list, fetch directly
+  const targetCourseId = target?.courseId;
+  const hasTargetInList = courses.some((c) => c.id === targetCourseId);
+  const { data: fetchedTargetCourse } = useGetCourseQuery(
+    { id: targetCourseId! },
+    { skip: !open || !targetCourseId || hasTargetInList },
+  );
 
+  // Sync selectedCourse when target changes or fetched
+  useEffect(() => {
+    if (target?.course) {
+      setSelectedCourse(target.course);
+    } else if (fetchedTargetCourse) {
+      setSelectedCourse(fetchedTargetCourse);
+    }
+  }, [target, fetchedTargetCourse]);
+
+  // Build course options preserving selectedCourse
+  const courseOptions = useMemo(() => {
+    const list = courses.map((c) => ({
+      value: c.id,
+      label: `${c.code} ${c.title}`,
+    }));
+
+    if (selectedCourse && !list.some((opt) => opt.value === selectedCourse.id)) {
+      return [
+        {
+          value: selectedCourse.id,
+          label: `${selectedCourse.code} ${selectedCourse.title}`,
+        },
+        ...list,
+      ];
+    }
+    return list;
+  }, [courses, selectedCourse]);
+
+  // Fetch semester types for the dropdown
   const { data: semesterTypesData, isLoading: isSemesterTypesLoading } = useGetSemesterTypesQuery(
     { sort: "sortOrder:asc", itemsPerPage: 100 },
     { skip: !open },
@@ -75,10 +137,13 @@ export function useCourseConfigFormModal(
   const levels = levelsData?.member ?? [];
 
   // Prerequisites: all courses excluding self (by courseId)
-  const prerequisiteOptions = (target
-    ? courses.filter((c) => c.id !== target.courseId)
-    : courses
-  ).map((c) => ({ value: c.id, label: `${c.code} ${c.title}` }));
+  const prerequisiteOptions = useMemo(() => {
+    const activeTargetId = target?.courseId ?? selectedCourse?.id;
+    return (activeTargetId
+      ? courses.filter((c) => c.id !== activeTargetId)
+      : courses
+    ).map((c) => ({ value: c.id, label: `${c.code} ${c.title}` }));
+  }, [courses, target?.courseId, selectedCourse?.id]);
 
   // Pre-fill form when modal opens
   useEffect(() => {
@@ -103,10 +168,13 @@ export function useCourseConfigFormModal(
     }
   }, [open, target, form, prefillLevelId, prefillSemesterTypeId]);
 
-  // Reset form when modal closes
+  // Reset form and search when modal closes
   useEffect(() => {
     if (!open) {
       form.resetFields();
+      setCourseSearch("");
+      setDebouncedCourseSearch("");
+      setSelectedCourse(null);
     }
   }, [open, form]);
 
@@ -115,8 +183,11 @@ export function useCourseConfigFormModal(
    * Auto-fills the creditUnit field with the selected course's creditUnits value.
    */
   const handleCourseChange = (courseId: number) => {
-    const selected = courses.find((c) => c.id === courseId);
+    const selected =
+      courses.find((c) => c.id === courseId) ??
+      (selectedCourse?.id === courseId ? selectedCourse : null);
     if (selected) {
+      setSelectedCourse(selected);
       form.setFieldsValue({ creditUnit: selected.creditUnits });
     }
   };
@@ -175,10 +246,21 @@ export function useCourseConfigFormModal(
   };
 
   return {
-    state: { isLoading, isEditMode },
-    actions: { handleSubmit, handleCancel, handleCourseChange },
+    state: {
+      isLoading,
+      isEditMode,
+      courseSearch,
+      isCoursesLoading: isCoursesLoading || isCoursesFetching,
+    },
+    actions: {
+      handleSubmit,
+      handleCancel,
+      handleCourseChange,
+      handleCourseSearch,
+    },
     form,
     courses,
+    courseOptions,
     levels,
     semesterTypes,
     isSemesterTypesLoading,

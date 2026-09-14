@@ -1,7 +1,5 @@
 import { StatusBadge } from "@/features/student/components/StatusBadge";
-import type { StudentStatus } from "@/features/student/types/student";
 import { useIsMobile } from "@/hooks/useBreakpoint";
-import { STUDENT_STATUS_OPTIONS } from "@/shared/constants/studentOptions";
 import { useToken } from "@/shared/hooks/useToken";
 import { LevelSelect } from "@/components/ui-kit/data-entry/LevelSelect";
 import {
@@ -65,6 +63,8 @@ export function StudentSelectionPanel({
     statusFilter,
     programs,
     isProgramsLoading,
+    transitionStatuses,
+    isTransitionStatusesLoading,
   } = state;
 
   const {
@@ -119,12 +119,16 @@ export function StudentSelectionPanel({
           <Select
             placeholder="Any status"
             allowClear
+            loading={isTransitionStatusesLoading}
             value={statusFilter}
             onChange={(val) =>
-              handleStatusFilterChange(val as StudentStatus | undefined)
+              handleStatusFilterChange(val as number | undefined)
             }
             style={{ width: "100%" }}
-            options={STUDENT_STATUS_OPTIONS}
+            options={transitionStatuses.map((s) => ({
+              value: s.id,
+              label: s.isDefault ? `${s.name} (Default)` : s.name,
+            }))}
           />
         </Form.Item>
       </Form>

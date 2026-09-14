@@ -493,7 +493,7 @@ export function CoursesTab() {
               current={page}
               pageSize={100}
               total={totalItems}
-              onChange={(p) => handlePageChange(p)}
+              onChange={(p) => handlePageChange(p, 100)}
               showSizeChanger={false}
             />
           </Flex>

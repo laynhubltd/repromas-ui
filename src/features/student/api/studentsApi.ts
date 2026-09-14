@@ -3,18 +3,23 @@ import type { AppStore } from "@/app/store";
 import { ApiTagTypes } from "@/shared/types/apiTagTypes";
 import { downloadFileFromUrl } from "@/shared/utils/download/downloadFile";
 import type {
-    CreateStudentRequest,
-    PaginatedResponse,
-    Student,
-    StudentListParams,
-    UpdateStudentRequest,
-    UploadSummary,
+  CreateStudentRequest,
+  PaginatedResponse,
+  Student,
+  StudentListParams,
+  UpdateStudentRequest,
+  UploadSummary,
 } from "../types/student";
 
 const studentsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getStudents: builder.query<PaginatedResponse<Student>, StudentListParams>({
       query: (params) => ({ url: "students", method: "GET", params }),
+      providesTags: [{ type: ApiTagTypes.Student, id: "LIST" }],
+    }),
+
+    getNonTerminalStudents: builder.query<PaginatedResponse<Student>, StudentListParams>({
+      query: (params) => ({ url: "students/non-terminal", method: "GET", params }),
       providesTags: [{ type: ApiTagTypes.Student, id: "LIST" }],
     }),
 
@@ -59,6 +64,7 @@ const studentsApi = baseApi.injectEndpoints({
 export const {
   useGetStudentsQuery,
   useGetStudentQuery,
+  useGetNonTerminalStudentsQuery,
   useCreateStudentMutation,
   useUpdateStudentMutation,
   useDeleteStudentMutation,

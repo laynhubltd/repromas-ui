@@ -1,9 +1,9 @@
 import { useGetProgramsQuery } from "@/features/program/tabs/programs/api/programsApi";
-import { useGetStudentsQuery } from "@/features/student/api/studentsApi";
-import type { StudentStatus } from "@/features/student/types/student";
+import { useGetTransitionStatusesQuery } from "@/features/settings/tabs/student-transition-status/api/studentTransitionStatusApi";
+import { useGetNonTerminalStudentsQuery } from "@/features/student/api/studentsApi";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-const ITEMS_PER_PAGE = 20;
+const ITEMS_PER_PAGE = 5;
 
 /**
  * Hook that contains all business logic for the StudentSelectionPanel.
@@ -18,6 +18,14 @@ export function useStudentSelectionPanel(
   selectedStudentId: number | null,
   onStudentSelect: (studentId: number) => void,
 ) {
+  // ─── Reference Data (Transition Statuses) ──────────────────────────────────
+  const {
+    data: transitionStatusesData,
+    isLoading: isTransitionStatusesLoading,
+  } = useGetTransitionStatusesQuery({ itemsPerPage: 100, sort: "name:asc" });
+  const transitionStatuses = transitionStatusesData?.member ?? [];
+  const defaultStatusInitialized = useRef(false);
+
   // ─── Pagination ───────────────────────────────────────────────────────────
   const [page, setPage] = useState(1);
 
@@ -33,9 +41,20 @@ export function useStudentSelectionPanel(
     undefined,
   );
   const [levelFilter, setLevelFilter] = useState<number | undefined>(undefined);
-  const [statusFilter, setStatusFilter] = useState<StudentStatus | undefined>(
+  const [statusFilter, setStatusFilter] = useState<number | undefined>(
     undefined,
   );
+
+  // ─── Auto-initialize default transition status on initial load ─────────────
+  useEffect(() => {
+    if (!defaultStatusInitialized.current && transitionStatuses.length > 0) {
+      const defaultStatus = transitionStatuses.find((s) => s.isDefault);
+      if (defaultStatus) {
+        setStatusFilter(defaultStatus.id);
+      }
+      defaultStatusInitialized.current = true;
+    }
+  }, [transitionStatuses]);
 
   // ─── Cleanup timers on unmount ────────────────────────────────────────────
   useEffect(() => {
@@ -50,12 +69,17 @@ export function useStudentSelectionPanel(
   const queryParams = {
     page,
     itemsPerPage: ITEMS_PER_PAGE,
-    sort: "lastName:asc",
+    sort: "matricNumber:desc",
     include: "currentLevel,program" as const,
     ...(debouncedMatric ? { "search[matricNumber]": debouncedMatric } : {}),
-    ...(statusFilter !== undefined ? { "exact[status]": statusFilter } : {}),
+    ...(statusFilter !== undefined
+      ? { "exact[currentTransition.status_id]": statusFilter }
+      : {}),
     ...(programFilter !== undefined
       ? { "exact[programId]": programFilter }
+      : {}),
+    ...(levelFilter !== undefined
+      ? { "exact[currentLevelId]": levelFilter }
       : {}),
   };
 
@@ -64,7 +88,7 @@ export function useStudentSelectionPanel(
     isLoading: isStudentsLoading,
     isError: isStudentsError,
     refetch,
-  } = useGetStudentsQuery(queryParams);
+  } = useGetNonTerminalStudentsQuery(queryParams);
 
   // ─── Reference Data ───────────────────────────────────────────────────────
   // Programs for the program filter dropdown
@@ -103,18 +127,13 @@ export function useStudentSelectionPanel(
     setPage(1);
   }, []);
 
-  /**
-   * Level filter is applied client-side since the students API does not
-   * support filtering by currentLevelId directly. We filter the returned
-   * students by their currentLevel.id when a level filter is active.
-   */
   const handleLevelFilterChange = useCallback((value: number | undefined) => {
     setLevelFilter(value);
     setPage(1);
   }, []);
 
   const handleStatusFilterChange = useCallback(
-    (value: StudentStatus | undefined) => {
+    (value: number | undefined) => {
       setStatusFilter(value);
       setPage(1);
     },
@@ -141,18 +160,10 @@ export function useStudentSelectionPanel(
     setPage(1);
   }, []);
 
-  // ─── Client-side level filtering ─────────────────────────────────────────
-  // Apply level filter on the fetched students since the API doesn't support it
-  const filteredStudents =
-    levelFilter !== undefined
-      ? students.filter((s) => s.currentLevel?.id === levelFilter)
-      : students;
-
   return {
     state: {
-      students: filteredStudents,
-      totalItems:
-        levelFilter !== undefined ? filteredStudents.length : totalItems,
+      students,
+      totalItems,
       isLoading: isStudentsLoading,
       isError: isStudentsError,
       page,
@@ -163,6 +174,8 @@ export function useStudentSelectionPanel(
       statusFilter,
       programs,
       isProgramsLoading,
+      transitionStatuses,
+      isTransitionStatusesLoading,
       selectedStudentId,
     },
     actions: {
@@ -176,7 +189,7 @@ export function useStudentSelectionPanel(
       refetch,
     },
     flags: {
-      hasData: filteredStudents.length > 0,
+      hasData: students.length > 0,
       isSearchActive,
       isFilterActive,
       isAnyFilterActive,

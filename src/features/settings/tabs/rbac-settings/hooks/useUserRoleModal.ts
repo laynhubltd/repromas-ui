@@ -2,7 +2,7 @@
 import { useApiError } from "@/shared/hooks/useApiError";
 import { RequestScreen } from "@/shared/types/error-ui";
 import { Form, notification } from "antd";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import {
     useAssignRoleToUserMutation,
     useGetRolesQuery,
@@ -25,7 +25,6 @@ export function useUserRoleFormModal(
   onSuccess?: () => void,
 ) {
   const [form] = Form.useForm<UserRoleFormValues>();
-  const [selectedScope, setSelectedScope] = useState<RoleScope | null>(null);
   const handleApiError = useApiError();
 
   const [assignRole, { isLoading: isSubmitting }] = useAssignRoleToUserMutation();
@@ -36,17 +35,18 @@ export function useUserRoleFormModal(
   );
   const roles: Role[] = rolesData?.member ?? [];
 
+  const selectedRoleId = Form.useWatch("roleId", form);
+  const selectedRole = roles.find((r) => r.id === selectedRoleId);
+  const selectedScope: RoleScope | null = selectedRole?.scope ?? null;
+
   // Reset state when modal closes
   useEffect(() => {
     if (!open) {
       form.resetFields();
-      setSelectedScope(null);
     }
   }, [open, form]);
 
-  const handleRoleChange = (roleId: number) => {
-    const role = roles.find((r) => r.id === roleId);
-    setSelectedScope(role?.scope ?? null);
+  const handleRoleChange = () => {
     // Clear scopeReferenceId when role changes
     form.setFieldValue("scopeReferenceId", undefined);
   };

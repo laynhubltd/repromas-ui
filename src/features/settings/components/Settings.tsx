@@ -7,12 +7,14 @@ import {
   PartitionOutlined,
   SafetyOutlined,
   SettingOutlined,
+  BranchesOutlined,
   SwapOutlined,
   TeamOutlined,
 } from "@ant-design/icons";
 import { useMemo } from "react";
 import { useSettingsPage } from "../hooks/useSettingsPage";
 import { AcademicCalendarTab } from "../tabs/academic-calendar";
+import { WorkflowDefinitionsTab } from "../tabs/approval-workflows";
 import { CurriculumVersionTab } from "../tabs/curriculum-version";
 import { LevelConfigTab } from "../tabs/level-config";
 import { RbacSettingsTab } from "../tabs/rbac-settings";
@@ -108,6 +110,15 @@ export default function Settings() {
           </span>
         ),
         children: <TransitionStatusTab />,
+      },
+      {
+        key: "approval-workflows",
+        label: (
+          <span>
+            <BranchesOutlined /> Approval Workflows
+          </span>
+        ),
+        children: <WorkflowDefinitionsTab />,
       },
     ],
     [],

@@ -6,8 +6,9 @@ import { Alert, Card, Empty, Flex, Tabs, Typography } from "antd";
 import { type BroadsheetCellMode } from "@/components/ui-kit";
 import { useCallback, useState } from "react";
 import { useBroadsheetFilters } from "../hooks/useBroadsheetFilters";
-import { usePdfExport } from "../hooks/usePdfExport";
 import { useBroadsheetReport } from "../hooks/useBroadsheetReport";
+import { usePdfExport } from "../hooks/usePdfExport";
+import { BroadsheetApprovalPanel } from "./BroadsheetApprovalPanel";
 import { BroadsheetExplainer } from "./BroadsheetExplainer";
 import { BroadsheetFilterBar } from "./BroadsheetFilterBar";
 import { BroadsheetMatrixTable } from "./BroadsheetMatrixTable";
@@ -15,7 +16,9 @@ import { BroadsheetMetricsRow } from "./BroadsheetMetricsRow";
 import { CohortStatisticsCards } from "./CohortStatisticsCards";
 import { GradeDistributionMatrix } from "./GradeDistributionMatrix";
 import { GraduatesTable } from "./GraduatesTable";
+import { SnapshotBanner } from "./SnapshotBanner";
 import { SpecialHighlightsTable } from "./SpecialHighlightsTable";
+import { useBroadsheetSource } from "../hooks/useBroadsheetSource";
 
 const CELL_MODE_STORAGE_KEY = "repromas_broadsheet_cell_mode";
 
@@ -59,6 +62,14 @@ export function ResultBroadsheetPage() {
     state: reportState,
     actions: reportActions,
   } = useBroadsheetReport(filterState.filterParams);
+
+  const {
+    sourceModel,
+    approval,
+    toggleSourceMode,
+  } = useBroadsheetSource(
+    filterState.isFilterComplete ? filterState.filterParams : null,
+  );
 
   const { isExporting, handleExportPdf } = usePdfExport(
     filterState.filterParams,
@@ -182,6 +193,19 @@ export function ResultBroadsheetPage() {
           onRefresh={reportActions.refetch}
           onExportPdf={handleExportPdf}
         />
+
+        {/* Broadsheet Approval Workflow Panel */}
+        {filterState.isFilterComplete && approval && (
+          <BroadsheetApprovalPanel approval={approval} />
+        )}
+
+        {/* Snapshot / Live Viewing Mode Banner */}
+        {filterState.isFilterComplete && approval?.isFrozen && (
+          <SnapshotBanner
+            sourceModel={sourceModel}
+            onToggleMode={toggleSourceMode}
+          />
+        )}
 
         {/* Content Body */}
         {!filterState.isFilterComplete ? (

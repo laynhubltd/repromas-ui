@@ -1,6 +1,6 @@
 // Feature: course-management
 import { useToken } from "@/shared/hooks/useToken";
-import { Button, Form, InputNumber, Modal, Select } from "antd";
+import { Button, Form, InputNumber, Modal, Select, Spin } from "antd";
 import { LevelSelect } from "@/components/ui-kit/data-entry/LevelSelect";
 import { useCourseConfigFormModal } from "../../hooks/useCourseConfigModal";
 import type { CourseConfiguration } from "../../types/course-configuration";
@@ -36,15 +36,24 @@ export function CourseConfigFormModal({
   prefillSemesterTypeId,
 }: CourseConfigFormModalProps) {
   const token = useToken();
-  const { state, actions, form, courses, semesterTypes, levels, isSemesterTypesLoading, prerequisiteOptions } = useCourseConfigFormModal(
+  const {
+    state,
+    actions,
+    form,
+    courseOptions,
+    semesterTypes,
+    levels,
+    isSemesterTypesLoading,
+    prerequisiteOptions,
+  } = useCourseConfigFormModal(
     target,
     open,
     onClose,
     prefillLevelId,
     prefillSemesterTypeId,
   );
-  const { isLoading, isEditMode } = state;
-  const { handleSubmit, handleCancel, handleCourseChange } = actions;
+  const { isLoading, isEditMode, courseSearch, isCoursesLoading } = state;
+  const { handleSubmit, handleCancel, handleCourseChange, handleCourseSearch } = actions;
 
   const watchedLevelId = Form.useWatch("levelId", form);
   const selectedLevel = levels.find((l) => l.id === watchedLevelId);
@@ -98,13 +107,23 @@ export function CourseConfigFormModal({
             rules={[{ required: true, message: "Course is required" }]}
           >
             <Select
-              placeholder="Select course"
+              placeholder="Search and select course"
               disabled={isEditMode}
               showSearch
-              optionFilterProp="label"
+              filterOption={false}
+              searchValue={courseSearch}
+              onSearch={handleCourseSearch}
+              loading={isCoursesLoading}
               style={{ height: 40 }}
-              options={courses.map((c) => ({ value: c.id, label: `${c.code} ${c.title}` }))}
+              options={courseOptions}
               onChange={!isEditMode ? handleCourseChange : undefined}
+              notFoundContent={
+                isCoursesLoading ? (
+                  <div style={{ textAlign: "center", padding: 8 }}>
+                    <Spin size="small" />
+                  </div>
+                ) : undefined
+              }
             />
           </Form.Item>
 

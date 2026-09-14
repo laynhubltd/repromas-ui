@@ -40,7 +40,8 @@ export type ScoreSheetRow = {
   grade: string;
   gradePoint: number;
   isPass: boolean;
-  evaluationStatusCode: string;
+  evaluationStatusId?: number | null;
+  evaluationStatusCode?: string | null;
   evaluationStatuses: EvaluationStatusOption[];
   /** The StudentScoreSheet.id; null when no sheet exists yet for this registration */
   id: number | null;

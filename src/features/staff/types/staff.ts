@@ -3,7 +3,9 @@ export type RoleScope =
   | "FACULTY"
   | "DEPARTMENT"
   | "PROGRAM"
-  | "CANDIDATE";
+  | "STUDENT"
+  | "CANDIDATE"
+  | "LECTURER";
 
 export type Role = {
   id: number;

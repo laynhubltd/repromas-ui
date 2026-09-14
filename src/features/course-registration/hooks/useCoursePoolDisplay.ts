@@ -151,6 +151,29 @@ export function useCoursePoolDisplay(
     return allBuckets.filter((b) => b.courses.length > 0);
   }, [coursePool]);
 
+  // ─── Toggle all courses in a bucket ───────────────────────────────────────
+  /**
+   * Toggles all courses in a bucket.
+   * When checked: adds all courses from the bucket to selection.
+   * When unchecked: removes non-mandatory courses from the bucket while preserving mandatory ones.
+   */
+  const handleBucketToggle = useCallback(
+    (courses: CourseItem[], checked: boolean) => {
+      const currentSet = new Set(selectedCourseIds);
+      if (checked) {
+        courses.forEach((c) => currentSet.add(c.configId));
+      } else {
+        courses.forEach((c) => {
+          if (!mandatoryCourseIds.has(c.configId)) {
+            currentSet.delete(c.configId);
+          }
+        });
+      }
+      onCourseSelectionChange(Array.from(currentSet));
+    },
+    [selectedCourseIds, mandatoryCourseIds, onCourseSelectionChange],
+  );
+
   // ─── Helpers ──────────────────────────────────────────────────────────────
 
   /** Returns true if a course is currently selected. */
@@ -165,15 +188,49 @@ export function useCoursePoolDisplay(
     [mandatoryCourseIds],
   );
 
+  /** Returns true if all courses in a bucket are selected. */
+  const isBucketAllSelected = useCallback(
+    (courses: CourseItem[]) => {
+      if (courses.length === 0) return false;
+      return courses.every((c) => selectedCourseIds.includes(c.configId));
+    },
+    [selectedCourseIds],
+  );
+
+  /** Returns true if some (but not all) courses in a bucket are selected. */
+  const isBucketIndeterminate = useCallback(
+    (courses: CourseItem[]) => {
+      if (courses.length === 0) return false;
+      const selectedCount = courses.filter((c) =>
+        selectedCourseIds.includes(c.configId),
+      ).length;
+      return selectedCount > 0 && selectedCount < courses.length;
+    },
+    [selectedCourseIds],
+  );
+
+  /** Returns true if all courses in a bucket are mandatory/locked. */
+  const isBucketAllLocked = useCallback(
+    (courses: CourseItem[]) => {
+      if (courses.length === 0) return false;
+      return courses.every((c) => mandatoryCourseIds.has(c.configId));
+    },
+    [mandatoryCourseIds],
+  );
+
   return {
     buckets,
     isLateWindow,
     actions: {
       handleCourseToggle,
+      handleBucketToggle,
     },
     helpers: {
       isCourseSelected,
       isCourseLocked,
+      isBucketAllSelected,
+      isBucketIndeterminate,
+      isBucketAllLocked,
     },
   };
 }

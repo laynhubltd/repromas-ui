@@ -31,6 +31,8 @@ export interface ScoreInputProps extends UIKitCommonProps {
   value: number | null | undefined;
   /** When true renders a loading overlay and makes the input read-only. */
   saving?: boolean;
+  /** When true disables user interaction with the input. */
+  disabled?: boolean;
   /** Error message string. When truthy the cell renders in error state. */
   error?: string;
   /** Called on every value change with the score key and new value. */
@@ -47,6 +49,7 @@ export function ScoreInput({
   scoreKey,
   value,
   saving = false,
+  disabled = false,
   error,
   onChange,
   onSave,
@@ -104,7 +107,7 @@ export function ScoreInput({
           },
         }}
         status={hasError ? "error" : undefined}
-        disabled={saving}
+        disabled={saving || disabled}
         min={min}
         max={max}
         controls={false}
