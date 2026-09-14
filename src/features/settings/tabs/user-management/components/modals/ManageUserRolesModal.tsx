@@ -212,21 +212,57 @@ export function ManageUserRolesModal({
 
           {/* Scope reference select — shown only for non-GLOBAL roles */}
           <ConditionalRenderer when={state.needsScopeRef}>
-            <Select
-              showSearch
-              allowClear
-              placeholder={`Select ${(state.selectedRoleScope ?? "scope").toLowerCase()}`}
-              loading={state.isScopeRefLoading}
-              value={state.selectedScopeRefId}
-              options={state.scopeRefOptions}
-              filterOption={(input, opt) =>
-                String(opt?.label ?? "")
-                  .toLowerCase()
-                  .includes(input.toLowerCase())
-              }
-              onChange={(val) => actions.handleScopeRefSelect(val ?? null)}
-              style={{ width: "100%" }}
-            />
+            <Flex vertical gap={4} style={{ width: "100%" }}>
+              <Select
+                showSearch
+                allowClear={!state.isScopeRefDisabled}
+                disabled={state.isScopeRefDisabled}
+                placeholder={`Select ${(state.selectedRoleScope ?? "scope").toLowerCase()}`}
+                loading={state.isScopeRefLoading}
+                value={state.selectedScopeRefId}
+                options={state.scopeRefOptions}
+                filterOption={(input, opt) =>
+                  String(opt?.label ?? "")
+                    .toLowerCase()
+                    .includes(input.toLowerCase())
+                }
+                onChange={(val) => actions.handleScopeRefSelect(val ?? null)}
+                style={{ width: "100%" }}
+              />
+              <ConditionalRenderer
+                when={
+                  state.selectedRoleScope === "LECTURER" &&
+                  state.autoResolvedStaff !== null
+                }
+              >
+                <Typography.Text
+                  type="secondary"
+                  style={{
+                    fontSize: token.fontSizeSM,
+                    color: token.colorSuccess,
+                  }}
+                >
+                  ✓ Staff record automatically linked to this user.
+                </Typography.Text>
+              </ConditionalRenderer>
+              <ConditionalRenderer
+                when={
+                  state.selectedRoleScope === "LECTURER" &&
+                  state.autoResolvedStaff === null &&
+                  !state.isScopeRefLoading
+                }
+              >
+                <Typography.Text
+                  type="secondary"
+                  style={{
+                    fontSize: token.fontSizeSM,
+                    color: token.colorWarning,
+                  }}
+                >
+                  No staff record linked to this user. Select manually or create one under Staff Management.
+                </Typography.Text>
+              </ConditionalRenderer>
+            </Flex>
           </ConditionalRenderer>
 
           <Button

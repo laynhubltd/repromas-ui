@@ -1,7 +1,7 @@
 import { useApiError } from "@/shared/hooks/useApiError";
 import { RequestScreen } from "@/shared/types/error-ui";
 import { notification } from "antd";
-import { useCallback, useReducer } from "react";
+import { useCallback, useEffect, useReducer } from "react";
 import {
   useUpdateEvaluationStatusMutation,
   useUpsertStudentScoreSheetMutation,
@@ -20,6 +20,35 @@ export function useScoreRow(row: ScoreSheetRow) {
   const [state, dispatch] = useReducer(scoreRowReducer, undefined, () =>
     initialScoreRowState(row),
   );
+
+  // Keep localEvalStatusId and localEvalStatusCode in sync when row prop updates (e.g. on refetch or parent reload)
+  useEffect(() => {
+    const defaultStatus = row.evaluationStatuses?.find((s) => s.isDefault);
+    const resolvedId =
+      row.evaluationStatusId ??
+      (row.evaluationStatusCode
+        ? row.evaluationStatuses?.find(
+            (s) =>
+              s.code === row.evaluationStatusCode ||
+              s.code?.toLowerCase() === row.evaluationStatusCode?.toLowerCase(),
+          )?.id
+        : undefined) ??
+      defaultStatus?.id ??
+      null;
+
+    const resolvedCode =
+      row.evaluationStatuses?.find((s) => s.id === resolvedId)?.code ??
+      row.evaluationStatusCode ??
+      defaultStatus?.code ??
+      "";
+
+    if (resolvedId !== null) {
+      dispatch({
+        type: ScoreRowActionType.SetLocalEvalStatusId,
+        payload: { statusId: resolvedId, code: resolvedCode },
+      });
+    }
+  }, [row.evaluationStatusId, row.evaluationStatusCode, row.evaluationStatuses]);
 
   // ─── Mutations ────────────────────────────────────────────────────────────
   const [upsertStudentScoreSheet] = useUpsertStudentScoreSheetMutation();
@@ -86,22 +115,28 @@ export function useScoreRow(row: ScoreSheetRow) {
   // ─── Evaluation status action ─────────────────────────────────────────────
   const handleEvalStatusChange = useCallback(
     async (statusId: number) => {
-      // Guard: scoreSheetId must exist before assigning an evaluation status
-      if (row.id === null) {
-        notification.error({
-          message:
-            "Scores must be saved before an evaluation status can be assigned.",
-        });
+      console.log(
+        "[useScoreRow] handleEvalStatusChange triggered with statusId:",
+        statusId,
+        "row.id:",
+        row.id,
+        "registrationId:",
+        row.registrationId,
+      );
+
+      const selected = row.evaluationStatuses.find((s) => s.id === statusId);
+      if (!selected) {
+        console.warn("[useScoreRow] Status not found in evaluationStatuses for statusId:", statusId);
         return;
       }
 
-      const selected = row.evaluationStatuses.find((s) => s.id === statusId);
-      if (!selected) return;
+      const previousStatusId = state.localEvalStatusId;
+      const previousStatusCode = state.localEvalStatusCode;
 
       // Optimistic update
       dispatch({
-        type: ScoreRowActionType.SetLocalEvalStatusCode,
-        payload: { code: selected.code },
+        type: ScoreRowActionType.SetLocalEvalStatusId,
+        payload: { statusId, code: selected.code },
       });
       dispatch({
         type: ScoreRowActionType.SetEvalStatusError,
@@ -113,24 +148,45 @@ export function useScoreRow(row: ScoreSheetRow) {
       });
 
       try {
+        // If row.id is null (score sheet not persisted yet), create it with current scores
+        if (row.id === null) {
+          console.log(
+            "[useScoreRow] row.id is null — auto-creating score sheet via upsertStudentScoreSheet...",
+          );
+          await upsertStudentScoreSheet({
+            registrationId: row.registrationId,
+            componentScores: row.scores ?? {},
+          }).unwrap();
+
+          notification.success({ message: `Evaluation status set to ${selected.name}` });
+          return;
+        }
+
+        console.log(
+          "[useScoreRow] Calling updateEvaluationStatus PATCH with scoreSheetId:",
+          row.id,
+          "evaluationStatusId:",
+          statusId,
+        );
         await updateEvaluationStatus({
           scoreSheetId: row.id,
           evaluationStatusId: statusId,
         }).unwrap();
 
-        // Optimistic update stands; just clear the saving flag
+        notification.success({ message: `Evaluation status updated to ${selected.name}` });
         dispatch({
           type: ScoreRowActionType.SetIsSavingEvalStatus,
           payload: { isSaving: false },
         });
       } catch (err: unknown) {
+        console.error("[useScoreRow] handleEvalStatusChange failed with error:", err);
         const decision = handleApiError(err, {
           context: { screen: RequestScreen.Action, method: "PATCH" },
         });
         // Revert optimistic update
         dispatch({
-          type: ScoreRowActionType.SetLocalEvalStatusCode,
-          payload: { code: row.evaluationStatusCode },
+          type: ScoreRowActionType.SetLocalEvalStatusId,
+          payload: { statusId: previousStatusId, code: previousStatusCode },
         });
         dispatch({
           type: ScoreRowActionType.SetEvalStatusError,
@@ -144,8 +200,12 @@ export function useScoreRow(row: ScoreSheetRow) {
     },
     [
       row.id,
+      row.registrationId,
+      row.scores,
       row.evaluationStatuses,
-      row.evaluationStatusCode,
+      state.localEvalStatusId,
+      state.localEvalStatusCode,
+      upsertStudentScoreSheet,
       updateEvaluationStatus,
       handleApiError,
     ],

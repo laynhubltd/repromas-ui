@@ -71,18 +71,38 @@ export function useScoreSheetBulkOperations({
   // ─── Download ─────────────────────────────────────────────────────────────
 
   const handleDownload = async () => {
-    if (courseConfigId === null || courseCode === null || courseTitle === null)
+    console.log("[useScoreSheetBulkOperations] handleDownload triggered with:", {
+      courseConfigId,
+      courseCode,
+      courseTitle,
+    });
+
+    if (courseConfigId === null) {
+      console.warn(
+        "[useScoreSheetBulkOperations] handleDownload aborted: courseConfigId is null",
+      );
       return;
+    }
+
+    const resolvedCode = courseCode?.trim() || "course";
+    const resolvedTitle = courseTitle?.trim() || String(courseConfigId);
 
     setIsDownloading(true);
     try {
+      console.log("[useScoreSheetBulkOperations] Invoking downloadScoreSheet with:", {
+        courseConfigId,
+        resolvedCode,
+        resolvedTitle,
+      });
       await downloadScoreSheet({
         courseConfigId,
-        courseCode,
-        courseTitle,
+        courseCode: resolvedCode,
+        courseTitle: resolvedTitle,
         store,
       });
+      console.log("[useScoreSheetBulkOperations] downloadScoreSheet completed successfully.");
     } catch (err: unknown) {
+      console.error("[useScoreSheetBulkOperations] downloadScoreSheet failed with error:", err);
       handleApiError(err, {
         context: { screen: RequestScreen.Action, method: "GET" },
       });

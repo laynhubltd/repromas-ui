@@ -87,7 +87,7 @@ export function useCourseTab() {
 
   // ─── Pagination & Sort ────────────────────────────────────────────────────
   const [page, setPage] = useState(1);
-  const [itemsPerPage] = useState(ITEMS_PER_PAGE);
+  const [itemsPerPage, setItemsPerPage] = useState(ITEMS_PER_PAGE);
   const [sort, setSort] = useState("code:asc");
 
   // ─── Search ───────────────────────────────────────────────────────────────
@@ -197,8 +197,11 @@ export function useCourseTab() {
     setSort(newSort);
   }, []);
 
-  const handlePageChange = useCallback((newPage: number) => {
+  const handlePageChange = useCallback((newPage: number, newPageSize?: number) => {
     setPage(newPage);
+    if (newPageSize) {
+      setItemsPerPage(newPageSize);
+    }
   }, []);
 
   const handleOpenCreate = useCallback(() => {

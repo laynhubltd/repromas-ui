@@ -17,6 +17,7 @@ type ScoreSheetCardProps = {
   rowIndex: number;
   isExpanded: boolean;
   onToggle: () => void;
+  isLocked?: boolean;
 };
 
 export function ScoreSheetCard({
@@ -25,6 +26,7 @@ export function ScoreSheetCard({
   rowIndex,
   isExpanded,
   onToggle,
+  isLocked = false,
 }: ScoreSheetCardProps) {
   const token = useToken();
   const { state, actions } = useScoreRow(row);
@@ -32,7 +34,7 @@ export function ScoreSheetCard({
     dirtyScores,
     savingCells,
     errorCells,
-    localEvalStatusCode,
+    localEvalStatusId,
     isSavingEvalStatus,
     evalStatusError,
   } = state;
@@ -190,6 +192,7 @@ export function ScoreSheetCard({
                 scoreKey={key}
                 value={displayScore}
                 saving={isSaving}
+                disabled={isLocked}
                 error={errorMsg}
                 onChange={handleScoreChange}
                 onSave={handleScoreSave}
@@ -415,47 +418,56 @@ export function ScoreSheetCard({
             >
               Eval Status
             </div>
-            <Select
-              value={localEvalStatusCode || undefined}
-              onChange={(code: string) => {
-                const selected = row.evaluationStatuses.find(
-                  (s) => s.code === code,
-                );
-                if (selected) handleEvalStatusChange(selected.id);
-              }}
-              loading={isSavingEvalStatus}
-              disabled={isSavingEvalStatus}
-              size="middle"
-              variant="borderless"
-              style={{ width: "100%" }}
-              placeholder="Select status…"
-              aria-label="Evaluation status"
-              options={row.evaluationStatuses.map((s) => ({
-                value: s.code,
-                label: (
-                  <span>
-                    <span
-                      style={{
-                        fontFamily: "monospace",
-                        fontWeight: 600,
-                        marginRight: token.marginXXS,
-                        color: token.colorPrimary,
-                      }}
-                    >
-                      {s.code}
-                    </span>
-                    <span
-                      style={{
-                        color: token.colorTextSecondary,
-                        fontSize: token.fontSizeSM,
-                      }}
-                    >
-                      {s.name}
-                    </span>
-                  </span>
-                ),
-              }))}
-            />
+            {(() => {
+              const defaultStatus = row.evaluationStatuses?.find((s) => s.isDefault);
+              const activeStatusId =
+                localEvalStatusId ??
+                row.evaluationStatusId ??
+                defaultStatus?.id ??
+                undefined;
+
+              return (
+                <Select
+                  value={activeStatusId}
+                  onChange={(statusId: number) => {
+                    console.log("[ScoreSheetCard] Select onChange with statusId:", statusId);
+                    handleEvalStatusChange(statusId);
+                  }}
+                  loading={isSavingEvalStatus}
+                  disabled={isLocked || isSavingEvalStatus}
+                  size="middle"
+                  variant="borderless"
+                  style={{ width: "100%" }}
+                  placeholder="Select status…"
+                  aria-label="Evaluation status"
+                  options={row.evaluationStatuses.map((s) => ({
+                    value: s.id,
+                    label: (
+                      <span>
+                        <span
+                          style={{
+                            fontFamily: "monospace",
+                            fontWeight: 600,
+                            marginRight: token.marginXXS,
+                            color: token.colorPrimary,
+                          }}
+                        >
+                          {s.code}
+                        </span>
+                        <span
+                          style={{
+                            color: token.colorTextSecondary,
+                            fontSize: token.fontSizeSM,
+                          }}
+                        >
+                          {s.name}
+                        </span>
+                      </span>
+                    ),
+                  }))}
+                />
+              );
+            })()}
           </div>
         </div>
       )}

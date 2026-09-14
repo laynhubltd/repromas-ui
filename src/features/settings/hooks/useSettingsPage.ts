@@ -11,6 +11,7 @@ const ALL_TAB_KEYS = [
   "system-config",
   "student-transition-status",
   "user-management",
+  "approval-workflows",
   "general",
 ] as const;
 

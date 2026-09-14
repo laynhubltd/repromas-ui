@@ -48,6 +48,7 @@ export type CourseConfigListParams = {
   "exact[courseId]"?: number;
   "exact[courseStatus]"?: CourseStatus;
   "search[course.code]"?: string;
+  "search[course.title]"?: string;
   include?: string;
 };
 
@@ -81,3 +82,56 @@ export type CurriculumGridRow = {
   level: Level;
   cells: Map<number, CourseConfiguration[]>; // key = semesterTypeId
 };
+
+export interface CourseConfigurationLeafOption {
+  "@id"?: string;
+  "@type"?: string;
+  /** The Course Configuration ID (to be submitted as form value) */
+  value: number;
+  /** Pre-formatted display label: "{code} — {title} ({creditUnit} Unit(s)) [{courseStatus}]" */
+  label: string;
+  /** Base Course ID */
+  courseId: number;
+  /** Course code (e.g. "COM111") */
+  code: string;
+  /** Course title (e.g. "Introduction to Computers") */
+  title: string;
+  /** Credit units (e.g. 3) */
+  creditUnit: number;
+  /** Status (e.g. "CORE", "ELECTIVE", "REQUIRED", "AUDIT") */
+  courseStatus: string;
+  /** Academic Level ID */
+  levelId: number;
+  /** Academic Level Name (e.g. "ND I") */
+  levelName?: string;
+  /** Semester Type ID */
+  semesterTypeId: number;
+  /** Semester Type Name (e.g. "First Semester") */
+  semesterName?: string;
+  /** Alias for semesterName if provided */
+  semesterTypeName?: string;
+}
+
+export interface CourseConfigurationGroupOption {
+  "@id"?: string;
+  "@type"?: string;
+  /** Curriculum Version ID */
+  versionId: number;
+  /** Group Label for AntD optgroup (e.g. "2022/2023 - 2026/2027") */
+  label: string;
+  /** OrgUnit scope (e.g. "DEPARTMENT", "GLOBAL", "PROGRAM") */
+  scope: string;
+  /** Indicates if active for current admissions */
+  isActiveForAdmission: boolean;
+  /** List of child course configuration options */
+  options: CourseConfigurationLeafOption[];
+}
+
+export interface CourseConfigurationGroupedParams {
+  programId: number;
+  levelId?: number;
+  semesterTypeId?: number;
+  search?: string;
+  courseStatus?: string;
+  versionId?: number;
+}

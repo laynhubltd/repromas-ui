@@ -5,7 +5,7 @@ import {
   notifyMutationSuccess,
 } from "@/shared/utils/feedback/notifyMutationSuccess";
 import { Form } from "antd";
-import { useCallback, useReducer } from "react";
+import { useCallback, useEffect, useMemo, useReducer } from "react";
 import {
   useAssignRoleToUserMutation,
   useGetRolesQuery,
@@ -16,6 +16,7 @@ import type { Role } from "@/features/settings/tabs/rbac-settings/types/rbac";
 import { useGetFacultiesQuery } from "@/features/academic-structure/api/facultiesApi";
 import { useGetDepartmentsQuery } from "@/features/academic-structure/api/departmentsApi";
 import { useGetProgramsQuery } from "@/features/program/tabs/programs/api/programsApi";
+import { useGetStaffListQuery } from "@/features/staff";
 import {
   useCreateUserMutation,
   useUpdateUserMutation,
@@ -89,6 +90,14 @@ export function useUserFormModal(
       skip: !open || !needsScopeRef || selectedRole?.scope !== "PROGRAM",
     });
 
+  const { data: staffData, isLoading: isLoadingStaff } =
+    useGetStaffListQuery(
+      { include: "profile,department", itemsPerPage: 200 },
+      {
+        skip: !open || !needsScopeRef || selectedRole?.scope !== "LECTURER",
+      },
+    );
+
   const scopeRefOptions = (() => {
     if (!needsScopeRef || !selectedRole) return [];
     switch (selectedRole.scope) {
@@ -107,13 +116,27 @@ export function useUserFormModal(
           value: p.id,
           label: p.name,
         }));
+      case "LECTURER":
+        return (staffData?.member ?? []).map((s) => {
+          const first = s.profile?.firstName ?? s.firstName;
+          const last = s.profile?.lastName ?? s.lastName;
+          const name = [first, last].filter(Boolean).join(" ") || "Staff";
+          const details = [s.fileNumber, s.department?.code].filter(Boolean).join(" - ");
+          return {
+            value: s.id,
+            label: details ? `${name} (${details})` : name,
+          };
+        });
       default:
         return [];
     }
   })();
 
   const isScopeRefLoading =
-    isLoadingFaculties || isLoadingDepartments || isLoadingPrograms;
+    isLoadingFaculties ||
+    isLoadingDepartments ||
+    isLoadingPrograms ||
+    isLoadingStaff;
 
   // ── Initial values ────────────────────────────────────────────────────────
 
@@ -300,6 +323,14 @@ export function useManageUserRolesModal(
       skip: !open || !needsScopeRef || selectedRole?.scope !== "PROGRAM",
     });
 
+  const { data: staffData, isLoading: isLoadingStaff } =
+    useGetStaffListQuery(
+      { include: "profile,department", itemsPerPage: 200 },
+      {
+        skip: !open || !needsScopeRef || selectedRole?.scope !== "LECTURER",
+      },
+    );
+
   const scopeRefOptions = (() => {
     if (!needsScopeRef || !selectedRole) return [];
     switch (selectedRole.scope) {
@@ -318,13 +349,56 @@ export function useManageUserRolesModal(
           value: p.id,
           label: p.name,
         }));
+      case "LECTURER":
+        return (staffData?.member ?? []).map((s) => {
+          const first = s.profile?.firstName ?? s.firstName;
+          const last = s.profile?.lastName ?? s.lastName;
+          const name = [first, last].filter(Boolean).join(" ") || "Staff";
+          const details = [s.fileNumber, s.department?.code].filter(Boolean).join(" - ");
+          return {
+            value: s.id,
+            label: details ? `${name} (${details})` : name,
+          };
+        });
       default:
         return [];
     }
   })();
 
   const isScopeRefLoading =
-    isLoadingFaculties || isLoadingDepartments || isLoadingPrograms;
+    isLoadingFaculties ||
+    isLoadingDepartments ||
+    isLoadingPrograms ||
+    isLoadingStaff;
+
+  // ── Auto-resolve Lecturer staff record ──────────────────────────────────────
+
+  const autoResolvedStaff = useMemo(() => {
+    if (!target || selectedRole?.scope !== "LECTURER") return null;
+    return (
+      (staffData?.member ?? []).find(
+        (s) =>
+          s.userId === target.id ||
+          (target.email &&
+            ((s.profile?.email &&
+              s.profile.email.toLowerCase() === target.email.toLowerCase()) ||
+              (s.email && s.email.toLowerCase() === target.email.toLowerCase()))),
+      ) ?? null
+    );
+  }, [target, selectedRole?.scope, staffData?.member]);
+
+  // Synchronize auto-resolved staff ID when role or staff data resolves
+  useEffect(() => {
+    if (selectedRole?.scope === "LECTURER" && autoResolvedStaff) {
+      dispatch({
+        type: UserRoleAssignmentActionType.SetSelectedScopeRefId,
+        refId: autoResolvedStaff.id,
+      });
+    }
+  }, [selectedRole?.scope, autoResolvedStaff]);
+
+  const isScopeRefDisabled =
+    selectedRole?.scope === "LECTURER" && autoResolvedStaff !== null;
 
   // ── Mutations ───────────────────────────────────────────────────────────────
 
@@ -403,9 +477,32 @@ export function useManageUserRolesModal(
 
   // ── Form field handlers ─────────────────────────────────────────────────────
 
-  const handleRoleSelect = useCallback((roleId: number | null) => {
-    dispatch({ type: UserRoleAssignmentActionType.SetSelectedRoleId, roleId });
-  }, []);
+  const handleRoleSelect = useCallback(
+    (roleId: number | null) => {
+      dispatch({ type: UserRoleAssignmentActionType.SetSelectedRoleId, roleId });
+      const nextRole = (rolesData?.member ?? []).find((r: Role) => r.id === roleId);
+      if (nextRole?.scope === "LECTURER") {
+        const matched = (staffData?.member ?? []).find(
+          (s) =>
+            s.userId === target?.id ||
+            (target?.email &&
+              ((s.profile?.email &&
+                s.profile.email.toLowerCase() === target.email.toLowerCase()) ||
+                (s.email && s.email.toLowerCase() === target.email.toLowerCase()))),
+        );
+        dispatch({
+          type: UserRoleAssignmentActionType.SetSelectedScopeRefId,
+          refId: matched ? matched.id : null,
+        });
+      } else {
+        dispatch({
+          type: UserRoleAssignmentActionType.SetSelectedScopeRefId,
+          refId: null,
+        });
+      }
+    },
+    [rolesData?.member, staffData?.member, target],
+  );
 
   const handleScopeRefSelect = useCallback((refId: number | null) => {
     dispatch({ type: UserRoleAssignmentActionType.SetSelectedScopeRefId, refId });
@@ -430,6 +527,8 @@ export function useManageUserRolesModal(
       scopeRefOptions,
       needsScopeRef,
       selectedRoleScope: selectedRole?.scope ?? null,
+      autoResolvedStaff,
+      isScopeRefDisabled,
       isLoadingRoles,
       isScopeRefLoading,
       isAssigning,

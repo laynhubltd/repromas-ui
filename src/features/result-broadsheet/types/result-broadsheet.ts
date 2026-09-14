@@ -126,3 +126,33 @@ export interface BroadsheetFilterParams {
   semesterId?: number;
   curriculumVersionId?: number;
 }
+
+export type BroadsheetSourceType = "LIVE" | "SNAPSHOT";
+
+export type BroadsheetSourceModel =
+  | {
+      source: "LIVE";
+      data: BroadsheetReport | null;
+      isPublished?: boolean;
+    }
+  | {
+      source: "SNAPSHOT";
+      data: BroadsheetReport | null;
+      frozenAt: string;
+      isPublished: boolean;
+    };
+
+export type CohortBroadsheetApproval = {
+  id: number;
+  programId: number;
+  levelId: number;
+  sessionId: number;
+  semesterId?: number;
+  isPublished: boolean;
+  isFrozen: boolean;
+  frozenAt?: string | null;
+  approvedSheetsCount: number;
+  totalSheetsCount: number;
+  laggards?: string[];
+};
+

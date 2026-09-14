@@ -381,8 +381,8 @@ describe("P2 — Cell error state: non-500 save failure adds cell to errorCells 
         fc
           .string({ minLength: 1, maxLength: 80 })
           .filter((s) => s.trim().length > 0),
-        // Generate a non-500 HTTP status code
-        fc.constantFrom(400, 401, 403, 404, 409, 422),
+        // Generate a non-500, non-401 HTTP status code (401 triggers auth redirect instead of notification)
+        fc.constantFrom(400, 403, 404, 409, 422),
         async (key, errorDetail, statusCode) => {
           vi.clearAllMocks();
 

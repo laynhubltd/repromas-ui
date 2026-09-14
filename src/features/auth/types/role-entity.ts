@@ -24,7 +24,8 @@ export type AuthRoleScope =
   | "DEPARTMENT"
   | "PROGRAM"
   | "STUDENT"
-  | "CANDIDATE";
+  | "CANDIDATE"
+  | "LECTURER";
 
 export const AUTH_ROLE_SCOPES: AuthRoleScope[] = [
   "GLOBAL",
@@ -33,6 +34,7 @@ export const AUTH_ROLE_SCOPES: AuthRoleScope[] = [
   "PROGRAM",
   "STUDENT",
   "CANDIDATE",
+  "LECTURER",
 ];
 
 export type AuthFacultyEntity = Pick<
@@ -154,4 +156,5 @@ export type RoleEntityByScope = {
   PROGRAM: AuthProgramEntity;
   STUDENT: AuthStudentEntity;
   CANDIDATE: AuthCandidateEntity;
+  LECTURER: AuthDepartmentEntity | null;
 };

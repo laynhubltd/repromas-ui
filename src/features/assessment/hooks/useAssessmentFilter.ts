@@ -1,5 +1,5 @@
-import { useGetCourseConfigurationsQuery } from "@/features/courses/tabs/course-configurations/api/courseConfigurationsApi";
-import type { CourseConfiguration } from "@/features/courses/tabs/course-configurations/types/course-configuration";
+import { useGetCourseConfigurationsGroupedQuery } from "@/features/courses/tabs/course-configurations/api/courseConfigurationsApi";
+import type { CourseConfigurationGroupOption } from "@/features/courses/tabs/course-configurations/types/course-configuration";
 import { useGetProgramsQuery } from "@/features/program/tabs/programs/api/programsApi";
 import type { Program } from "@/features/program/tabs/programs/types/program";
 import { RequestScreen } from "@/shared/types/error-ui";
@@ -76,27 +76,27 @@ export function useAssessmentFilter() {
     ? resolveListQueryError(programRawError)
     : null;
 
-  // ─── Course configurations query ──────────────────────────────────────────
+  // ─── Course configurations grouped query (with server-side search) ────────
   const {
-    data: courseConfigsData,
+    data: courseConfigsGroupedData,
     isLoading: courseConfigLoading,
+    isFetching: courseConfigFetching,
     error: courseConfigRawError,
-  } = useGetCourseConfigurationsQuery(
+  } = useGetCourseConfigurationsGroupedQuery(
     {
-      "exact[program]": selectedProgramId!,
-      "exact[level]": selectedLevelId!,
-      include: "course",
-      sort: "id:asc",
-      itemsPerPage: 50,
-      ...(debouncedCourseSearch
-        ? { "search[course.code]": debouncedCourseSearch }
+      programId: selectedProgramId!,
+      ...(selectedLevelId ? { levelId: selectedLevelId } : {}),
+      ...(debouncedCourseSearch?.trim()
+        ? { search: debouncedCourseSearch.trim() }
         : {}),
-    } as Parameters<typeof useGetCourseConfigurationsQuery>[0],
+    },
     { skip: isCourseConfigDisabled },
   );
 
-  const courseConfigOptions: CourseConfiguration[] =
-    courseConfigsData?.member ?? [];
+  const courseConfigGroupedOptions: CourseConfigurationGroupOption[] =
+    Array.isArray(courseConfigsGroupedData)
+      ? courseConfigsGroupedData
+      : ((courseConfigsGroupedData as any)?.member ?? []);
   const courseConfigError = courseConfigRawError
     ? resolveListQueryError(courseConfigRawError)
     : null;
@@ -113,10 +113,14 @@ export function useAssessmentFilter() {
 
   const handleProgramChange = useCallback((id: number | null) => {
     dispatch({ type: AssessmentActionType.SetProgramId, id });
+    dispatch({ type: AssessmentActionType.SetCourseSearch, value: "" });
+    dispatch({ type: AssessmentActionType.SetCourseSearchDebounced, value: "" });
   }, []);
 
   const handleLevelChange = useCallback((id: number | null) => {
     dispatch({ type: AssessmentActionType.SetLevelId, id });
+    dispatch({ type: AssessmentActionType.SetCourseSearch, value: "" });
+    dispatch({ type: AssessmentActionType.SetCourseSearchDebounced, value: "" });
   }, []);
 
   const handleCourseSearch = useCallback((value: string) => {
@@ -143,9 +147,9 @@ export function useAssessmentFilter() {
       programSearch,
       courseSearch,
       programOptions,
-      courseConfigOptions,
+      courseConfigGroupedOptions,
       programLoading,
-      courseConfigLoading,
+      courseConfigLoading: courseConfigLoading || courseConfigFetching,
       programError,
       courseConfigError,
       isCourseConfigDisabled,

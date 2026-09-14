@@ -10,6 +10,7 @@ export const ScoreRowActionType = {
   ClearSavingCell: "CLEAR_SAVING_CELL",
   SetErrorCell: "SET_ERROR_CELL",
   ClearErrorCell: "CLEAR_ERROR_CELL",
+  SetLocalEvalStatusId: "SET_LOCAL_EVAL_STATUS_ID",
   SetLocalEvalStatusCode: "SET_LOCAL_EVAL_STATUS_CODE",
   SetIsSavingEvalStatus: "SET_IS_SAVING_EVAL_STATUS",
   SetEvalStatusError: "SET_EVAL_STATUS_ERROR",
@@ -34,6 +35,8 @@ export type ScoreRowState = {
   savingCells: Set<string>;
   /** Map of component key → error message for cells that failed to save */
   errorCells: Record<string, string>;
+  /** Optimistically-updated evaluation status ID */
+  localEvalStatusId: number | null;
   /** Optimistically-updated evaluation status code (reverted on failure) */
   localEvalStatusCode: string;
   /** Whether the evaluation-status PATCH request is in-flight */
@@ -65,6 +68,10 @@ export type ScoreRowAction =
       payload: { key: string };
     }
   | {
+      type: typeof ScoreRowActionType.SetLocalEvalStatusId;
+      payload: { statusId: number | null; code?: string };
+    }
+  | {
       type: typeof ScoreRowActionType.SetLocalEvalStatusCode;
       payload: { code: string };
     }
@@ -83,15 +90,35 @@ export type ScoreRowAction =
 // ---------------------------------------------------------------------------
 
 /**
- * Seeds the 6 UI state fields from the row prop.
+ * Seeds the UI state fields from the row prop.
  * Called once on mount (via the `useReducer` initializer argument).
  */
 export function initialScoreRowState(row: ScoreSheetRow): ScoreRowState {
+  const defaultStatus = row.evaluationStatuses?.find((s) => s.isDefault);
+  const initialStatusId =
+    row.evaluationStatusId ??
+    (row.evaluationStatusCode
+      ? row.evaluationStatuses?.find(
+          (s) =>
+            s.code === row.evaluationStatusCode ||
+            s.code?.toLowerCase() === row.evaluationStatusCode?.toLowerCase(),
+        )?.id
+      : undefined) ??
+    defaultStatus?.id ??
+    null;
+
+  const initialCode =
+    row.evaluationStatuses?.find((s) => s.id === initialStatusId)?.code ??
+    row.evaluationStatusCode ??
+    defaultStatus?.code ??
+    "";
+
   return {
     dirtyScores: {},
     savingCells: new Set(),
     errorCells: {},
-    localEvalStatusCode: row.evaluationStatusCode,
+    localEvalStatusId: initialStatusId,
+    localEvalStatusCode: initialCode,
     isSavingEvalStatus: false,
     evalStatusError: null,
   };
@@ -140,9 +167,17 @@ export function scoreRowReducer(
       };
 
     case ScoreRowActionType.ClearErrorCell: {
-      const { [action.payload.key]: _removed, ...rest } = state.errorCells;
+      const rest = { ...state.errorCells };
+      delete rest[action.payload.key];
       return { ...state, errorCells: rest };
     }
+
+    case ScoreRowActionType.SetLocalEvalStatusId:
+      return {
+        ...state,
+        localEvalStatusId: action.payload.statusId,
+        ...(action.payload.code ? { localEvalStatusCode: action.payload.code } : {}),
+      };
 
     case ScoreRowActionType.SetLocalEvalStatusCode:
       return { ...state, localEvalStatusCode: action.payload.code };

@@ -6,7 +6,9 @@ type RoleScope =
   | "FACULTY"
   | "DEPARTMENT"
   | "PROGRAM"
-  | "CANDIDATE";
+  | "STUDENT"
+  | "CANDIDATE"
+  | "LECTURER";
 
 type Role = {
   id: number;

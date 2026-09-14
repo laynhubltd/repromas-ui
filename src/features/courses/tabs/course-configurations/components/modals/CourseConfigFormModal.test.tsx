@@ -24,14 +24,16 @@ vi.mock("@/components/ui-kit/data-entry/LevelSelect", () => ({
 function TestContainer() {
   const [form] = Form.useForm();
   mockUseCourseConfigFormModal.mockReturnValue({
-    state: { isLoading: false, isEditMode: false },
+    state: { isLoading: false, isEditMode: false, courseSearch: "", isCoursesLoading: false },
     actions: {
       handleSubmit: vi.fn(),
       handleCancel: vi.fn(),
       handleCourseChange: vi.fn(),
+      handleCourseSearch: vi.fn(),
     },
     form,
     courses: [{ id: 10, code: "MTH211", title: "Calculus II" }],
+    courseOptions: [{ value: 10, label: "MTH211 Calculus II" }],
     levels: [
       { id: 1, name: "ND I", rankOrder: 1 },
       { id: 2, name: "ND II", rankOrder: 2 },

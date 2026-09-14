@@ -8,6 +8,7 @@ import { DataLoader } from "@/shared/ui/DataLoader";
 import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { SkeletonRows } from "@/shared/ui/SkeletonRows";
 import {
+  BookOutlined,
   DeleteOutlined,
   EditOutlined,
   EyeOutlined,
@@ -35,6 +36,7 @@ import { useState } from "react";
 import { useStaffTab } from "../hooks/useStaffTab";
 import type { Staff } from "../types/staff";
 import { StaffDrawer } from "./StaffDrawer";
+import { AllocateCoursesModal } from "./modals/AllocateCoursesModal";
 import { DeleteStaffModal } from "./modals/DeleteStaffModal";
 import { StaffFormModal } from "./modals/StaffFormModal";
 
@@ -81,6 +83,8 @@ export function StaffPage() {
   const { hasData, isSearchActive, isFilterActive } = flags;
 
   const [filterOpen, setFilterOpen] = useState(false);
+  const [allocateTarget, setAllocateTarget] = useState<Staff | null>(null);
+  const [allocateModalOpen, setAllocateModalOpen] = useState(false);
 
   const isAnyFilterActive = isSearchActive || isFilterActive;
   const cardState = isLoading ? "loading" : "default";
@@ -153,6 +157,19 @@ export function StaffPage() {
             label: <span>View</span>,
             icon: <EyeOutlined />,
             onClick: () => handleOpenDrawer(record.id),
+          },
+          {
+            key: "allocate",
+            label: (
+              <PermissionGuard permission={Permission.CoursesManage}>
+                <span>Allocate Courses</span>
+              </PermissionGuard>
+            ),
+            icon: <BookOutlined />,
+            onClick: () => {
+              setAllocateTarget(record);
+              setAllocateModalOpen(true);
+            },
           },
           {
             key: "edit",
@@ -385,6 +402,15 @@ export function StaffPage() {
           handleCloseDrawer();
           handleOpenDelete(staffMember);
         }}
+      />
+      <AllocateCoursesModal
+        open={allocateModalOpen}
+        staff={allocateTarget}
+        onClose={() => {
+          setAllocateModalOpen(false);
+          setAllocateTarget(null);
+        }}
+        onSuccess={refetch}
       />
     </Flex>
   );

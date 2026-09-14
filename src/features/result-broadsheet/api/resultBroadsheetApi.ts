@@ -1,8 +1,10 @@
+// Feature: result-broadsheet
 import { baseApi } from "@/app/api/baseApi";
 import { ApiTagTypes } from "@/shared/types/apiTagTypes";
 import type {
   BroadsheetFilterParams,
   BroadsheetReport,
+  CohortBroadsheetApproval,
 } from "../types/result-broadsheet";
 
 function unwrapBroadsheetResponse(response: unknown): BroadsheetReport {
@@ -14,7 +16,10 @@ function unwrapBroadsheetResponse(response: unknown): BroadsheetReport {
     if (Array.isArray(obj.member) && obj.member.length > 0) {
       return obj.member[0] as BroadsheetReport;
     }
-    if (Array.isArray(obj["hydra:member"]) && (obj["hydra:member"] as unknown[]).length > 0) {
+    if (
+      Array.isArray(obj["hydra:member"]) &&
+      (obj["hydra:member"] as unknown[]).length > 0
+    ) {
       return (obj["hydra:member"] as unknown[])[0] as BroadsheetReport;
     }
     if (Array.isArray(obj.data) && obj.data.length > 0) {
@@ -29,18 +34,37 @@ function unwrapBroadsheetResponse(response: unknown): BroadsheetReport {
 
 const resultBroadsheetApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getBroadsheetReport: builder.query<BroadsheetReport, BroadsheetFilterParams>({
+    getBroadsheetReport: builder.query<
+      BroadsheetReport,
+      BroadsheetFilterParams
+    >({
       query: (params) => ({
         url: "/results/broadsheet",
         method: "GET",
         params,
       }),
-      transformResponse: (response: unknown) => unwrapBroadsheetResponse(response),
+      transformResponse: (response: unknown) =>
+        unwrapBroadsheetResponse(response),
+      providesTags: [ApiTagTypes.BroadsheetReport],
+    }),
+
+    getCohortBroadsheetApproval: builder.query<
+      CohortBroadsheetApproval,
+      BroadsheetFilterParams
+    >({
+      query: (params) => ({
+        url: "/results/cohort-broadsheet-approvals/by-filter",
+        method: "GET",
+        params,
+      }),
       providesTags: [ApiTagTypes.BroadsheetReport],
     }),
   }),
 });
 
-export const { useGetBroadsheetReportQuery, useLazyGetBroadsheetReportQuery } =
-  resultBroadsheetApi;
+export const {
+  useGetBroadsheetReportQuery,
+  useLazyGetBroadsheetReportQuery,
+  useGetCohortBroadsheetApprovalQuery,
+} = resultBroadsheetApi;
 export default resultBroadsheetApi;

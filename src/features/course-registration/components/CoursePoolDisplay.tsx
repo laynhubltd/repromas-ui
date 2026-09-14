@@ -82,26 +82,56 @@ export function CoursePoolDisplay({
       </ConditionalRenderer>
 
       {/* ─── Course Buckets ──────────────────────────────────────────────── */}
-      {buckets.map((bucket) => (
-        <div
-          key={bucket.key}
-          data-testid={bucket.testId}
-          style={{ marginBottom: 20 }}
-        >
-          {/* Bucket header */}
-          <Typography.Text
-            strong
-            style={{
-              display: "block",
-              marginBottom: 8,
-              fontSize: token.fontSizeSM,
-              textTransform: "uppercase",
-              letterSpacing: "0.04em",
-              color: token.colorTextSecondary,
-            }}
+      {buckets.map((bucket) => {
+        const isAllSelected = helpers.isBucketAllSelected(bucket.courses);
+        const isIndeterminate = helpers.isBucketIndeterminate(bucket.courses);
+        const isAllLocked = helpers.isBucketAllLocked(bucket.courses);
+
+        return (
+          <div
+            key={bucket.key}
+            data-testid={bucket.testId}
+            style={{ marginBottom: 20 }}
           >
-            {bucket.label}
-          </Typography.Text>
+            {/* Bucket header */}
+            <Flex
+              justify="space-between"
+              align="center"
+              style={{ marginBottom: 8 }}
+            >
+              <Typography.Text
+                strong
+                style={{
+                  fontSize: token.fontSizeSM,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.04em",
+                  color: token.colorTextSecondary,
+                }}
+              >
+                {bucket.label}
+              </Typography.Text>
+
+              {!bucket.isReadOnly && bucket.courses.length > 0 && (
+                <Checkbox
+                  checked={isAllSelected}
+                  indeterminate={isIndeterminate}
+                  disabled={disabled || (isAllLocked && isAllSelected)}
+                  onChange={(e) =>
+                    actions.handleBucketToggle(bucket.courses, e.target.checked)
+                  }
+                  data-testid={`bucket-check-all-${bucket.key}`}
+                >
+                  <Typography.Text
+                    style={{
+                      fontSize: token.fontSizeSM,
+                      color: token.colorTextSecondary,
+                    }}
+                  >
+                    Select All
+                  </Typography.Text>
+                </Checkbox>
+              )}
+            </Flex>
 
           {/* Course rows */}
           <div
@@ -333,7 +363,8 @@ export function CoursePoolDisplay({
             })}
           </div>
         </div>
-      ))}
+      );
+    })}
 
       {/* ─── Empty state ─────────────────────────────────────────────────── */}
       <ConditionalRenderer when={buckets.length === 0}>

@@ -1,4 +1,5 @@
 // Feature: assessment
+import { WorkflowLockBanner } from "@/features/approval-workflow";
 import { useIsMobile } from "@/hooks/useBreakpoint";
 import { useToken } from "@/shared/hooks/useToken";
 import { TeamOutlined } from "@ant-design/icons";
@@ -11,9 +12,18 @@ import { ScoreSheetCard } from "./ScoreSheetCard";
 type ScoreSheetTableProps = {
   columns: ScoreColumn[];
   rows: ScoreSheetRow[];
+  isLocked?: boolean;
+  stepName?: string;
+  onViewHistory?: () => void;
 };
 
-export function ScoreSheetTable({ columns, rows }: ScoreSheetTableProps) {
+export function ScoreSheetTable({
+  columns,
+  rows,
+  isLocked = false,
+  stepName,
+  onViewHistory,
+}: ScoreSheetTableProps) {
   const token = useToken();
   const isMobile = useIsMobile();
 
@@ -140,6 +150,12 @@ export function ScoreSheetTable({ columns, rows }: ScoreSheetTableProps) {
 
     return (
       <Flex vertical gap={token.marginXS}>
+        {isLocked && (
+          <WorkflowLockBanner
+            stepName={stepName}
+            onViewHistory={onViewHistory}
+          />
+        )}
         {rows.map((row, index) => (
           <ScoreSheetCard
             key={row.registrationId}
@@ -148,6 +164,7 @@ export function ScoreSheetTable({ columns, rows }: ScoreSheetTableProps) {
             rowIndex={index}
             isExpanded={activeId === row.registrationId}
             onToggle={() => handleToggle(row.registrationId)}
+            isLocked={isLocked}
           />
         ))}
       </Flex>
@@ -156,165 +173,174 @@ export function ScoreSheetTable({ columns, rows }: ScoreSheetTableProps) {
 
   // ─── Desktop: table ───────────────────────────────────────────────────────
   return (
-    <div
-      style={{
-        overflowX: "auto",
-        overflowY: "auto",
-        maxHeight: "65vh",
-        border: `1px solid ${token.colorBorderSecondary}`,
-        borderRadius: token.borderRadiusLG,
-        background: token.colorBgContainer,
-        boxShadow: token.boxShadowTertiary,
-      }}
-    >
-      <table
+    <div>
+      {isLocked && (
+        <WorkflowLockBanner
+          stepName={stepName}
+          onViewHistory={onViewHistory}
+        />
+      )}
+      <div
         style={{
-          width: "100%",
-          borderCollapse: "separate",
-          borderSpacing: 0,
-          fontSize: token.fontSize,
-          tableLayout: "auto",
+          overflowX: "auto",
+          overflowY: "auto",
+          maxHeight: "65vh",
+          border: `1px solid ${token.colorBorderSecondary}`,
+          borderRadius: token.borderRadiusLG,
+          background: token.colorBgContainer,
+          boxShadow: token.boxShadowTertiary,
         }}
       >
-        <thead>
-          {/* ── Row 1 ── */}
-          <tr>
-            {/* # (row number) — frozen col 0 */}
-            <th
-              rowSpan={2}
-              style={{ ...thFixed(0), width: 48, textAlign: "center" }}
-            >
-              #
-            </th>
-            {/* Reg No — frozen col 1 */}
-            <th rowSpan={2} style={{ ...thFixed(48), minWidth: 110 }}>
-              Reg No
-            </th>
-            {/* Full Name — frozen col 2 */}
-            <th rowSpan={2} style={{ ...thFixed(158), minWidth: 180 }}>
-              Full Name
-            </th>
-
-            {/* Score column headers */}
-            {columns.map((col) =>
-              col.subComponents.length === 0 ? (
-                <th
-                  key={col.code}
-                  rowSpan={2}
-                  style={{
-                    ...thBase,
-                    textAlign: "center",
-                    minWidth: 90,
-                  }}
-                >
-                  <div style={{ fontSize: token.fontSize, fontWeight: 700 }}>
-                    {col.code}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: token.fontSizeSM,
-                      fontWeight: 400,
-                      color: token.colorTextTertiary,
-                      marginTop: 2,
-                    }}
-                  >
-                    {col.weightPercentage}%
-                  </div>
-                </th>
-              ) : (
-                <th
-                  key={col.code}
-                  colSpan={col.subComponents.length}
-                  style={{
-                    ...thBase,
-                    textAlign: "center",
-                    borderBottom: `1px solid ${token.colorBorderSecondary}`,
-                  }}
-                >
-                  <div>{col.code}</div>
-                  <div
-                    style={{
-                      fontSize: token.fontSizeSM,
-                      fontWeight: 400,
-                      color: token.colorTextTertiary,
-                      marginTop: 2,
-                    }}
-                  >
-                    {col.weightPercentage}%
-                  </div>
-                </th>
-              ),
-            )}
-
-            {/* Result columns */}
-            <th
-              rowSpan={2}
-              style={{ ...thBase, textAlign: "center", minWidth: 80 }}
-            >
-              Total
-            </th>
-            <th
-              rowSpan={2}
-              style={{ ...thBase, textAlign: "center", minWidth: 72 }}
-            >
-              Grade
-            </th>
-            <th
-              rowSpan={2}
-              style={{ ...thBase, textAlign: "center", minWidth: 72 }}
-            >
-              GP
-            </th>
-
-            {/* Eval Status — last column */}
-            <th
-              rowSpan={2}
-              style={{ ...thBase, textAlign: "center", minWidth: 160 }}
-            >
-              Eval Status
-            </th>
-          </tr>
-
-          {/* ── Row 2 — sub-component headers ── */}
-          <tr>
-            {parentColumns.flatMap((col) =>
-              col.subComponents.map((sub) => (
-                <th
-                  key={`${col.code}-${sub.code}`}
-                  style={{ ...thSub, minWidth: 90 }}
-                >
-                  {sub.code}
-                </th>
-              )),
-            )}
-          </tr>
-        </thead>
-
-        <tbody>
-          {rows.length === 0 ? (
+        <table
+          style={{
+            width: "100%",
+            borderCollapse: "separate",
+            borderSpacing: 0,
+            fontSize: token.fontSize,
+            tableLayout: "auto",
+          }}
+        >
+          <thead>
+            {/* ── Row 1 ── */}
             <tr>
-              <td
-                colSpan={totalCols}
-                style={{
-                  background: token.colorBgContainer,
-                  textAlign: "center",
-                }}
+              {/* # (row number) — frozen col 0 */}
+              <th
+                rowSpan={2}
+                style={{ ...thFixed(0), width: 48, textAlign: "center" }}
               >
-                {emptyState}
-              </td>
+                #
+              </th>
+              {/* Reg No — frozen col 1 */}
+              <th rowSpan={2} style={{ ...thFixed(48), minWidth: 110 }}>
+                Reg No
+              </th>
+              {/* Full Name — frozen col 2 */}
+              <th rowSpan={2} style={{ ...thFixed(158), minWidth: 180 }}>
+                Full Name
+              </th>
+
+              {/* Score column headers */}
+              {columns.map((col) =>
+                col.subComponents.length === 0 ? (
+                  <th
+                    key={col.code}
+                    rowSpan={2}
+                    style={{
+                      ...thBase,
+                      textAlign: "center",
+                      minWidth: 90,
+                    }}
+                  >
+                    <div style={{ fontSize: token.fontSize, fontWeight: 700 }}>
+                      {col.code}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: token.fontSizeSM,
+                        fontWeight: 400,
+                        color: token.colorTextTertiary,
+                        marginTop: 2,
+                      }}
+                    >
+                      {col.weightPercentage}%
+                    </div>
+                  </th>
+                ) : (
+                  <th
+                    key={col.code}
+                    colSpan={col.subComponents.length}
+                    style={{
+                      ...thBase,
+                      textAlign: "center",
+                      borderBottom: `1px solid ${token.colorBorderSecondary}`,
+                    }}
+                  >
+                    <div>{col.code}</div>
+                    <div
+                      style={{
+                        fontSize: token.fontSizeSM,
+                        fontWeight: 400,
+                        color: token.colorTextTertiary,
+                        marginTop: 2,
+                      }}
+                    >
+                      {col.weightPercentage}%
+                    </div>
+                  </th>
+                ),
+              )}
+
+              {/* Result columns */}
+              <th
+                rowSpan={2}
+                style={{ ...thBase, textAlign: "center", minWidth: 80 }}
+              >
+                Total
+              </th>
+              <th
+                rowSpan={2}
+                style={{ ...thBase, textAlign: "center", minWidth: 72 }}
+              >
+                Grade
+              </th>
+              <th
+                rowSpan={2}
+                style={{ ...thBase, textAlign: "center", minWidth: 72 }}
+              >
+                GP
+              </th>
+
+              {/* Eval Status — last column */}
+              <th
+                rowSpan={2}
+                style={{ ...thBase, textAlign: "center", minWidth: 160 }}
+              >
+                Eval Status
+              </th>
             </tr>
-          ) : (
-            rows.map((row, index) => (
-              <ScoreRow
-                key={row.registrationId}
-                row={row}
-                columns={columns}
-                rowIndex={index}
-              />
-            ))
-          )}
-        </tbody>
-      </table>
+
+            {/* ── Row 2 — sub-component headers ── */}
+            <tr>
+              {parentColumns.flatMap((col) =>
+                col.subComponents.map((sub) => (
+                  <th
+                    key={`${col.code}-${sub.code}`}
+                    style={{ ...thSub, minWidth: 90 }}
+                  >
+                    {sub.code}
+                  </th>
+                )),
+              )}
+            </tr>
+          </thead>
+
+          <tbody>
+            {rows.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={totalCols}
+                  style={{
+                    background: token.colorBgContainer,
+                    textAlign: "center",
+                  }}
+                >
+                  {emptyState}
+                </td>
+              </tr>
+            ) : (
+              rows.map((row, index) => (
+                <ScoreRow
+                  key={row.registrationId}
+                  row={row}
+                  columns={columns}
+                  rowIndex={index}
+                  isLocked={isLocked}
+                />
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

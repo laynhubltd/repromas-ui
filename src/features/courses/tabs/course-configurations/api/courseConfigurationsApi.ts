@@ -4,6 +4,8 @@ import type { PaginatedResponse } from "../../courses/types/course";
 import type {
     CourseConfigListParams,
     CourseConfiguration,
+    CourseConfigurationGroupOption,
+    CourseConfigurationGroupedParams,
     CreateCourseConfigRequest,
     UpdateCourseConfigRequest,
 } from "../types/course-configuration";
@@ -16,6 +18,28 @@ const courseConfigurationsApi = baseApi.injectEndpoints({
     >({
       query: (params) => ({ url: "course-configurations", method: "GET", params }),
       providesTags: [{ type: ApiTagTypes.CourseConfiguration, id: "LIST" }],
+    }),
+
+    getCourseConfigurationsGrouped: builder.query<
+      CourseConfigurationGroupOption[],
+      CourseConfigurationGroupedParams
+    >({
+      query: (params) => ({
+        url: "course-configurations/options-grouped",
+        method: "GET",
+        params,
+      }),
+      transformResponse: (
+        response:
+          | PaginatedResponse<CourseConfigurationGroupOption>
+          | CourseConfigurationGroupOption[],
+      ) => {
+        if (Array.isArray(response)) {
+          return response;
+        }
+        return response?.member ?? [];
+      },
+      providesTags: [{ type: ApiTagTypes.CourseConfiguration, id: "GROUPED_OPTIONS" }],
     }),
 
     createCourseConfiguration: builder.mutation<
@@ -47,6 +71,7 @@ const courseConfigurationsApi = baseApi.injectEndpoints({
 
 export const {
   useGetCourseConfigurationsQuery,
+  useGetCourseConfigurationsGroupedQuery,
   useCreateCourseConfigurationMutation,
   useUpdateCourseConfigurationMutation,
   useDeleteCourseConfigurationMutation,
