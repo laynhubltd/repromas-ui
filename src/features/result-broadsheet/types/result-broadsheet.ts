@@ -142,17 +142,49 @@ export type BroadsheetSourceModel =
       isPublished: boolean;
     };
 
+export type CohortBroadsheetLaggard = {
+  courseConfigId?: number;
+  courseCode?: string;
+  courseTitle?: string;
+  creditUnits?: number;
+  status?: string;
+  statusLabel?: string;
+  registeredStudentsCount?: number;
+  gradedStudentsCount?: number;
+  primaryLecturer?: string | null;
+  lastActivityAt?: string | null;
+};
+
 export type CohortBroadsheetApproval = {
   id: number;
   programId: number;
   levelId: number;
   sessionId: number;
   semesterId?: number;
+  semesterTypeId?: number;
+  status?: string;
+  currentStepLabel?: string;
+  isReady?: boolean;
+  isLocked?: boolean;
+  isTerminal?: boolean;
   isPublished: boolean;
   isFrozen: boolean;
   frozenAt?: string | null;
+  canAct?: boolean;
   approvedSheetsCount: number;
   totalSheetsCount: number;
-  laggards?: string[];
+  pendingSheetsCount?: number;
+  completionPercentage?: number;
+  totalStudentsCount?: number;
+  metrics?: {
+    totalSheetsCount: number;
+    approvedSheetsCount: number;
+    pendingSheetsCount: number;
+    completionPercentage: number;
+    totalStudentsCount: number;
+    isReady: boolean;
+  };
+  laggards?: (CohortBroadsheetLaggard | string)[];
 };
+
 

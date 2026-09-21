@@ -113,7 +113,6 @@ describe("ResultBroadsheetPage", () => {
 
     render(<ResultBroadsheetPage />);
 
-    expect(screen.getByText(/Result Broadsheet Viewer/i)).toBeInTheDocument();
     expect(
       screen.getByText(/Please select an Academic Session, Semester, Program, and Level/i),
     ).toBeInTheDocument();
@@ -260,10 +259,10 @@ describe("ResultBroadsheetPage", () => {
 
     render(<ResultBroadsheetPage />);
 
-    // Check Metrics Cards
-    expect(screen.getByText("Registered")).toBeInTheDocument();
-    expect(screen.getByText("Sat for Exam")).toBeInTheDocument();
-    expect(screen.getByText("Passed (Good Standing)")).toBeInTheDocument();
+    // Check Metrics Stats
+    expect(screen.getByText(/Registered/i)).toBeInTheDocument();
+    expect(screen.getByText(/Sat for Exam/i)).toBeInTheDocument();
+    expect(screen.getByText(/Passed/i)).toBeInTheDocument();
 
     // Check Matrix Column Headers
     expect(screen.getByText("Broadsheet Matrix")).toBeInTheDocument();

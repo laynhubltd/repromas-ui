@@ -1,11 +1,10 @@
-// Feature: rbac-settings
 import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import { useToken } from "@/shared/hooks/useToken";
-import { Button, Flex, Form, InputNumber, Modal, Select } from "antd";
+import { Button, Form, InputNumber, Modal } from "antd";
 import { useUserRoleFormModal } from "../../hooks/useUserRoleModal";
 import { deriveScopeLabel, roleScopeOmitsReference } from "../../types/rbac";
-import { ScopeBadge } from "../ScopeBadge";
+import { AssignableRoleSelect } from "../shared/AssignableRoleSelect";
 
 export type UserRoleFormModalProps = {
   open: boolean;
@@ -17,18 +16,8 @@ export type UserRoleFormModalProps = {
 export function UserRoleFormModal({ open, userId, onClose, onSuccess }: UserRoleFormModalProps) {
   const token = useToken();
   const { state, actions, form } = useUserRoleFormModal(userId, open, onClose, onSuccess);
-  const { isSubmitting, roles, selectedScope } = state;
+  const { isSubmitting, selectedScope, isSelfAssignmentRestricted, isEmpty } = state;
   const { handleSubmit, handleCancel, handleRoleChange } = actions;
-
-  const roleOptions = roles.map((role) => ({
-    value: role.id,
-    label: (
-      <Flex align="center" gap={8}>
-        <span>{role.name}</span>
-        <ScopeBadge scope={role.scope} />
-      </Flex>
-    ),
-  }));
 
   const scopeLabel =
     selectedScope && !roleScopeOmitsReference(selectedScope)
@@ -65,16 +54,10 @@ export function UserRoleFormModal({ open, userId, onClose, onSuccess }: UserRole
             }
             rules={[{ required: true, message: "Please select a role." }]}
           >
-            <Select
-              placeholder="Select a role"
-              options={roleOptions}
+            <AssignableRoleSelect
+              targetUserId={userId}
               onChange={handleRoleChange}
-              showSearch
-              filterOption={(input, option) => {
-                const role = roles.find((r) => r.id === option?.value);
-                return role?.name.toLowerCase().includes(input.toLowerCase()) ?? false;
-              }}
-              style={{ width: "100%" }}
+              placeholder="Select a role"
             />
           </Form.Item>
 
@@ -115,7 +98,7 @@ export function UserRoleFormModal({ open, userId, onClose, onSuccess }: UserRole
           <Button
             type="primary"
             loading={isSubmitting}
-            disabled={isSubmitting}
+            disabled={isSubmitting || isSelfAssignmentRestricted || isEmpty}
             onClick={() => form.submit()}
             block
             style={{ height: 48, fontWeight: 600 }}

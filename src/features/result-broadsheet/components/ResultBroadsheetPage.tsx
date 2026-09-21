@@ -4,12 +4,12 @@ import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { SkeletonRows } from "@/shared/ui/SkeletonRows";
 import { Alert, Card, Empty, Flex, Tabs, Typography } from "antd";
 import { type BroadsheetCellMode } from "@/components/ui-kit";
+import { useToken } from "@/shared/hooks/useToken";
 import { useCallback, useState } from "react";
 import { useBroadsheetFilters } from "../hooks/useBroadsheetFilters";
 import { useBroadsheetReport } from "../hooks/useBroadsheetReport";
 import { usePdfExport } from "../hooks/usePdfExport";
 import { BroadsheetApprovalPanel } from "./BroadsheetApprovalPanel";
-import { BroadsheetExplainer } from "./BroadsheetExplainer";
 import { BroadsheetFilterBar } from "./BroadsheetFilterBar";
 import { BroadsheetMatrixTable } from "./BroadsheetMatrixTable";
 import { BroadsheetMetricsRow } from "./BroadsheetMetricsRow";
@@ -40,6 +40,7 @@ function getInitialCellMode(): BroadsheetCellMode {
 }
 
 export function ResultBroadsheetPage() {
+  const token = useToken();
   const [activeTabKey, setActiveTabKey] = useState<string>("matrix");
   const [cellMode, setCellMode] = useState<BroadsheetCellMode>(getInitialCellMode);
 
@@ -118,18 +119,18 @@ export function ResultBroadsheetPage() {
     },
     ...(reportState.hasGraduates
       ? [
-          {
-            key: "graduates",
-            label: `Graduates (${reportState.graduatedStudents.length})`,
-            children: (
-              <GraduatesTable
-                graduatedStudents={reportState.graduatedStudents}
-                classificationFootnote={reportState.classificationFootnote}
-                isLoading={reportState.isFetching}
-              />
-            ),
-          },
-        ]
+        {
+          key: "graduates",
+          label: `Graduates (${reportState.graduatedStudents.length})`,
+          children: (
+            <GraduatesTable
+              graduatedStudents={reportState.graduatedStudents}
+              classificationFootnote={reportState.classificationFootnote}
+              isLoading={reportState.isFetching}
+            />
+          ),
+        },
+      ]
       : []),
   ];
 
@@ -147,18 +148,13 @@ export function ResultBroadsheetPage() {
     >
       <Flex
         vertical
-        gap={16}
+        gap={token.marginSM}
         style={{
-          padding: "16px 12px",
           width: "100%",
           maxWidth: "100%",
-          boxSizing: "border-box",
-          overflowX: "hidden",
+          minWidth: 0,
         }}
       >
-        {/* Explainer Callout */}
-        <BroadsheetExplainer />
-
         {/* Metrics Overview Row */}
         <BroadsheetMetricsRow
           statistics={reportState.statistics}
@@ -209,7 +205,7 @@ export function ResultBroadsheetPage() {
 
         {/* Content Body */}
         {!filterState.isFilterComplete ? (
-          <Card>
+          <Card style={{ width: "100%", maxWidth: "100%", minWidth: 0 }}>
             <Empty
               description={
                 <Typography.Text type="secondary">
@@ -219,7 +215,7 @@ export function ResultBroadsheetPage() {
             />
           </Card>
         ) : reportState.isLoading ? (
-          <Card>
+          <Card style={{ width: "100%", maxWidth: "100%", minWidth: 0 }}>
             <SkeletonRows count={8} />
           </Card>
         ) : reportState.isError ? (
@@ -227,9 +223,9 @@ export function ResultBroadsheetPage() {
             variant="section"
             error={
               typeof reportState.error === "object" &&
-              reportState.error !== null &&
-              "data" in reportState.error &&
-              typeof (reportState.error as { data?: { message?: string } }).data?.message === "string"
+                reportState.error !== null &&
+                "data" in reportState.error &&
+                typeof (reportState.error as { data?: { message?: string } }).data?.message === "string"
                 ? (reportState.error as { data?: { message?: string } }).data?.message ?? "Failed to load result broadsheet."
                 : "Unable to retrieve cohort results."
             }
@@ -238,7 +234,7 @@ export function ResultBroadsheetPage() {
             }}
           />
         ) : !reportState.hasData ? (
-          <Card>
+          <Card style={{ width: "100%", maxWidth: "100%", minWidth: 0 }}>
             <Empty
               description={
                 <Typography.Text type="secondary">
@@ -250,7 +246,7 @@ export function ResultBroadsheetPage() {
         ) : (
           <Card
             styles={{ body: { padding: "12px 14px" } }}
-            style={{ width: "100%", maxWidth: "100%", minWidth: 0 }}
+            style={{ width: "100%", maxWidth: "100%", minWidth: 0, overflow: "hidden" }}
           >
             <Tabs
               activeKey={activeTabKey}

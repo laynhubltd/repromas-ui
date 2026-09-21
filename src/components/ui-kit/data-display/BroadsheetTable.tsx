@@ -861,7 +861,8 @@ export function BroadsheetTable<RecordType extends object = BroadsheetRowBase>({
       style={{
         position: "relative",
         width: "100%",
-        overflowX: "auto",
+        maxWidth: "100%",
+        minWidth: 0,
         ...style,
       }}
       data-testid={dataTestId}

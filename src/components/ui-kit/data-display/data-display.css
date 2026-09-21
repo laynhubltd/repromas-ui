@@ -9,8 +9,34 @@
 }
 
 .ui-kit-table--density-ledger .ant-table-thead > tr > th {
-  background-color: var(--ant-color-fill-alter, #fafafa) !important;
+  background-color: #fafafa !important;
   font-weight: 600 !important;
+}
+
+/* Fixed left and right header cells (solid opaque #fafafa with elevated z-index) */
+.ui-kit-table--density-ledger .ant-table-thead th.ant-table-cell-fix-left,
+.ui-kit-table--density-ledger .ant-table-thead th.ant-table-cell-fix-right,
+.ant-table-wrapper .ui-kit-table--density-ledger .ant-table-thead th.ant-table-cell-fix-left,
+.ant-table-wrapper .ui-kit-table--density-ledger .ant-table-thead th.ant-table-cell-fix-right {
+  background-color: #fafafa !important;
+  z-index: 4 !important;
+}
+
+/* Fixed left and right body cells (solid opaque #ffffff so scrolling content never bleeds through) */
+.ui-kit-table--density-ledger .ant-table-tbody > tr > td.ant-table-cell-fix-left,
+.ui-kit-table--density-ledger .ant-table-tbody > tr > td.ant-table-cell-fix-right,
+.ant-table-wrapper .ui-kit-table--density-ledger .ant-table-tbody > tr > td.ant-table-cell-fix-left,
+.ant-table-wrapper .ui-kit-table--density-ledger .ant-table-tbody > tr > td.ant-table-cell-fix-right {
+  background-color: #ffffff !important;
+  z-index: 2 !important;
+}
+
+/* Fixed cells hover background */
+.ui-kit-table--density-ledger .ant-table-tbody > tr:hover > td.ant-table-cell-fix-left,
+.ui-kit-table--density-ledger .ant-table-tbody > tr:hover > td.ant-table-cell-fix-right,
+.ant-table-wrapper .ui-kit-table--density-ledger .ant-table-tbody > tr:hover > td.ant-table-cell-fix-left,
+.ant-table-wrapper .ui-kit-table--density-ledger .ant-table-tbody > tr:hover > td.ant-table-cell-fix-right {
+  background-color: #f5f5f5 !important;
 }
 
 .ui-kit-table--density-compact .ant-table-thead > tr > th,

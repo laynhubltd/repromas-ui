@@ -1,3 +1,4 @@
+import { AssignableRoleSelect } from "@/features/settings/tabs/rbac-settings/components/shared/AssignableRoleSelect";
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
 import { Button, DatePicker, Flex, Form, Input, Modal, Select, Typography } from "antd";
@@ -19,16 +20,14 @@ type UserFormModalProps = {
   open: boolean;
   target: TenantUser | null;
   controller: UserFormController;
-  roleOptions: { value: number; label: string }[];
-  isRolesLoading: boolean;
+  roleOptions?: { value: number; label: string }[];
+  isRolesLoading?: boolean;
 };
 
 export function UserFormModal({
   open,
   target,
   controller,
-  roleOptions,
-  isRolesLoading,
 }: UserFormModalProps) {
   const token = useToken();
   const { state, actions, form } = controller;
@@ -144,18 +143,7 @@ export function UserFormModal({
           {/* Role — create only; changes go through Manage Roles modal */}
           <ConditionalRenderer when={!isEditMode}>
             <Form.Item name="roleId" label="Role" rules={roleRules}>
-              <Select
-                showSearch
-                filterOption={(input, opt) =>
-                  String(opt?.label ?? "")
-                    .toLowerCase()
-                    .includes(input.toLowerCase())
-                }
-                placeholder="Select a role"
-                loading={isRolesLoading}
-                options={roleOptions}
-                style={{ width: "100%" }}
-              />
+              <AssignableRoleSelect placeholder="Select a role" />
             </Form.Item>
           </ConditionalRenderer>
 

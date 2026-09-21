@@ -83,6 +83,8 @@ export const ApiTagTypes = {
   WorkflowDefinition: "WorkflowDefinition",
   WorkflowTransitions: "WorkflowTransitions",
   WorkflowAudit: "WorkflowAudit",
+  AssignablePicker: "AssignablePicker",
+  RoleAssignableRole: "RoleAssignableRole",
 } as const;
 
 export type ApiTagLiteral = (typeof ApiTagTypes)[keyof typeof ApiTagTypes];

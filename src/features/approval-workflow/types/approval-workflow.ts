@@ -19,6 +19,7 @@ export type WorkflowStepDto = {
   isInitial?: boolean;
   isTerminal?: boolean;
   isEditable?: boolean;
+  canAct?: boolean;
   outgoingTransitions?: WorkflowTransitionDto[];
 };
 
@@ -44,6 +45,7 @@ export type AvailableTransitionsResponse = {
   transitions: WorkflowTransitionDto[];
   isLocked: boolean;
   isTerminal: boolean;
+  canAct?: boolean;
 };
 
 export type ExecuteTransitionRequest = {

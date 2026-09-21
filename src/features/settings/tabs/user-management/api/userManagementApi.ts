@@ -1,7 +1,6 @@
 import { baseApi } from "@/app/api/baseApi";
 import { ApiTagTypes } from "@/shared/types/apiTagTypes";
 import type {
-  AssignUserRoleRequest,
   CreateUserRequest,
   ResendPasswordRequest,
   ResendPasswordResponse,
@@ -9,7 +8,6 @@ import type {
   TenantUsersListParams,
   TenantUsersListResponse,
   UpdateUserRequest,
-  UserRoleAssignment,
 } from "../types/user-management";
 
 const userManagementApi = baseApi.injectEndpoints({
@@ -83,33 +81,6 @@ const userManagementApi = baseApi.injectEndpoints({
       }),
       // No cache tags — this is a fire-and-forget action email
     }),
-
-    // ── Role assignment ──────────────────────────────────────────────────────
-
-    // POST /api/user-roles
-    assignUserRole: builder.mutation<UserRoleAssignment, AssignUserRoleRequest>({
-      query: (body) => ({
-        url: "/user-roles",
-        method: "POST",
-        data: body,
-      }),
-      invalidatesTags: [
-        { type: ApiTagTypes.UserRole, id: "LIST" },
-        { type: ApiTagTypes.User, id: "LIST" },
-      ],
-    }),
-
-    // DELETE /api/user-roles/{id}
-    removeUserRole: builder.mutation<void, number>({
-      query: (id) => ({
-        url: `/user-roles/${id}`,
-        method: "DELETE",
-      }),
-      invalidatesTags: [
-        { type: ApiTagTypes.UserRole, id: "LIST" },
-        { type: ApiTagTypes.User, id: "LIST" },
-      ],
-    }),
   }),
 });
 
@@ -119,8 +90,6 @@ export const {
   useCreateUserMutation,
   useUpdateUserMutation,
   useResendPasswordResetMutation,
-  useAssignUserRoleMutation,
-  useRemoveUserRoleMutation,
 } = userManagementApi;
 
 export default userManagementApi;

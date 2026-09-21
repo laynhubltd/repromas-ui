@@ -1,10 +1,10 @@
-// Feature: staff
 import { useGetDepartmentsQuery } from "@/features/academic-structure/api/departmentsApi";
 import { useGetFacultiesQuery } from "@/features/academic-structure/api/facultiesApi";
 import { useGetProgramsQuery } from "@/features/program/tabs/programs/api/programsApi";
-import { useGetRolesQuery } from "@/features/role/api/rolesApi";
+import { AssignableRoleSelect } from "@/features/settings/tabs/rbac-settings/components/shared/AssignableRoleSelect";
+import { useAssignableRolePicker } from "@/features/settings/tabs/rbac-settings/hooks/useAssignableRolePicker";
 import { useToken } from "@/shared/hooks/useToken";
-import { Alert, Badge, Button, DatePicker, Form, Input, Modal, Select, Tag, Typography } from "antd";
+import { Alert, Button, DatePicker, Form, Input, Modal, Select, Typography } from "antd";
 import { useStaffFormModal } from "../../hooks/useStaffModal";
 import type { Staff } from "../../types/staff";
 import {
@@ -23,22 +23,6 @@ export type StaffFormModalProps = {
   onClose: () => void;
 };
 
-const SCOPE_LABEL: Record<string, string> = {
-  GLOBAL: "Global",
-  FACULTY: "Faculty",
-  DEPARTMENT: "Department",
-  PROGRAM: "Program",
-  CANDIDATE: "Candidate",
-};
-
-const SCOPE_COLOR: Record<string, string> = {
-  GLOBAL: "blue",
-  FACULTY: "green",
-  DEPARTMENT: "orange",
-  PROGRAM: "purple",
-  CANDIDATE: "cyan",
-};
-
 export function StaffFormModal({ open, target, onClose }: StaffFormModalProps) {
   const token = useToken();
   const { state, actions, form } = useStaffFormModal(target, open, onClose);
@@ -48,12 +32,8 @@ export function StaffFormModal({ open, target, onClose }: StaffFormModalProps) {
   // Watch roleId to determine scope
   const selectedRoleId = Form.useWatch("roleId", form);
 
-  // Roles
-  const { data: rolesData, isLoading: isRolesLoading } = useGetRolesQuery(
-    { sort: "name:asc", itemsPerPage: 100 },
-    { skip: isEditMode }
-  );
-  const roles = rolesData?.member ?? [];
+  // Delegated Roles
+  const { roles } = useAssignableRolePicker({ skip: isEditMode });
   const selectedRole = roles.find((r) => r.id === selectedRoleId) ?? null;
   const selectedScope = selectedRole?.scope ?? null;
 
@@ -208,47 +188,12 @@ export function StaffFormModal({ open, target, onClose }: StaffFormModalProps) {
                 name="roleId"
                 label="Role"
               >
-                <Select
+                <AssignableRoleSelect
                   placeholder="Select role (optional)"
-                  loading={isRolesLoading}
-                  showSearch
                   allowClear
-                  optionFilterProp="label"
-                  style={{ height: 40 }}
                   onChange={() => {
                     // Reset scopeReferenceId when role changes
                     form.setFieldValue("scopeReferenceId", undefined);
-                  }}
-                  options={roles.map((r) => ({
-                    value: r.id,
-                    label: r.name,
-                  }))}
-                  optionRender={(option) => {
-                    const role = roles.find((r) => r.id === option.value);
-                    return (
-                      <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        {option.label}
-                        {role && (
-                          <Tag color={SCOPE_COLOR[role.scope] ?? "default"} style={{ marginLeft: "auto" }}>
-                            {SCOPE_LABEL[role.scope] ?? role.scope}
-                          </Tag>
-                        )}
-                      </span>
-                    );
-                  }}
-                  labelRender={(props) => {
-                    const role = roles.find((r) => r.id === props.value);
-                    if (!role) return <span>{props.label}</span>;
-                    return (
-                      <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        {role.name}
-                        <Badge
-                          count={SCOPE_LABEL[role.scope] ?? role.scope}
-                          color={SCOPE_COLOR[role.scope] ?? "default"}
-                          style={{ fontSize: 10 }}
-                        />
-                      </span>
-                    );
                   }}
                 />
               </Form.Item>
