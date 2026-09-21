@@ -38,10 +38,43 @@ export type Role = {
   name: string;
   scope: RoleScope;
   description: string | null;
+  isSystem?: boolean;
+  canAssignAll?: boolean;
   tenantId: number;
   createdAt: string;
   updatedAt: string;
   permissions: Permission[] | null; // null = not loaded; [] = loaded but empty
+};
+
+export type RoleAssignableRole = {
+  id: number;
+  roleId: number;
+  assignableRoleId: number;
+  assignableRoleName: string;
+  assignableRoleScope: RoleScope;
+  createdAt: string;
+};
+
+export type AddAssignableRolePayload = {
+  roleId: number;
+  assignableRoleId: number;
+};
+
+export type RemoveAssignableRolePayload = {
+  roleId: number;
+  targetRoleId: number;
+};
+
+export type AssignUserRolePayload = {
+  userId: number;
+  roleId: number;
+  scopeReferenceId: number | null;
+};
+
+export type RevokeUserRolePayload = {
+  userId: number;
+  roleId: number;
+  scopeReferenceId?: number | null;
 };
 
 export type UserRole = {
@@ -95,6 +128,7 @@ export type RoleListParams = {
   include?: "permissions";
   "search[name]"?: string;
   "exact[scope]"?: RoleScope;
+  assignableOnly?: 1 | 0;
 };
 
 export type UserRoleListParams = {

@@ -1,8 +1,7 @@
-// Feature: rbac-settings
 import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import { useToken } from "@/shared/hooks/useToken";
-import { Button, Flex, Modal, Typography } from "antd";
+import { Alert, Button, Flex, Modal, Typography } from "antd";
 import { useRevokeUserRoleModal } from "../../hooks/useUserRoleModal";
 import type { UserRole } from "../../types/rbac";
 import { ScopeBadge } from "../ScopeBadge";
@@ -11,6 +10,7 @@ export type RevokeUserRoleModalProps = {
   open: boolean;
   target: UserRole | null;
   userId: number;
+  userName?: string;
   onClose: () => void;
   onSuccess?: () => void;
 };
@@ -19,22 +19,32 @@ export function RevokeUserRoleModal({
   open,
   target,
   userId,
+  userName,
   onClose,
   onSuccess,
 }: RevokeUserRoleModalProps) {
   const token = useToken();
   const { state, actions } = useRevokeUserRoleModal(target, userId, open, onClose, onSuccess);
-  const { isRevoking } = state;
+  const { isRevoking, lockoutError } = state;
   const { handleConfirm, handleCancel } = actions;
+
+  const isGlobalAdminRole =
+    target?.scope === "GLOBAL" || target?.roleName === "System Administrator";
 
   return (
     <Modal
-      title="Revoke Role"
+      title={
+        target
+          ? `Revoke ${target.roleName} Role${userName ? ` from ${userName}` : ""}?`
+          : "Revoke Role"
+      }
       open={open}
-      onCancel={handleCancel}
+      onCancel={isRevoking ? undefined : handleCancel}
       footer={null}
-      width={480}
-      closable
+      width={500}
+      closable={!isRevoking}
+      keyboard={!isRevoking}
+      maskClosable={!isRevoking}
       styles={{
         body: { padding: `${token.paddingSM}px ${token.paddingSM}px` },
         header: {
@@ -44,9 +54,27 @@ export function RevokeUserRoleModal({
         },
       }}
     >
-      <div style={{ padding: 24 }}>
+      <Flex vertical gap={16} style={{ padding: 24 }}>
+        {lockoutError && (
+          <Alert
+            type="error"
+            showIcon
+            message="Cannot Revoke Role (409 Conflict)"
+            description={lockoutError}
+          />
+        )}
+
+        {isGlobalAdminRole && !lockoutError && (
+          <Alert
+            type="warning"
+            showIcon
+            message="Global Administrator Protection"
+            description="Revoking global administrator roles is verified against active administrator counts. The last administrator in the tenant cannot be revoked."
+          />
+        )}
+
         <Typography.Text>
-          Revoke role{" "}
+          Are you sure you want to revoke the role{" "}
           <Typography.Text strong>'{target?.roleName}'</Typography.Text>
           {target && (
             <>
@@ -56,9 +84,9 @@ export function RevokeUserRoleModal({
               </Flex>
             </>
           )}
-          ? This cannot be undone.
+          ? This will immediately remove all associated permissions.
         </Typography.Text>
-      </div>
+      </Flex>
 
       <div
         style={{
@@ -70,34 +98,34 @@ export function RevokeUserRoleModal({
           background: token.colorBgLayout,
         }}
       >
+        <Button
+          type="default"
+          block
+          autoFocus
+          onClick={handleCancel}
+          disabled={isRevoking}
+          style={{
+            height: 44,
+            fontWeight: 600,
+          }}
+        >
+          Cancel
+        </Button>
         <PermissionGuard permission={Permission.UserRolesDelete}>
           <Button
             type="primary"
             danger
             loading={isRevoking}
-            disabled={isRevoking}
+            disabled={isRevoking || Boolean(lockoutError)}
             onClick={handleConfirm}
             block
-            style={{ height: 48, fontWeight: 600 }}
+            style={{ height: 44, fontWeight: 600 }}
           >
             Revoke Role
           </Button>
         </PermissionGuard>
-        <Button
-          type="text"
-          block
-          onClick={handleCancel}
-          disabled={isRevoking}
-          style={{
-            height: 40,
-            color: token.colorTextSecondary,
-            fontWeight: 500,
-            fontSize: token.fontSizeSM,
-          }}
-        >
-          Cancel
-        </Button>
       </div>
     </Modal>
   );
 }
+

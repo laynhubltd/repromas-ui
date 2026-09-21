@@ -1,10 +1,18 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { Provider } from "react-redux";
-import { describe, expect, it, vi } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 import { baseApi } from "@/app/api/baseApi";
 import type { AvailableTransitionsResponse } from "../types/approval-workflow";
 import { WorkflowStatusBar } from "./WorkflowStatusBar";
+
+beforeAll(() => {
+  global.ResizeObserver = class ResizeObserver {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  };
+});
 
 function makeStore() {
   return configureStore({
@@ -78,6 +86,7 @@ describe("WorkflowStatusBar", () => {
       ],
       isLocked: false,
       isTerminal: false,
+      canAct: true,
     };
 
     const handleInitiateTransition = vi.fn();
@@ -90,6 +99,7 @@ describe("WorkflowStatusBar", () => {
         transitions: mockData.transitions,
         isLocked: false,
         isTerminal: false,
+        canAct: true,
         isLoading: false,
         isFetching: false,
         isExecuting: false,
@@ -127,6 +137,11 @@ describe("WorkflowStatusBar", () => {
     expect(submitBtn).toBeInTheDocument();
 
     fireEvent.click(submitBtn);
+
+    const confirmBtn = screen.getByRole("button", { name: "Confirm" });
+    expect(confirmBtn).toBeInTheDocument();
+    fireEvent.click(confirmBtn);
+
     expect(handleInitiateTransition).toHaveBeenCalledWith(mockData.transitions[0]);
   });
 
@@ -177,5 +192,57 @@ describe("WorkflowStatusBar", () => {
     );
 
     expect(screen.getByText("Approved & Published")).toBeInTheDocument();
+  });
+
+  it("renders 'Under Review (View Only)' tag when user cannot act (canAct: false)", () => {
+    const mockData: AvailableTransitionsResponse = {
+      currentStep: mockSteps[1],
+      steps: mockSteps,
+      transitions: [],
+      isLocked: true,
+      isTerminal: false,
+      canAct: false,
+    };
+
+    mockUseWorkflowTransitions.mockReturnValue({
+      state: {
+        availableTransitions: mockData,
+        currentStep: mockData.currentStep,
+        steps: mockData.steps,
+        transitions: [],
+        isLocked: true,
+        isTerminal: false,
+        canAct: false,
+        isLoading: false,
+        isFetching: false,
+        isExecuting: false,
+        isCommentModalOpen: false,
+        selectedTransition: null,
+        comment: "",
+        isPropagating: false,
+        isAuditDrawerOpen: false,
+      },
+      actions: {
+        handleInitiateTransition: vi.fn(),
+        handleCommentChange: vi.fn(),
+        handleConfirmCommentModal: vi.fn(),
+        handleCancelCommentModal: vi.fn(),
+        handleOpenAuditDrawer: vi.fn(),
+        handleCloseAuditDrawer: vi.fn(),
+        refetch: vi.fn(),
+      },
+    });
+
+    render(
+      <Provider store={makeStore()}>
+        <WorkflowStatusBar
+          targetEntity="SCORE_SHEET"
+          targetId={99}
+        />
+      </Provider>,
+    );
+
+    expect(screen.getByText("Under Review (View Only)")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Submit/i })).not.toBeInTheDocument();
   });
 });

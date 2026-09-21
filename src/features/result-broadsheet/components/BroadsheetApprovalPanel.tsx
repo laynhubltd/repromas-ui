@@ -7,7 +7,7 @@ import {
   CheckCircleOutlined,
   ExclamationCircleOutlined,
 } from "@ant-design/icons";
-import { Alert, Flex, Progress, Typography } from "antd";
+import { Alert, Flex, Progress, Tag, Typography } from "antd";
 import type { CohortBroadsheetApproval } from "../types/result-broadsheet";
 
 type BroadsheetApprovalPanelProps = {
@@ -33,72 +33,128 @@ export function BroadsheetApprovalPanel({
         display: "flex",
         flexDirection: "column",
         gap: token.marginSM,
-        marginBottom: token.marginMD,
       }}
     >
-      {/* ── Completeness Meter (Pre-submission context) ── */}
-      <div
-        style={{
-          padding: `${token.paddingSM}px ${token.paddingMD}px`,
-          background: token.colorBgContainer,
-          border: `1px solid ${token.colorBorderSecondary}`,
-          borderRadius: token.borderRadiusLG,
-        }}
-      >
-        <Flex
-          justify="space-between"
-          align="center"
-          wrap="wrap"
-          gap={token.marginSM}
-          style={{ marginBottom: token.marginXS }}
+      {/* ── Completeness Gate: Passed State (100% Complete) ── */}
+      <ConditionalRenderer when={isComplete}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: token.marginXS,
+            padding: `${token.paddingXXS + 2}px ${token.paddingSM}px`,
+            background: token.colorSuccessBg,
+            border: `1px solid ${token.colorSuccessBorder}`,
+            borderRadius: token.borderRadiusLG,
+            fontSize: token.fontSizeSM,
+          }}
         >
           <Flex align="center" gap={token.marginXS}>
-            {isComplete ? (
-              <CheckCircleOutlined style={{ color: token.colorSuccess }} />
-            ) : (
-              <ExclamationCircleOutlined style={{ color: token.colorWarning }} />
-            )}
-            <Typography.Text strong style={{ fontSize: token.fontSize }}>
-              Course Score Sheets Completeness Gate
+            <CheckCircleOutlined style={{ color: token.colorSuccess }} />
+            <Typography.Text strong style={{ color: token.colorSuccessText, fontSize: token.fontSizeSM }}>
+              Course Score Sheets Completeness Gate Passed
             </Typography.Text>
+            <Tag color="success" style={{ marginInlineEnd: 0, fontSize: token.fontSizeSM - 1 }}>
+              {approved}/{total} Score Sheets Approved (100%)
+            </Tag>
           </Flex>
-
-          <Typography.Text type="secondary" style={{ fontSize: token.fontSizeSM }}>
-            <strong>{approved}</strong> of <strong>{total}</strong> course score sheets approved ({percent}%)
+          <Typography.Text type="secondary" style={{ fontSize: token.fontSizeSM - 1 }}>
+            All course scores finalized & verified for cohort workflow progression.
           </Typography.Text>
-        </Flex>
+        </div>
+      </ConditionalRenderer>
 
-        <Progress
-          percent={percent}
-          status={isComplete ? "success" : "active"}
-          strokeColor={isComplete ? token.colorSuccess : token.colorPrimary}
-        />
-
-        {/* Laggards Warning */}
-        <ConditionalRenderer when={hasLaggards && !isComplete}>
-          <Alert
-            type="warning"
-            showIcon
-            style={{ marginTop: token.marginSM }}
-            message={
+      {/* ── Completeness Gate: Pending / Incomplete State ── */}
+      <ConditionalRenderer when={!isComplete}>
+        <Alert
+          type="warning"
+          showIcon
+          icon={<ExclamationCircleOutlined />}
+          style={{
+            padding: "8px 12px",
+            borderRadius: token.borderRadiusLG,
+          }}
+          title={
+            <Flex justify="space-between" align="center" wrap="wrap" gap={token.marginXS}>
               <span>
-                <strong>Unapproved Course Score Sheets</strong> — All course score sheets must be finalized before broadsheet submission.
+                <strong>Course Score Sheets Completeness Gate</strong>: {approved} of {total} score sheets approved ({percent}%)
               </span>
-            }
-            description={
-              <ul style={{ margin: "4px 0 0 16px", padding: 0 }}>
-                {approval.laggards?.map((courseName, idx) => (
-                  <li key={idx}>
-                    <Typography.Text style={{ fontSize: token.fontSizeSM }}>
-                      {courseName}
-                    </Typography.Text>
-                  </li>
-                ))}
-              </ul>
-            }
-          />
-        </ConditionalRenderer>
-      </div>
+              <Typography.Text type="secondary" style={{ fontSize: token.fontSizeSM }}>
+                All course score sheets must be finalized before cohort submission.
+              </Typography.Text>
+            </Flex>
+          }
+          description={
+            hasLaggards ? (
+              <div style={{ marginTop: token.marginXS }}>
+                <Progress
+                  percent={percent}
+                  size="small"
+                  status="active"
+                  strokeColor={token.colorPrimary}
+                  style={{ marginBottom: token.marginXS }}
+                />
+                <ul style={{ margin: "4px 0 0 16px", padding: 0 }}>
+                  {approval.laggards?.map((item, idx) => {
+                    if (typeof item === "string") {
+                      return (
+                        <li key={idx} style={{ marginBottom: 2 }}>
+                          <Typography.Text style={{ fontSize: token.fontSizeSM }}>
+                            {item}
+                          </Typography.Text>
+                        </li>
+                      );
+                    }
+
+                    const code = item.courseCode || "";
+                    const courseTitle = item.courseTitle || "";
+                    const status = item.statusLabel || item.status || "";
+                    const credits = item.creditUnits ? `${item.creditUnits} CU` : "";
+                    const gradedInfo =
+                      item.registeredStudentsCount !== undefined &&
+                      item.gradedStudentsCount !== undefined
+                        ? `(${item.gradedStudentsCount}/${item.registeredStudentsCount} graded)`
+                        : "";
+
+                    return (
+                      <li key={item.courseConfigId ?? idx} style={{ marginBottom: 2 }}>
+                        <Flex align="center" gap={token.marginXS} wrap="wrap">
+                          <Typography.Text strong style={{ fontSize: token.fontSizeSM }}>
+                            {code}
+                          </Typography.Text>
+                          <Typography.Text style={{ fontSize: token.fontSizeSM }}>
+                            — {courseTitle}
+                          </Typography.Text>
+                          {credits && (
+                            <Tag style={{ marginInlineEnd: 0, fontSize: token.fontSizeSM - 1 }}>
+                              {credits}
+                            </Tag>
+                          )}
+                          {status && (
+                            <Tag
+                              color={status === "PUBLISHED" ? "success" : "warning"}
+                              style={{ marginInlineEnd: 0, fontSize: token.fontSizeSM - 1 }}
+                            >
+                              {status}
+                            </Tag>
+                          )}
+                          {gradedInfo && (
+                            <Typography.Text type="secondary" style={{ fontSize: token.fontSizeSM }}>
+                              {gradedInfo}
+                            </Typography.Text>
+                          )}
+                        </Flex>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ) : undefined
+          }
+        />
+      </ConditionalRenderer>
 
       {/* ── Workflow Status Bar & Approval Actions ── */}
       <WorkflowStatusBar

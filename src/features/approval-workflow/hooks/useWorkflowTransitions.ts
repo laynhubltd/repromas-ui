@@ -158,6 +158,10 @@ export function useWorkflowTransitions({
       transitions: availableTransitions?.transitions ?? [],
       isLocked: availableTransitions?.isLocked ?? false,
       isTerminal: availableTransitions?.isTerminal ?? false,
+      canAct:
+        availableTransitions?.canAct ??
+        availableTransitions?.currentStep?.canAct ??
+        (availableTransitions?.transitions ?? []).length > 0,
       isLoading,
       isFetching,
       isExecuting,

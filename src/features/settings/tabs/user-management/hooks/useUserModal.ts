@@ -8,7 +8,6 @@ import { Form } from "antd";
 import { useCallback, useEffect, useMemo, useReducer } from "react";
 import {
   useAssignRoleToUserMutation,
-  useGetRolesQuery,
   useGetUserRolesQuery,
   useRevokeRoleFromUserMutation,
 } from "@/features/settings/tabs/rbac-settings/api/rbacSettingsApi";
@@ -21,6 +20,7 @@ import {
   useCreateUserMutation,
   useUpdateUserMutation,
 } from "../api/userManagementApi";
+import { useAssignableRolePicker } from "@/features/settings/tabs/rbac-settings/hooks/useAssignableRolePicker";
 import {
   UserRoleAssignmentActionType,
   initialUserRoleAssignmentState,
@@ -143,18 +143,18 @@ export function useUserFormModal(
   // Stable initial values — form remounts via key in the view so no useEffect needed
   const initialValues: Partial<UserFormValues> = isEditMode
     ? {
-        email: target.email,
-        firstName: target.firstName ?? "",
-        lastName: target.lastName ?? "",
-        phoneNumber: target.phoneNumber ?? "",
-        dateOfBirth: target.dateOfBirth ?? undefined,
-      }
+      email: target.email,
+      firstName: target.firstName ?? "",
+      lastName: target.lastName ?? "",
+      phoneNumber: target.phoneNumber ?? "",
+      dateOfBirth: target.dateOfBirth ?? undefined,
+    }
     : {
-        email: "",
-        firstName: "",
-        lastName: "",
-        phoneNumber: "",
-      };
+      email: "",
+      firstName: "",
+      lastName: "",
+      phoneNumber: "",
+    };
 
   // ── Submit ────────────────────────────────────────────────────────────────
 
@@ -249,7 +249,6 @@ export function useUserFormModal(
 
 // ─── Manage User Roles (assign + revoke, multi-role) ─────────────────────────
 
-const ROLES_QUERY = { itemsPerPage: 200 } as const;
 const SCOPE_QUERY = { itemsPerPage: 200 } as const;
 
 export function useManageUserRolesModal(
@@ -288,19 +287,23 @@ export function useManageUserRolesModal(
     }),
   );
 
-  // ── Role options datasource ─────────────────────────────────────────────────
+  // ── Delegated assignable role options datasource ───────────────────────────
 
-  const { data: rolesData, isLoading: isLoadingRoles } =
-    useGetRolesQuery(ROLES_QUERY, { skip: !open });
+  const {
+    roles: assignableRoles,
+    isLoading: isLoadingRoles,
+    isSelfAssignmentRestricted,
+    isEmpty: isAssignableEmpty,
+  } = useAssignableRolePicker({ targetUserId: target?.id, skip: !open });
 
-  const roleOptions = (rolesData?.member ?? []).map((r: Role) => ({
+  const roleOptions = assignableRoles.map((r: Role) => ({
     value: r.id,
     label: r.name,
     scope: r.scope,
   }));
 
   // Derive selected role's scope to conditionally show scope reference select
-  const selectedRole = (rolesData?.member ?? []).find(
+  const selectedRole = assignableRoles.find(
     (r: Role) => r.id === formState.selectedRoleId,
   ) ?? null;
   const needsScopeRef =
@@ -381,8 +384,8 @@ export function useManageUserRolesModal(
           s.userId === target.id ||
           Boolean(
             target.email &&
-              s.profile?.email &&
-              s.profile.email.toLowerCase() === target.email.toLowerCase(),
+            s.profile?.email &&
+            s.profile.email.toLowerCase() === target.email.toLowerCase(),
           ),
       ) ?? null
     );
@@ -410,6 +413,16 @@ export function useManageUserRolesModal(
 
   const handleAddRole = useCallback(async () => {
     if (!target || !formState.selectedRoleId) return;
+
+    if (isSelfAssignmentRestricted) {
+      handleApiError(
+        new Error(
+          "Users cannot assign roles to themselves under the delegated authority policy.",
+        ),
+        { context: { screen: RequestScreen.Action, method: "POST" } },
+      );
+      return;
+    }
 
     const scopeReferenceId =
       needsScopeRef ? (formState.selectedScopeRefId ?? null) : null;
@@ -444,6 +457,7 @@ export function useManageUserRolesModal(
     formState.selectedScopeRefId,
     needsScopeRef,
     selectedRole,
+    isSelfAssignmentRestricted,
     assignRole,
     handleApiError,
   ]);
@@ -481,15 +495,15 @@ export function useManageUserRolesModal(
   const handleRoleSelect = useCallback(
     (roleId: number | null) => {
       dispatch({ type: UserRoleAssignmentActionType.SetSelectedRoleId, roleId });
-      const nextRole = (rolesData?.member ?? []).find((r: Role) => r.id === roleId);
+      const nextRole = assignableRoles.find((r: Role) => r.id === roleId);
       if (nextRole?.scope === "LECTURER") {
         const matched = (staffData?.member ?? []).find(
           (s) =>
             s.userId === target?.id ||
             Boolean(
               target?.email &&
-                s.profile?.email &&
-                s.profile.email.toLowerCase() === target.email.toLowerCase(),
+              s.profile?.email &&
+              s.profile.email.toLowerCase() === target.email.toLowerCase(),
             ),
         );
         dispatch({
@@ -503,7 +517,7 @@ export function useManageUserRolesModal(
         });
       }
     },
-    [rolesData?.member, staffData?.member, target],
+    [assignableRoles, staffData?.member, target],
   );
 
   const handleScopeRefSelect = useCallback((refId: number | null) => {
@@ -535,6 +549,8 @@ export function useManageUserRolesModal(
       isScopeRefLoading,
       isAssigning,
       isRevoking,
+      isSelfAssignmentRestricted,
+      isAssignableEmpty,
     },
     actions: {
       handleAddRole,
@@ -548,7 +564,8 @@ export function useManageUserRolesModal(
       hasAssignments: assignments.length > 0,
       canAdd:
         formState.selectedRoleId !== null &&
-        (!needsScopeRef || formState.selectedScopeRefId !== null),
+        (!needsScopeRef || formState.selectedScopeRefId !== null) &&
+        !isSelfAssignmentRestricted,
     },
   };
 }

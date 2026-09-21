@@ -1,5 +1,6 @@
 // Feature: settings/tabs/approval-workflows
 import type { WorkflowTargetEntity } from "@/features/approval-workflow/types/approval-workflow";
+import type { RoleScope } from "@/features/settings/tabs/rbac-settings/types/rbac";
 
 export type WorkflowDefinitionDto = {
   id: number;
@@ -41,6 +42,7 @@ export type WorkflowTransitionConfigDto = {
   toStepId: number;
   allowedRoleIds?: number[];
   roleBindings?: Array<{ roleId: number; roleName?: string }>;
+  requiredScope?: RoleScope | null;
   requiresComment: boolean;
   preventSelfTransition?: boolean;
   preventSelfApproval?: boolean;
@@ -89,6 +91,7 @@ export type UpsertWorkflowTransitionRequest = {
   toStepId: number;
   allowedRoleIds?: number[];
   roleBindings?: Array<{ roleId: number }>;
+  requiredScope?: RoleScope | null;
   requiresComment: boolean;
   preventSelfTransition?: boolean;
   preventSelfApproval?: boolean;

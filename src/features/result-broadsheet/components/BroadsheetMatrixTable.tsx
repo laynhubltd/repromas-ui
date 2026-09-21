@@ -17,6 +17,7 @@ export interface BroadsheetMatrixTableProps {
   showStudentName?: boolean;
   isLoading?: boolean;
   watermarkText?: string;
+  scrollY?: number | string;
 }
 
 export function BroadsheetMatrixTable({
@@ -28,6 +29,7 @@ export function BroadsheetMatrixTable({
   showStudentName = false,
   isLoading = false,
   watermarkText,
+  scrollY = "calc(100vh - 360px)",
 }: BroadsheetMatrixTableProps) {
 
   return (
@@ -40,6 +42,7 @@ export function BroadsheetMatrixTable({
       showStudentName={showStudentName}
       loading={isLoading}
       watermarkText={watermarkText}
+      scrollY={scrollY}
       labels={{
         serialLabel: "#",
         registrationNoLabel: "Reg No",

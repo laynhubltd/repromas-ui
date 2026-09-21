@@ -6,11 +6,12 @@ import { DataLoader } from "@/shared/ui/DataLoader";
 import {
   ArrowLeftOutlined,
   CheckOutlined,
+  ClockCircleOutlined,
   HistoryOutlined,
   LoadingOutlined,
   RightOutlined,
 } from "@ant-design/icons";
-import { Button, Flex, Steps, Tag, Typography } from "antd";
+import { Button, Flex, Popconfirm, Steps, Tag, Tooltip, Typography } from "antd";
 import type { ApiTagLiteral } from "@/shared/types/apiTagTypes";
 import { useWorkflowTransitions } from "../hooks/useWorkflowTransitions";
 import type { WorkflowTargetEntity } from "../types/approval-workflow";
@@ -50,6 +51,11 @@ export function WorkflowStatusBar({
     comment,
     isAuditDrawerOpen,
   } = state;
+
+  const canAct =
+    state.canAct ??
+    currentStep?.canAct ??
+    transitions.length > 0;
 
   const {
     handleInitiateTransition,
@@ -99,22 +105,45 @@ export function WorkflowStatusBar({
                       step.stateCode === currentStep?.stateCode);
                   const isPassed =
                     currentStepIndex >= 0 && idx < currentStepIndex;
+                  const isUpcoming =
+                    currentStepIndex >= 0 ? idx > currentStepIndex : idx > 0;
+
+                  const stepCanAct =
+                    step.canAct ?? (isCurrent ? canAct : false);
+                  const stepLabel =
+                    step.label || step.name || step.stateCode || "";
+
+                  let tooltipTitle = "";
+                  if (isPassed) {
+                    tooltipTitle = `Completed: ${stepLabel} finalized.`;
+                  } else if (isCurrent) {
+                    tooltipTitle = stepCanAct
+                      ? `Action Required: You are authorized to review and advance "${stepLabel}".`
+                      : `In Review (View Only): "${stepLabel}" is awaiting review from designated approvers. You have view-only access for this stage.`;
+                  } else if (isUpcoming) {
+                    tooltipTitle = `Upcoming: ${stepLabel} (Pending completion of prior stages).`;
+                  }
 
                   return {
                     title: (
-                      <span
-                        style={{
-                          fontWeight: isCurrent ? 700 : 500,
-                          fontSize: token.fontSizeSM,
-                          color: isCurrent
-                            ? token.colorPrimary
-                            : isPassed
-                              ? token.colorText
-                              : token.colorTextTertiary,
-                        }}
-                      >
-                        {step.label || step.name || step.stateCode || ""}
-                      </span>
+                      <Tooltip title={tooltipTitle} placement="top">
+                        <span
+                          style={{
+                            fontWeight: isCurrent ? 700 : 500,
+                            fontSize: token.fontSizeSM,
+                            color: isCurrent
+                              ? stepCanAct
+                                ? token.colorPrimary
+                                : token.colorTextSecondary
+                              : isPassed
+                                ? token.colorText
+                                : token.colorTextTertiary,
+                            cursor: "help",
+                          }}
+                        >
+                          {stepLabel}
+                        </span>
+                      </Tooltip>
                     ),
                     status: isCurrent
                       ? "process"
@@ -151,15 +180,16 @@ export function WorkflowStatusBar({
               </Tag>
             </ConditionalRenderer>
 
-            {/* Action Buttons */}
-            <ConditionalRenderer when={transitions.length > 0}>
+            {/* Action Buttons (when user can act and transitions exist) */}
+            <ConditionalRenderer when={Boolean(canAct) && transitions.length > 0}>
               {transitions.map((t) => {
                 const tId = t.transitionId ?? t.id ?? 0;
                 const isReverse = t.direction === "REVERSE";
+                const requiresComment = isReverse || Boolean(t.requiresComment);
                 const label =
                   t.actionName || t.actionLabel || t.name || "Advance";
 
-                return (
+                const buttonElement = (
                   <Button
                     key={tId}
                     type={isReverse ? "default" : "primary"}
@@ -171,16 +201,61 @@ export function WorkflowStatusBar({
                       (selectedTransition?.transitionId === tId ||
                         selectedTransition?.id === tId)
                     }
-                    onClick={() => handleInitiateTransition(t)}
+                    onClick={
+                      requiresComment ? () => handleInitiateTransition(t) : undefined
+                    }
                   >
                     {label}
                   </Button>
                 );
+
+                if (requiresComment) {
+                  return buttonElement;
+                }
+
+                return (
+                  <Popconfirm
+                    key={tId}
+                    title={`Confirm ${label}`}
+                    description={`Are you sure you want to proceed with "${label}"?`}
+                    okText="Confirm"
+                    cancelText="Cancel"
+                    okButtonProps={{ loading: isExecuting }}
+                    onConfirm={() => handleInitiateTransition(t)}
+                    disabled={isExecuting || isPropagating}
+                    placement="topRight"
+                  >
+                    {buttonElement}
+                  </Popconfirm>
+                );
               })}
             </ConditionalRenderer>
 
-            {/* Read-only status info when no transitions are available */}
-            <ConditionalRenderer when={transitions.length === 0 && !isLoading && !isTerminal}>
+            {/* Read-only view tag when user cannot act on the current non-terminal step */}
+            <ConditionalRenderer
+              when={!canAct && !isLoading && !isTerminal}
+            >
+              <Tooltip title="You have view-only access for this stage. Only designated approvers can execute workflow actions.">
+                <Tag
+                  icon={<ClockCircleOutlined />}
+                  style={{
+                    padding: "4px 10px",
+                    fontSize: token.fontSizeSM,
+                    background: token.colorFillAlter,
+                    border: `1px solid ${token.colorBorderSecondary}`,
+                    color: token.colorTextSecondary,
+                    cursor: "default",
+                  }}
+                >
+                  Under Review (View Only)
+                </Tag>
+              </Tooltip>
+            </ConditionalRenderer>
+
+            {/* Awaiting reviewer fallback (if canAct is true but no transition matches current state) */}
+            <ConditionalRenderer
+              when={Boolean(canAct) && transitions.length === 0 && !isLoading && !isTerminal}
+            >
               <Typography.Text type="secondary" style={{ fontSize: token.fontSizeSM }}>
                 Awaiting next reviewer
               </Typography.Text>

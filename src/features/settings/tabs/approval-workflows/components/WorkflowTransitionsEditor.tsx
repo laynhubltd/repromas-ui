@@ -1,5 +1,6 @@
 // Feature: settings/tabs/approval-workflows
 import { useGetRolesQuery } from "@/features/role/api/rolesApi";
+import type { RoleScope } from "@/features/settings/tabs/rbac-settings/types/rbac";
 import { useToken } from "@/shared/hooks/useToken";
 import {
   ArrowLeftOutlined,
@@ -60,6 +61,7 @@ export function WorkflowTransitionsEditor({
     rolesData?.member.map((r) => ({
       value: r.id,
       label: r.name,
+      scope: r.scope as RoleScope,
     })) ?? [];
 
   const stepOptions = steps.map((s) => {
@@ -119,6 +121,14 @@ export function WorkflowTransitionsEditor({
       const values = await form.validateFields();
       const isReverse = values.direction === "REVERSE";
       const actionName = values.actionName || "Transition";
+      const allowedRoleIds: number[] = values.allowedRoleIds ?? [];
+
+      // Auto-derive requiredScope silently from selected role(s)
+      const selectedRoles = roleOptions.filter((r) => allowedRoleIds.includes(r.value));
+      const uniqueScopes = Array.from(
+        new Set(selectedRoles.map((r) => r.scope).filter(Boolean)),
+      );
+      const derivedScope = uniqueScopes.length === 1 ? uniqueScopes[0] : undefined;
 
       await onSaveTransition({
         id: editingTransition?.id,
@@ -128,10 +138,11 @@ export function WorkflowTransitionsEditor({
         direction: values.direction,
         fromStepId: values.fromStepId,
         toStepId: values.toStepId,
-        allowedRoleIds: values.allowedRoleIds ?? [],
-        roleBindings: (values.allowedRoleIds ?? []).map((roleId: number) => ({
+        allowedRoleIds,
+        roleBindings: allowedRoleIds.map((roleId: number) => ({
           roleId,
         })),
+        requiredScope: derivedScope,
         requiresComment: isReverse ? true : Boolean(values.requiresComment),
         preventSelfTransition: Boolean(values.preventSelfApproval),
         preventSelfApproval: Boolean(values.preventSelfApproval),
@@ -189,23 +200,35 @@ export function WorkflowTransitionsEditor({
       },
     },
     {
-      title: "Allowed Roles",
-      dataIndex: "allowedRoleIds",
+      title: "Allowed Roles & Scope",
       key: "allowedRoles",
-      render: (roleIds: number[]) => {
-        if (!roleIds || roleIds.length === 0) {
-          return <Typography.Text type="secondary">Any authenticated actor</Typography.Text>;
-        }
+      render: (_: unknown, record: WorkflowTransitionConfigDto) => {
+        const roleIds = record.allowedRoleIds ?? [];
         return (
-          <Flex gap={4} wrap="wrap">
-            {roleIds.map((id) => {
-              const role = roleOptions.find((r) => r.value === id);
-              return (
-                <Tag key={id} color="purple">
-                  {role?.label ?? `Role #${id}`}
+          <Flex vertical gap={4}>
+            {roleIds.length === 0 ? (
+              <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                Any authenticated actor
+              </Typography.Text>
+            ) : (
+              <Flex gap={4} wrap="wrap">
+                {roleIds.map((id) => {
+                  const role = roleOptions.find((r) => r.value === id);
+                  return (
+                    <Tag key={id} color="purple" style={{ margin: 0, fontSize: 11 }}>
+                      {role?.label ?? `Role #${id}`}
+                    </Tag>
+                  );
+                })}
+              </Flex>
+            )}
+            {record.requiredScope && (
+              <div>
+                <Tag color="cyan" style={{ margin: 0, fontSize: 10, fontWeight: 600 }}>
+                  Scope: {record.requiredScope}
                 </Tag>
-              );
-            })}
+              </div>
+            )}
           </Flex>
         );
       },
@@ -337,12 +360,29 @@ export function WorkflowTransitionsEditor({
             </Form.Item>
           </Flex>
 
-          <Form.Item name="allowedRoleIds" label="Authorized Roles">
+          <Form.Item
+            name="allowedRoleIds"
+            label="Authorized Roles"
+            tooltip="Select roles authorized to trigger this transition. Jurisdiction scope is automatically enforced based on the selected roles."
+          >
             <Select
               mode="multiple"
               options={roleOptions}
               loading={isLoadingRoles}
               placeholder="Select roles authorized to trigger this transition..."
+              optionRender={(option) => {
+                const scope = option.data.scope;
+                return (
+                  <Flex justify="space-between" align="center" style={{ width: "100%" }}>
+                    <Typography.Text>{option.data.label}</Typography.Text>
+                    {scope && (
+                      <Tag color="cyan" style={{ margin: 0, fontSize: 10, fontWeight: 600 }}>
+                        {scope}
+                      </Tag>
+                    )}
+                  </Flex>
+                );
+              }}
             />
           </Form.Item>
 
