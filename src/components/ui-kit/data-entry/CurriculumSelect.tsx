@@ -1,11 +1,15 @@
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Select, Tag } from "antd";
 import type { SelectProps } from "antd";
-import { useGetCurriculumVersionsQuery } from "@/features/settings/tabs/curriculum-version/api/curriculumVersionApi";
+import {
+  useGetCurriculumVersionQuery,
+  useGetCurriculumVersionsQuery,
+} from "@/features/settings/tabs/curriculum-version/api/curriculumVersionApi";
 import type {
   CurriculumScope,
   CurriculumVersion,
 } from "@/features/settings/tabs/curriculum-version/types/curriculum-version";
+import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
 
 export interface CurriculumSelectProps
   extends Omit<SelectProps<number>, "options" | "loading" | "onChange" | "value"> {
@@ -47,22 +51,45 @@ export const CurriculumSelect = React.forwardRef<any, CurriculumSelectProps>(
     },
     ref,
   ) => {
+    const [search, setSearch] = useState("");
+    const debouncedSearch = useDebouncedValue(search, 500);
+
     const queryParams = useMemo(() => {
       return programId
-        ? { forProgramId: programId, include: "program", itemsPerPage: 100 }
-        : { itemsPerPage: 100 };
-    }, [programId]);
+        ? {
+            forProgramId: programId,
+            include: "program",
+            itemsPerPage: 100,
+            ...(debouncedSearch ? { "search[name]": debouncedSearch } : {}),
+          }
+        : {
+            itemsPerPage: 100,
+            ...(debouncedSearch ? { "search[name]": debouncedSearch } : {}),
+          };
+    }, [programId, debouncedSearch]);
 
     const { data, isLoading, isFetching } = useGetCurriculumVersionsQuery(
       queryParams,
       { skip },
     );
 
-    const rawVersions: CurriculumVersion[] = useMemo(() => {
+    const queriedVersions: CurriculumVersion[] = useMemo(() => {
       if (!data) return [];
       if (Array.isArray(data)) return data;
       return data.member ?? [];
     }, [data]);
+
+    // Ensure currently selected version is preserved even when filtered out by search term
+    const { data: selectedVersionData } = useGetCurriculumVersionQuery(value!, {
+      skip: !value || queriedVersions.some((v) => v.id === value),
+    });
+
+    const rawVersions: CurriculumVersion[] = useMemo(() => {
+      if (selectedVersionData && !queriedVersions.some((v) => v.id === selectedVersionData.id)) {
+        return [selectedVersionData, ...queriedVersions];
+      }
+      return queriedVersions;
+    }, [queriedVersions, selectedVersionData]);
 
     // Apply optional scope filter
     const versions = useMemo(() => {
@@ -154,12 +181,15 @@ export const CurriculumSelect = React.forwardRef<any, CurriculumSelectProps>(
         disabled={disabled || isLoading}
         allowClear
         showSearch
-        optionFilterProp="searchValue"
-        filterOption={(input, option) =>
-          String(option?.searchValue ?? "")
-            .toLowerCase()
-            .includes(input.toLowerCase())
-        }
+        searchValue={search}
+        onSearch={(val) => setSearch(val)}
+        filterOption={false}
+        defaultActiveFirstOption={false}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSearch("");
+          }
+        }}
         style={{ width: "100%", height: 40, ...style }}
         {...restProps}
       />
