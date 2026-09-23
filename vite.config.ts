@@ -38,7 +38,7 @@ export default defineConfig({
       },
     },
   },
-  // @ts-ignore — vitest config lives here
+  // @ts-expect-error — vitest config lives here
   test: {
     globals: true,
     environment: "jsdom",

@@ -41,8 +41,10 @@ export function useSetupGatedMenuItems(items: RouteMenuItem[]): ItemType[] {
     if (!flags.shouldGateMenus) {
       return items.map((item) => {
         if (!item || typeof item !== "object") return item as ItemType;
-        const { setupStepId: _s, permission: _p, ...rest } = item;
-        return rest as ItemType;
+        const rest = { ...item } as Record<string, unknown>;
+        delete rest.setupStepId;
+        delete rest.permission;
+        return rest as unknown as ItemType;
       });
     }
 
@@ -52,14 +54,17 @@ export function useSetupGatedMenuItems(items: RouteMenuItem[]): ItemType[] {
       }
 
       const key = String(item.key);
-      const { setupStepId, permission: _p, ...restItem } = item;
+      const setupStepId = item.setupStepId;
+      const restItem = { ...item } as Record<string, unknown>;
+      delete restItem.setupStepId;
+      delete restItem.permission;
 
       if (key === appPaths.dashboard) {
-        return restItem as ItemType;
+        return restItem as unknown as ItemType;
       }
 
       if (!setupStepId) {
-        return restItem as ItemType;
+        return restItem as unknown as ItemType;
       }
 
       let accessible = actions.canAccess(setupStepId);
@@ -76,7 +81,7 @@ export function useSetupGatedMenuItems(items: RouteMenuItem[]): ItemType[] {
           : ""
         : SETUP_STEP_TOOLTIP_BLOCKED[setupStepId];
 
-      const itemLabel = "label" in restItem ? restItem.label : null;
+      const itemLabel = "label" in restItem ? (restItem.label as React.ReactNode) : null;
 
       if (accessible) {
         return {
