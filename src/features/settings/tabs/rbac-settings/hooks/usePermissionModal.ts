@@ -55,7 +55,7 @@ export function usePermissionFormModal(
         type: PermissionFormActionType.SetCatalogueSearchDebounced,
         value,
       });
-    }, 300);
+    }, 500);
   }, []);
 
   // Cleanup debounce timer on unmount

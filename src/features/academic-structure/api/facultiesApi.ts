@@ -11,6 +11,7 @@ const facultiesApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getFaculties: builder.query<PaginatedResponse<Faculty>, FacultyListParams>({
       query: (params) => ({ url: "/faculties", method: "GET", params }),
+      keepUnusedDataFor: 1800,
       providesTags: (result) =>
         result
           ? [

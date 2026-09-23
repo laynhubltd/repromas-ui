@@ -44,7 +44,7 @@ export function useRecommendationTab() {
   const cycles = cyclesData?.member ?? [];
 
   const { data: programsData } = useGetProgramsQuery(
-    { itemsPerPage: 200, sort: "name:asc", include: "department" },
+    { itemsPerPage: 100, sort: "name:asc", include: "department" },
     { skip: state.cycleId === undefined },
   );
   const programs = programsData?.member ?? [];

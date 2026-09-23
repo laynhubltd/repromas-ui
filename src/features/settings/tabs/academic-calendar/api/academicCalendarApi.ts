@@ -33,6 +33,7 @@ const academicCalendarApi = baseApi.injectEndpoints({
     // ── AcademicSession ──────────────────────────────────────────────────────
     getAcademicSessions: builder.query<PaginatedResponse<AcademicSession>, AcademicSessionListParams>({
       query: (params) => ({ url: "/academic-sessions", method: "GET", params }),
+      keepUnusedDataFor: 1800,
       providesTags: [ApiTagTypes.Session],
     }),
     createAcademicSession: builder.mutation<AcademicSession, CreateSessionRequest>({
@@ -55,6 +56,7 @@ const academicCalendarApi = baseApi.injectEndpoints({
     // ── SemesterType ─────────────────────────────────────────────────────────
     getSemesterTypes: builder.query<PaginatedResponse<SemesterType>, SemesterTypeListParams>({
       query: (params) => ({ url: "/semester-types", method: "GET", params }),
+      keepUnusedDataFor: 1800,
       providesTags: [ApiTagTypes.SemesterType],
     }),
     createSemesterType: builder.mutation<SemesterType, CreateSemesterTypeRequest>({

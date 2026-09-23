@@ -17,6 +17,7 @@ const levelApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getLevelCategories: builder.query<PaginatedResponse<LevelCategory>, LevelListParams>({
       query: (params) => ({ url: "/level-categories", method: "GET", params }),
+      keepUnusedDataFor: 1800,
       providesTags: [{ type: ApiTagTypes.LevelCategory, id: "LIST" }],
     }),
     createLevelCategory: builder.mutation<LevelCategory, CreateLevelCategoryRequest>({
@@ -36,6 +37,7 @@ const levelApi = baseApi.injectEndpoints({
     }),
     getLevels: builder.query<PaginatedResponse<Level>, LevelListParams>({
       query: (params) => ({ url: "/levels", method: "GET", params }),
+      keepUnusedDataFor: 1800,
       providesTags: [{ type: ApiTagTypes.Level, id: "LIST" }],
     }),
     createLevel: builder.mutation<Level, CreateLevelRequest>({

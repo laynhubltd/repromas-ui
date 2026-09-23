@@ -49,7 +49,7 @@ export function useBroadsheetFilters() {
 
   const { data: programsData, isLoading: isProgramsLoading } = useGetProgramsQuery({
     sort: "name:asc",
-    itemsPerPage: 500,
+    itemsPerPage: 100,
   });
 
   const { data: levelsData, isLoading: isLevelsLoading } = useGetLevelsQuery({

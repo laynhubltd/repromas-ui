@@ -39,13 +39,13 @@ export function StaffFormModal({ open, target, onClose }: StaffFormModalProps) {
 
   // Departments (for departmentId field)
   const { data: departmentsData, isLoading: isDepartmentsLoading } = useGetDepartmentsQuery({
-    itemsPerPage: 200,
+    itemsPerPage: 100,
   });
   const departments = departmentsData?.member ?? [];
 
   // Faculties (for scopeReferenceId when scope === FACULTY)
   const { data: facultiesData, isLoading: isFacultiesLoading } = useGetFacultiesQuery(
-    { itemsPerPage: 200 },
+    { itemsPerPage: 100 },
     { skip: isEditMode || selectedScope !== "FACULTY" }
   );
   const faculties = facultiesData?.member ?? [];
@@ -53,14 +53,14 @@ export function StaffFormModal({ open, target, onClose }: StaffFormModalProps) {
   // Departments for scopeReferenceId when scope === DEPARTMENT
   const { data: scopeDepartmentsData, isLoading: isScopeDepartmentsLoading } =
     useGetDepartmentsQuery(
-      { itemsPerPage: 200 },
+      { itemsPerPage: 100 },
       { skip: isEditMode || selectedScope !== "DEPARTMENT" }
     );
   const scopeDepartments = scopeDepartmentsData?.member ?? [];
 
   // Programs for scopeReferenceId when scope === PROGRAM
   const { data: programsData, isLoading: isProgramsLoading } = useGetProgramsQuery(
-    { itemsPerPage: 200 },
+    { itemsPerPage: 100 },
     { skip: isEditMode || selectedScope !== "PROGRAM" }
   );
   const programs = programsData?.member ?? [];

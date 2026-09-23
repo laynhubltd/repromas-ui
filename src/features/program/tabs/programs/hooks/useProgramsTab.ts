@@ -1,8 +1,9 @@
 import { useAccessControl } from "@/features/access-control";
+import { useAppSelector } from "@/app/hooks";
+import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
 import { RequestScreen } from "@/shared/types/error-ui";
 import { deriveSectionErrorMessage } from "@/shared/utils/error/deriveSectionErrorMessage";
-import { useAppSelector } from "@/app/hooks";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useGetProgramsQuery } from "../api/programsApi";
 import type { Program } from "../types/program";
 
@@ -23,15 +24,11 @@ export function useProgramsTab() {
 
   // ─── Search ───────────────────────────────────────────────────────────────
   const [nameSearch, setNameSearch] = useState("");
-  const [debouncedName, setDebouncedName] = useState("");
+  const debouncedName = useDebouncedValue(nameSearch, 500);
   const [degreeTitleSearch, setDegreeTitleSearch] = useState("");
-  const [debouncedDegreeTitle, setDebouncedDegreeTitle] = useState("");
+  const debouncedDegreeTitle = useDebouncedValue(degreeTitleSearch, 500);
   const [codeSearch, setCodeSearch] = useState("");
-  const [debouncedCode, setDebouncedCode] = useState("");
-
-  const nameDebounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const degreeTitleDebounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const codeDebounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const debouncedCode = useDebouncedValue(codeSearch, 500);
 
   // ─── Filters ──────────────────────────────────────────────────────────────
   const [departmentFilter, setDepartmentFilter] = useState<number | undefined>(undefined);
@@ -43,15 +40,6 @@ export function useProgramsTab() {
   const [formTarget, setFormTarget] = useState<Program | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Program | null>(null);
   const [formModalOpen, setFormModalOpen] = useState(false);
-
-  // ─── Cleanup timers on unmount ────────────────────────────────────────────
-  useEffect(() => {
-    return () => {
-      if (nameDebounceTimer.current) clearTimeout(nameDebounceTimer.current);
-      if (degreeTitleDebounceTimer.current) clearTimeout(degreeTitleDebounceTimer.current);
-      if (codeDebounceTimer.current) clearTimeout(codeDebounceTimer.current);
-    };
-  }, []);
 
   // ─── Flags (computed early — used in queryParams) ─────────────────────────
   const showDepartmentFilter =
@@ -111,22 +99,16 @@ export function useProgramsTab() {
   const handleNameSearchChange = useCallback((value: string) => {
     setNameSearch(value);
     setPage(1);
-    if (nameDebounceTimer.current) clearTimeout(nameDebounceTimer.current);
-    nameDebounceTimer.current = setTimeout(() => setDebouncedName(value), 300);
   }, []);
 
   const handleDegreeTitleSearchChange = useCallback((value: string) => {
     setDegreeTitleSearch(value);
     setPage(1);
-    if (degreeTitleDebounceTimer.current) clearTimeout(degreeTitleDebounceTimer.current);
-    degreeTitleDebounceTimer.current = setTimeout(() => setDebouncedDegreeTitle(value), 300);
   }, []);
 
   const handleCodeSearchChange = useCallback((value: string) => {
     setCodeSearch(value);
     setPage(1);
-    if (codeDebounceTimer.current) clearTimeout(codeDebounceTimer.current);
-    codeDebounceTimer.current = setTimeout(() => setDebouncedCode(value), 300);
   }, []);
 
   const handleDepartmentFilterChange = useCallback((departmentId: number | undefined) => {

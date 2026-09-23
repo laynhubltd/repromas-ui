@@ -87,7 +87,7 @@ export function useGradingSystemTab(): {
     setSearchInput(value);
     setPage(1);
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
-    debounceTimer.current = setTimeout(() => setDebouncedSearch(value), 300);
+    debounceTimer.current = setTimeout(() => setDebouncedSearch(value), 500);
   }, []);
 
   const handleScopeFilterChange = useCallback(

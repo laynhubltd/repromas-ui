@@ -18,7 +18,7 @@ export function useCreateVersionModal(open: boolean, onClose: () => void) {
   const handleApiError = useApiError();
 
   const { data: programsData, isLoading: isProgramsLoading } = useGetProgramsQuery(
-    { itemsPerPage: 200 },
+    { itemsPerPage: 100 },
     { skip: !open },
   );
 

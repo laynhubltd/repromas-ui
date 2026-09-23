@@ -22,7 +22,7 @@ export function useAddFileFieldModal({
 
   // Fetch active document types — only when the modal is open
   const { data, isLoading: isLoadingTypes } = useGetDocumentTypesQuery(
-    { "exact[isActive]": true, sort: "name:asc", itemsPerPage: 200 },
+    { "exact[isActive]": true, sort: "name:asc", itemsPerPage: 100 },
     { skip: !open },
   );
 

@@ -152,7 +152,7 @@ export function GraduationConfigTab() {
   const distinctPrograms = new Set(requirements.map((r) => r.programId)).size;
 
   const { data: programsData, isLoading: isProgramsLoading } = useGetProgramsQuery({
-    itemsPerPage: 200,
+    itemsPerPage: 100,
   });
   const programs = programsData?.member ?? [];
 

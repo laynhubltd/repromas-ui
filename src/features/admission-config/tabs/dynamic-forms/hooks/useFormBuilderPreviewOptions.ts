@@ -26,7 +26,7 @@ export function useFormBuilderPreviewOptions(
   });
 
   const { data: lgasData, isLoading: isLgasLoading } = useGetLgasByStateQuery(
-    { stateId: resolvedStateId ?? 0, itemsPerPage: 200 },
+    { stateId: resolvedStateId ?? 0, itemsPerPage: 100 },
     { skip: resolvedStateId == null },
   );
 

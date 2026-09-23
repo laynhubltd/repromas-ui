@@ -120,7 +120,7 @@ export function useAdmissionApplicationWizard() {
   );
 
   const { data: programsData } = useGetProgramsQuery(
-    { itemsPerPage: 200, sort: "name:asc" },
+    { itemsPerPage: 100, sort: "name:asc" },
     { skip: !isCandidate },
   );
 
@@ -134,7 +134,7 @@ export function useAdmissionApplicationWizard() {
   );
 
   const { data: subjectsData } = useGetOlevelSubjectsQuery(
-    { itemsPerPage: 200, sort: "name:asc" },
+    { itemsPerPage: 100, sort: "name:asc" },
     { skip: !isCandidate },
   );
 

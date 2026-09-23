@@ -85,7 +85,7 @@ export function useQualificationTypeTab() {
     if (searchTimer.current) clearTimeout(searchTimer.current);
     searchTimer.current = setTimeout(() => {
       dispatch({ type: QualificationTypeTabActionType.SetDebouncedSearch, value });
-    }, 300);
+    }, 500);
   }, []);
 
   const handleIsActiveFilterChange = useCallback(

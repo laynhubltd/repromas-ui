@@ -1,9 +1,10 @@
 import { useApiError } from "@/shared/hooks/useApiError";
+import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
 import { RequestScreen } from "@/shared/types/error-ui";
 import { deriveSectionErrorMessage } from "@/shared/utils/error/deriveSectionErrorMessage";
 import { notification } from "antd";
 import type { SorterResult } from "antd/es/table/interface";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   useActivateCurriculumVersionMutation,
   useGetCurriculumVersionsQuery,
@@ -57,7 +58,7 @@ export function resetPageOnFilterChange(
 export function useCurriculumVersionTab() {
   const handleApiError = useApiError();
   const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search, 500);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [scopeFilter, setScopeFilter] = useState<ScopeFilter>("all");
   const [sort, setSort] = useState("createdAt:desc");
@@ -67,19 +68,9 @@ export function useCurriculumVersionTab() {
   const [editTarget, setEditTarget] = useState<CurriculumVersion | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<CurriculumVersion | null>(null);
 
-  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   const handleSearchChange = useCallback((value: string) => {
     setSearch(value);
     setPage(1);
-    if (debounceTimer.current) clearTimeout(debounceTimer.current);
-    debounceTimer.current = setTimeout(() => setDebouncedSearch(value), 300);
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (debounceTimer.current) clearTimeout(debounceTimer.current);
-    };
   }, []);
 
   const handleFilterChange = (value: StatusFilter) => {
@@ -163,7 +154,6 @@ export function useCurriculumVersionTab() {
       isLoading,
       isError,
       sectionError,
-      debounceTimer,
     },
     actions: {
       handleSearchChange,

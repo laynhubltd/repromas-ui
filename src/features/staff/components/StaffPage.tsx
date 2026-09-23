@@ -90,7 +90,7 @@ export function StaffPage() {
   const cardState = isLoading ? "loading" : "default";
   const activeFilterCount = [departmentFilter].filter((v) => v !== undefined).length;
 
-  const { data: departmentsData } = useGetDepartmentsQuery({ itemsPerPage: 200 });
+  const { data: departmentsData } = useGetDepartmentsQuery({ itemsPerPage: 100 });
   const departments = departmentsData?.member ?? [];
 
   const handleTableChange = (

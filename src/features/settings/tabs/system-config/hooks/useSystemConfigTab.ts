@@ -94,7 +94,7 @@ export function useSystemConfigTab() {
   } = useListSystemConfigsQuery();
 
   const { data: programsData, isLoading: programsLoading } = useGetProgramsQuery({
-    itemsPerPage: 200,
+    itemsPerPage: 100,
     sort: "name:asc",
   });
 

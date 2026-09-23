@@ -12,6 +12,7 @@ const programsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getPrograms: builder.query<PaginatedResponse<Program>, ProgramListParams>({
       query: (params) => ({ url: "programs", method: "GET", params }),
+      keepUnusedDataFor: 1800,
       providesTags: [{ type: ApiTagTypes.Program, id: "LIST" }],
     }),
 

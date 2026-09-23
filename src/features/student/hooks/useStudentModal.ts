@@ -54,15 +54,15 @@ export function useStudentFormModal(
   const selectedProgramId = Form.useWatch("programId", form);
 
   const { data: programsData, isLoading: isProgramsLoading } =
-    useGetProgramsQuery({ itemsPerPage: 200 }, { skip: !open });
+    useGetProgramsQuery({ itemsPerPage: 100 }, { skip: !open });
 
   const {
     data: curriculumVersionsData,
     isLoading: isCurriculumVersionsLoading,
   } = useGetCurriculumVersionsQuery(
     selectedProgramId
-      ? { forProgramId: selectedProgramId, include: "program", itemsPerPage: 200 }
-      : { itemsPerPage: 200 },
+      ? { forProgramId: selectedProgramId, include: "program", itemsPerPage: 100 }
+      : { itemsPerPage: 100 },
     { skip: !open },
   );
 

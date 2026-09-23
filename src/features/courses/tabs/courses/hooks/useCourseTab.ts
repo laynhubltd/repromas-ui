@@ -1,7 +1,8 @@
 import { useAccessControl } from "@/features/access-control";
+import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
 import { RequestScreen } from "@/shared/types/error-ui";
 import { deriveSectionErrorMessage } from "@/shared/utils/error/deriveSectionErrorMessage";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useGetCoursesQuery } from "../api/coursesApi";
 import type { Course } from "../types/course";
 import { useCourseBulkUpload } from "./useCourseBulkUpload";
@@ -92,13 +93,10 @@ export function useCourseTab() {
 
   // ─── Search ───────────────────────────────────────────────────────────────
   const [codeSearch, setCodeSearch] = useState("");
-  const [debouncedCode, setDebouncedCode] = useState("");
+  const debouncedCode = useDebouncedValue(codeSearch, 500);
 
   const [titleSearch, setTitleSearch] = useState("");
-  const [debouncedTitle, setDebouncedTitle] = useState("");
-
-  const codeDebounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const titleDebounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const debouncedTitle = useDebouncedValue(titleSearch, 500);
 
   // ─── Filters ──────────────────────────────────────────────────────────────
   const [departmentId, setDepartmentId] = useState<number | undefined>(undefined);
@@ -113,14 +111,6 @@ export function useCourseTab() {
   const [formModalOpen, setFormModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [bulkUploadModalOpen, setBulkUploadModalOpen] = useState(false);
-
-  // ─── Cleanup timers on unmount ────────────────────────────────────────────
-  useEffect(() => {
-    return () => {
-      if (codeDebounceTimer.current) clearTimeout(codeDebounceTimer.current);
-      if (titleDebounceTimer.current) clearTimeout(titleDebounceTimer.current);
-    };
-  }, []);
 
   // ─── Query Params ─────────────────────────────────────────────────────────
   const queryParams = buildQueryParams({
@@ -172,15 +162,11 @@ export function useCourseTab() {
   const handleCodeSearchChange = useCallback((value: string) => {
     setCodeSearch(value);
     setPage(1);
-    if (codeDebounceTimer.current) clearTimeout(codeDebounceTimer.current);
-    codeDebounceTimer.current = setTimeout(() => setDebouncedCode(value), 300);
   }, []);
 
   const handleTitleSearchChange = useCallback((value: string) => {
     setTitleSearch(value);
     setPage(1);
-    if (titleDebounceTimer.current) clearTimeout(titleDebounceTimer.current);
-    titleDebounceTimer.current = setTimeout(() => setDebouncedTitle(value), 300);
   }, []);
 
   const handleDepartmentFilterChange = useCallback((value: number | undefined) => {
@@ -231,9 +217,7 @@ export function useCourseTab() {
 
   const clearSearch = useCallback(() => {
     setCodeSearch("");
-    setDebouncedCode("");
     setTitleSearch("");
-    setDebouncedTitle("");
     setDepartmentId(undefined);
     setPage(1);
   }, []);

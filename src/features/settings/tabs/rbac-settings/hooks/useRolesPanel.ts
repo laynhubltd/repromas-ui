@@ -1,6 +1,6 @@
-// Feature: rbac-settings
+import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
 import type { SorterResult } from "antd/es/table/interface";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import { useGetRolesQuery } from "../api/rbacSettingsApi";
 import type { Role, RoleScope } from "../types/rbac";
 
@@ -8,7 +8,7 @@ const ITEMS_PER_PAGE = 30;
 
 export function useRolesPanel() {
   const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search, 500);
   const [scopeFilter, setScopeFilter] = useState<RoleScope | undefined>(undefined);
   const [sort, setSort] = useState("createdAt:desc");
   const [page, setPage] = useState(1);
@@ -18,13 +18,9 @@ export function useRolesPanel() {
   const [deleteTarget, setDeleteTarget] = useState<Role | null>(null);
   const [filterOpen, setFilterOpen] = useState(false);
 
-  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   const handleSearchChange = useCallback((value: string) => {
     setSearch(value);
     setPage(1);
-    if (debounceTimer.current) clearTimeout(debounceTimer.current);
-    debounceTimer.current = setTimeout(() => setDebouncedSearch(value), 300);
   }, []);
 
   const handleScopeFilterChange = useCallback((scope: RoleScope | undefined) => {
@@ -34,16 +30,8 @@ export function useRolesPanel() {
 
   const clearAllFilters = useCallback(() => {
     setSearch("");
-    setDebouncedSearch("");
     setScopeFilter(undefined);
     setPage(1);
-    if (debounceTimer.current) clearTimeout(debounceTimer.current);
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (debounceTimer.current) clearTimeout(debounceTimer.current);
-    };
   }, []);
 
   const queryParams = {

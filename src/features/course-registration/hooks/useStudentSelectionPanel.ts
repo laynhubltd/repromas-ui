@@ -94,7 +94,7 @@ export function useStudentSelectionPanel(
   // Programs for the program filter dropdown
   const { data: programsData, isLoading: isProgramsLoading } =
     useGetProgramsQuery({
-      itemsPerPage: 200,
+      itemsPerPage: 100,
       sort: "name:asc",
     });
 

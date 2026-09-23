@@ -256,7 +256,7 @@ export function ProgramsTab() {
   const cardState = isLoading ? "loading" : "default";
   const distinctDepartments = new Set(programs.map((p) => p.departmentId)).size;
 
-  const { data: departmentsData } = useGetDepartmentsQuery({ itemsPerPage: 200 });
+  const { data: departmentsData } = useGetDepartmentsQuery({ itemsPerPage: 100 });
   const departments = departmentsData?.member ?? [];
 
   const handleTableChange = (

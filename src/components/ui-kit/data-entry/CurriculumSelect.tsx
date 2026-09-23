@@ -49,8 +49,8 @@ export const CurriculumSelect = React.forwardRef<any, CurriculumSelectProps>(
   ) => {
     const queryParams = useMemo(() => {
       return programId
-        ? { forProgramId: programId, include: "program", itemsPerPage: 200 }
-        : { itemsPerPage: 200 };
+        ? { forProgramId: programId, include: "program", itemsPerPage: 100 }
+        : { itemsPerPage: 100 };
     }, [programId]);
 
     const { data, isLoading, isFetching } = useGetCurriculumVersionsQuery(

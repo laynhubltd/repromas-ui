@@ -71,7 +71,7 @@ export function useDocumentTypeTab() {
     if (searchTimer.current) clearTimeout(searchTimer.current);
     searchTimer.current = setTimeout(() => {
       dispatch({ type: DocumentTypeTabActionType.SetDebouncedSearch, value });
-    }, 300);
+    }, 500);
   }, []);
 
   const handleIsActiveFilterChange = useCallback(

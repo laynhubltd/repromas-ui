@@ -12,9 +12,14 @@ import {
   LoadingOutlined,
 } from "@ant-design/icons";
 import { Button, Card, Flex, Tag, Typography } from "antd";
-import { useState } from "react";
+import { Suspense, lazy, useState } from "react";
 import { useMyDocumentUploads } from "../hooks/useMyDocumentUploads";
-import { DocumentViewerModal } from "./DocumentViewerModal";
+
+const DocumentViewerModal = lazy(() =>
+  import("./DocumentViewerModal").then((m) => ({
+    default: m.DocumentViewerModal,
+  })),
+);
 
 // ─── Status tag ───────────────────────────────────────────────────────────────
 
@@ -166,11 +171,15 @@ export function ApplicationDocumentsSection({
         </DataLoader>
       </Card>
 
-      <DocumentViewerModal
-        upload={viewingUpload}
-        open={viewingUpload !== null}
-        onClose={() => setViewingUpload(null)}
-      />
+      {viewingUpload !== null && (
+        <Suspense fallback={null}>
+          <DocumentViewerModal
+            upload={viewingUpload}
+            open={viewingUpload !== null}
+            onClose={() => setViewingUpload(null)}
+          />
+        </Suspense>
+      )}
     </>
   );
 }

@@ -3,9 +3,10 @@ import {
   FEE_ITEM_ITEMS_PER_PAGE,
   FEE_ITEM_SORT_DEFAULT,
 } from "@/shared/constants/feeItemOptions";
+import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
 import { RequestScreen } from "@/shared/types/error-ui";
 import { deriveSectionErrorMessage } from "@/shared/utils/error/deriveSectionErrorMessage";
-import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
+import { useCallback, useMemo, useReducer } from "react";
 import { useGetFeeItemsQuery } from "../api/feeItemApi";
 import {
   FeeItemsTabActionType,
@@ -14,28 +15,20 @@ import {
 } from "../state/feeItemsTabState";
 import type { FeeItem } from "../types/fee-item";
 
-const DEBOUNCE_MS = 300;
-
 export function useFeeItemsTab() {
   const [state, dispatch] = useReducer(
     feeItemsTabReducer,
     initialFeeItemsTabState,
   );
 
-  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (debounceTimer.current) clearTimeout(debounceTimer.current);
-    };
-  }, []);
+  const debouncedSearch = useDebouncedValue(state.search, 500);
 
   const queryParams = {
     page: state.page,
     itemsPerPage: FEE_ITEM_ITEMS_PER_PAGE,
     sort: FEE_ITEM_SORT_DEFAULT,
-    ...(state.debouncedSearch
-      ? { "search[name]": state.debouncedSearch }
+    ...(debouncedSearch
+      ? { "search[name]": debouncedSearch }
       : {}),
     ...(state.isActiveFilter !== undefined
       ? { "exact[isActive]": state.isActiveFilter }
@@ -61,14 +54,6 @@ export function useFeeItemsTab() {
   const handleSearchChange = useCallback((value: string) => {
     dispatch({ type: FeeItemsTabActionType.SetSearch, value });
     dispatch({ type: FeeItemsTabActionType.SetPage, value: 1 });
-
-    if (debounceTimer.current) clearTimeout(debounceTimer.current);
-    debounceTimer.current = setTimeout(() => {
-      dispatch({
-        type: FeeItemsTabActionType.SetDebouncedSearch,
-        value,
-      });
-    }, DEBOUNCE_MS);
   }, []);
 
   const handlePageChange = useCallback((page: number) => {

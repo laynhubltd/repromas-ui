@@ -141,7 +141,7 @@ export function CandidateTab() {
 
   const [filterOpen, setFilterOpen] = useState(false);
 
-  const { data: statesData } = useGetStatesQuery({ itemsPerPage: 200 });
+  const { data: statesData } = useGetStatesQuery({ itemsPerPage: 100 });
   const states = statesData?.member ?? [];
 
   const uploadMenuItems = [

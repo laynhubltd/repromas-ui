@@ -1,4 +1,5 @@
 import { useGetTransitionStatusesQuery } from "@/features/settings/tabs/student-transition-status/api/studentTransitionStatusApi";
+import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useGetStudentsQuery } from "../api/studentsApi";
 import type { EntryMode, Student } from "../types/student";
@@ -22,17 +23,13 @@ export function useStudentsTab() {
 
   // ─── Search ───────────────────────────────────────────────────────────────
   const [firstNameSearch, setFirstNameSearch] = useState("");
-  const [debouncedFirstName, setDebouncedFirstName] = useState("");
+  const debouncedFirstName = useDebouncedValue(firstNameSearch, 500);
 
   const [lastNameSearch, setLastNameSearch] = useState("");
-  const [debouncedLastName, setDebouncedLastName] = useState("");
+  const debouncedLastName = useDebouncedValue(lastNameSearch, 500);
 
   const [matricSearch, setMatricSearch] = useState("");
-  const [debouncedMatric, setDebouncedMatric] = useState("");
-
-  const firstNameDebounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastNameDebounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const matricDebounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const debouncedMatric = useDebouncedValue(matricSearch, 500);
 
   // ─── Filters ──────────────────────────────────────────────────────────────
   const [statusFilter, setStatusFilter] = useState<number | undefined>(undefined);
@@ -56,15 +53,6 @@ export function useStudentsTab() {
   const [deleteTarget, setDeleteTarget] = useState<Student | null>(null);
   const [formModalOpen, setFormModalOpen] = useState(false);
   const [drawerStudentId, setDrawerStudentId] = useState<number | null>(null);
-
-  // ─── Cleanup timers on unmount ────────────────────────────────────
-  useEffect(() => {
-    return () => {
-      if (firstNameDebounceTimer.current) clearTimeout(firstNameDebounceTimer.current);
-      if (lastNameDebounceTimer.current) clearTimeout(lastNameDebounceTimer.current);
-      if (matricDebounceTimer.current) clearTimeout(matricDebounceTimer.current);
-    };
-  }, []);
 
   // ─── Query Params ─────────────────────────────────────────────────────────
   const queryParams = {
@@ -102,22 +90,16 @@ export function useStudentsTab() {
   const handleFirstNameSearchChange = useCallback((value: string) => {
     setFirstNameSearch(value);
     setPage(1);
-    if (firstNameDebounceTimer.current) clearTimeout(firstNameDebounceTimer.current);
-    firstNameDebounceTimer.current = setTimeout(() => setDebouncedFirstName(value), 300);
   }, []);
 
   const handleLastNameSearchChange = useCallback((value: string) => {
     setLastNameSearch(value);
     setPage(1);
-    if (lastNameDebounceTimer.current) clearTimeout(lastNameDebounceTimer.current);
-    lastNameDebounceTimer.current = setTimeout(() => setDebouncedLastName(value), 300);
   }, []);
 
   const handleMatricSearchChange = useCallback((value: string) => {
     setMatricSearch(value);
     setPage(1);
-    if (matricDebounceTimer.current) clearTimeout(matricDebounceTimer.current);
-    matricDebounceTimer.current = setTimeout(() => setDebouncedMatric(value), 300);
   }, []);
 
   const handleStatusFilterChange = useCallback((value: number | undefined) => {

@@ -151,7 +151,7 @@ export function StudentPage() {
     handleProgramFilterChange(undefined);
   };
 
-  const { data: programsData } = useGetProgramsQuery({ itemsPerPage: 200 });
+  const { data: programsData } = useGetProgramsQuery({ itemsPerPage: 100 });
   const programs = programsData?.member ?? [];
 
   const transitionStatusOptions =

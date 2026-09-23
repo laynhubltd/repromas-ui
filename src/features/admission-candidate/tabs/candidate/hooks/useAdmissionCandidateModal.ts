@@ -89,17 +89,18 @@ export function useAdmissionCandidateFormModal({
     { itemsPerPage: 100, sort: "createdAt:desc" },
     { skip: !open },
   );
+  // Bounded reference domain ceiling — backend clamps to 100 max
   const { data: statesData } = useGetStatesQuery(
-    { itemsPerPage: 200 },
+    { itemsPerPage: 100 },
     { skip: !open },
   );
   const { data: programsData, isLoading: isProgramsLoading } =
     useGetProgramsQuery(
-      { itemsPerPage: 200, sort: "name:asc", include: "department" },
+      { itemsPerPage: 100, sort: "name:asc", include: "department" },
       { skip: !open },
     );
   const { data: subjectsData } = useGetOlevelSubjectsQuery(
-    { itemsPerPage: 200, sort: "name:asc" },
+    { itemsPerPage: 100, sort: "name:asc" },
     { skip: !open },
   );
   const { data: stateWithLgas, isFetching: isStateLgasLoading } =
@@ -110,7 +111,7 @@ export function useAdmissionCandidateFormModal({
   const embeddedLgaCount = stateWithLgas?.lgas?.length ?? 0;
   const { data: lgasListData, isFetching: isListLgasLoading } =
     useGetLgasByStateQuery(
-      { stateId: selectedStateId!, itemsPerPage: 200 },
+      { stateId: selectedStateId!, itemsPerPage: 100 },
       {
         skip:
           !open ||
@@ -417,7 +418,7 @@ export function useOfferAdmissionCandidateModal(
 
   const { data: programsData, isLoading: isProgramsLoading } =
     useGetProgramsQuery(
-      { itemsPerPage: 200, sort: "name:asc", include: "department" },
+      { itemsPerPage: 100, sort: "name:asc", include: "department" },
       { skip: !open },
     );
 

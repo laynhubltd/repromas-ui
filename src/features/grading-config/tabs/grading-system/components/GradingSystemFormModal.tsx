@@ -57,17 +57,17 @@ export function GradingSystemFormModal({
   // Reference entity data — fetched based on scope
   const { data: facultiesData, isLoading: facultiesLoading } =
     useGetFacultiesQuery(
-      { itemsPerPage: 200 },
+      { itemsPerPage: 100 },
       { skip: scope !== "FACULTY" || isEditMode },
     );
   const { data: departmentsData, isLoading: departmentsLoading } =
     useGetDepartmentsQuery(
-      { itemsPerPage: 200 },
+      { itemsPerPage: 100 },
       { skip: scope !== "DEPARTMENT" || isEditMode },
     );
   const { data: programsData, isLoading: programsLoading } =
     useGetProgramsQuery(
-      { itemsPerPage: 200 },
+      { itemsPerPage: 100 },
       { skip: scope !== "PROGRAM" || isEditMode },
     );
 

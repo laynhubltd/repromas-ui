@@ -63,8 +63,8 @@ function mapEntriesToPayload(list: LocalSignatoryEntry[]): SignatoryPayloadItem[
 
 // ── Datasource query params (stable references) ───────────────────────────────
 
-const USERS_QUERY = { itemsPerPage: 200 } as const;
-const ROLES_QUERY = { itemsPerPage: 200 } as const;
+const USERS_QUERY = { itemsPerPage: 100 } as const;
+const ROLES_QUERY = { itemsPerPage: 100 } as const;
 
 // ── Hook ──────────────────────────────────────────────────────────────────────
 

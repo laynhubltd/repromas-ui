@@ -62,17 +62,17 @@ export function useDashboardFilterBar({
 
   const { data: facultiesData, isLoading: isFacultiesLoading } =
     useGetFacultiesQuery({
-      itemsPerPage: 200,
+      itemsPerPage: 100,
     });
 
   const { data: departmentsData, isLoading: isDepartmentsLoading } =
     useGetDepartmentsQuery({
-      itemsPerPage: 500,
+      itemsPerPage: 100,
     });
 
   const { data: programsData, isLoading: isProgramsLoading } =
     useGetProgramsQuery({
-      itemsPerPage: 500,
+      itemsPerPage: 100,
     });
 
   const { data: levelsData, isLoading: isLevelsLoading } = useGetLevelsQuery({

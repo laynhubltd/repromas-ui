@@ -23,7 +23,7 @@ export function useGeographyFieldOptions({
   );
 
   const { data: statesData, isLoading: isStatesLoading } = useGetStatesQuery(
-    { itemsPerPage: 200, sort: "name:asc" },
+    { itemsPerPage: 100, sort: "name:asc" },
     { skip },
   );
 
@@ -35,7 +35,7 @@ export function useGeographyFieldOptions({
   const embeddedLgaCount = stateWithLgas?.lgas?.length ?? 0;
   const { data: lgasListData, isFetching: isListLgasLoading } =
     useGetLgasByStateQuery(
-      { stateId: selectedStateId!, itemsPerPage: 200 },
+      { stateId: selectedStateId!, itemsPerPage: 100 },
       {
         skip:
           skip ||

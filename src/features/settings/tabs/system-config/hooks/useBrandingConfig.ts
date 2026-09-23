@@ -55,7 +55,7 @@ function buildUpsertPayload(
 
 const LOGO_ACCEPT_TYPES = BRANDING_LOGO_ACCEPT_MIME_TYPES;
 
-const STATES_QUERY = { itemsPerPage: 200, sort: "name:asc" } as const;
+const STATES_QUERY = { itemsPerPage: 100, sort: "name:asc" } as const;
 
 export function useBrandingConfig() {
   const handleApiError = useApiError();

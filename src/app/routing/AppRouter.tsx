@@ -29,15 +29,20 @@ const AcademicStructure = lazy(() =>
   ),
 );
 const Settings = lazy(() => import("@/features/settings/components/Settings"));
+const Unauthorized = lazy(
+  () => import("@/features/auth/components/Unauthorized"),
+);
 const GradingConfigPage = lazy(() =>
   import("@/features/grading-config").then((m) => ({
     default: m.GradingConfigPage,
   })),
 );
 
+import FullscreenLoader from "@/components/system/FullscreenLoader";
+
 const GuardedDashboardShell = withAuthGuard({
   Component: DashboardShell,
-  fallback: null,
+  fallback: <FullscreenLoader />,
 });
 
 export function AppRouter() {
@@ -71,11 +76,3 @@ export function AppRouter() {
   );
 }
 
-function Unauthorized() {
-  return (
-    <div style={{ padding: 24, textAlign: "center" }}>
-      <h2>Unauthorized</h2>
-      <p>You do not have access to this resource.</p>
-    </div>
-  );
-}

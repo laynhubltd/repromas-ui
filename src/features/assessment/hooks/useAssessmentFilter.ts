@@ -108,7 +108,7 @@ export function useAssessmentFilter() {
       clearTimeout(programDebounceTimer.current);
     programDebounceTimer.current = setTimeout(() => {
       dispatch({ type: AssessmentActionType.SetProgramSearchDebounced, value });
-    }, 300);
+    }, 500);
   }, []);
 
   const handleProgramChange = useCallback((id: number | null) => {
@@ -128,7 +128,7 @@ export function useAssessmentFilter() {
     if (courseDebounceTimer.current) clearTimeout(courseDebounceTimer.current);
     courseDebounceTimer.current = setTimeout(() => {
       dispatch({ type: AssessmentActionType.SetCourseSearchDebounced, value });
-    }, 300);
+    }, 500);
   }, []);
 
   const handleCourseConfigChange = useCallback((id: number | null) => {
