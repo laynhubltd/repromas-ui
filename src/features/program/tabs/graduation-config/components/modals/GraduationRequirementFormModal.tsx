@@ -34,7 +34,7 @@ export function GraduationRequirementFormModal({
 
   const { data: programsData, isLoading: isProgramsLoading } =
     useGetProgramsQuery(
-      { itemsPerPage: 200 },
+      { itemsPerPage: 100 },
       { skip: !open },
     );
   const programs = programsData?.member ?? [];

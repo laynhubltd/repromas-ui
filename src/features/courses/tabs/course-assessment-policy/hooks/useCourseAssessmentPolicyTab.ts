@@ -1,3 +1,4 @@
+import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
 import { useCallback, useReducer } from "react";
 import { useGetCourseAssessmentPoliciesQuery } from "../api/courseAssessmentPoliciesApi";
 import {
@@ -17,6 +18,8 @@ export function useCourseAssessmentPolicyTab() {
     initialState,
   );
 
+  const debouncedCourseCodeSearch = useDebouncedValue(state.courseCodeSearch, 300);
+
   // ─── Query ────────────────────────────────────────────────────────────────
   const queryParams = {
     sort: "breakdownName:asc",
@@ -24,8 +27,8 @@ export function useCourseAssessmentPolicyTab() {
     page: state.page,
     itemsPerPage: state.itemsPerPage,
     ...(state.scopeFilter !== "ALL" && { "exact[scope]": state.scopeFilter }),
-    ...(state.courseCodeSearch && {
-      "search[breakdownName]": state.courseCodeSearch,
+    ...(debouncedCourseCodeSearch && {
+      "search[breakdownName]": debouncedCourseCodeSearch,
     }),
   };
 

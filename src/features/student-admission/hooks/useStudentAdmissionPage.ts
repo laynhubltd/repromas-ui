@@ -30,7 +30,6 @@ export function useStudentAdmissionPage() {
     refetch,
   } = useGetMeAdmissionProgressQuery(undefined, {
     skip: !isCandidate,
-    refetchOnMountOrArgChange: true,
   });
 
   const paymentReturnPolling = usePaymentReturnOrchestrator({

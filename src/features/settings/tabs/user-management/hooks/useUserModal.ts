@@ -44,7 +44,7 @@ export type UserFormValues = {
 
 // ─── Upsert (Create / Edit) ───────────────────────────────────────────────────
 
-const SCOPE_QUERY_SMALL = { itemsPerPage: 200 } as const;
+const SCOPE_QUERY_SMALL = { itemsPerPage: 100 } as const;
 
 export function useUserFormModal(
   target: TenantUser | null,
@@ -92,7 +92,7 @@ export function useUserFormModal(
 
   const { data: staffData, isLoading: isLoadingStaff } =
     useGetStaffListQuery(
-      { include: "profile,department", itemsPerPage: 200 },
+      { include: "profile,department", itemsPerPage: 100 },
       {
         skip: !open || !needsScopeRef || selectedRole?.scope !== "LECTURER",
       },
@@ -249,7 +249,7 @@ export function useUserFormModal(
 
 // ─── Manage User Roles (assign + revoke, multi-role) ─────────────────────────
 
-const SCOPE_QUERY = { itemsPerPage: 200 } as const;
+const SCOPE_QUERY = { itemsPerPage: 100 } as const;
 
 export function useManageUserRolesModal(
   target: TenantUser | null,
@@ -328,7 +328,7 @@ export function useManageUserRolesModal(
 
   const { data: staffData, isLoading: isLoadingStaff } =
     useGetStaffListQuery(
-      { include: "profile,department", itemsPerPage: 200 },
+      { include: "profile,department", itemsPerPage: 100 },
       {
         skip: !open || !needsScopeRef || selectedRole?.scope !== "LECTURER",
       },

@@ -90,9 +90,11 @@ const ProfilePage = lazy(() =>
   })),
 );
 
+import FullscreenLoader from "@/components/system/FullscreenLoader";
+
 const GuardedDashboardShell = withAuthGuard({
   Component: DashboardShell,
-  fallback: null,
+  fallback: <FullscreenLoader />,
 });
 
 export function getAdminRouteEntries() {

@@ -37,7 +37,6 @@ export function useAdmissionProgressData() {
   } = useGetMeAdmissionProgressQuery(undefined, {
     skip: !isCandidate,
     pollingInterval,
-    refetchOnMountOrArgChange: true,
   });
 
   useEffect(() => {

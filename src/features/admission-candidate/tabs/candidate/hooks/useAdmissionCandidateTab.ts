@@ -7,7 +7,8 @@ import {
   ADMISSION_CANDIDATE_SORT_DEFAULT,
   CANDIDATE_INGEST_ALLOWED_STATUSES,
 } from "@/shared/constants/admissionCandidateOptions";
-import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
+import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
+import { useCallback, useMemo, useReducer } from "react";
 import { useGetAdmissionCandidatesQuery } from "../api/admissionCandidateApi";
 import {
   AdmissionCandidatePageActionType,
@@ -30,17 +31,9 @@ export function useAdmissionCandidateTab() {
 
   const { hasPermission } = useAccessControl();
 
-  const firstNameTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastNameTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const jambRegTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (firstNameTimer.current) clearTimeout(firstNameTimer.current);
-      if (lastNameTimer.current) clearTimeout(lastNameTimer.current);
-      if (jambRegTimer.current) clearTimeout(jambRegTimer.current);
-    };
-  }, []);
+  const debouncedFirstName = useDebouncedValue(state.firstNameSearch, 300);
+  const debouncedLastName = useDebouncedValue(state.lastNameSearch, 300);
+  const debouncedJambReg = useDebouncedValue(state.jambRegSearch, 300);
 
   const { data: cyclesData } = useGetAdmissionCyclesQuery({
     itemsPerPage: 100,
@@ -68,14 +61,14 @@ export function useAdmissionCandidateTab() {
     sort: state.sort,
     include: ADMISSION_CANDIDATE_LIST_INCLUDE,
     "exact[cycleId]": state.cycleId!,
-    ...(state.debouncedFirstName
-      ? { "search[firstName]": state.debouncedFirstName }
+    ...(debouncedFirstName
+      ? { "search[firstName]": debouncedFirstName }
       : {}),
-    ...(state.debouncedLastName
-      ? { "search[lastName]": state.debouncedLastName }
+    ...(debouncedLastName
+      ? { "search[lastName]": debouncedLastName }
       : {}),
-    ...(state.debouncedJambReg
-      ? { "exact[jambRegNo]": state.debouncedJambReg }
+    ...(debouncedJambReg
+      ? { "exact[jambRegNo]": debouncedJambReg }
       : {}),
     ...(state.genderFilter !== undefined
       ? { "exact[gender]": state.genderFilter }
@@ -148,13 +141,6 @@ export function useAdmissionCandidateTab() {
       type: AdmissionCandidatePageActionType.SetFirstNameSearch,
       value,
     });
-    if (firstNameTimer.current) clearTimeout(firstNameTimer.current);
-    firstNameTimer.current = setTimeout(() => {
-      dispatch({
-        type: AdmissionCandidatePageActionType.SetDebouncedFirstName,
-        value,
-      });
-    }, 300);
   }, []);
 
   const handleLastNameSearchChange = useCallback((value: string) => {
@@ -162,13 +148,6 @@ export function useAdmissionCandidateTab() {
       type: AdmissionCandidatePageActionType.SetLastNameSearch,
       value,
     });
-    if (lastNameTimer.current) clearTimeout(lastNameTimer.current);
-    lastNameTimer.current = setTimeout(() => {
-      dispatch({
-        type: AdmissionCandidatePageActionType.SetDebouncedLastName,
-        value,
-      });
-    }, 300);
   }, []);
 
   const handleJambRegSearchChange = useCallback((value: string) => {
@@ -176,13 +155,6 @@ export function useAdmissionCandidateTab() {
       type: AdmissionCandidatePageActionType.SetJambRegSearch,
       value,
     });
-    if (jambRegTimer.current) clearTimeout(jambRegTimer.current);
-    jambRegTimer.current = setTimeout(() => {
-      dispatch({
-        type: AdmissionCandidatePageActionType.SetDebouncedJambReg,
-        value,
-      });
-    }, 300);
   }, []);
 
   const handleGenderFilterChange = useCallback(

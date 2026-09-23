@@ -4,7 +4,8 @@ import {
 } from "@/features/admission-config/tabs/olevel-subject/api/olevelSubjectApi";
 import { OLEVEL_SUBJECT_SORT_DEFAULT } from "@/shared/constants/olevelSubjectOptions";
 import { OLEVEL_SUBJECT_PICKER_ITEMS_PER_PAGE } from "@/shared/constants/programAdmissionConfigOptions";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
+import { useMemo, useState } from "react";
 
 export type OlevelSubjectPickerOption = {
   id: number;
@@ -21,22 +22,7 @@ export function useOlevelSubjectPickerOptions(
   setSearch: (value: string) => void;
 } {
   const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const handleSearchChange = (value: string) => {
-    setSearch(value);
-    if (debounceTimer.current) clearTimeout(debounceTimer.current);
-    debounceTimer.current = setTimeout(() => {
-      setDebouncedSearch(value);
-    }, 300);
-  };
-
-  useEffect(() => {
-    return () => {
-      if (debounceTimer.current) clearTimeout(debounceTimer.current);
-    };
-  }, []);
+  const debouncedSearch = useDebouncedValue(search, 300);
 
   const { data: listData, isLoading: isListLoading } = useGetOlevelSubjectsQuery(
     {
@@ -86,6 +72,6 @@ export function useOlevelSubjectPickerOptions(
     options,
     isLoading: isListLoading || isSelectedLoading,
     search,
-    setSearch: handleSearchChange,
+    setSearch,
   };
 }

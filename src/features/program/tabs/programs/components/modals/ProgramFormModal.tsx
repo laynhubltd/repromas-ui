@@ -51,7 +51,7 @@ export function ProgramFormModal({ open, target, onClose, defaultDepartmentId }:
   }, [open, target, defaultDepartmentId, form]);
 
   const { data: departmentsData, isLoading: isDepartmentsLoading } = useGetDepartmentsQuery({
-    itemsPerPage: 200,
+    itemsPerPage: 100,
   });
   const departments = departmentsData?.member ?? [];
 
@@ -60,7 +60,7 @@ export function ProgramFormModal({ open, target, onClose, defaultDepartmentId }:
   );
 
   const { data: levelCategoriesData, isLoading: isLevelCategoriesLoading } = useGetLevelCategoriesQuery(
-    { itemsPerPage: 200 },
+    { itemsPerPage: 100 },
     { skip: !hasLevelCategory }
   );
   const levelCategories = levelCategoriesData?.member ?? [];

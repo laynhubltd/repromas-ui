@@ -135,7 +135,7 @@ export function useCandidateSignUpPage() {
     !isConfigFetching;
 
   const { data: statesData, isLoading: isStatesLoading } = useGetStatesQuery(
-    { itemsPerPage: 200, sort: "name:asc" },
+    { itemsPerPage: 100, sort: "name:asc" },
     { skip: !isOpenFormActive },
   );
 
@@ -147,7 +147,7 @@ export function useCandidateSignUpPage() {
   const embeddedLgaCount = stateWithLgas?.lgas?.length ?? 0;
   const { data: lgasListData, isFetching: isListLgasLoading } =
     useGetLgasByStateQuery(
-      { stateId: openStateId!, itemsPerPage: 200 },
+      { stateId: openStateId!, itemsPerPage: 100 },
       {
         skip:
           !isOpenFormActive ||

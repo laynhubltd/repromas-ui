@@ -80,9 +80,11 @@ const ProfileGate = lazy(() =>
   })),
 );
 
+import FullscreenLoader from "@/components/system/FullscreenLoader";
+
 const GuardedStudentShell = withAuthGuard({
   Component: StudentShell,
-  fallback: null,
+  fallback: <FullscreenLoader />,
 });
 
 export function getStudentRouteEntries() {

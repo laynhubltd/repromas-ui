@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
+import { useCallback, useState } from "react";
 import { useGetStaffListQuery } from "../api/staffApi";
 import type { Staff } from "../types/staff";
 
@@ -7,13 +8,12 @@ const ITEMS_PER_PAGE = 10;
 export function useStaffTab() {
   // ─── Pagination & Sort ────────────────────────────────────────────────────
   const [page, setPage] = useState(1);
-  const [itemsPerPage] = useState(ITEMS_PER_PAGE);
+  const itemsPerPage = ITEMS_PER_PAGE;
   const [sort, setSort] = useState("createdAt:desc");
 
   // ─── Search ───────────────────────────────────────────────────────────────
   const [fileNumberSearch, setFileNumberSearch] = useState("");
-  const [debouncedFileNumber, setDebouncedFileNumber] = useState("");
-  const fileNumberDebounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const debouncedFileNumber = useDebouncedValue(fileNumberSearch, 300);
 
   // ─── Filters ──────────────────────────────────────────────────────────────
   const [departmentFilter, setDepartmentFilter] = useState<number | undefined>(undefined);
@@ -23,13 +23,6 @@ export function useStaffTab() {
   const [deleteTarget, setDeleteTarget] = useState<Staff | null>(null);
   const [formModalOpen, setFormModalOpen] = useState(false);
   const [drawerStaffId, setDrawerStaffId] = useState<number | null>(null);
-
-  // ─── Cleanup timers on unmount ────────────────────────────────────────────
-  useEffect(() => {
-    return () => {
-      if (fileNumberDebounceTimer.current) clearTimeout(fileNumberDebounceTimer.current);
-    };
-  }, []);
 
   // ─── Query Params ─────────────────────────────────────────────────────────
   const queryParams = {
@@ -55,8 +48,6 @@ export function useStaffTab() {
   const handleFileNumberSearchChange = useCallback((value: string) => {
     setFileNumberSearch(value);
     setPage(1);
-    if (fileNumberDebounceTimer.current) clearTimeout(fileNumberDebounceTimer.current);
-    fileNumberDebounceTimer.current = setTimeout(() => setDebouncedFileNumber(value), 300);
   }, []);
 
   const handleDepartmentFilterChange = useCallback((value: number | undefined) => {

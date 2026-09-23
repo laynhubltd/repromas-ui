@@ -1,6 +1,6 @@
-// Feature: rbac-settings
+import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
 import type { SorterResult } from "antd/es/table/interface";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import { useGetPermissionsQuery } from "../api/rbacSettingsApi";
 import type { Permission } from "../types/rbac";
 
@@ -8,7 +8,7 @@ const ITEMS_PER_PAGE = 30;
 
 export function usePermissionsPanel() {
   const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search, 300);
   const [sort, setSort] = useState("createdAt:desc");
   const [page, setPage] = useState(1);
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -16,19 +16,9 @@ export function usePermissionsPanel() {
   const [deleteTarget, setDeleteTarget] = useState<Permission | null>(null);
   const [syncModalOpen, setSyncModalOpen] = useState(false);
 
-  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   const handleSearchChange = useCallback((value: string) => {
     setSearch(value);
     setPage(1);
-    if (debounceTimer.current) clearTimeout(debounceTimer.current);
-    debounceTimer.current = setTimeout(() => setDebouncedSearch(value), 300);
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (debounceTimer.current) clearTimeout(debounceTimer.current);
-    };
   }, []);
 
   const queryParams = {

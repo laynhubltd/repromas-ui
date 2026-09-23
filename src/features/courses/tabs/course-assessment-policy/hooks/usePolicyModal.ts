@@ -3,6 +3,7 @@ import type { CourseConfiguration } from "@/features/courses/tabs/course-configu
 import { useGetProgramsQuery } from "@/features/program/tabs/programs/api/programsApi";
 import { useGetCurriculumVersionsQuery } from "@/features/settings/tabs/curriculum-version/api/curriculumVersionApi";
 import { useApiError } from "@/shared/hooks/useApiError";
+import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
 import { RequestScreen } from "@/shared/types/error-ui";
 import {
   mutationSuccessMessage,
@@ -65,6 +66,7 @@ export function usePolicyFormModal(
     number | undefined
   >(undefined);
   const [configSearch, setConfigSearch] = useState<string>("");
+  const debouncedConfigSearch = useDebouncedValue(configSearch, 300);
 
   const isSubmitting = isCreating || isUpdating;
   const bothSelected =
@@ -94,7 +96,7 @@ export function usePolicyFormModal(
       {
         "exact[program]": selectedProgramId!,
         "exact[version]": selectedVersionId!,
-        ...(configSearch ? { "search[course.code]": configSearch } : {}),
+        ...(debouncedConfigSearch ? { "search[course.code]": debouncedConfigSearch } : {}),
         include: "course",
         sort: "id:asc",
         itemsPerPage: 50,

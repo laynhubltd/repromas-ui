@@ -5,11 +5,12 @@ import {
   FEE_EVENT_UI_COPY,
 } from "@/shared/constants/feeEventOptions";
 import { useApiError } from "@/shared/hooks/useApiError";
+import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
 import { RequestScreen } from "@/shared/types/error-ui";
 import { deriveSectionErrorMessage } from "@/shared/utils/error/deriveSectionErrorMessage";
 import { notifyMutationSuccess } from "@/shared/utils/feedback/notifyMutationSuccess";
 import { Modal } from "antd";
-import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
+import { useCallback, useMemo, useReducer } from "react";
 import {
   useGetBillableEventCatalogQuery,
   useGetBillableEventsQuery,
@@ -26,8 +27,6 @@ import type {
 } from "../types/billable-event";
 import type { FeeEventsTabLabelMaps } from "../types/fee-events-tab";
 
-const DEBOUNCE_MS = 300;
-
 function matchesPolicyStatusFilter(
   event: BillableEvent,
   filter: FeeEventPolicyStatusFilter,
@@ -43,21 +42,15 @@ export function useFeeEventsTab() {
     initialFeeEventsTabState,
   );
 
-  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (debounceTimer.current) clearTimeout(debounceTimer.current);
-    };
-  }, []);
+  const debouncedSearch = useDebouncedValue(state.search, 300);
 
   const queryParams = {
     page: state.page,
     itemsPerPage: FEE_EVENT_ITEMS_PER_PAGE,
     sort: FEE_EVENT_SORT_DEFAULT,
     include: "currentPolicy" as const,
-    ...(state.debouncedSearch
-      ? { "search[name]": state.debouncedSearch }
+    ...(debouncedSearch
+      ? { "search[name]": debouncedSearch }
       : {}),
     ...(state.isActiveFilter !== undefined
       ? { "exact[isActive]": state.isActiveFilter }
@@ -191,14 +184,6 @@ export function useFeeEventsTab() {
   const handleSearchChange = useCallback((value: string) => {
     dispatch({ type: FeeEventsTabActionType.SetSearch, value });
     dispatch({ type: FeeEventsTabActionType.SetPage, value: 1 });
-
-    if (debounceTimer.current) clearTimeout(debounceTimer.current);
-    debounceTimer.current = setTimeout(() => {
-      dispatch({
-        type: FeeEventsTabActionType.SetDebouncedSearch,
-        value,
-      });
-    }, DEBOUNCE_MS);
   }, []);
 
   const handlePageChange = useCallback((page: number) => {

@@ -41,7 +41,7 @@ export function FormatPreviewPanel({
   const token = useToken();
 
   const { data: programsData, isLoading: isProgramsLoading } = useGetProgramsQuery({
-    itemsPerPage: 200,
+    itemsPerPage: 100,
   });
   const { data: sessionsData, isLoading: isSessionsLoading } =
     useGetAcademicSessionsForCyclesQuery();

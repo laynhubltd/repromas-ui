@@ -1,6 +1,7 @@
 // Feature: faculty-department-management
 import { useAccessControl } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
+import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
 import { useState } from "react";
 import { useGetDepartmentsQuery } from "../api/departmentsApi";
 import type { Department } from "../types/faculty";
@@ -35,6 +36,8 @@ export function useFacultyRow(facultyId: number, isExpanded: boolean): {
   // Search state is preserved across collapse/re-expand (not reset on collapse)
   const [nameSearch, setNameSearch] = useState("");
   const [codeSearch, setCodeSearch] = useState("");
+  const debouncedNameSearch = useDebouncedValue(nameSearch, 300);
+  const debouncedCodeSearch = useDebouncedValue(codeSearch, 300);
   const [editTarget, setEditTarget] = useState<Department | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Department | null>(null);
 
@@ -43,8 +46,8 @@ export function useFacultyRow(facultyId: number, isExpanded: boolean): {
   const { data, isLoading, isError, refetch } = useGetDepartmentsQuery(
     {
       "exact[facultyId]": facultyId,
-      ...(nameSearch ? { "search[name]": nameSearch } : {}),
-      ...(codeSearch ? { "search[code]": codeSearch } : {}),
+      ...(debouncedNameSearch ? { "search[name]": debouncedNameSearch } : {}),
+      ...(debouncedCodeSearch ? { "search[code]": debouncedCodeSearch } : {}),
     },
     { skip: !isExpanded }
   );

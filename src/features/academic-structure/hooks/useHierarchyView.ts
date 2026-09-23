@@ -1,5 +1,5 @@
-// Feature: faculty-department-management
 import { useAccessControl } from "@/features/access-control";
+import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
 import { RequestScreen } from "@/shared/types/error-ui";
 import { deriveSectionErrorMessage } from "@/shared/utils/error/deriveSectionErrorMessage";
 import { useEffect, useMemo, useState } from "react";
@@ -54,6 +54,8 @@ export function useHierarchyView(): {
   // Search
   const [nameSearch, setNameSearch] = useState("");
   const [codeSearch, setCodeSearch] = useState("");
+  const debouncedNameSearch = useDebouncedValue(nameSearch, 300);
+  const debouncedCodeSearch = useDebouncedValue(codeSearch, 300);
 
   // Sort
   const [sort, setSort] = useState("");
@@ -95,8 +97,8 @@ export function useHierarchyView(): {
   const queryParams = {
     page,
     itemsPerPage,
-    ...(nameSearch ? { "search[name]": nameSearch } : {}),
-    ...(codeSearch ? { "search[code]": codeSearch } : {}),
+    ...(debouncedNameSearch ? { "search[name]": debouncedNameSearch } : {}),
+    ...(debouncedCodeSearch ? { "search[code]": debouncedCodeSearch } : {}),
     ...(sort ? { sort } : {}),
   };
 

@@ -24,7 +24,7 @@ export function useRoleAuthorityMatrix(roleId: number | null) {
   const handleApiError = useApiError();
 
   const { data: allRolesData, isLoading: isLoadingAllRoles } = useGetRolesQuery(
-    { itemsPerPage: 200, sort: "name:asc" },
+    { itemsPerPage: 100, sort: "name:asc" },
     { skip: !roleId },
   );
 

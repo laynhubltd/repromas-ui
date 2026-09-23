@@ -1,9 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { message } from "antd";
 import { useGetCourseConfigurationsGroupedQuery } from "@/features/courses";
 import type { CourseConfigurationGroupOption } from "@/features/courses";
 import { useGetAcademicSessionsQuery } from "@/features/settings";
 import { useGetProgramsQuery } from "@/features/program/tabs/programs/api/programsApi";
+import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
 import { useBatchAllocateCoursesMutation } from "../api/courseAllocationsApi";
 import type { Staff } from "../types/staff";
 import type {
@@ -33,8 +34,7 @@ export function useAllocateCoursesModal({
   const [semesterTypeId, setSemesterTypeId] = useState<number | undefined>(undefined);
 
   const [search, setSearch] = useState<string>("");
-  const [debouncedSearch, setDebouncedSearch] = useState<string>("");
-  const searchDebounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const debouncedSearch = useDebouncedValue(search, 300);
 
   const [selectedCourseConfigIds, setSelectedCourseConfigIds] = useState<number[]>([]);
   const [roleOverrides, setRoleOverrides] = useState<Record<number, AllocationRole>>({});
@@ -86,14 +86,10 @@ export function useAllocateCoursesModal({
       setConflictCourseConfigId(null);
       setConflictMessage(null);
       setSearch("");
-      setDebouncedSearch("");
       setProgramId(undefined);
       setLevelId(undefined);
       setSemesterTypeId(undefined);
       setExpandedRowKeys([]);
-      if (searchDebounceTimer.current) {
-        clearTimeout(searchDebounceTimer.current);
-      }
     }
   }, [open]);
 
@@ -207,12 +203,6 @@ export function useAllocateCoursesModal({
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
-    if (searchDebounceTimer.current) {
-      clearTimeout(searchDebounceTimer.current);
-    }
-    searchDebounceTimer.current = setTimeout(() => {
-      setDebouncedSearch(value);
-    }, 300);
   };
 
   const handleExpandedRowsChange = (keys: readonly React.Key[]) => {

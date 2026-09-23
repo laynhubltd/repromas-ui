@@ -8,9 +8,11 @@ import { useProfilePictureRequired } from "@/features/profile/hooks/useProfilePi
 import { LogoutOutlined, SwapOutlined, UserOutlined } from "@ant-design/icons";
 import type { ItemType } from "antd/es/menu/interface";
 import { Tooltip } from "antd";
-import { useCallback, useMemo } from "react";
-import { Link, Outlet, useNavigate } from "react-router-dom";
+import { Suspense, useCallback, useMemo } from "react";
+import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { appPaths } from "./app-path";
+import { preloadRoute } from "./routePreloaders";
+import { PageSkeleton } from "@/shared/ui/PageSkeleton";
 import {
   toAntdMenuItem,
   useRestrictedStudentRouteMenuItems,
@@ -24,7 +26,10 @@ export default function StudentShell() {
   const { needsProfilePicture, tooltipMessage } = useProfilePictureRequired();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const [logout] = useLogoutMutation();
+
+  const topSegment = location.pathname.split("/")[1] || "root";
 
   const onLogout = () => {
     void logout();
@@ -39,8 +44,15 @@ export default function StudentShell() {
         "key" in antdItem &&
         "label" in antdItem
       ) {
+        const itemKey = String(antdItem.key);
         const linkLabel = (
-          <Link to={String(antdItem.key)}>{antdItem.label}</Link>
+          <Link
+            to={itemKey}
+            onMouseEnter={() => preloadRoute(itemKey)}
+            onFocus={() => preloadRoute(itemKey)}
+          >
+            {antdItem.label}
+          </Link>
         );
 
         return {
@@ -114,7 +126,9 @@ export default function StudentShell() {
       userLastName={userProfile?.lastName}
       userEmail={userProfile?.email}
     >
-      <Outlet />
+      <Suspense key={topSegment} fallback={<PageSkeleton delayMs={150} />}>
+        <Outlet />
+      </Suspense>
     </MainLayout>
   );
 }

@@ -46,7 +46,6 @@ export function CurriculumVersionTab() {
     cloneTarget,
     editTarget,
     deleteTarget,
-    debounceTimer,
   } = state;
   const {
     handleSearchChange,
@@ -157,9 +156,6 @@ export function CurriculumVersionTab() {
           placeholder="Search by name…"
           value={search}
           onChange={(e) => handleSearchChange(e.target.value)}
-          onSearch={() => {
-            if (debounceTimer.current) clearTimeout(debounceTimer.current);
-          }}
           allowClear
           style={{ maxWidth: 320 }}
         />

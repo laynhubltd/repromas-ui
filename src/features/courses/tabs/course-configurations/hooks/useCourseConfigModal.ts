@@ -1,13 +1,14 @@
 import { useGetSemesterTypesQuery } from "@/features/settings/tabs/academic-calendar/api/academicCalendarApi";
 import { useGetLevelsQuery } from "@/features/settings/tabs/level-config/api/levelApi";
 import { useApiError } from "@/shared/hooks/useApiError";
+import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
 import { RequestScreen } from "@/shared/types/error-ui";
 import {
   mutationSuccessMessage,
   notifyMutationSuccess,
 } from "@/shared/utils/feedback/notifyMutationSuccess";
 import { Form } from "antd";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useGetCourseQuery, useGetCoursesQuery } from "../../courses/api/coursesApi";
 import type { Course } from "../../courses/types/course";
 import {
@@ -55,23 +56,11 @@ export function useCourseConfigFormModal(
 
   // ─── Course Search State ──────────────────────────────────────────────────
   const [courseSearch, setCourseSearch] = useState("");
-  const [debouncedCourseSearch, setDebouncedCourseSearch] = useState("");
+  const debouncedCourseSearch = useDebouncedValue(courseSearch, 300);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
-  const courseSearchDebounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleCourseSearch = useCallback((value: string) => {
     setCourseSearch(value);
-    if (courseSearchDebounceTimer.current) clearTimeout(courseSearchDebounceTimer.current);
-    courseSearchDebounceTimer.current = setTimeout(() => {
-      setDebouncedCourseSearch(value);
-    }, 300);
-  }, []);
-
-  // Cleanup debounce timer on unmount
-  useEffect(() => {
-    return () => {
-      if (courseSearchDebounceTimer.current) clearTimeout(courseSearchDebounceTimer.current);
-    };
   }, []);
 
   // Fetch active courses with server-side filtering
@@ -173,7 +162,6 @@ export function useCourseConfigFormModal(
     if (!open) {
       form.resetFields();
       setCourseSearch("");
-      setDebouncedCourseSearch("");
       setSelectedCourse(null);
     }
   }, [open, form]);

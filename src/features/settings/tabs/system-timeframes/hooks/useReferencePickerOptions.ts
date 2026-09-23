@@ -4,6 +4,7 @@ import { useGetFacultiesQuery } from "@/features/academic-structure/api/facultie
 import { useGetProgramsQuery } from "@/features/program/tabs/programs/api/programsApi";
 import { useGetLevelsQuery } from "@/features/settings/tabs/level-config/api/levelApi";
 import { useGetStudentsQuery } from "@/features/student/api/studentsApi";
+import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
 import type { Scope } from "../types/system-timeframe";
 
 export type ReferenceOption = {
@@ -20,6 +21,8 @@ export function useReferencePickerOptions(
   scope: Scope,
   search: string,
 ): UseReferencePickerOptionsResult {
+  const debouncedSearch = useDebouncedValue(search, 300);
+
   const isFaculty = scope === "FACULTY";
   const isDepartment = scope === "DEPARTMENT";
   const isProgram = scope === "PROGRAM";
@@ -27,29 +30,29 @@ export function useReferencePickerOptions(
   const isStudent = scope === "STUDENT";
 
   const { data: facultiesData, isLoading: facultiesLoading } = useGetFacultiesQuery(
-    { itemsPerPage: 30, ...(search ? { "search[name]": search } : {}) },
+    { itemsPerPage: 30, ...(debouncedSearch ? { "search[name]": debouncedSearch } : {}) },
     { skip: !isFaculty },
   );
 
   const { data: departmentsData, isLoading: departmentsLoading } = useGetDepartmentsQuery(
-    { itemsPerPage: 30, ...(search ? { "search[name]": search } : {}) },
+    { itemsPerPage: 30, ...(debouncedSearch ? { "search[name]": debouncedSearch } : {}) },
     { skip: !isDepartment },
   );
 
   const { data: programsData, isLoading: programsLoading } = useGetProgramsQuery(
-    { itemsPerPage: 30, ...(search ? { "search[name]": search } : {}) },
+    { itemsPerPage: 30, ...(debouncedSearch ? { "search[name]": debouncedSearch } : {}) },
     { skip: !isProgram },
   );
 
   const { data: levelsData, isLoading: levelsLoading } = useGetLevelsQuery(
-    { itemsPerPage: 30, ...(search ? { "search[name]": search } : {}) },
+    { itemsPerPage: 30, ...(debouncedSearch ? { "search[name]": debouncedSearch } : {}) },
     { skip: !isLevel },
   );
 
   // Students: only load when search is non-empty (matric number search)
   const { data: studentsData, isLoading: studentsLoading } = useGetStudentsQuery(
-    { itemsPerPage: 30, "search[matricNumber]": search },
-    { skip: !isStudent || !search },
+    { itemsPerPage: 30, "search[matricNumber]": debouncedSearch },
+    { skip: !isStudent || !debouncedSearch },
   );
 
   if (isFaculty) {

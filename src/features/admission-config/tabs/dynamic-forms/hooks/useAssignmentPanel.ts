@@ -41,7 +41,7 @@ export function useAssignmentPanel() {
 
   const { data: assignmentsData, refetch: refetchAssignments } =
     useGetFormAssignmentsQuery({
-      itemsPerPage: 200,
+      itemsPerPage: 100,
       "exact[purpose]": "ADMISSION_APPLICATION",
     });
 

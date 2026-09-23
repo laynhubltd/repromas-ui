@@ -85,7 +85,7 @@ export function useMatricNumberFormatPreview(
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
     debounceTimer.current = setTimeout(() => {
       void runPreview();
-    }, 400);
+    }, 300);
     return () => {
       if (debounceTimer.current) clearTimeout(debounceTimer.current);
     };

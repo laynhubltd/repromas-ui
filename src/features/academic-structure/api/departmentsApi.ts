@@ -12,6 +12,7 @@ const departmentsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getDepartments: builder.query<PaginatedResponse<Department>, DepartmentListParams>({
       query: (params) => ({ url: "/departments", method: "GET", params }),
+      keepUnusedDataFor: 1800,
       providesTags: (_result, _err, params) =>
         params["exact[facultyId]"] !== undefined
           ? [{ type: "Department" as const, id: params["exact[facultyId]"] }]

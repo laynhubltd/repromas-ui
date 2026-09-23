@@ -56,7 +56,7 @@ describe("CurriculumSelect", () => {
     render(<CurriculumSelect programId={15} />);
 
     expect(queryMock).toHaveBeenCalledWith(
-      { forProgramId: 15, include: "program", itemsPerPage: 200 },
+      { forProgramId: 15, include: "program", itemsPerPage: 100 },
       { skip: false },
     );
   });

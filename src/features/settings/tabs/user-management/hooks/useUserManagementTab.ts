@@ -1,6 +1,7 @@
 import { useGetRolesQuery } from "@/features/settings/tabs/rbac-settings/api/rbacSettingsApi";
 import type { Role } from "@/features/settings/tabs/rbac-settings/types/rbac";
 import { useApiError } from "@/shared/hooks/useApiError";
+import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
 import { RequestScreen } from "@/shared/types/error-ui";
 import { deriveSectionErrorMessage } from "@/shared/utils/error/deriveSectionErrorMessage";
 import { useCallback, useEffect, useMemo, useReducer, useState } from "react";
@@ -13,8 +14,8 @@ import {
 import type { TenantUser } from "../types/user-management";
 
 const ITEMS_PER_PAGE = 30;
-const ROLES_QUERY = { itemsPerPage: 200 } as const;
-const SEARCH_DEBOUNCE_MS = 400;
+// Bounded reference domain ceiling — backend clamps to 100 max
+const ROLES_QUERY = { itemsPerPage: 100 } as const;
 
 export function useUserManagementTab() {
   // ── Filter + pagination state (reducer) ───────────────────────────────────
@@ -38,18 +39,15 @@ export function useUserManagementTab() {
   const [resendModalOpen, setResendModalOpen] = useState(false);
   const [resendTarget, setResendTarget] = useState<TenantUser | null>(null);
 
-  // ── Debounce: fire SetDebouncedSearch 400ms after the user stops typing.
-  // useEffect here is correct — it syncs React state with a timer (external system),
-  // not resetting state based on prop changes.
+  const debouncedSearch = useDebouncedValue(listState.search, 300);
+
+  // Sync debounced search to reducer when value updates
   useEffect(() => {
-    const timer = setTimeout(() => {
-      dispatch({
-        type: UserManagementActionType.SetDebouncedSearch,
-        search: listState.search,
-      });
-    }, SEARCH_DEBOUNCE_MS);
-    return () => clearTimeout(timer);
-  }, [listState.search]);
+    dispatch({
+      type: UserManagementActionType.SetDebouncedSearch,
+      search: debouncedSearch,
+    });
+  }, [debouncedSearch]);
 
   // ── Queries ───────────────────────────────────────────────────────────────
 
@@ -64,8 +62,8 @@ export function useUserManagementTab() {
     page: listState.page,
     itemsPerPage: ITEMS_PER_PAGE,
     // Only send the email param when the user has typed something
-    ...(listState.debouncedSearch.trim()
-      ? { email: listState.debouncedSearch.trim() }
+    ...(debouncedSearch.trim()
+      ? { email: debouncedSearch.trim() }
       : {}),
   });
 

@@ -5,9 +5,11 @@ import { roleSwitcherOpened } from "@/features/auth/state/auth-slice";
 import useAuthState from "@/features/auth/use-auth-state";
 import { LogoutOutlined, SwapOutlined, UserOutlined } from "@ant-design/icons";
 import type { ItemType } from "antd/es/menu/interface";
-import { useMemo } from "react";
-import { Link, Outlet, useNavigate } from "react-router-dom";
+import { Suspense, useMemo } from "react";
+import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { appPaths } from "./app-path";
+import { preloadRoute } from "./routePreloaders";
+import { PageSkeleton } from "@/shared/ui/PageSkeleton";
 import {
   SetupChecklistLauncher,
   useSetupGatedMenuItems,
@@ -25,7 +27,10 @@ export default function DashboardShell() {
   const { userProfile, roles, activeRole } = useAuthState();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const [logout] = useLogoutMutation();
+
+  const topSegment = location.pathname.split("/")[1] || "root";
 
   const onLogout = () => {
     void logout();
@@ -41,9 +46,18 @@ export default function DashboardShell() {
       if ("disabled" in item && item.disabled) {
         return item;
       }
+      const itemKey = String(item.key);
       return {
         ...item,
-        label: <Link to={String(item.key)}>{item.label}</Link>,
+        label: (
+          <Link
+            to={itemKey}
+            onMouseEnter={() => preloadRoute(itemKey)}
+            onFocus={() => preloadRoute(itemKey)}
+          >
+            {item.label}
+          </Link>
+        ),
       };
     }
     return item;
@@ -105,7 +119,9 @@ export default function DashboardShell() {
       userLastName={userProfile?.lastName}
       userEmail={userProfile?.email}
     >
-      <Outlet />
+      <Suspense key={topSegment} fallback={<PageSkeleton delayMs={150} />}>
+        <Outlet />
+      </Suspense>
       <SetupChecklistLauncher />
     </MainLayout>
   );
