@@ -18,7 +18,7 @@ export function useCourseAssessmentPolicyTab() {
     initialState,
   );
 
-  const debouncedCourseCodeSearch = useDebouncedValue(state.courseCodeSearch, 300);
+  const debouncedCourseCodeSearch = useDebouncedValue(state.courseCodeSearch, 500);
 
   // ─── Query ────────────────────────────────────────────────────────────────
   const queryParams = {

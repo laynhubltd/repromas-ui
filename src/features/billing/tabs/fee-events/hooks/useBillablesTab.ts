@@ -27,7 +27,7 @@ export function useBillablesTab() {
     initialBillablesTabState,
   );
 
-  const debouncedSearch = useDebouncedValue(state.search, 300);
+  const debouncedSearch = useDebouncedValue(state.search, 500);
 
   const queryParams = {
     page: state.page,

@@ -24,11 +24,11 @@ export function useProgramsTab() {
 
   // ─── Search ───────────────────────────────────────────────────────────────
   const [nameSearch, setNameSearch] = useState("");
-  const debouncedName = useDebouncedValue(nameSearch, 300);
+  const debouncedName = useDebouncedValue(nameSearch, 500);
   const [degreeTitleSearch, setDegreeTitleSearch] = useState("");
-  const debouncedDegreeTitle = useDebouncedValue(degreeTitleSearch, 300);
+  const debouncedDegreeTitle = useDebouncedValue(degreeTitleSearch, 500);
   const [codeSearch, setCodeSearch] = useState("");
-  const debouncedCode = useDebouncedValue(codeSearch, 300);
+  const debouncedCode = useDebouncedValue(codeSearch, 500);
 
   // ─── Filters ──────────────────────────────────────────────────────────────
   const [departmentFilter, setDepartmentFilter] = useState<number | undefined>(undefined);

@@ -56,7 +56,7 @@ export function useCourseConfigFormModal(
 
   // ─── Course Search State ──────────────────────────────────────────────────
   const [courseSearch, setCourseSearch] = useState("");
-  const debouncedCourseSearch = useDebouncedValue(courseSearch, 300);
+  const debouncedCourseSearch = useDebouncedValue(courseSearch, 500);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
 
   const handleCourseSearch = useCallback((value: string) => {

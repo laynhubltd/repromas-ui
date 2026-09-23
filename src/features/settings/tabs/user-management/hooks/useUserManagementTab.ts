@@ -39,7 +39,7 @@ export function useUserManagementTab() {
   const [resendModalOpen, setResendModalOpen] = useState(false);
   const [resendTarget, setResendTarget] = useState<TenantUser | null>(null);
 
-  const debouncedSearch = useDebouncedValue(listState.search, 300);
+  const debouncedSearch = useDebouncedValue(listState.search, 500);
 
   // Sync debounced search to reducer when value updates
   useEffect(() => {

@@ -23,7 +23,7 @@ export function useAcademicStandingTab() {
     debounceTimer.current = setTimeout(() => {
       setDebouncedSearch(value.trim());
       setPage(1);
-    }, 300);
+    }, 500);
   };
 
   const handleScopeFilterChange = (scope?: AcademicStandingScope) => {

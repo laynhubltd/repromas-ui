@@ -58,7 +58,7 @@ export function resetPageOnFilterChange(
 export function useCurriculumVersionTab() {
   const handleApiError = useApiError();
   const [search, setSearch] = useState("");
-  const debouncedSearch = useDebouncedValue(search, 300);
+  const debouncedSearch = useDebouncedValue(search, 500);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [scopeFilter, setScopeFilter] = useState<ScopeFilter>("all");
   const [sort, setSort] = useState("createdAt:desc");

@@ -13,7 +13,7 @@ export function useStaffTab() {
 
   // ─── Search ───────────────────────────────────────────────────────────────
   const [fileNumberSearch, setFileNumberSearch] = useState("");
-  const debouncedFileNumber = useDebouncedValue(fileNumberSearch, 300);
+  const debouncedFileNumber = useDebouncedValue(fileNumberSearch, 500);
 
   // ─── Filters ──────────────────────────────────────────────────────────────
   const [departmentFilter, setDepartmentFilter] = useState<number | undefined>(undefined);

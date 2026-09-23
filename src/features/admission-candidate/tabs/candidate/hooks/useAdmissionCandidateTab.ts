@@ -31,9 +31,9 @@ export function useAdmissionCandidateTab() {
 
   const { hasPermission } = useAccessControl();
 
-  const debouncedFirstName = useDebouncedValue(state.firstNameSearch, 300);
-  const debouncedLastName = useDebouncedValue(state.lastNameSearch, 300);
-  const debouncedJambReg = useDebouncedValue(state.jambRegSearch, 300);
+  const debouncedFirstName = useDebouncedValue(state.firstNameSearch, 500);
+  const debouncedLastName = useDebouncedValue(state.lastNameSearch, 500);
+  const debouncedJambReg = useDebouncedValue(state.jambRegSearch, 500);
 
   const { data: cyclesData } = useGetAdmissionCyclesQuery({
     itemsPerPage: 100,

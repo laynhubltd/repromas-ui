@@ -66,7 +66,7 @@ export function usePolicyFormModal(
     number | undefined
   >(undefined);
   const [configSearch, setConfigSearch] = useState<string>("");
-  const debouncedConfigSearch = useDebouncedValue(configSearch, 300);
+  const debouncedConfigSearch = useDebouncedValue(configSearch, 500);
 
   const isSubmitting = isCreating || isUpdating;
   const bothSelected =

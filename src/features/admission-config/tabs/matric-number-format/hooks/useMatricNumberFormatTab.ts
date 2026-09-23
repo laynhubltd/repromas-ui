@@ -127,7 +127,7 @@ export function useMatricNumberFormatTab() {
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
     debounceTimer.current = setTimeout(() => {
       dispatch({ type: MatricNumberFormatTabActionType.SetDebouncedSearch, value });
-    }, 300);
+    }, 500);
   }, []);
 
   const handleStatusFilterChange = useCallback(

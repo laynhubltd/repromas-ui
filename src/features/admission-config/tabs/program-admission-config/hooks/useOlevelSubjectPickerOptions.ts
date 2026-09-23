@@ -22,7 +22,7 @@ export function useOlevelSubjectPickerOptions(
   setSearch: (value: string) => void;
 } {
   const [search, setSearch] = useState("");
-  const debouncedSearch = useDebouncedValue(search, 300);
+  const debouncedSearch = useDebouncedValue(search, 500);
 
   const { data: listData, isLoading: isListLoading } = useGetOlevelSubjectsQuery(
     {

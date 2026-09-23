@@ -34,7 +34,7 @@ export function useAllocateCoursesModal({
   const [semesterTypeId, setSemesterTypeId] = useState<number | undefined>(undefined);
 
   const [search, setSearch] = useState<string>("");
-  const debouncedSearch = useDebouncedValue(search, 300);
+  const debouncedSearch = useDebouncedValue(search, 500);
 
   const [selectedCourseConfigIds, setSelectedCourseConfigIds] = useState<number[]>([]);
   const [roleOverrides, setRoleOverrides] = useState<Record<number, AllocationRole>>({});

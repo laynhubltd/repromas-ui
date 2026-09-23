@@ -8,7 +8,7 @@ const ITEMS_PER_PAGE = 30;
 
 export function usePermissionsPanel() {
   const [search, setSearch] = useState("");
-  const debouncedSearch = useDebouncedValue(search, 300);
+  const debouncedSearch = useDebouncedValue(search, 500);
   const [sort, setSort] = useState("createdAt:desc");
   const [page, setPage] = useState(1);
   const [createModalOpen, setCreateModalOpen] = useState(false);

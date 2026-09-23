@@ -21,7 +21,7 @@ export function useReferencePickerOptions(
   scope: Scope,
   search: string,
 ): UseReferencePickerOptionsResult {
-  const debouncedSearch = useDebouncedValue(search, 300);
+  const debouncedSearch = useDebouncedValue(search, 500);
 
   const isFaculty = scope === "FACULTY";
   const isDepartment = scope === "DEPARTMENT";

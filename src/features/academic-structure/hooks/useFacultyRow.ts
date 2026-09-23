@@ -36,8 +36,8 @@ export function useFacultyRow(facultyId: number, isExpanded: boolean): {
   // Search state is preserved across collapse/re-expand (not reset on collapse)
   const [nameSearch, setNameSearch] = useState("");
   const [codeSearch, setCodeSearch] = useState("");
-  const debouncedNameSearch = useDebouncedValue(nameSearch, 300);
-  const debouncedCodeSearch = useDebouncedValue(codeSearch, 300);
+  const debouncedNameSearch = useDebouncedValue(nameSearch, 500);
+  const debouncedCodeSearch = useDebouncedValue(codeSearch, 500);
   const [editTarget, setEditTarget] = useState<Department | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Department | null>(null);
 

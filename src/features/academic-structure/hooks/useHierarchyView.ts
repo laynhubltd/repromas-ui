@@ -54,8 +54,8 @@ export function useHierarchyView(): {
   // Search
   const [nameSearch, setNameSearch] = useState("");
   const [codeSearch, setCodeSearch] = useState("");
-  const debouncedNameSearch = useDebouncedValue(nameSearch, 300);
-  const debouncedCodeSearch = useDebouncedValue(codeSearch, 300);
+  const debouncedNameSearch = useDebouncedValue(nameSearch, 500);
+  const debouncedCodeSearch = useDebouncedValue(codeSearch, 500);
 
   // Sort
   const [sort, setSort] = useState("");

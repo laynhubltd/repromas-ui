@@ -93,10 +93,10 @@ export function useCourseTab() {
 
   // ─── Search ───────────────────────────────────────────────────────────────
   const [codeSearch, setCodeSearch] = useState("");
-  const debouncedCode = useDebouncedValue(codeSearch, 300);
+  const debouncedCode = useDebouncedValue(codeSearch, 500);
 
   const [titleSearch, setTitleSearch] = useState("");
-  const debouncedTitle = useDebouncedValue(titleSearch, 300);
+  const debouncedTitle = useDebouncedValue(titleSearch, 500);
 
   // ─── Filters ──────────────────────────────────────────────────────────────
   const [departmentId, setDepartmentId] = useState<number | undefined>(undefined);

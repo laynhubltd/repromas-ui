@@ -2,7 +2,8 @@
 import { useApiError } from "@/shared/hooks/useApiError";
 import { RequestScreen } from "@/shared/types/error-ui";
 import { notification } from "antd";
-import { useEffect, useState } from "react";
+import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
+import { useState } from "react";
 import {
     useAssignPermissionsToRoleMutation,
     useGetPermissionsQuery,
@@ -31,20 +32,12 @@ export function useAddPermissionsModal(
   };
 } {
   const [searchTerm, setSearchTerm] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(searchTerm, 500);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const handleApiError = useApiError();
 
   const [assignPermissionsToRole, { isLoading: isSubmitting }] =
     useAssignPermissionsToRoleMutation();
-
-  // 300 ms debounce for search term
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchTerm);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
 
   const { data: permissionsData, isLoading } = useGetPermissionsQuery(
     { itemsPerPage: 100, "search[name]": debouncedSearch || undefined },
@@ -59,7 +52,6 @@ export function useAddPermissionsModal(
 
   const reset = () => {
     setSearchTerm("");
-    setDebouncedSearch("");
     setSelectedIds(new Set());
   };
 

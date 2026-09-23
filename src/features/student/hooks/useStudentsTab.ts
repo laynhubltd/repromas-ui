@@ -23,13 +23,13 @@ export function useStudentsTab() {
 
   // ─── Search ───────────────────────────────────────────────────────────────
   const [firstNameSearch, setFirstNameSearch] = useState("");
-  const debouncedFirstName = useDebouncedValue(firstNameSearch, 300);
+  const debouncedFirstName = useDebouncedValue(firstNameSearch, 500);
 
   const [lastNameSearch, setLastNameSearch] = useState("");
-  const debouncedLastName = useDebouncedValue(lastNameSearch, 300);
+  const debouncedLastName = useDebouncedValue(lastNameSearch, 500);
 
   const [matricSearch, setMatricSearch] = useState("");
-  const debouncedMatric = useDebouncedValue(matricSearch, 300);
+  const debouncedMatric = useDebouncedValue(matricSearch, 500);
 
   // ─── Filters ──────────────────────────────────────────────────────────────
   const [statusFilter, setStatusFilter] = useState<number | undefined>(undefined);
