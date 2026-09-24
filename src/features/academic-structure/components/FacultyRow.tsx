@@ -1,5 +1,9 @@
 // Feature: faculty-department-management
-import { PermissionGuard } from "@/features/access-control";
+import {
+  PermissionGuard,
+  PermittedDropdown,
+  type PermittedMenuItem,
+} from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
@@ -12,15 +16,15 @@ import {
   EditOutlined,
   MoreOutlined,
   PlusOutlined,
-  RightOutlined
+  RightOutlined,
 } from "@ant-design/icons";
-import { Button, Dropdown, Typography } from "antd";
+import { Button, Typography } from "antd";
 import { useFacultyRow } from "../hooks/useFacultyRow";
 import type { Faculty } from "../types/faculty";
-import { DepartmentRow } from "./DepartmentRow";
-import { DepartmentSearchBar } from "./DepartmentSearchBar";
 import { DeleteDepartmentModal } from "./modals/DeleteDepartmentModal";
 import { DepartmentFormModal } from "./modals/DepartmentFormModal";
+import { DepartmentRow } from "./DepartmentRow";
+import { DepartmentSearchBar } from "./DepartmentSearchBar";
 
 export type FacultyRowProps = {
   faculty: Faculty;
@@ -69,24 +73,18 @@ export function FacultyRow({
   } = actions;
   const { hasData, isSearchActive, canCreateDept } = flags;
 
-  const facultyMenuItems = [
+  const facultyMenuItems: PermittedMenuItem[] = [
     {
       key: "edit",
-      label: (
-        <PermissionGuard permission={Permission.FacultiesUpdate}>
-          <span>Edit</span>
-        </PermissionGuard>
-      ),
+      label: "Edit",
+      permission: [Permission.FacultiesUpdate, Permission.FacultiesManage],
       icon: <EditOutlined />,
       onClick: () => onEdit(faculty),
     },
     {
       key: "delete",
-      label: (
-        <PermissionGuard permission={Permission.FacultiesDelete}>
-          <span style={{ color: token.colorError }}>Delete</span>
-        </PermissionGuard>
-      ),
+      label: <span style={{ color: token.colorError }}>Delete</span>,
+      permission: [Permission.FacultiesDelete, Permission.FacultiesManage],
       icon: <DeleteOutlined style={{ color: token.colorError }} />,
       onClick: () => onDelete(faculty),
       danger: true,
@@ -170,7 +168,7 @@ export function FacultyRow({
 
         {/* Department count badge */}
         <ConditionalRenderer when={deptCount !== null}>
-            <span
+          <span
             style={{
               fontSize: 10,
               fontWeight: 700,
@@ -211,8 +209,8 @@ export function FacultyRow({
           style={{ flex: "0 0 auto" }}
           onClick={(e) => e.stopPropagation()}
         >
-          <Dropdown
-            menu={{ items: facultyMenuItems }}
+          <PermittedDropdown
+            items={facultyMenuItems}
             trigger={["click"]}
             placement="bottomRight"
           >
@@ -222,7 +220,7 @@ export function FacultyRow({
               icon={<MoreOutlined style={{ fontSize: 16 }} />}
               style={{ color: token.colorTextTertiary }}
             />
-          </Dropdown>
+          </PermittedDropdown>
         </div>
       </div>
 
@@ -252,7 +250,13 @@ export function FacultyRow({
               onCodeChange={handleCodeSearchChange}
             />
             {canCreateDept && (
-              <PermissionGuard permission={Permission.DepartmentsCreate}>
+              <PermissionGuard
+                permission={[
+                  Permission.DepartmentsCreate,
+                  Permission.DepartmentsManage,
+                  Permission.FacultiesManage,
+                ]}
+              >
                 <Button
                   type="primary"
                   size="small"
@@ -318,7 +322,13 @@ export function FacultyRow({
                 <div style={{ padding: "24px 16px", textAlign: "center" }}>
                   <Typography.Text type="secondary">No departments yet.</Typography.Text>
                   <div style={{ marginTop: 8 }}>
-                    <PermissionGuard permission={Permission.DepartmentsCreate}>
+                    <PermissionGuard
+                      permission={[
+                        Permission.DepartmentsCreate,
+                        Permission.DepartmentsManage,
+                        Permission.FacultiesManage,
+                      ]}
+                    >
                       <Button
                         type="primary"
                         size="small"

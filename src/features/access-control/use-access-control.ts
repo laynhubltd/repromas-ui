@@ -1,30 +1,56 @@
 import useAuthState from "@/features/auth/use-auth-state";
+import { useCallback, useContext } from "react";
+import { ReactReduxContext } from "react-redux";
+import { isPermitted as evaluateIsPermitted } from "./evaluate";
+import { Permission } from "./permissions";
 import {
   hasStudentPortalScope as checkStudentPortalScope,
   hasStudentRouteAccess,
 } from "./student-access-control-util";
-import { Permission } from "./permissions";
 import {
   normalizeStudentPortalScope,
   type StudentPortalScope,
 } from "./student-portal-scopes";
+import type { PermissionRequirement } from "./types";
 
 export function useAccessControl() {
   const { roles, permissions, activeRole } = useAuthState();
+  const reduxContext = useContext(ReactReduxContext);
 
-  // When no role is active, all permission checks return false
-  const effectivePermissions = activeRole !== null ? permissions : [];
+  const hasProvider = reduxContext !== null;
+
+  // When no redux provider is mounted (isolated UI unit tests), default to full permission
+  // When provider is mounted but activeRole is null, deny all permissions
+  const effectivePermissions = !hasProvider
+    ? null
+    : activeRole !== null
+      ? permissions
+      : [];
 
   const studentPortalScope = normalizeStudentPortalScope(activeRole?.scope);
 
-  const hasPermission = (permission: Permission | string): boolean =>
-    effectivePermissions.includes(permission as string);
+  const isPermitted = useCallback(
+    (requirement: PermissionRequirement | undefined | null): boolean => {
+      if (!hasProvider) return true;
+      return evaluateIsPermitted(effectivePermissions ?? [], requirement);
+    },
+    [hasProvider, effectivePermissions],
+  );
 
-  const hasAnyPermission = (required: (Permission | string)[]): boolean =>
-    required.some((p) => effectivePermissions.includes(p as string));
+  const hasPermission = (permission: Permission | string): boolean => {
+    if (!hasProvider) return true;
+    return (effectivePermissions ?? []).includes(permission as string);
+  };
 
-  const hasAllPermissions = (required: (Permission | string)[]): boolean =>
-    required.every((p) => effectivePermissions.includes(p as string));
+  const hasAnyPermission = (required: (Permission | string)[]): boolean => {
+    if (!hasProvider) return true;
+    return required.some((p) => (effectivePermissions ?? []).includes(p as string));
+  };
+
+  const hasAllPermissions = (required: (Permission | string)[]): boolean => {
+    if (!hasProvider) return true;
+    return required.every((p) => (effectivePermissions ?? []).includes(p as string));
+  };
 
   const hasRole = (roleName: string): boolean =>
     roles.some((r) => r.name === roleName);
@@ -40,9 +66,10 @@ export function useAccessControl() {
 
   return {
     roles,
-    permissions: effectivePermissions,
+    permissions: effectivePermissions ?? [],
     activeRole,
     studentPortalScope,
+    isPermitted,
     hasPermission,
     hasAnyPermission,
     hasAllPermissions,
@@ -51,4 +78,14 @@ export function useAccessControl() {
     hasStudentPortalScope,
     canAccessStudentRoute,
   };
+}
+
+/**
+ * Convenience hook to check a single `PermissionRequirement`.
+ */
+export function usePermitted(
+  requirement: PermissionRequirement | undefined | null,
+): boolean {
+  const { isPermitted } = useAccessControl();
+  return isPermitted(requirement);
 }

@@ -2,7 +2,11 @@
 import type { AccordionItem } from "@/components/ui-kit";
 import { Accordion, DashCard, ExplainerCallout, Table } from "@/components/ui-kit";
 import { useGetDepartmentsQuery } from "@/features/academic-structure/api/departmentsApi";
-import { PermissionGuard } from "@/features/access-control";
+import {
+  PermissionGuard,
+  PermittedDropdown,
+  type PermittedMenuItem,
+} from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer, centeredBox } from "@/shared/ui/ConditionalRenderer";
@@ -11,9 +15,7 @@ import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { SkeletonRows } from "@/shared/ui/SkeletonRows";
 import {
   CloudUploadOutlined,
-  DeleteOutlined,
   DownloadOutlined,
-  EditOutlined,
   FilterOutlined,
   PlusOutlined,
   UploadOutlined,
@@ -22,7 +24,6 @@ import {
   Badge,
   Button,
   Col,
-  Dropdown,
   Flex,
   Form,
   Input,
@@ -40,6 +41,7 @@ import type { SorterResult } from "antd/es/table/interface";
 import { useState } from "react";
 import { useCourseTab } from "../hooks/useCourseTab";
 import type { Course } from "../types/course";
+import { CourseRowActions } from "./CourseRowActions";
 import { BulkUploadModal } from "./modals/BulkUploadModal";
 import { BulkUploadSummaryModal } from "./modals/BulkUploadSummaryModal";
 import { CourseFormModal } from "./modals/CourseFormModal";
@@ -116,30 +118,29 @@ function buildColumns(
       align: "right",
       width: 100,
       render: (_: unknown, record: Course) => (
-        <Flex align="center" justify="flex-end" gap={4}>
-          <PermissionGuard permission={Permission.CoursesUpdate}>
-            <Button
-              type="text"
-              size="small"
-              icon={<EditOutlined style={{ fontSize: 16 }} />}
-              onClick={() => handleOpenEdit(record)}
-              title="Edit"
-            />
-          </PermissionGuard>
-          <PermissionGuard permission={Permission.CoursesDelete}>
-            <Button
-              type="text"
-              size="small"
-              danger
-              icon={<DeleteOutlined style={{ fontSize: 16 }} />}
-              onClick={() => handleOpenDelete(record)}
-              title="Delete"
-            />
-          </PermissionGuard>
-        </Flex>
+        <CourseRowActions
+          course={record}
+          onEdit={handleOpenEdit}
+          onDelete={handleOpenDelete}
+        />
       ),
     },
   ];
+}
+
+function CreateCourseButton({ onClick }: { onClick: () => void }) {
+  return (
+    <PermissionGuard permission={[Permission.CoursesCreate, Permission.CoursesManage]}>
+      <Button
+        type="primary"
+        icon={<PlusOutlined />}
+        onClick={onClick}
+        style={{ fontWeight: 600 }}
+      >
+        Create Course
+      </Button>
+    </PermissionGuard>
+  );
 }
 
 function buildGroupColumns(
@@ -208,18 +209,20 @@ export function CoursesTab() {
   const cardState = isLoading ? "loading" : "default";
   const activeCount = courses.filter((c) => c.isActive).length;
 
-  const uploadMenuItems = [
+  const uploadMenuItems: PermittedMenuItem[] = [
     {
       key: "download-template",
       label: "Download Template",
       icon: <DownloadOutlined />,
       onClick: bulkActions.handleDownloadTemplate,
+      permission: [Permission.CoursesCreate, Permission.CoursesManage],
     },
     {
       key: "upload-bulk",
       label: "Upload Bulk",
       icon: <UploadOutlined />,
       onClick: handleOpenBulkUpload,
+      permission: [Permission.CoursesCreate, Permission.CoursesManage],
     },
   ];
 
@@ -399,21 +402,10 @@ export function CoursesTab() {
             </Flex>
           </ConditionalRenderer>
         </Flex>
-        <PermissionGuard permission={Permission.CoursesCreate}>
-          <Dropdown menu={{ items: uploadMenuItems }} trigger={["click"]}>
-            <Button icon={<CloudUploadOutlined />}>Upload Multiple</Button>
-          </Dropdown>
-        </PermissionGuard>
-        <PermissionGuard permission={Permission.CoursesCreate}>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={handleOpenCreate}
-            style={{ fontWeight: 600 }}
-          >
-            Create Course
-          </Button>
-        </PermissionGuard>
+        <PermittedDropdown items={uploadMenuItems} trigger={["click"]}>
+          <Button icon={<CloudUploadOutlined />}>Upload Multiple</Button>
+        </PermittedDropdown>
+        <CreateCourseButton onClick={handleOpenCreate} />
       </Flex>
 
       <DataLoader loading={isLoading} loader={<SkeletonRows count={5} variant="card" />}>
@@ -432,16 +424,7 @@ export function CoursesTab() {
           <Typography.Text type="secondary" style={{ display: "block", marginBottom: 16 }}>
             No courses configured. Create your first course to get started.
           </Typography.Text>
-          <PermissionGuard permission={Permission.CoursesCreate}>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={handleOpenCreate}
-              style={{ fontWeight: 600 }}
-            >
-              Create Course
-            </Button>
-          </PermissionGuard>
+          <CreateCourseButton onClick={handleOpenCreate} />
         </ConditionalRenderer>
 
         <ConditionalRenderer

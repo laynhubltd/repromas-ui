@@ -19,7 +19,6 @@ import { Navigate, Route } from "react-router-dom";
 import { appPaths } from "./app-path";
 import type { ModuleRegistry } from "./module-registry";
 import RouterShell from "./router-shell";
-import { isTokenExpired } from "@/shared/utils/token-util";
 
 const ResetPassword = lazy(() => import("@/features/auth/components/ResetPassword"));
 
@@ -153,8 +152,17 @@ export function moduleMounter({
     return fullScreenRoute(<InstitutionNotActive tenantSlug={tenantSlug} />);
   }
 
-  // 6. Unauthenticated or expired token — show auth routes
-  if (!auth.token || isTokenExpired(auth.token)) {
+  // 6. Unauthenticated — show auth routes.
+  //
+  // Deliberately gates on token PRESENCE only, never on client-clock expiry
+  // (isTokenExpired). Trusting the local clock here caused a silent login
+  // loop: on a machine whose clock ran ahead, a freshly issued token looked
+  // "expired", so the mounter kept the auth tree mounted and the user landed
+  // back on /login immediately after a successful login — with no error
+  // anywhere. Genuine expiry is resolved by the server: the first API call
+  // returns 401, axiosBaseQuery refreshes (or clears auth and redirects),
+  // and this gate then re-evaluates with the correct outcome.
+  if (!auth.token) {
     return withRootShell(registry.authentication.getRouteEntries());
   }
 

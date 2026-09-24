@@ -2,10 +2,12 @@ import { appPaths } from "@/app/routing/app-path";
 import { AuthPageLayout } from "@/components/auth/AuthPageLayout";
 import { AdmissionApplicationOpenNotice } from "@/features/auth/candidate-signup/components/AdmissionApplicationOpenNotice";
 import { useLogin } from "@/features/auth/hooks/useLogin";
+import { consumeIdleLogoutReason } from "@/features/auth/idle-session/idle-session";
 import { useToken } from "@/shared/hooks/useToken";
 import { validators } from "@/shared/utils/validators";
 import { LockOutlined, UserOutlined } from "@ant-design/icons";
 import { Alert, Button, Form, Input, Typography } from "antd";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 const { Title, Text } = Typography;
@@ -14,6 +16,8 @@ export default function Login() {
   const [form] = Form.useForm();
   const t = useToken();
   const navigate = useNavigate();
+  // Read-and-clear on first render so the banner shows exactly once.
+  const [wasIdleLogout] = useState(() => consumeIdleLogoutReason());
   const { state, actions, flags } = useLogin();
   const {
     isLoading,
@@ -51,6 +55,16 @@ export default function Login() {
           Sign in to your Repromas account
         </Text>
       </div>
+
+      {wasIdleLogout && !isError && (
+        <Alert
+          type="info"
+          message="You were signed out due to inactivity"
+          description="For your security, sessions end after a period of inactivity. Please sign in again."
+          style={{ marginBottom: t.sizeMD }}
+          showIcon
+        />
+      )}
 
       {isError && (
         <Alert

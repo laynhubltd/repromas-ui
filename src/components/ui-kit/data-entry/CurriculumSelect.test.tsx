@@ -5,6 +5,7 @@ import * as curriculumVersionApi from "@/features/settings/tabs/curriculum-versi
 
 vi.mock("@/features/settings/tabs/curriculum-version/api/curriculumVersionApi", () => ({
   useGetCurriculumVersionsQuery: vi.fn(),
+  useGetCurriculumVersionQuery: vi.fn().mockReturnValue({ data: undefined, isLoading: false }),
 }));
 
 describe("CurriculumSelect", () => {
@@ -76,5 +77,21 @@ describe("CurriculumSelect", () => {
     render(<CurriculumSelect programId={10} autoSelectActive onChange={onChange} />);
 
     expect(onChange).toHaveBeenCalledWith(2);
+  });
+
+  it("passes search query parameter to backend query when debounced search is provided", () => {
+    const queryMock = vi.fn().mockReturnValue({
+      data: { totalItems: 0, member: [], view: { first: "", last: "" } },
+      isLoading: false,
+      isFetching: false,
+    });
+    vi.mocked(curriculumVersionApi.useGetCurriculumVersionsQuery).mockImplementation(queryMock);
+
+    render(<CurriculumSelect programId={20} />);
+
+    expect(queryMock).toHaveBeenCalledWith(
+      { forProgramId: 20, include: "program", itemsPerPage: 100 },
+      { skip: false },
+    );
   });
 });

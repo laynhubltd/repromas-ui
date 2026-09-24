@@ -1,3 +1,8 @@
+import {
+  PermittedDropdown,
+  type PermittedMenuItem,
+} from "@/features/access-control";
+import { Permission } from "@/features/access-control/permissions";
 import { useToken } from "@/shared/hooks/useToken";
 import {
   EditOutlined,
@@ -9,7 +14,6 @@ import {
 import {
   Avatar,
   Button,
-  Dropdown,
   Table,
   Tag,
   Tooltip,
@@ -56,7 +60,7 @@ export function UserTable({
               color: token.colorTextSecondary,
               border: `1px solid ${token.colorBorder}`,
               fontWeight: 600,
-              fontSize: `${token.fontSizeSM}px`
+              fontSize: `${token.fontSizeSM}px`,
             }}
           >
             {resolveUserInitials(user)}
@@ -117,54 +121,70 @@ export function UserTable({
       key: "actions",
       width: 48,
       align: "right",
-      render: (_, user) => (
-        <Dropdown
-          trigger={["click"]}
-          placement="bottomRight"
-          menu={{
-            items: [
-              {
-                key: "view",
-                label: "View",
-                icon: <UserOutlined />,
-                onClick: () => actions.handleOpenDrawer(user),
-              },
-              {
-                key: "edit",
-                label: "Edit Profile",
-                icon: <EditOutlined />,
-                onClick: () => actions.handleOpenEdit(user),
-              },
-              {
-                key: "change-role",
-                label: "Manage Roles",
-                icon: <SwapOutlined />,
-                onClick: () => actions.handleOpenRoleModal(user),
-              },
-              { type: "divider" },
-              {
-                key: "resend",
-                label: "Resend Password Reset",
-                icon: <KeyOutlined />,
-                onClick: () => actions.handleOpenResend(user),
-              },
+      render: (_, user) => {
+        const menuItems: PermittedMenuItem[] = [
+          {
+            key: "view",
+            label: "View",
+            icon: <UserOutlined />,
+            onClick: () => actions.handleOpenDrawer(user),
+          },
+          {
+            key: "edit",
+            label: "Edit Profile",
+            icon: <EditOutlined />,
+            permission: [
+              Permission.UsersUpdate,
+              Permission.ProfilesUpdate,
+              Permission.UsersManage,
             ],
-          }}
-        >
-          <Tooltip title="Actions">
-            <Button
-              type="text"
-              size="small"
-              icon={
-                <MoreOutlined
-                  style={{ fontSize: 16, color: token.colorTextTertiary }}
-                />
-              }
-              onClick={(e) => e.stopPropagation()}
-            />
-          </Tooltip>
-        </Dropdown>
-      ),
+            onClick: () => actions.handleOpenEdit(user),
+          },
+          {
+            key: "change-role",
+            label: "Manage Roles",
+            icon: <SwapOutlined />,
+            permission: [
+              Permission.UserRolesUpdate,
+              Permission.UserRolesManage,
+              Permission.RolesManage,
+            ],
+            onClick: () => actions.handleOpenRoleModal(user),
+          },
+          { type: "divider" },
+          {
+            key: "resend",
+            label: "Resend Password Reset",
+            icon: <KeyOutlined />,
+            permission: [
+              Permission.UsersUpdate,
+              Permission.UsersManage,
+            ],
+            onClick: () => actions.handleOpenResend(user),
+          },
+        ];
+
+        return (
+          <PermittedDropdown
+            items={menuItems}
+            placement="bottomRight"
+            trigger={["click"]}
+          >
+            <Tooltip title="Actions">
+              <Button
+                type="text"
+                size="small"
+                icon={
+                  <MoreOutlined
+                    style={{ fontSize: 16, color: token.colorTextTertiary }}
+                  />
+                }
+                onClick={(e) => e.stopPropagation()}
+              />
+            </Tooltip>
+          </PermittedDropdown>
+        );
+      },
     },
   ];
 

@@ -64,7 +64,14 @@ export function UserManagementTab() {
             style={{ width: 240 }}
           />
 
-          <PermissionGuard permission={Permission.UserRolesCreate}>
+          <PermissionGuard
+            permission={[
+              Permission.UsersCreate,
+              Permission.UserRolesCreate,
+              Permission.RolesCreate,
+              Permission.UsersManage,
+            ]}
+          >
             <Button
               type="primary"
               icon={<PlusOutlined />}

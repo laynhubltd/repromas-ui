@@ -1,9 +1,12 @@
 // Feature: faculty-department-management
-import { PermissionGuard } from "@/features/access-control";
+import {
+  PermittedDropdown,
+  type PermittedMenuItem,
+} from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import { useToken } from "@/shared/hooks/useToken";
 import { DeleteOutlined, EditOutlined, MoreOutlined } from "@ant-design/icons";
-import { Button, Dropdown, Typography } from "antd";
+import { Button, Typography } from "antd";
 import { useDepartmentRow } from "../hooks/useDepartmentRow";
 import type { Department } from "../types/faculty";
 
@@ -25,22 +28,13 @@ export function DepartmentRow({ department, onEdit, onDelete }: DepartmentRowPro
   const token = useToken();
   const { flags } = useDepartmentRow(department);
 
-  const menuItems: Array<{
-    key: string;
-    label: React.ReactNode;
-    icon: React.ReactNode;
-    onClick: () => void;
-    danger?: boolean;
-  }> = [];
+  const menuItems: PermittedMenuItem[] = [];
 
   if (flags.canEdit) {
     menuItems.push({
       key: "edit",
-      label: (
-        <PermissionGuard permission={Permission.DepartmentsUpdate}>
-          <span>Edit</span>
-        </PermissionGuard>
-      ),
+      label: "Edit",
+      permission: [Permission.DepartmentsUpdate, Permission.DepartmentsManage],
       icon: <EditOutlined />,
       onClick: () => onEdit(department),
     });
@@ -49,11 +43,8 @@ export function DepartmentRow({ department, onEdit, onDelete }: DepartmentRowPro
   if (flags.canDelete) {
     menuItems.push({
       key: "delete",
-      label: (
-        <PermissionGuard permission={Permission.DepartmentsDelete}>
-          <span style={{ color: token.colorError }}>Delete</span>
-        </PermissionGuard>
-      ),
+      label: <span style={{ color: token.colorError }}>Delete</span>,
+      permission: [Permission.DepartmentsDelete, Permission.DepartmentsManage],
       icon: <DeleteOutlined style={{ color: token.colorError }} />,
       onClick: () => onDelete(department),
       danger: true,
@@ -113,18 +104,19 @@ export function DepartmentRow({ department, onEdit, onDelete }: DepartmentRowPro
 
       {/* Actions */}
       <div style={{ flex: "0 0 auto" }}>
-        {menuItems.length > 0 ? (
-          <Dropdown menu={{ items: menuItems }} trigger={["click"]} placement="bottomRight">
-            <Button
-              type="text"
-              size="small"
-              icon={<MoreOutlined style={{ fontSize: 16 }} />}
-              style={{ color: token.colorTextTertiary }}
-            />
-          </Dropdown>
-        ) : (
-          <div style={{ width: 24 }} />
-        )}
+        <PermittedDropdown
+          items={menuItems}
+          trigger={["click"]}
+          placement="bottomRight"
+          emptyFallback={<div style={{ width: 24 }} />}
+        >
+          <Button
+            type="text"
+            size="small"
+            icon={<MoreOutlined style={{ fontSize: 16 }} />}
+            style={{ color: token.colorTextTertiary }}
+          />
+        </PermittedDropdown>
       </div>
     </div>
   );

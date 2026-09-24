@@ -207,7 +207,7 @@ describe("P-5: route path not in routePrivilegeMatrix → hasRouteReadAccess ret
 describe("P-6: route with empty array entry in matrix → hasRouteReadAccess returns true", () => {
   // Find matrix entries that have empty arrays
   const emptyEntryPaths = Object.entries(routePrivilegeMatrix)
-    .filter(([, perms]) => perms.length === 0)
+    .filter(([, perms]) => Array.isArray(perms) && perms.length === 0)
     .map(([path]) => path);
 
   it("returns true for routes with empty permission arrays, regardless of user permissions", () => {

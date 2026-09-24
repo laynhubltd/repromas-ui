@@ -76,6 +76,9 @@ export function SessionPanel({
             Current
           </Tag>
         )}
+        {session.rankOrder !== undefined && session.rankOrder !== null && (
+          <Tag style={{ margin: 0 }}>Order #{session.rankOrder}</Tag>
+        )}
       </span>
     ),
     subtitle: formatDateRange(session.startDate, session.endDate),

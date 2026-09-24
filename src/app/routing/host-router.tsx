@@ -12,7 +12,6 @@ import { BrowserRouter as Router, Routes } from "react-router-dom";
 import { resolveHost } from "./host-resolver";
 import { moduleMounter, resolveModuleRole } from "./module-mounter";
 import type { ModuleRegistry } from "./module-registry";
-import { isTokenExpired } from "@/shared/utils/token-util";
 
 /**
  * Composes the module registry — the only place that knows about concrete modules.
@@ -74,7 +73,10 @@ export function HostRouter() {
         ? "error"
         : "ready",
     tenantBootstrap.data?.status ?? "unknown",
-    auth.token && !isTokenExpired(auth.token) ? "authed" : "anon",
+    // Presence only — must mirror the mounter's step-6 gate exactly. Keying
+    // on client-clock expiry here made the memoized tree disagree with the
+    // gate on machines with skewed clocks (the silent login-loop bug).
+    auth.token ? "authed" : "anon",
     auth.roleSwitcherOpen ? "picking" : "settled",
     moduleRole,
     systemConfig.isBootstrapped ? "bootstrapped" : "bootstrapping",

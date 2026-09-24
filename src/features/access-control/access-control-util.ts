@@ -1,4 +1,5 @@
 import { matchPath } from "react-router-dom";
+import { isPermitted } from "./evaluate";
 import { routePrivilegeMatrix } from "./route-privilege-matrix";
 
 export function hasRouteReadAccess({
@@ -11,12 +12,9 @@ export function hasRouteReadAccess({
   const matchedKey = Object.keys(routePrivilegeMatrix).find((key) =>
     matchPath({ path: key, end: false }, routePath),
   );
-  
+
   if (!matchedKey) return true; // no matrix entry => allow
 
-  const required = routePrivilegeMatrix[matchedKey] ?? [];
-  
-  if (required.length === 0) return true; // empty entry => open to authenticated users
-  
-  return required.some((p) => userPermissions.includes(p));
+  const requirement = routePrivilegeMatrix[matchedKey];
+  return isPermitted(userPermissions, requirement);
 }
