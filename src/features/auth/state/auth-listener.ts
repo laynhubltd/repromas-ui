@@ -2,7 +2,7 @@ import { baseApi } from "@/app/api/baseApi";
 import systemConfigApi from "@/features/settings/tabs/system-config/api/systemConfigApi";
 import { clearSystemConfigs } from "@/features/settings/tabs/system-config/state/systemConfigSlice";
 import { clearAllSubmissionIds } from "@/features/admission-application/state/admissionApplicationSessionSlice";
-import { isTokenExpired } from "@/shared/utils/token-util";
+import { clearLastActivity } from "@/features/auth/idle-session/idle-session";
 import { createListenerMiddleware } from "@reduxjs/toolkit";
 import { REHYDRATE } from "redux-persist";
 import {
@@ -47,6 +47,10 @@ const clearUserScopedClientState = (
   listenerApi.dispatch(clearAllSubmissionIds());
   listenerApi.dispatch(baseApi.util.resetApiState());
   listenerApi.dispatch(clearSystemConfigs());
+  // Idle-session contract: a stored activity timestamp means "a session is
+  // live". Every logout must clear it, or the next login would judge itself
+  // against the previous session's inactivity and instantly sign out.
+  clearLastActivity();
 };
 
 startListening({
@@ -85,12 +89,16 @@ startListening({
     // is complete — so there is no race with login. The app only renders
     // once the persisted state is fully loaded into Redux.
     //
-    // This listener's sole job: clear auth if the rehydrated token is
-    // expired, so the user is sent to login on page load with a stale session.
+    // Deliberately keyed on token PRESENCE, not client-clock expiry
+    // (isTokenExpired). Clearing auth here when the local clock judged the
+    // token expired logged skewed-clock users out on EVERY page load with
+    // no error. A genuinely stale session is cleared authoritatively by the
+    // server's 401 through axiosBaseQuery's refresh flow (the config fetch
+    // below doubles as that probe), never by this listener.
     const state = listenerApi.getState();
     const { token } = state.auth;
 
-    if (!token || isTokenExpired(token)) {
+    if (!token) {
       listenerApi.dispatch(authCleared());
     } else {
       listenerApi.dispatch(systemConfigApi.endpoints.listSystemConfigs.initiate());

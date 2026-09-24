@@ -15,7 +15,6 @@ import {
 } from "@/shared/utils/constants";
 import { errorsToObject, errorsToString } from "@/shared/utils/object-utils";
 import { getTenantFromHostname } from "@/shared/utils/tenant-util";
-import { isTokenExpired } from "@/shared/utils/token-util";
 import type { BaseQueryApi, BaseQueryFn } from "@reduxjs/toolkit/query";
 import { Mutex } from "async-mutex";
 import axios, { type AxiosError, type AxiosRequestConfig } from "axios";
@@ -108,7 +107,14 @@ export const axiosBaseQuery =
       const token = state.auth?.token;
       const is401 = axiosError.response?.status === 401;
 
-      if (token && is401 && isTokenExpired(token)) {
+      // The server's 401 is the authoritative expiry signal — never gate the
+      // refresh on isTokenExpired(token). That client-clock check made the
+      // gate unreachable on machines whose clock ran BEHIND (the token never
+      // "looked" expired locally, so a real 401 was returned as a plain error
+      // and the session silently dead-ended). Auth endpoints themselves
+      // (login/refresh) are excluded: a 401 there means bad credentials or a
+      // dead refresh token, not an expired access token.
+      if (token && is401 && isWhitelistedPath(requestConfig.url)) {
         const refreshToken = state.auth?.refreshToken;
 
         if (refreshToken) {
@@ -117,24 +123,38 @@ export const axiosBaseQuery =
           await refreshMutex.runExclusive(async () => {
             // Re-read state inside the lock. A previous waiter may have
             // already refreshed the token — if so, skip the refresh call.
+            // Compared by identity (did the token CHANGE since our 401?),
+            // not by client-clock expiry, which is unreliable under skew.
             const latestToken = (api.getState() as StateWithAuth).auth?.token;
-            if (latestToken && !isTokenExpired(latestToken)) return;
+            if (latestToken && latestToken !== token) return;
 
             try {
+              // Gesdinet refresh endpoint — /api/token/refresh, NOT
+              // /api/auth/refresh (that path 404s). X-TENANT is required so
+              // the new JWT is minted with the tenant claims and the
+              // response carries the full session bootstrap.
+              const tenant = getTenantFromHostname(window.location.hostname);
               const refreshRes = await axios.post<{
                 token?: string;
                 refresh_token?: string;
               }>(
-                `${config.apiBaseUrl.replace(/\/api\/?$/, "")}/api/auth/refresh`,
+                `${config.apiBaseUrl.replace(/\/api\/?$/, "")}/api/token/refresh`,
                 { refresh_token: refreshToken },
+                { headers: tenant ? { "X-TENANT": tenant } : undefined },
               );
               const newAccessToken =
                 refreshRes.data?.token ??
                 (refreshRes.data as { accessToken?: string }).accessToken;
 
               if (newAccessToken) {
+                // single_use rotation: the refresh token we just spent is now
+                // invalid — store the rotated one or the NEXT refresh fails
+                // with 401 "JWT Refresh Token Not Found" and logs the user out.
                 api.dispatch(
-                  setToken({ accessToken: newAccessToken, refreshToken }),
+                  setToken({
+                    accessToken: newAccessToken,
+                    refreshToken: refreshRes.data?.refresh_token ?? refreshToken,
+                  }),
                 );
               } else {
                 api.dispatch(clearAuth());

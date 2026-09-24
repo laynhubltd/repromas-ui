@@ -1,5 +1,9 @@
 import { DashCard, ExplainerCallout, Table } from "@/components/ui-kit";
-import { PermissionGuard } from "@/features/access-control";
+import {
+  PermissionGuard,
+  PermittedDropdown,
+  type PermittedMenuItem,
+} from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import { useGetDepartmentsQuery } from "@/features/academic-structure/api/departmentsApi";
 import { useToken } from "@/shared/hooks/useToken";
@@ -20,7 +24,6 @@ import {
   Badge,
   Button,
   Col,
-  Dropdown,
   Flex,
   Form,
   Input,
@@ -151,20 +154,22 @@ export function StaffPage() {
       align: "right",
       width: 60,
       render: (_: unknown, record: Staff) => {
-        const menuItems = [
+        const menuItems: PermittedMenuItem[] = [
           {
             key: "view",
-            label: <span>View</span>,
+            label: "View",
             icon: <EyeOutlined />,
             onClick: () => handleOpenDrawer(record.id),
           },
           {
             key: "allocate",
-            label: (
-              <PermissionGuard permission={Permission.CoursesManage}>
-                <span>Allocate Courses</span>
-              </PermissionGuard>
-            ),
+            label: "Allocate Courses",
+            permission: [
+              Permission.CourseAllocationsCreate,
+              Permission.CourseAllocationsManage,
+              Permission.CoursesManage,
+              Permission.StaffManage,
+            ],
             icon: <BookOutlined />,
             onClick: () => {
               setAllocateTarget(record);
@@ -173,21 +178,15 @@ export function StaffPage() {
           },
           {
             key: "edit",
-            label: (
-              <PermissionGuard permission={Permission.StaffUpdate}>
-                <span>Edit</span>
-              </PermissionGuard>
-            ),
+            label: "Edit",
+            permission: [Permission.StaffUpdate, Permission.StaffManage],
             icon: <EditOutlined />,
             onClick: () => handleOpenEdit(record),
           },
           {
             key: "delete",
-            label: (
-              <PermissionGuard permission={Permission.StaffDelete}>
-                <span style={{ color: token.colorError }}>Delete</span>
-              </PermissionGuard>
-            ),
+            label: <span style={{ color: token.colorError }}>Delete</span>,
+            permission: [Permission.StaffDelete, Permission.StaffManage],
             icon: <DeleteOutlined style={{ color: token.colorError }} />,
             onClick: () => handleOpenDelete(record),
             danger: true as const,
@@ -195,14 +194,14 @@ export function StaffPage() {
         ];
 
         return (
-          <Dropdown menu={{ items: menuItems }} trigger={["click"]} placement="bottomRight">
+          <PermittedDropdown items={menuItems} trigger={["click"]} placement="bottomRight">
             <Button
               type="text"
               size="small"
               icon={<MoreOutlined style={{ fontSize: 16 }} />}
               style={{ color: token.colorTextTertiary }}
             />
-          </Dropdown>
+          </PermittedDropdown>
         );
       },
     },
@@ -297,7 +296,7 @@ export function StaffPage() {
             </Badge>
           </Popover>
         </Flex>
-        <PermissionGuard permission={Permission.StaffCreate}>
+        <PermissionGuard permission={[Permission.StaffCreate, Permission.StaffManage]}>
           <Button
             type="primary"
             icon={<PlusOutlined />}
@@ -325,7 +324,7 @@ export function StaffPage() {
           <Typography.Text type="secondary" style={{ display: "block", marginBottom: 16 }}>
             No staff records yet. Create your first staff member to get started.
           </Typography.Text>
-          <PermissionGuard permission={Permission.StaffCreate}>
+          <PermissionGuard permission={[Permission.StaffCreate, Permission.StaffManage]}>
             <Button
               type="primary"
               icon={<PlusOutlined />}

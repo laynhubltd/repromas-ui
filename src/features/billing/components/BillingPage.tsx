@@ -1,4 +1,6 @@
 import { Tabs } from "@/components/ui-kit";
+import { Permission } from "@/features/access-control/permissions";
+import { useAccessControl } from "@/features/access-control/use-access-control";
 import { FeeChargesTab } from "@/features/billing/tabs/fee-charges";
 import { FeeEventsTab } from "@/features/billing/tabs/fee-events";
 import { FeeItemsTab } from "@/features/billing/tabs/fee-items";
@@ -9,12 +11,13 @@ import { PaymentTransactionsTab } from "@/features/billing/tabs/payment-transact
 import { PaymentsTab } from "@/features/billing/tabs/payments";
 import { PricingRulesTab } from "@/features/billing/tabs/pricing-rules";
 import type { ConfigurePricingParams } from "@/features/billing/types/configure-pricing";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 export type { ConfigurePricingParams } from "@/features/billing/types/configure-pricing";
 
 export function BillingPage() {
-  const [activeTab, setActiveTab] = useState("fee-events");
+  const { isPermitted } = useAccessControl();
+  const [activeTab, setActiveTab] = useState<string | null>(null);
   const [policyEventId, setPolicyEventId] = useState<number | null>(null);
   const [pricingEventCode, setPricingEventCode] = useState<string | null>(null);
   const [pricingPolicyId, setPricingPolicyId] = useState<number | null>(null);
@@ -46,10 +49,143 @@ export function BillingPage() {
     setActiveTab("fee-charges");
   };
 
+  const allBillingTabs = useMemo(
+    () => [
+      {
+        key: "fee-events",
+        label: "Fee Event",
+        permission: [
+          Permission.BillingBillableEventsList,
+          Permission.BillingBillableEventsManage,
+        ],
+        children: (
+          <FeeEventsTab
+            onViewPolicy={handleViewPolicy}
+            onConfigurePricing={handleConfigurePricing}
+          />
+        ),
+      },
+      {
+        key: "fee-policies",
+        label: "Fee Policy",
+        permission: [
+          Permission.BillingBillableEventPoliciesList,
+          Permission.BillingBillableEventPoliciesManage,
+        ],
+        children: (
+          <FeePoliciesTab
+            initialEventId={policyEventId}
+            onConfigurePricing={handleConfigurePricing}
+            onViewFeeCharges={handleViewFeeCharges}
+          />
+        ),
+      },
+      {
+        key: "fee-items",
+        label: "Fee Items",
+        permission: [
+          Permission.BillingFeeItemsList,
+          Permission.BillingFeeItemsManage,
+        ],
+        children: <FeeItemsTab />,
+      },
+      {
+        key: "pricing-rules",
+        label: "Pricing Rules",
+        permission: [
+          Permission.BillingPricingRulesList,
+          Permission.BillingPricingRulesManage,
+        ],
+        children: (
+          <PricingRulesTab
+            initialEventCode={pricingEventCode}
+            initialBillableEventPolicyId={pricingPolicyId}
+            initialCloneFromPolicyId={pricingCloneFromPolicyId}
+            onNavigateToFeePolicy={handleViewPolicy}
+            key={`${pricingEventCode ?? "default"}-${pricingPolicyId ?? "p"}-${pricingCloneFromPolicyId ?? "c"}`}
+          />
+        ),
+      },
+      {
+        key: "payment-gateway",
+        label: "Payment Gateway",
+        permission: [
+          Permission.TenantPaymentGatewayConfigsList,
+          Permission.TenantPaymentGatewayConfigsManage,
+        ],
+        children: <PaymentGatewayTab />,
+      },
+      {
+        key: "fee-charges",
+        label: "Fee Charges",
+        permission: [
+          Permission.BillingFeeChargesList,
+          Permission.BillingFeeChargesManage,
+        ],
+        children: (
+          <FeeChargesTab
+            initialEventCode={feeChargesEventCode}
+            key={feeChargesEventCode ?? "default-charges"}
+          />
+        ),
+      },
+      {
+        key: "invoices",
+        label: "Invoices",
+        permission: [
+          Permission.BillingInvoicesList,
+          Permission.BillingInvoicesManage,
+        ],
+        children: <InvoicesTab key="invoices-tab" />,
+      },
+      {
+        key: "payments",
+        label: "Payments",
+        permission: [
+          Permission.BillingPaymentsList,
+          Permission.BillingPaymentsManage,
+        ],
+        children: <PaymentsTab key="payments-tab" />,
+      },
+      {
+        key: "payment-transactions",
+        label: "Transactions",
+        permission: [
+          Permission.BillingPaymentTransactionsList,
+          Permission.BillingPaymentTransactionsManage,
+        ],
+        children: <PaymentTransactionsTab key="transactions-tab" />,
+      },
+    ],
+    [
+      policyEventId,
+      pricingEventCode,
+      pricingPolicyId,
+      pricingCloneFromPolicyId,
+      feeChargesEventCode,
+    ],
+  );
+
+  const permittedTabs = useMemo(
+    () => allBillingTabs.filter((tab) => isPermitted(tab.permission)),
+    [allBillingTabs, isPermitted],
+  );
+
+  const resolvedActiveKey = useMemo(() => {
+    if (activeTab && permittedTabs.some((t) => t.key === activeTab)) {
+      return activeTab;
+    }
+    return permittedTabs[0]?.key ?? "";
+  }, [activeTab, permittedTabs]);
+
+  if (permittedTabs.length === 0) {
+    return null;
+  }
+
   return (
     <div style={{ maxWidth: 1280, margin: "0 auto" }}>
       <Tabs
-        activeKey={activeTab}
+        activeKey={resolvedActiveKey}
         onChange={(key) => {
           setActiveTab(key);
           if (key !== "fee-policies") {
@@ -64,78 +200,7 @@ export function BillingPage() {
             setFeeChargesEventCode(null);
           }
         }}
-        items={[
-          {
-            key: "fee-events",
-            label: "Fee Event",
-            children: (
-              <FeeEventsTab
-                onViewPolicy={handleViewPolicy}
-                onConfigurePricing={handleConfigurePricing}
-              />
-            ),
-          },
-          {
-            key: "fee-policies",
-            label: "Fee Policy",
-            children: (
-              <FeePoliciesTab
-                initialEventId={policyEventId}
-                onConfigurePricing={handleConfigurePricing}
-                onViewFeeCharges={handleViewFeeCharges}
-              />
-            ),
-          },
-          {
-            key: "fee-items",
-            label: "Fee Items",
-            children: <FeeItemsTab />,
-          },
-          {
-            key: "pricing-rules",
-            label: "Pricing Rules",
-            children: (
-              <PricingRulesTab
-                initialEventCode={pricingEventCode}
-                initialBillableEventPolicyId={pricingPolicyId}
-                initialCloneFromPolicyId={pricingCloneFromPolicyId}
-                onNavigateToFeePolicy={handleViewPolicy}
-                key={`${pricingEventCode ?? "default"}-${pricingPolicyId ?? "p"}-${pricingCloneFromPolicyId ?? "c"}`}
-              />
-            ),
-          },
-          {
-            key: "payment-gateway",
-            label: "Payment Gateway",
-            children: <PaymentGatewayTab />,
-          },
-          {
-            key: "fee-charges",
-            label: "Fee Charges",
-            children: (
-              <FeeChargesTab
-                initialEventCode={feeChargesEventCode}
-                key={feeChargesEventCode ?? "default-charges"}
-              />
-            ),
-          },
-          {
-            key: "invoices",
-            label: "Invoices",
-            children: <InvoicesTab key="invoices-tab" />,
-          },
-          {
-            key: "payments",
-            label: "Payments",
-            children: <PaymentsTab key="payments-tab" />,
-          },
-          {
-            key: "payment-transactions",
-            label: "Transactions",
-            children: <PaymentTransactionsTab key="transactions-tab" />,
-          },
-        ]}
-        defaultActiveKey="fee-events"
+        items={permittedTabs.map(({ permission: _, ...rest }) => rest)}
         size="md"
         density="compact"
         variant="filled"

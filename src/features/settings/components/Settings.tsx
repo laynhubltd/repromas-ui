@@ -1,6 +1,4 @@
 import { Tabs } from "@/components/ui-kit";
-import { PermissionGuard } from "@/features/access-control";
-import { Permission } from "@/features/access-control/permissions";
 import {
   BookOutlined,
   CalendarOutlined,
@@ -31,35 +29,27 @@ export default function Settings() {
       {
         key: "roles-permissions",
         label: (
-          <PermissionGuard
-            permission={[Permission.RolesList, Permission.PermissionsList]}
-          >
-            <span>
-              <SafetyOutlined /> Roles & Permissions
-            </span>
-          </PermissionGuard>
+          <span>
+            <SafetyOutlined /> Roles & Permissions
+          </span>
         ),
         children: <RbacSettingsTab />,
       },
       {
         key: "user-management",
         label: (
-          <PermissionGuard permission={Permission.UsersList}>
-            <span>
-              <TeamOutlined /> Users
-            </span>
-          </PermissionGuard>
+          <span>
+            <TeamOutlined /> Users
+          </span>
         ),
         children: <UserManagementTab />,
       },
       {
         key: "system-config",
         label: (
-          <PermissionGuard permission={[Permission.SystemConfigsList]}>
-            <span>
-              <SettingOutlined /> System Config
-            </span>
-          </PermissionGuard>
+          <span>
+            <SettingOutlined /> System Config
+          </span>
         ),
         children: <SystemConfigTab />,
       },
@@ -94,11 +84,9 @@ export default function Settings() {
       {
         key: "system-timeframe",
         label: (
-          <PermissionGuard permission={[Permission.SystemTimeFramesList]}>
-            <span>
-              <CalendarOutlined /> Time Frame
-            </span>
-          </PermissionGuard>
+          <span>
+            <CalendarOutlined /> Time Frame
+          </span>
         ),
         children: <SystemTimeFramesTab />,
       },
@@ -131,6 +119,10 @@ export default function Settings() {
       ),
     [allTabItems, state.allowedTabKeys],
   );
+
+  if (tabItems.length === 0) {
+    return null;
+  }
 
   return (
     <div style={{ maxWidth: 1280, margin: "0 auto" }}>

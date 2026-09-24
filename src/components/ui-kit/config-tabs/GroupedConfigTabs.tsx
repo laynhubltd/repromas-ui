@@ -14,9 +14,12 @@ export function GroupedConfigTabs({
   syncWithUrl = true,
   urlGroupParam,
   urlTabParam,
+  emptyFallback = null,
 }: GroupedConfigTabsProps) {
   const token = useToken();
   const {
+    permittedGroups,
+    isEmpty,
     activeGroup,
     activeTab,
     activeGroupKey,
@@ -32,7 +35,11 @@ export function GroupedConfigTabs({
     urlTabParam,
   });
 
-  const segmentOptions = groups.map((group) => ({
+  if (isEmpty || !activeGroup || !activeTab) {
+    return <>{emptyFallback}</>;
+  }
+
+  const segmentOptions = permittedGroups.map((group) => ({
     label: group.label,
     value: group.key,
   }));

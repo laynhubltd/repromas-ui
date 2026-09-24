@@ -1,8 +1,7 @@
 import { useAppSelector } from "@/app/hooks";
 import { appPaths } from "@/app/routing/app-path";
-import { isTokenExpired } from "@/shared/utils/token-util";
 import type { ComponentType } from "react";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense } from "react";
 import { Navigate } from "react-router-dom";
 
 type WithAuthGuardProps<T extends object> = {
@@ -23,19 +22,14 @@ export default function withAuthGuard<T extends object>(
     const rehydrated = useAppSelector(
       (state) => (state as RootWithPersist)._persist?.rehydrated ?? false,
     );
-    const [checking, setChecking] = useState(true);
-    const [authenticated, setAuthenticated] = useState(false);
 
-    useEffect(() => {
-      if (!rehydrated) return;
-      const hasValidToken = !!token && !isTokenExpired(token);
-      setAuthenticated(hasValidToken);
-      setChecking(false);
-    }, [rehydrated, token]);
-
-    if (!rehydrated || checking) return <>{fallback ?? null}</>;
-    if (!token || !authenticated)
-      return <Navigate to={appPaths.login} replace />;
+    // Wait for redux-persist rehydration before judging auth, then gate on
+    // token PRESENCE only — never on client-clock expiry (isTokenExpired):
+    // a skewed local clock made fresh tokens look expired and bounced users
+    // straight back to /login. A genuinely stale token gets a 401 from the
+    // server, which axiosBaseQuery resolves (refresh or logout).
+    if (!rehydrated) return <>{fallback ?? null}</>;
+    if (!token) return <Navigate to={appPaths.login} replace />;
     return (
       <Suspense fallback={fallback ?? null}>
         <Component {...innerProps} />

@@ -1,7 +1,9 @@
+import { useAccessControl } from "@/features/access-control/use-access-control";
+import { filterPermittedGroups } from "@/features/access-control/permitted-tabs";
 import { useCallback, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { resolveGroupedConfigSelection } from "./resolveGroupedConfigSelection";
-import type { ConfigTabGroupDefinition } from "./types";
+import type { ConfigTabDefinition, ConfigTabGroupDefinition } from "./types";
 
 type UseGroupedConfigTabsArgs = {
   groups: ConfigTabGroupDefinition[];
@@ -21,37 +23,74 @@ export function useGroupedConfigTabs({
   urlTabParam = "tab",
 }: UseGroupedConfigTabsArgs) {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { isPermitted } = useAccessControl();
+
+  // Filter groups and their tabs using the pure headless engine before resolution
+  const permittedGroups = useMemo(
+    () => filterPermittedGroups(groups, isPermitted),
+    [groups, isPermitted],
+  );
+
+  const isEmpty = permittedGroups.length === 0;
 
   const initialSelection = useMemo(
-    () =>
-      resolveGroupedConfigSelection({
-        groups,
+    () => {
+      if (permittedGroups.length === 0) {
+        return { groupKey: "", tabKey: "" };
+      }
+      return resolveGroupedConfigSelection({
+        groups: permittedGroups,
         requestedGroup: syncWithUrl ? searchParams.get(urlGroupParam) : null,
         requestedTab: syncWithUrl ? searchParams.get(urlTabParam) : null,
         defaultGroupKey,
         defaultTabKey,
-      }),
+      });
+    },
     // eslint-disable-next-line react-hooks/exhaustive-deps -- mount defaults only
     [],
   );
 
   const [localSelection, setLocalSelection] = useState(initialSelection);
 
-  const selection = syncWithUrl
-    ? resolveGroupedConfigSelection({
-        groups,
-        requestedGroup: searchParams.get(urlGroupParam),
-        requestedTab: searchParams.get(urlTabParam),
-        defaultGroupKey,
-        defaultTabKey,
-      })
-    : localSelection;
+  const selection = useMemo(() => {
+    if (permittedGroups.length === 0) {
+      return { groupKey: "", tabKey: "" };
+    }
+    return syncWithUrl
+      ? resolveGroupedConfigSelection({
+          groups: permittedGroups,
+          requestedGroup: searchParams.get(urlGroupParam),
+          requestedTab: searchParams.get(urlTabParam),
+          defaultGroupKey,
+          defaultTabKey,
+        })
+      : localSelection;
+  }, [
+    permittedGroups,
+    syncWithUrl,
+    searchParams,
+    urlGroupParam,
+    urlTabParam,
+    defaultGroupKey,
+    defaultTabKey,
+    localSelection,
+  ]);
 
-  const activeGroup =
-    groups.find((group) => group.key === selection.groupKey) ?? groups[0];
-  const activeTab =
-    activeGroup.tabs.find((tab) => tab.key === selection.tabKey) ??
-    activeGroup.tabs[0];
+  const activeGroup: ConfigTabGroupDefinition | null = useMemo(() => {
+    if (permittedGroups.length === 0) return null;
+    return (
+      permittedGroups.find((group) => group.key === selection.groupKey) ??
+      permittedGroups[0]
+    );
+  }, [permittedGroups, selection.groupKey]);
+
+  const activeTab: ConfigTabDefinition | null = useMemo(() => {
+    if (!activeGroup || activeGroup.tabs.length === 0) return null;
+    return (
+      activeGroup.tabs.find((tab) => tab.key === selection.tabKey) ??
+      activeGroup.tabs[0]
+    );
+  }, [activeGroup, selection.tabKey]);
 
   const applySelection = useCallback(
     (groupKey: string, tabKey: string) => {
@@ -74,7 +113,7 @@ export function useGroupedConfigTabs({
 
   const handleGroupChange = useCallback(
     (groupKey: string) => {
-      const group = groups.find((item) => item.key === groupKey);
+      const group = permittedGroups.find((item) => item.key === groupKey);
       if (!group || group.tabs.length === 0) return;
 
       const nextTabKey =
@@ -85,17 +124,20 @@ export function useGroupedConfigTabs({
 
       applySelection(group.key, nextTabKey);
     },
-    [applySelection, groups, selection.groupKey, selection.tabKey],
+    [applySelection, permittedGroups, selection.groupKey, selection.tabKey],
   );
 
   const handleTabChange = useCallback(
     (tabKey: string) => {
+      if (!activeGroup) return;
       applySelection(activeGroup.key, tabKey);
     },
-    [activeGroup.key, applySelection],
+    [activeGroup, applySelection],
   );
 
   return {
+    permittedGroups,
+    isEmpty,
     activeGroup,
     activeTab,
     activeGroupKey: selection.groupKey,

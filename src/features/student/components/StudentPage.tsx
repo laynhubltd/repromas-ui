@@ -1,7 +1,11 @@
 // Feature: student
 
 import { DashCard, ExplainerCallout, Table } from "@/components/ui-kit";
-import { PermissionGuard } from "@/features/access-control";
+import {
+  PermissionGuard,
+  PermittedDropdown,
+  type PermittedMenuItem,
+} from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import { useGetProgramsQuery } from "@/features/program/tabs/programs/api/programsApi";
 import { ENTRY_MODE_OPTIONS } from "@/shared/constants/studentOptions";
@@ -29,7 +33,6 @@ import {
   Badge,
   Button,
   Col,
-  Dropdown,
   Flex,
   Form,
   Input,
@@ -115,22 +118,37 @@ export function StudentPage() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [bulkEnrollOpen, setBulkEnrollOpen] = useState(false);
 
-  const uploadMenuItems = [
+  const uploadMenuItems: PermittedMenuItem[] = [
     {
       key: "download-template",
       label: "Download Upload Template",
+      permission: [
+        Permission.BulkStudentUploadsCreate,
+        Permission.BulkStudentUploadsManage,
+        Permission.StudentsCreate,
+      ],
       icon: <DownloadOutlined />,
       onClick: bulkActions.handleDownloadTemplate,
     },
     {
       key: "upload-bulk",
       label: "Bulk Upload",
+      permission: [
+        Permission.BulkStudentUploadsCreate,
+        Permission.BulkStudentUploadsManage,
+        Permission.StudentsCreate,
+      ],
       icon: <UploadOutlined />,
       onClick: handleOpenBulkUpload,
     },
     {
       key: "bulk-transition",
       label: "Bulk Transition",
+      permission: [
+        Permission.BulkEnrollmentTransitionsCreate,
+        Permission.BulkEnrollmentTransitionsManage,
+        Permission.StudentEnrollmentTransitionsCreate,
+      ],
       icon: <RollbackOutlined />,
       onClick: () => setBulkEnrollOpen(true),
     },
@@ -295,30 +313,24 @@ export function StudentPage() {
       align: "right",
       width: 60,
       render: (_: unknown, record: Student) => {
-        const menuItems = [
+        const menuItems: PermittedMenuItem[] = [
           {
             key: "view",
-            label: <span>View</span>,
+            label: "View",
             icon: <EyeOutlined />,
             onClick: () => handleOpenDrawer(record.id),
           },
           {
             key: "edit",
-            label: (
-              <PermissionGuard permission={Permission.StudentsUpdate}>
-                <span>Edit</span>
-              </PermissionGuard>
-            ),
+            label: "Edit",
+            permission: [Permission.StudentsUpdate, Permission.StudentsManage],
             icon: <EditOutlined />,
             onClick: () => handleOpenEdit(record),
           },
           {
             key: "delete",
-            label: (
-              <PermissionGuard permission={Permission.StudentsDelete}>
-                <span style={{ color: token.colorError }}>Delete</span>
-              </PermissionGuard>
-            ),
+            label: <span style={{ color: token.colorError }}>Delete</span>,
+            permission: [Permission.StudentsDelete, Permission.StudentsManage],
             icon: <DeleteOutlined style={{ color: token.colorError }} />,
             onClick: () => handleOpenDelete(record),
             danger: true as const,
@@ -326,8 +338,8 @@ export function StudentPage() {
         ];
 
         return (
-          <Dropdown
-            menu={{ items: menuItems }}
+          <PermittedDropdown
+            items={menuItems}
             trigger={["click"]}
             placement="bottomRight"
           >
@@ -337,7 +349,7 @@ export function StudentPage() {
               icon={<MoreOutlined style={{ fontSize: 16 }} />}
               style={{ color: token.colorTextTertiary }}
             />
-          </Dropdown>
+          </PermittedDropdown>
         );
       },
     },
@@ -423,17 +435,12 @@ export function StudentPage() {
             </Badge>
           </Popover>
         </Flex>
+        <PermittedDropdown items={uploadMenuItems} trigger={["click"]}>
+          <Button icon={<CloudUploadOutlined />}>Multiple Upload</Button>
+        </PermittedDropdown>
         <PermissionGuard
-          permission={[
-            Permission.StudentsCreate,
-            Permission.StudentEnrollmentTransitionsCreate,
-          ]}
+          permission={[Permission.StudentsCreate, Permission.StudentsManage]}
         >
-          <Dropdown menu={{ items: uploadMenuItems }} trigger={["click"]}>
-            <Button icon={<CloudUploadOutlined />}>Multiple Upload</Button>
-          </Dropdown>
-        </PermissionGuard>
-        <PermissionGuard permission={Permission.StudentsCreate}>
           <Button
             type="primary"
             icon={<PlusOutlined />}
@@ -471,7 +478,9 @@ export function StudentPage() {
           >
             No students enrolled yet. Create your first student to get started.
           </Typography.Text>
-          <PermissionGuard permission={Permission.StudentsCreate}>
+          <PermissionGuard
+            permission={[Permission.StudentsCreate, Permission.StudentsManage]}
+          >
             <Button
               type="primary"
               icon={<PlusOutlined />}

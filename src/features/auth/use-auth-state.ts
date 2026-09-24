@@ -1,37 +1,30 @@
 import { useAppSelector } from "@/app/hooks";
+import { useContext } from "react";
+import { ReactReduxContext } from "react-redux";
+
+const EMPTY_AUTH_STATE = {
+  token: null,
+  refreshToken: null,
+  isAuthenticated: false,
+  userProfile: null,
+  profiles: [],
+  currentRole: null,
+  currentProfileId: null,
+  bootstrapComplete: false,
+  roles: [],
+  permissions: [],
+  activeRole: null,
+  roleSwitcherOpen: false,
+  tenantId: null,
+  entity: null,
+};
 
 export default function useAuthState() {
-  const {
-    token,
-    refreshToken,
-    isAuthenticated,
-    userProfile,
-    profiles,
-    currentRole,
-    currentProfileId,
-    bootstrapComplete,
-    roles,
-    permissions,
-    activeRole,
-    roleSwitcherOpen,
-    tenantId,
-    entity,
-  } = useAppSelector((state) => state.auth);
+  const reduxContext = useContext(ReactReduxContext);
 
-  return {
-    token,
-    refreshToken,
-    isAuthenticated,
-    userProfile,
-    profiles,
-    currentRole,
-    currentProfileId,
-    bootstrapComplete,
-    roles,
-    permissions,
-    activeRole,
-    roleSwitcherOpen,
-    tenantId,
-    entity,
-  };
+  if (!reduxContext) {
+    return EMPTY_AUTH_STATE;
+  }
+
+  return useAppSelector((state) => state.auth);
 }

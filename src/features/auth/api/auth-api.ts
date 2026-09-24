@@ -55,7 +55,8 @@ export const authApi = createApi({
       { refresh_token: string }
     >({
       query: (body) => ({
-        url: `${AUTH_BASE}/refresh`,
+        // Gesdinet refresh route lives at /token/refresh, not under /auth.
+        url: "/token/refresh",
         method: "POST",
         data: body,
       }),

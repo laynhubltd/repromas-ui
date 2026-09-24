@@ -11,6 +11,8 @@ export type Course = {
   updatedAt: string;
   // Relation object — only present when requested via include=department
   department?: Department | null;
+  canEdit?: boolean;
+  canDelete?: boolean;
 };
 
 export type CourseListParams = {

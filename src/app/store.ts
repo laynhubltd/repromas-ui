@@ -18,10 +18,37 @@ import {
     REHYDRATE,
 } from "redux-persist";
 // import storage from "redux-persist/lib/storage";
+//
+// localStorage access can THROW synchronously (Safari/Firefox private mode,
+// blocked site data, storage quota, sandboxed iframes). Unguarded, that
+// rejection propagated into redux-persist: the session was never persisted
+// and every full reload silently landed on /login. Degrade to an in-memory
+// session (survives SPA navigation, not reloads) instead of breaking auth.
 const storage = {
-  getItem: (key: string) => Promise.resolve(localStorage.getItem(key)),
-  setItem: (key: string, value: string) => Promise.resolve(localStorage.setItem(key, value)),
-  removeItem: (key: string) => Promise.resolve(localStorage.removeItem(key)),
+  getItem: (key: string) => {
+    try {
+      return Promise.resolve(localStorage.getItem(key));
+    } catch (error) {
+      console.warn("[persist] storage read failed — session will not survive reloads:", error);
+      return Promise.resolve(null);
+    }
+  },
+  setItem: (key: string, value: string) => {
+    try {
+      return Promise.resolve(localStorage.setItem(key, value));
+    } catch (error) {
+      console.warn("[persist] storage write failed — session will not survive reloads:", error);
+      return Promise.resolve();
+    }
+  },
+  removeItem: (key: string) => {
+    try {
+      return Promise.resolve(localStorage.removeItem(key));
+    } catch (error) {
+      console.warn("[persist] storage remove failed:", error);
+      return Promise.resolve();
+    }
+  },
 };
 import { baseApi } from "./api/baseApi";
 

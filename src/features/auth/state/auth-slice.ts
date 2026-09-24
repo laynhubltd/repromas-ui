@@ -1,4 +1,3 @@
-import { isTokenExpired } from "@/shared/utils/token-util";
 import {
   createSlice,
   type AnyAction,
@@ -163,7 +162,11 @@ const authSlice = createSlice({
         }
       })
       .addCase(REHYDRATE, (state, action: AnyAction) => {
-        if (state.token && !isTokenExpired(state.token)) {
+        // A login that raced ahead of rehydration wins by token PRESENCE.
+        // This must not use isTokenExpired: on a clock-ahead machine the
+        // freshly issued token "looked" expired, so REHYDRATE discarded the
+        // just-logged-in state and the user bounced back to /login silently.
+        if (state.token) {
           return {
             ...state,
             bootstrapComplete: false,

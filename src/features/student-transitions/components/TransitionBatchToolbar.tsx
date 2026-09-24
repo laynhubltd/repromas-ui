@@ -114,7 +114,15 @@ export function TransitionBatchToolbar({
         </Flex>
 
         {/* Primary Action Button */}
-        <PermissionGuard permission={Permission.StudentEnrollmentTransitionsManage}>
+        <PermissionGuard
+          permission={[
+            Permission.StudentEnrollmentTransitionsCreate,
+            Permission.StudentEnrollmentTransitionsUpdate,
+            Permission.StudentEnrollmentTransitionsManage,
+            Permission.BulkEnrollmentTransitionsCreate,
+            Permission.BulkEnrollmentTransitionsManage,
+          ]}
+        >
           <Button
             type="primary"
             icon={<ExperimentOutlined />}
