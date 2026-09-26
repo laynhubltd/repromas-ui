@@ -1,5 +1,6 @@
 // Feature: approval-workflow
 import type { WorkflowTransitionDto } from "../types/approval-workflow";
+import type { IncompleteStudentOutcome } from "../utils/parseSubmissionPrecondition";
 
 // 1. Action type constants
 export const WorkflowTransitionActionType = {
@@ -10,6 +11,8 @@ export const WorkflowTransitionActionType = {
   ClearPropagating: "CLEAR_PROPAGATING",
   OpenAuditDrawer: "OPEN_AUDIT_DRAWER",
   CloseAuditDrawer: "CLOSE_AUDIT_DRAWER",
+  OpenGatingModal: "OPEN_GATING_MODAL",
+  CloseGatingModal: "CLOSE_GATING_MODAL",
   Reset: "RESET",
 } as const;
 
@@ -20,6 +23,8 @@ export type WorkflowTransitionState = {
   comment: string;
   isPropagating: boolean;
   isAuditDrawerOpen: boolean;
+  isGatingModalOpen: boolean;
+  gatingStudents: IncompleteStudentOutcome[];
 };
 
 // 3. Action union
@@ -37,6 +42,11 @@ export type WorkflowTransitionAction =
   | { type: typeof WorkflowTransitionActionType.ClearPropagating }
   | { type: typeof WorkflowTransitionActionType.OpenAuditDrawer }
   | { type: typeof WorkflowTransitionActionType.CloseAuditDrawer }
+  | {
+      type: typeof WorkflowTransitionActionType.OpenGatingModal;
+      students: IncompleteStudentOutcome[];
+    }
+  | { type: typeof WorkflowTransitionActionType.CloseGatingModal }
   | { type: typeof WorkflowTransitionActionType.Reset };
 
 // 4. Initial state
@@ -46,6 +56,8 @@ export const initialWorkflowTransitionState: WorkflowTransitionState = {
   comment: "",
   isPropagating: false,
   isAuditDrawerOpen: false,
+  isGatingModalOpen: false,
+  gatingStudents: [],
 };
 
 // 5. Pure reducer
@@ -93,7 +105,20 @@ export function workflowTransitionReducer(
         ...state,
         isAuditDrawerOpen: false,
       };
+    case WorkflowTransitionActionType.OpenGatingModal:
+      return {
+        ...state,
+        isGatingModalOpen: true,
+        gatingStudents: action.students,
+      };
+    case WorkflowTransitionActionType.CloseGatingModal:
+      return {
+        ...state,
+        isGatingModalOpen: false,
+        gatingStudents: [],
+      };
     case WorkflowTransitionActionType.Reset:
       return initialWorkflowTransitionState;
   }
 }
+

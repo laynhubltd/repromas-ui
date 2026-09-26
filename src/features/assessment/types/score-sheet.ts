@@ -19,6 +19,17 @@ export type ScoreColumn = {
   subComponents: ScoreSubComponent[];
 };
 
+export const EvaluationStatusSource = {
+  System: "SYSTEM",
+  Manual: "MANUAL",
+  SYSTEM: "SYSTEM",
+  MANUAL: "MANUAL",
+} as const;
+
+export type EvaluationStatusSource =
+  | (typeof EvaluationStatusSource)[keyof typeof EvaluationStatusSource]
+  | null;
+
 export type EvaluationStatusOption = {
   id: number;
   name: string;
@@ -28,6 +39,9 @@ export type EvaluationStatusOption = {
   earnsCredit: boolean;
   requiresRetake: boolean;
   isDefault: boolean;
+  indicatesAbsence?: boolean;
+  isStandardPass?: boolean;
+  isStandardFail?: boolean;
 };
 
 export type ScoreSheetRow = {
@@ -37,22 +51,55 @@ export type ScoreSheetRow = {
   fullName: string;
   scores: Record<string, number | null>;
   totalScore: number;
-  grade: string;
+  grade: string | null;
   gradePoint: number;
   isPass: boolean;
   evaluationStatusId?: number | null;
   evaluationStatusCode?: string | null;
+  evaluationStatusSource?: EvaluationStatusSource;
+  displayGrade: string;
   evaluationStatuses: EvaluationStatusOption[];
   /** The StudentScoreSheet.id; null when no sheet exists yet for this registration */
   id: number | null;
   wasVetoed: boolean;
   vetoReason: string | null;
+  isEditable?: boolean;
 };
 
-export type UpdateEvaluationStatusRequest = {
+export type StudentScoreSheetResponse = {
+  id: number;
+  registrationId: number;
+  componentScores: Record<string, number | null>;
+  totalScore: number;
+  grade: string | null;
+  displayGrade: string | null;
+  gradePoint: number | null;
+  isPass: boolean;
+  status: string;
+  wasVetoed: boolean;
+  vetoReason: string | null;
+  evaluationStatusId: number | null;
+  evaluationStatusSource: EvaluationStatusSource;
+  gradedByUserId: number | null;
+  publishedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  isEditable?: boolean;
+  registration?: unknown | null;
+};
+
+export type AssignEvaluationStatusRequest = {
   scoreSheetId: number;
   evaluationStatusId: number;
+  courseConfigId?: number;
 };
+
+export type ClearEvaluationStatusRequest = {
+  scoreSheetId: number;
+  courseConfigId?: number;
+};
+
+export type UpdateEvaluationStatusRequest = AssignEvaluationStatusRequest;
 
 export type ScoreSheetData = {
   meta: ScoreSheetMeta;
@@ -68,6 +115,8 @@ export type ScoreSheetApiResponse = {
 export type UpdateScoresRequest = {
   registrationId: number;
   componentScores: Record<string, number | null>;
+  evaluationStatusId?: number | null;
+  courseConfigId?: number;
 };
 
 export type ScoreSheetUploadError = {
@@ -87,3 +136,4 @@ export type ScoreSheetUploadSummaryState =
   | "partial"
   | "failed"
   | "system-error";
+

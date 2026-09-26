@@ -3,10 +3,13 @@ import type { AppStore } from "@/app/store";
 import { ApiTagTypes } from "@/shared/types/apiTagTypes";
 import { downloadFileFromUrl } from "@/shared/utils/download/downloadFile";
 import type {
-    ScoreSheetApiResponse,
-    ScoreSheetUploadSummary,
-    UpdateEvaluationStatusRequest,
-    UpdateScoresRequest,
+  AssignEvaluationStatusRequest,
+  ClearEvaluationStatusRequest,
+  ScoreSheetApiResponse,
+  ScoreSheetUploadSummary,
+  StudentScoreSheetResponse,
+  UpdateEvaluationStatusRequest,
+  UpdateScoresRequest,
 } from "../types/score-sheet";
 
 const scoreSheetApi = baseApi.injectEndpoints({
@@ -22,30 +25,168 @@ const scoreSheetApi = baseApi.injectEndpoints({
       providesTags: [{ type: ApiTagTypes.StudentScoreSheetData, id: "LIST" }],
     }),
 
-    upsertStudentScoreSheet: builder.mutation<void, UpdateScoresRequest>({
-      query: ({ registrationId, componentScores }) => ({
+    upsertStudentScoreSheet: builder.mutation<
+      StudentScoreSheetResponse,
+      UpdateScoresRequest
+    >({
+      query: ({ registrationId, componentScores, evaluationStatusId }) => ({
         url: `student-score-sheets`,
         method: "POST",
-        data: { registrationId, componentScores },
+        data: {
+          registrationId,
+          componentScores,
+          ...(evaluationStatusId !== undefined ? { evaluationStatusId } : {}),
+        },
       }),
-      invalidatesTags: [
-        { type: ApiTagTypes.StudentScoreSheetData, id: "LIST" },
-      ],
+      async onQueryStarted(
+        { courseConfigId, registrationId, componentScores },
+        { dispatch, queryFulfilled },
+      ) {
+        if (!courseConfigId) return;
+        try {
+          const { data: updated } = await queryFulfilled;
+          dispatch(
+            scoreSheetApi.util.updateQueryData(
+              "getScoreSheetData",
+              { courseConfigId },
+              (draft) => {
+                const targetRow = draft.member?.[0]?.rows?.find(
+                  (r) => r.registrationId === registrationId,
+                );
+                if (targetRow) {
+                  targetRow.id = updated.id;
+                  targetRow.scores = updated.componentScores ?? componentScores;
+                  targetRow.totalScore = updated.totalScore;
+                  targetRow.grade = updated.grade;
+                  targetRow.displayGrade =
+                    updated.displayGrade ?? updated.grade ?? "NR";
+                  targetRow.gradePoint = updated.gradePoint ?? 0;
+                  targetRow.isPass = updated.isPass;
+                  targetRow.wasVetoed = updated.wasVetoed;
+                  targetRow.vetoReason = updated.vetoReason;
+                  targetRow.evaluationStatusId = updated.evaluationStatusId;
+                  targetRow.evaluationStatusSource =
+                    updated.evaluationStatusSource;
+                }
+              },
+            ),
+          );
+        } catch {
+          // Cache update skipped on error
+        }
+      },
+      invalidatesTags: (_result, error, { componentScores }) =>
+        (componentScores && Object.keys(componentScores).length === 0) || error
+          ? [{ type: ApiTagTypes.StudentScoreSheetData, id: "LIST" }]
+          : [],
+    }),
+
+    assignEvaluationStatus: builder.mutation<
+      StudentScoreSheetResponse,
+      AssignEvaluationStatusRequest
+    >({
+      query: ({ scoreSheetId, evaluationStatusId }) => ({
+        url: `student-score-sheets/${scoreSheetId}/evaluation-status`,
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/merge-patch+json",
+        },
+        data: { evaluationStatusId },
+      }),
+      async onQueryStarted(
+        { courseConfigId, scoreSheetId },
+        { dispatch, queryFulfilled },
+      ) {
+        if (!courseConfigId) return;
+        try {
+          const { data: updated } = await queryFulfilled;
+          dispatch(
+            scoreSheetApi.util.updateQueryData(
+              "getScoreSheetData",
+              { courseConfigId },
+              (draft) => {
+                const targetRow = draft.member?.[0]?.rows?.find(
+                  (r) => r.id === scoreSheetId,
+                );
+                if (targetRow) {
+                  targetRow.evaluationStatusId = updated.evaluationStatusId;
+                  targetRow.evaluationStatusSource =
+                    updated.evaluationStatusSource;
+                  targetRow.displayGrade =
+                    updated.displayGrade ?? updated.grade ?? "NR";
+                  targetRow.totalScore = updated.totalScore;
+                  targetRow.grade = updated.grade;
+                  targetRow.gradePoint = updated.gradePoint ?? 0;
+                }
+              },
+            ),
+          );
+        } catch {
+          // Cache update skipped on error
+        }
+      },
+      invalidatesTags: (_result, error) =>
+        error ? [{ type: ApiTagTypes.StudentScoreSheetData, id: "LIST" }] : [],
+    }),
+
+    clearEvaluationStatus: builder.mutation<
+      StudentScoreSheetResponse,
+      ClearEvaluationStatusRequest
+    >({
+      query: ({ scoreSheetId }) => ({
+        url: `student-score-sheets/${scoreSheetId}/evaluation-status`,
+        method: "DELETE",
+      }),
+      async onQueryStarted(
+        { courseConfigId, scoreSheetId },
+        { dispatch, queryFulfilled },
+      ) {
+        if (!courseConfigId) return;
+        try {
+          const { data: updated } = await queryFulfilled;
+          dispatch(
+            scoreSheetApi.util.updateQueryData(
+              "getScoreSheetData",
+              { courseConfigId },
+              (draft) => {
+                const targetRow = draft.member?.[0]?.rows?.find(
+                  (r) => r.id === scoreSheetId,
+                );
+                if (targetRow) {
+                  targetRow.evaluationStatusId = updated.evaluationStatusId;
+                  targetRow.evaluationStatusSource =
+                    updated.evaluationStatusSource;
+                  targetRow.displayGrade =
+                    updated.displayGrade ?? updated.grade ?? "NR";
+                  targetRow.totalScore = updated.totalScore;
+                  targetRow.grade = updated.grade;
+                  targetRow.gradePoint = updated.gradePoint ?? 0;
+                }
+              },
+            ),
+          );
+        } catch {
+          // Cache update skipped on error
+        }
+      },
+      invalidatesTags: (_result, error) =>
+        error ? [{ type: ApiTagTypes.StudentScoreSheetData, id: "LIST" }] : [],
     }),
 
     updateEvaluationStatus: builder.mutation<
-      void,
+      StudentScoreSheetResponse,
       UpdateEvaluationStatusRequest
     >({
       query: ({ scoreSheetId, evaluationStatusId }) => ({
         url: `student-score-sheets/${scoreSheetId}/evaluation-status`,
         method: "PATCH",
-        headers: { "Content-Type": "application/merge-patch+json" },
+        headers: {
+          "Content-Type": "application/merge-patch+json",
+        },
         data: { evaluationStatusId },
       }),
-      invalidatesTags: [
-        { type: ApiTagTypes.StudentScoreSheetData, id: "LIST" },
-      ],
+      invalidatesTags: (_result, error) =>
+        error ? [{ type: ApiTagTypes.StudentScoreSheetData, id: "LIST" }] : [],
     }),
 
     uploadScoreSheet: builder.mutation<
@@ -71,6 +212,8 @@ const scoreSheetApi = baseApi.injectEndpoints({
 export const {
   useGetScoreSheetDataQuery,
   useUpsertStudentScoreSheetMutation,
+  useAssignEvaluationStatusMutation,
+  useClearEvaluationStatusMutation,
   useUpdateEvaluationStatusMutation,
   useUploadScoreSheetMutation,
 } = scoreSheetApi;

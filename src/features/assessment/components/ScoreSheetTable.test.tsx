@@ -47,6 +47,8 @@ describe("ScoreSheetTable isLocked Invariant", () => {
       wasVetoed: false,
       vetoReason: null,
       evaluationStatusId: 1,
+      displayGrade: "A",
+      evaluationStatusSource: "SYSTEM",
       evaluationStatuses: [
         {
           id: 1,

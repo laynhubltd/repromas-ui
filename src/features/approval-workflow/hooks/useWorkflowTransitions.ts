@@ -18,6 +18,7 @@ import type {
   WorkflowTargetEntity,
   WorkflowTransitionDto,
 } from "../types/approval-workflow";
+import { parseSubmissionPreconditionError } from "../utils/parseSubmissionPrecondition";
 
 type UseWorkflowTransitionsOptions = {
   targetEntity: WorkflowTargetEntity;
@@ -96,6 +97,49 @@ export function useWorkflowTransitions({
           });
           dispatch({ type: WorkflowTransitionActionType.CloseCommentModal });
         } else {
+          // Check for 422 Workflow Transition Precondition Failed (incomplete score sheet submission)
+          const errData = (anyErr as any)?.data;
+
+          // Primary check: structured unassessed precondition payload
+          if (
+            (anyErr?.status === 422 ||
+              errData?.code === "SCORE_SHEET_INCOMPLETE") &&
+            errData?.details?.unassessed &&
+            Array.isArray(errData.details.unassessed)
+          ) {
+            const reasonMap: Record<string, string> = {
+              NO_SCORES: "No scores recorded",
+              INCOMPLETE_SCORES: "Incomplete component scores",
+            };
+
+            const students = errData.details.unassessed.map((item: any) => ({
+              matricNumber: item.regNo || item.matricNumber || "—",
+              studentName:
+                item.name || item.fullName || item.studentName || "Student",
+              reason:
+                reasonMap[item.reason] || item.reason || "Unassessed score sheet",
+            }));
+
+            dispatch({ type: WorkflowTransitionActionType.CloseCommentModal });
+            dispatch({
+              type: WorkflowTransitionActionType.OpenGatingModal,
+              students,
+            });
+            return;
+          }
+
+          // Fallback: legacy regex string parsing
+          const detail = errData?.detail || errData?.message;
+          const gating = parseSubmissionPreconditionError(detail);
+          if (gating && gating.students.length > 0) {
+            dispatch({ type: WorkflowTransitionActionType.CloseCommentModal });
+            dispatch({
+              type: WorkflowTransitionActionType.OpenGatingModal,
+              students: gating.students,
+            });
+            return;
+          }
+
           handleApiError(err, {
             context: { screen: RequestScreen.Action, method: "POST" },
           });
@@ -150,6 +194,10 @@ export function useWorkflowTransitions({
     dispatch({ type: WorkflowTransitionActionType.CloseAuditDrawer });
   }, []);
 
+  const handleCloseGatingModal = useCallback(() => {
+    dispatch({ type: WorkflowTransitionActionType.CloseGatingModal });
+  }, []);
+
   return {
     state: {
       availableTransitions,
@@ -170,6 +218,8 @@ export function useWorkflowTransitions({
       comment: state.comment,
       isPropagating: state.isPropagating,
       isAuditDrawerOpen: state.isAuditDrawerOpen,
+      isGatingModalOpen: state.isGatingModalOpen,
+      gatingStudents: state.gatingStudents,
     },
     actions: {
       handleInitiateTransition,
@@ -178,6 +228,7 @@ export function useWorkflowTransitions({
       handleCancelCommentModal,
       handleOpenAuditDrawer,
       handleCloseAuditDrawer,
+      handleCloseGatingModal,
       refetch,
     },
   };

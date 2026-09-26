@@ -1,17 +1,21 @@
 // Feature: grading-config — Evaluation Status modal hooks
 import { useApiError } from "@/shared/hooks/useApiError";
 import { RequestScreen } from "@/shared/types/error-ui";
-import { Form, notification } from "antd";
+import {
+  mutationSuccessMessage,
+  notifyMutationSuccess,
+} from "@/shared/utils/feedback/notifyMutationSuccess";
+import { Form } from "antd";
 import { useCallback, useEffect, useReducer } from "react";
 import {
-    useCreateScoreEvaluationStatusMutation,
-    useDeleteScoreEvaluationStatusMutation,
-    useUpdateScoreEvaluationStatusMutation,
+  useCreateScoreEvaluationStatusMutation,
+  useDeleteScoreEvaluationStatusMutation,
+  useUpdateScoreEvaluationStatusMutation,
 } from "../api/evaluationStatusApi";
 import {
-    EvaluationStatusFormActionType,
-    evaluationStatusFormReducer,
-    initialEvaluationStatusFormState,
+  EvaluationStatusFormActionType,
+  evaluationStatusFormReducer,
+  initialEvaluationStatusFormState,
 } from "../state/evaluationStatusFormState";
 import type { ScoreEvaluationStatus } from "../types/evaluation-status";
 
@@ -26,6 +30,8 @@ type EvaluationStatusFormValues = {
   requiresRetake: boolean;
   isDefault: boolean;
   indicatesAbsence: boolean;
+  isStandardPass: boolean;
+  isStandardFail: boolean;
 };
 
 // ─── Upsert (Create / Edit) ───────────────────────────────────────────────────
@@ -41,7 +47,7 @@ export function useEvaluationStatusFormModal(
     evaluationStatusFormReducer,
     initialEvaluationStatusFormState,
   );
-  const { isDefault, requiresRetake, earnsCredit } = state;
+  const { isDefault, requiresRetake, earnsCredit, isStandardGraded, isStandardPass, isStandardFail } = state;
 
   const [createScoreEvaluationStatus, { isLoading: isCreating }] =
     useCreateScoreEvaluationStatusMutation();
@@ -63,6 +69,8 @@ export function useEvaluationStatusFormModal(
         requiresRetake: target.requiresRetake,
         isDefault: target.isDefault,
         indicatesAbsence: target.indicatesAbsence ?? false,
+        isStandardPass: target.isStandardPass ?? false,
+        isStandardFail: target.isStandardFail ?? false,
       });
       dispatch({
         type: EvaluationStatusFormActionType.SetIsDefault,
@@ -76,6 +84,30 @@ export function useEvaluationStatusFormModal(
         type: EvaluationStatusFormActionType.SetEarnsCredit,
         value: target.earnsCredit,
       });
+      dispatch({
+        type: EvaluationStatusFormActionType.SetIsStandardGraded,
+        value: target.isStandardGraded,
+      });
+      dispatch({
+        type: EvaluationStatusFormActionType.SetIsStandardPass,
+        value: target.isStandardPass ?? false,
+      });
+      dispatch({
+        type: EvaluationStatusFormActionType.SetIsStandardFail,
+        value: target.isStandardFail ?? false,
+      });
+    } else if (open && !isEditMode) {
+      form.setFieldsValue({
+        isStandardGraded: true,
+        computesInGpa: true,
+        earnsCredit: true,
+        requiresRetake: false,
+        isDefault: false,
+        indicatesAbsence: false,
+        isStandardPass: false,
+        isStandardFail: false,
+      });
+      dispatch({ type: EvaluationStatusFormActionType.Reset });
     }
   }, [open, target]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -88,6 +120,43 @@ export function useEvaluationStatusFormModal(
   const handleCodeChange = useCallback(
     (value: string) => {
       form.setFieldValue("code", value.toUpperCase());
+    },
+    [form],
+  );
+
+  // isStandardGraded toggle handler
+  const handleIsStandardGradedChange = useCallback(
+    (value: boolean) => {
+      dispatch({ type: EvaluationStatusFormActionType.SetIsStandardGraded, value });
+      form.setFieldValue("isStandardGraded", value);
+      if (!value) {
+        form.setFieldValue("isStandardPass", false);
+        form.setFieldValue("isStandardFail", false);
+      }
+    },
+    [form],
+  );
+
+  // isStandardPass toggle handler
+  const handleIsStandardPassChange = useCallback(
+    (value: boolean) => {
+      dispatch({ type: EvaluationStatusFormActionType.SetIsStandardPass, value });
+      form.setFieldValue("isStandardPass", value);
+      if (value) {
+        form.setFieldValue("isStandardFail", false);
+      }
+    },
+    [form],
+  );
+
+  // isStandardFail toggle handler
+  const handleIsStandardFailChange = useCallback(
+    (value: boolean) => {
+      dispatch({ type: EvaluationStatusFormActionType.SetIsStandardFail, value });
+      form.setFieldValue("isStandardFail", value);
+      if (value) {
+        form.setFieldValue("isStandardPass", false);
+      }
     },
     [form],
   );
@@ -141,10 +210,12 @@ export function useEvaluationStatusFormModal(
           requiresRetake: values.requiresRetake,
           isDefault: values.isDefault,
           indicatesAbsence: values.indicatesAbsence,
+          isStandardPass: values.isStandardPass,
+          isStandardFail: values.isStandardFail,
         }).unwrap();
-        notification.success({
-          message: "Evaluation status updated successfully.",
-        });
+        notifyMutationSuccess(
+          mutationSuccessMessage("Evaluation status", "updated"),
+        );
       } else {
         await createScoreEvaluationStatus({
           name: values.name,
@@ -155,10 +226,12 @@ export function useEvaluationStatusFormModal(
           requiresRetake: values.requiresRetake,
           isDefault: values.isDefault,
           indicatesAbsence: values.indicatesAbsence,
+          isStandardPass: values.isStandardPass,
+          isStandardFail: values.isStandardFail,
         }).unwrap();
-        notification.success({
-          message: "Evaluation status created successfully.",
-        });
+        notifyMutationSuccess(
+          mutationSuccessMessage("Evaluation status", "created"),
+        );
       }
 
       reset();
@@ -186,6 +259,9 @@ export function useEvaluationStatusFormModal(
       isDefault,
       requiresRetake,
       earnsCredit,
+      isStandardGraded,
+      isStandardPass,
+      isStandardFail,
     },
     actions: {
       handleSubmit,
@@ -193,6 +269,9 @@ export function useEvaluationStatusFormModal(
       handleIsDefaultChange,
       handleRequiresRetakeChange,
       handleEarnsCreditChange,
+      handleIsStandardGradedChange,
+      handleIsStandardPassChange,
+      handleIsStandardFailChange,
       handleCodeChange,
     },
     form,
@@ -214,9 +293,9 @@ export function useDeleteEvaluationStatusModal(
     if (!target) return;
     try {
       await deleteScoreEvaluationStatus(target.id).unwrap();
-      notification.success({
-        message: "Evaluation status deleted successfully.",
-      });
+      notifyMutationSuccess(
+        mutationSuccessMessage("Evaluation status", "deleted"),
+      );
       onClose();
     } catch (err: unknown) {
       handleApiError(err, {

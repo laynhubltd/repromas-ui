@@ -1,17 +1,23 @@
 // Feature: grading-config — Grading System Boundary modal hooks
+import { useListScoreEvaluationStatusesQuery } from "@/features/grading-config/tabs/evaluation-status/api/evaluationStatusApi";
+import type { ScoreEvaluationStatus } from "@/features/grading-config/tabs/evaluation-status/types/evaluation-status";
 import { useApiError } from "@/shared/hooks/useApiError";
 import { RequestScreen } from "@/shared/types/error-ui";
-import { Form, notification } from "antd";
-import { useCallback, useEffect, useReducer } from "react";
 import {
-    useCreateGradingSystemBoundaryMutation,
-    useDeleteGradingSystemBoundaryMutation,
-    useUpdateGradingSystemBoundaryMutation,
+  mutationSuccessMessage,
+  notifyMutationSuccess,
+} from "@/shared/utils/feedback/notifyMutationSuccess";
+import { Form } from "antd";
+import { useCallback, useEffect, useMemo, useReducer } from "react";
+import {
+  useCreateGradingSystemBoundaryMutation,
+  useDeleteGradingSystemBoundaryMutation,
+  useUpdateGradingSystemBoundaryMutation,
 } from "../api/gradingSystemBoundaryApi";
 import {
-    GradingSystemBoundaryFormActionType,
-    gradingSystemBoundaryFormReducer,
-    initialGradingSystemBoundaryFormState,
+  GradingSystemBoundaryFormActionType,
+  gradingSystemBoundaryFormReducer,
+  initialGradingSystemBoundaryFormState,
 } from "../state/gradingSystemBoundaryFormState";
 import type { GradingSystemBoundary } from "../types/grading-system-boundary";
 import { detectOverlap } from "../utils/overlapDetection";
@@ -24,6 +30,7 @@ type GradingSystemBoundaryFormValues = {
   maxScore: number;
   gradePoint: number;
   isPass: boolean;
+  evaluationStatusId?: number | null;
 };
 
 // ─── Upsert (Create / Edit) ───────────────────────────────────────────────────
@@ -44,6 +51,29 @@ export function useGradingSystemBoundaryFormModal(
   const { overlapError } = modalState;
   const handleApiError = useApiError();
 
+  const isPassValue = Form.useWatch("isPass", form);
+
+  const { data: statusData, isLoading: isLoadingStatuses } =
+    useListScoreEvaluationStatusesQuery(
+      { "boolean[isStandardGraded]": true, itemsPerPage: 100 },
+      { skip: !open },
+    );
+
+  const statusOptions = useMemo(() => {
+    const list = statusData?.member ?? [];
+    return list
+      .filter((s: ScoreEvaluationStatus) => {
+        if (isPassValue === false && s.earnsCredit) {
+          return false; // failing boundaries cannot link to credit-earning statuses
+        }
+        return true;
+      })
+      .map((s: ScoreEvaluationStatus) => ({
+        value: s.id,
+        label: `${s.code} — ${s.name}${s.earnsCredit ? " (Earns Credit)" : " (No Credit)"}`,
+      }));
+  }, [statusData, isPassValue]);
+
   const [createGradingSystemBoundary, { isLoading: isCreating }] =
     useCreateGradingSystemBoundaryMutation();
   const [updateGradingSystemBoundary, { isLoading: isUpdating }] =
@@ -60,6 +90,12 @@ export function useGradingSystemBoundaryFormModal(
         maxScore: target.maxScore,
         gradePoint: target.gradePoint,
         isPass: target.isPass,
+        evaluationStatusId: target.evaluationStatusId ?? undefined,
+      });
+    } else if (open && !isEditMode) {
+      form.setFieldsValue({
+        isPass: true,
+        evaluationStatusId: undefined,
       });
     }
   }, [open, isEditMode, target, form]);
@@ -110,10 +146,11 @@ export function useGradingSystemBoundaryFormModal(
           maxScore: values.maxScore,
           gradePoint: values.gradePoint,
           isPass: values.isPass,
+          evaluationStatusId: values.evaluationStatusId ?? null,
         }).unwrap();
-        notification.success({
-          message: "Grade boundary updated successfully.",
-        });
+        notifyMutationSuccess(
+          mutationSuccessMessage("Grade boundary", "updated"),
+        );
       } else {
         if (gradingSystemId === null) return;
         await createGradingSystemBoundary({
@@ -123,10 +160,11 @@ export function useGradingSystemBoundaryFormModal(
           maxScore: values.maxScore,
           gradePoint: values.gradePoint,
           isPass: values.isPass,
+          evaluationStatusId: values.evaluationStatusId ?? null,
         }).unwrap();
-        notification.success({
-          message: "Grade boundary created successfully.",
-        });
+        notifyMutationSuccess(
+          mutationSuccessMessage("Grade boundary", "created"),
+        );
       }
 
       reset();
@@ -152,6 +190,8 @@ export function useGradingSystemBoundaryFormModal(
       isEditMode,
       isSubmitting,
       overlapError,
+      statusOptions,
+      isLoadingStatuses,
     },
     actions: {
       handleSubmit,
@@ -176,9 +216,9 @@ export function useDeleteGradingSystemBoundaryModal(
     if (!target) return;
     try {
       await deleteGradingSystemBoundary(target.id).unwrap();
-      notification.success({
-        message: "Grade boundary deleted successfully.",
-      });
+      notifyMutationSuccess(
+        mutationSuccessMessage("Grade boundary", "deleted"),
+      );
       onClose();
     } catch (err: unknown) {
       handleApiError(err, {

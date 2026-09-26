@@ -2,14 +2,17 @@
 import { ScoreInput } from "@/components/ui-kit";
 import { useToken } from "@/shared/hooks/useToken";
 import {
+  ClearOutlined,
+  CloseCircleOutlined,
   DownOutlined,
   ExclamationCircleFilled,
   LoadingOutlined,
+  LockOutlined,
   RightOutlined,
 } from "@ant-design/icons";
-import { Flex, Select, Tooltip, Typography } from "antd";
+import { Button, Flex, Popconfirm, Select, Tag, Tooltip, Typography } from "antd";
 import { useScoreRow } from "../hooks/useScoreRow";
-import type { ScoreColumn, ScoreSheetRow } from "../types/score-sheet";
+import { EvaluationStatusSource, type ScoreColumn, type ScoreSheetRow } from "../types/score-sheet";
 
 type ScoreSheetCardProps = {
   row: ScoreSheetRow;
@@ -35,11 +38,38 @@ export function ScoreSheetCard({
     savingCells,
     errorCells,
     localEvalStatusId,
+    localEvalStatusCode,
+    localEvalStatusSource,
+    localDisplayGrade,
     isSavingEvalStatus,
     evalStatusError,
   } = state;
-  const { handleScoreChange, handleScoreSave, handleEvalStatusChange } =
-    actions;
+  const {
+    handleScoreChange,
+    handleScoreSave,
+    handleAssignEvalStatus,
+    handleClearEvalStatus,
+    handleWipeScores,
+  } = actions;
+
+  const isRowLocked = isLocked || row.isEditable === false;
+
+  const selectedStatus = row.evaluationStatuses?.find(
+    (s) => s.id === localEvalStatusId || s.code === localEvalStatusCode,
+  );
+  const isManual =
+    localEvalStatusSource === EvaluationStatusSource.MANUAL ||
+    (selectedStatus ? !selectedStatus.isStandardGraded : false);
+  const displayGrade =
+    localDisplayGrade ||
+    row.displayGrade ||
+    row.grade ||
+    (isManual ? selectedStatus?.code : null) ||
+    "NR";
+
+  const hasRecordedScores =
+    Object.values(row.scores ?? {}).some((v) => v !== null && v !== undefined) ||
+    Object.values(dirtyScores).some((v) => v !== null && v !== undefined);
 
   // ─── Flatten columns to leaf codes in API order ───────────────────────────
   const leafCodes: string[] = columns.flatMap((col) =>
@@ -122,7 +152,13 @@ export function ScoreSheetCard({
             flexShrink: 0,
           }}
         >
-          {rowIndex + 1}
+          {row.isEditable === false ? (
+            <Tooltip title="Locked — score sheet is in a non-editable state">
+              <LockOutlined style={{ color: token.colorWarning, fontSize: 13 }} />
+            </Tooltip>
+          ) : (
+            rowIndex + 1
+          )}
         </div>
 
         {/* Student identity */}
@@ -151,7 +187,26 @@ export function ScoreSheetCard({
           </Typography.Text>
         </Flex>
 
-        {/* Collapsed score summary chips — removed: header is same in both states */}
+        {/* Grade display tag on header */}
+        <div style={{ flexShrink: 0 }}>
+          {isManual ? (
+            <Tag color="orange" style={{ margin: 0, fontWeight: 700 }}>
+              {displayGrade} (Manual)
+            </Tag>
+          ) : displayGrade === "NR" ? (
+            <Tag color="default" style={{ margin: 0, color: token.colorTextTertiary }}>
+              NR
+            </Tag>
+          ) : displayGrade === "F" || row.wasVetoed ? (
+            <Tag color="error" style={{ margin: 0, fontWeight: 700 }}>
+              {displayGrade}
+            </Tag>
+          ) : (
+            <Tag color="success" style={{ margin: 0, fontWeight: 700 }}>
+              {displayGrade}
+            </Tag>
+          )}
+        </div>
 
         {/* Expand/collapse chevron */}
         <div
@@ -192,7 +247,7 @@ export function ScoreSheetCard({
                 scoreKey={key}
                 value={displayScore}
                 saving={isSaving}
-                disabled={isLocked}
+                disabled={isRowLocked || isManual}
                 error={errorMsg}
                 onChange={handleScoreChange}
                 onSave={handleScoreSave}
@@ -299,7 +354,7 @@ export function ScoreSheetCard({
             >
               <Tooltip
                 title={row.wasVetoed ? row.vetoReason : undefined}
-                color={token.colorWarning}
+                color={row.wasVetoed ? token.colorWarning : undefined}
               >
                 <span
                   style={{
@@ -322,7 +377,7 @@ export function ScoreSheetCard({
             </div>
           </div>
 
-          {/* Grade */}
+          {/* Grade (Display Grade) */}
           <div
             style={{
               borderRadius: token.borderRadius,
@@ -348,11 +403,26 @@ export function ScoreSheetCard({
                 padding: `${token.paddingSM}px ${token.paddingSM}px`,
                 fontWeight: 700,
                 fontSize: token.fontSizeLG,
-                color: row.grade ? token.colorText : token.colorTextTertiary,
                 textAlign: "center",
               }}
             >
-              {row.grade || "—"}
+              {isManual ? (
+                <Tag color="orange" style={{ margin: 0, fontWeight: 700 }}>
+                  {displayGrade}
+                </Tag>
+              ) : displayGrade === "NR" ? (
+                <Tag color="default" style={{ margin: 0, color: token.colorTextTertiary }}>
+                  NR
+                </Tag>
+              ) : displayGrade === "F" || row.wasVetoed ? (
+                <Tag color="error" style={{ margin: 0, fontWeight: 700 }}>
+                  {displayGrade}
+                </Tag>
+              ) : (
+                <Tag color="success" style={{ margin: 0, fontWeight: 700 }}>
+                  {displayGrade}
+                </Tag>
+              )}
             </div>
           </div>
 
@@ -383,18 +453,17 @@ export function ScoreSheetCard({
                 padding: `${token.paddingSM}px ${token.paddingSM}px`,
                 fontWeight: 600,
                 fontSize: token.fontSize,
-                color:
-                  row.gradePoint > 0
-                    ? token.colorText
-                    : token.colorTextTertiary,
+                color: row.gradePoint > 0 ? token.colorText : token.colorTextTertiary,
                 textAlign: "center",
               }}
             >
-              {row.grade ? row.gradePoint.toFixed(1) : "—"}
+              {row.gradePoint !== null && row.gradePoint !== undefined && (row.grade || row.gradePoint > 0 || isManual)
+                ? row.gradePoint.toFixed(1)
+                : "—"}
             </div>
           </div>
 
-          {/* Eval Status — last, full width */}
+          {/* Eval Status & Actions — last, full width */}
           <div
             style={{
               gridColumn: "1 / -1",
@@ -416,61 +485,84 @@ export function ScoreSheetCard({
                 background: "rgba(0,0,0,0.02)",
               }}
             >
-              Eval Status
+              Eval Status & Actions
             </div>
-            {(() => {
-              const defaultStatus = row.evaluationStatuses?.find((s) => s.isDefault);
-              const activeStatusId =
-                localEvalStatusId ??
-                row.evaluationStatusId ??
-                defaultStatus?.id ??
-                undefined;
-
-              return (
+            <div style={{ padding: `${token.paddingXS}px ${token.paddingSM}px` }}>
+              <Flex align="center" justify="space-between" gap={8}>
                 <Select
-                  value={activeStatusId}
+                  value={localEvalStatusId ?? undefined}
                   onChange={(statusId: number) => {
-                    console.log("[ScoreSheetCard] Select onChange with statusId:", statusId);
-                    handleEvalStatusChange(statusId);
+                    const selected = row.evaluationStatuses?.find((s) => s.id === statusId);
+                    if (selected && !selected.isStandardGraded) {
+                      handleAssignEvalStatus(statusId);
+                    } else {
+                      handleClearEvalStatus();
+                    }
                   }}
                   loading={isSavingEvalStatus}
-                  disabled={isLocked || isSavingEvalStatus}
+                  disabled={isRowLocked || isSavingEvalStatus}
                   size="middle"
                   variant="borderless"
-                  style={{ width: "100%" }}
-                  placeholder="Select status…"
+                  style={{ flex: 1 }}
+                  placeholder="Select evaluation status…"
                   aria-label="Evaluation status"
-                  options={row.evaluationStatuses.map((s) => ({
+                  options={row.evaluationStatuses?.map((s) => ({
                     value: s.id,
-                    label: (
-                      <span>
-                        <span
-                          style={{
-                            fontFamily: "monospace",
-                            fontWeight: 600,
-                            marginRight: token.marginXXS,
-                            color: token.colorPrimary,
-                          }}
-                        >
-                          {s.code}
-                        </span>
-                        <span
-                          style={{
-                            color: token.colorTextSecondary,
-                            fontSize: token.fontSizeSM,
-                          }}
-                        >
-                          {s.name}
-                        </span>
-                      </span>
-                    ),
+                    label: s.code,
+                    title: `${s.code} — ${s.name}`,
                   }))}
                 />
-              );
-            })()}
+                {isManual && (
+                  <Popconfirm
+                    title="Clear Override"
+                    description="Clear administrative mark and re-evaluate numeric scores?"
+                    okText="Clear"
+                    cancelText="Cancel"
+                    okButtonProps={{ danger: true, loading: isSavingEvalStatus }}
+                    onConfirm={handleClearEvalStatus}
+                    disabled={isRowLocked || isSavingEvalStatus}
+                  >
+                    <Button
+                      type="text"
+                      danger
+                      size="small"
+                      icon={<CloseCircleOutlined />}
+                      loading={isSavingEvalStatus}
+                      disabled={isRowLocked}
+                    >
+                      Clear
+                    </Button>
+                  </Popconfirm>
+                )}
+                {hasRecordedScores && !isRowLocked && (
+                  <Popconfirm
+                    title="Clear all scores?"
+                    description="This will clear all numeric component scores and reset display grade to Not Recorded (NR). Any manual administrative override will be preserved."
+                    okText="Clear All"
+                    cancelText="Cancel"
+                    okButtonProps={{ danger: true, loading: isSavingEvalStatus }}
+                    onConfirm={handleWipeScores}
+                    disabled={isRowLocked || isSavingEvalStatus}
+                  >
+                    <Button
+                      type="text"
+                      danger
+                      size="small"
+                      icon={<ClearOutlined />}
+                      loading={isSavingEvalStatus}
+                      disabled={isRowLocked}
+                      title="Clear all scores (wipe)"
+                    >
+                      Wipe
+                    </Button>
+                  </Popconfirm>
+                )}
+              </Flex>
+            </div>
           </div>
         </div>
       )}
     </div>
   );
 }
+

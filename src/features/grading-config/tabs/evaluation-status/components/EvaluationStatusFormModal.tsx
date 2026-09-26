@@ -31,6 +31,9 @@ export function EvaluationStatusFormModal({
     isDefault,
     requiresRetake,
     earnsCredit,
+    isStandardGraded,
+    isStandardPass,
+    isStandardFail,
   } = state;
   const {
     handleSubmit,
@@ -38,6 +41,9 @@ export function EvaluationStatusFormModal({
     handleIsDefaultChange,
     handleRequiresRetakeChange,
     handleEarnsCreditChange,
+    handleIsStandardGradedChange,
+    handleIsStandardPassChange,
+    handleIsStandardFailChange,
     handleCodeChange,
   } = actions;
 
@@ -109,7 +115,7 @@ export function EvaluationStatusFormModal({
             label="Standard Graded"
             valuePropName="checked"
           >
-            <Switch />
+            <Switch onChange={handleIsStandardGradedChange} />
           </Form.Item>
           <Typography.Text
             type="secondary"
@@ -123,6 +129,63 @@ export function EvaluationStatusFormModal({
             When disabled, the status code is used as the transcript grade
             instead of the computed letter grade.
           </Typography.Text>
+
+          {/* isStandardPass */}
+          <Form.Item
+            name="isStandardPass"
+            label="Standard Pass Status (Pipeline Outcome)"
+            valuePropName="checked"
+          >
+            <Switch
+              disabled={!isStandardGraded}
+              onChange={handleIsStandardPassChange}
+            />
+          </Form.Item>
+          <Typography.Text
+            type="secondary"
+            style={{
+              fontSize: token.fontSizeSM,
+              display: "block",
+              marginTop: -16,
+              marginBottom: 16,
+            }}
+          >
+            Designates this status as the default standard passing outcome for pipeline fallbacks. Only one status per tenant can hold this role.
+          </Typography.Text>
+
+          {/* isStandardFail */}
+          <Form.Item
+            name="isStandardFail"
+            label="Standard Fail Status (Pipeline & Veto Outcome)"
+            valuePropName="checked"
+          >
+            <Switch
+              disabled={!isStandardGraded}
+              onChange={handleIsStandardFailChange}
+            />
+          </Form.Item>
+          <Typography.Text
+            type="secondary"
+            style={{
+              fontSize: token.fontSizeSM,
+              display: "block",
+              marginTop: -16,
+              marginBottom: 16,
+            }}
+          >
+            Designates this status as the default standard failing outcome for pipeline vetoes and failures. Only one status per tenant can hold this role.
+          </Typography.Text>
+
+          {/* Role Flag Notice */}
+          <ConditionalRenderer when={isStandardPass || isStandardFail}>
+            <Alert
+              type="info"
+              showIcon
+              message="Single-Holder Role Flag"
+              description={`Setting this status as ${isStandardPass ? "Standard Pass" : "Standard Fail"} will automatically clear that designation from whichever status currently holds it in the tenant.`}
+              style={{ marginBottom: 16 }}
+            />
+          </ConditionalRenderer>
 
           {/* computesInGpa */}
           <Form.Item
