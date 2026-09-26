@@ -31,6 +31,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mockUpdateStudentScores = vi.fn();
 const mockUpsertStudentScoreSheet = vi.fn();
 const mockUpdateEvaluationStatus = vi.fn();
+const mockAssignEvaluationStatus = mockUpdateEvaluationStatus;
+const mockClearEvaluationStatus = vi.fn();
 
 vi.mock("@/features/assessment/api/scoreSheetApi", async (importOriginal) => {
   const actual =
@@ -49,6 +51,14 @@ vi.mock("@/features/assessment/api/scoreSheetApi", async (importOriginal) => {
     ],
     useUpdateEvaluationStatusMutation: () => [
       mockUpdateEvaluationStatus,
+      { isLoading: false },
+    ],
+    useAssignEvaluationStatusMutation: () => [
+      mockAssignEvaluationStatus,
+      { isLoading: false },
+    ],
+    useClearEvaluationStatusMutation: () => [
+      mockClearEvaluationStatus,
       { isLoading: false },
     ],
   };
@@ -185,12 +195,17 @@ beforeEach(() => {
   vi.clearAllMocks();
 
   // Default: mutations resolve successfully
-  mockUpdateStudentScores.mockReturnValue({ unwrap: () => Promise.resolve() });
+  mockUpdateStudentScores.mockReturnValue({
+    unwrap: () => Promise.resolve({ id: 7 }),
+  });
   mockUpsertStudentScoreSheet.mockReturnValue({
-    unwrap: () => Promise.resolve(),
+    unwrap: () => Promise.resolve({ id: 7 }),
   });
   mockUpdateEvaluationStatus.mockReturnValue({
-    unwrap: () => Promise.resolve(),
+    unwrap: () => Promise.resolve({ id: 7 }),
+  });
+  mockClearEvaluationStatus.mockReturnValue({
+    unwrap: () => Promise.resolve({ id: 7 }),
   });
 });
 

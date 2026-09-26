@@ -6,6 +6,7 @@ export type GradingSystemBoundary = {
   maxScore: number;
   gradePoint: number;
   isPass: boolean;
+  evaluationStatusId: number | null;
   gradingSystem: GradingSystemRef | null;
 };
 
@@ -39,6 +40,7 @@ export type CreateGradingSystemBoundaryRequest = {
   maxScore: number;
   gradePoint: number;
   isPass: boolean;
+  evaluationStatusId?: number | null;
 };
 
 export type UpdateGradingSystemBoundaryRequest = {
@@ -48,6 +50,7 @@ export type UpdateGradingSystemBoundaryRequest = {
   maxScore: number;
   gradePoint: number;
   isPass: boolean;
+  evaluationStatusId?: number | null;
   // NOTE: gradingSystemId is intentionally omitted — immutable
 };
 

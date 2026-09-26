@@ -21,10 +21,10 @@
  *   onSave={(key) => handleScoreSave(key)}
  * />
  */
-import { InputNumber, theme } from "antd";
+import { InputNumber, Tooltip, theme } from "antd";
 import type { UIKitCommonProps } from "../foundation";
 
-export interface ScoreInputProps extends UIKitCommonProps {
+export type ScoreInputProps = UIKitCommonProps & {
   /** The score key (column code) this cell represents. */
   scoreKey: string;
   /** Current score value. Pass `null` or `undefined` for an empty cell. */
@@ -43,7 +43,7 @@ export interface ScoreInputProps extends UIKitCommonProps {
   min?: number;
   /** Maximum allowed value. Defaults to 100. */
   max?: number;
-}
+};
 
 export function ScoreInput({
   scoreKey,
@@ -68,12 +68,44 @@ export function ScoreInput({
   // ─── Score band colour ────────────────────────────────────────────────────
   const scoreColor = hasError ? token.colorError : token.colorTextTertiary;
 
+  const resolvedAriaLabel =
+    ariaLabel ||
+    (hasValue
+      ? `Score: ${value} for ${scoreKey}`
+      : `No score recorded for ${scoreKey}`);
+
+  const inputEl = (
+    <InputNumber
+      value={hasValue ? value : undefined}
+      placeholder="—"
+      aria-label={resolvedAriaLabel}
+      onChange={(val) => onChange(scoreKey, val)}
+      onBlur={() => onSave(scoreKey)}
+      onPressEnter={() => onSave(scoreKey)}
+      variant="borderless"
+      className="score-cell-input"
+      style={{
+        width: "100%",
+        background: "transparent",
+      }}
+      styles={{
+        input: {
+          textAlign: "center",
+          fontWeight: hasValue ? 700 : 400,
+          fontSize: token.fontSize,
+          letterSpacing: hasValue ? "0.02em" : undefined,
+          padding: `${token.paddingXS}px ${token.paddingSM}px`,
+        },
+      }}
+      status={hasError ? "error" : undefined}
+      disabled={saving || disabled}
+      min={min}
+      max={max}
+      controls={false}
+    />
+  );
+
   return (
-    /*
-     * Wrapper div sets `color` so the `.score-cell-input` CSS rule can use
-     * `color: inherit !important` and `-webkit-text-fill-color: inherit !important`
-     * to override Ant Design's disabled/borderless text fade.
-     */
     <div
       style={{
         position: "relative",
@@ -84,34 +116,13 @@ export function ScoreInput({
       className={className}
       data-testid={testId}
     >
-      <InputNumber
-        value={hasValue ? value : undefined}
-        placeholder="—"
-        aria-label={ariaLabel}
-        onChange={(val) => onChange(scoreKey, val)}
-        onBlur={() => onSave(scoreKey)}
-        onPressEnter={() => onSave(scoreKey)}
-        variant="borderless"
-        className="score-cell-input"
-        style={{
-          width: "100%",
-          background: "transparent",
-        }}
-        styles={{
-          input: {
-            textAlign: "center",
-            fontWeight: hasValue ? 700 : 400,
-            fontSize: token.fontSize,
-            letterSpacing: hasValue ? "0.02em" : undefined,
-            padding: `${token.paddingXS}px ${token.paddingSM}px`,
-          },
-        }}
-        status={hasError ? "error" : undefined}
-        disabled={saving || disabled}
-        min={min}
-        max={max}
-        controls={false}
-      />
+      {!hasValue && !disabled ? (
+        <Tooltip title="No score recorded (absent / unassessed)" mouseEnterDelay={0.8}>
+          {inputEl}
+        </Tooltip>
+      ) : (
+        inputEl
+      )}
     </div>
   );
 }

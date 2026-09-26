@@ -1,3 +1,5 @@
+import type { EvaluationStatusSource } from "@/features/assessment/types/score-sheet";
+
 export interface BroadsheetMeta {
   institutionName?: string;
   schoolName?: string;
@@ -28,6 +30,7 @@ export interface BroadsheetCourseColumn {
 
 export interface BroadsheetGrade {
   grade?: string;
+  displayGrade?: string;
   score: number | null;
   gradePoint: number | null;
   netPoint: number | null;
@@ -35,6 +38,8 @@ export interface BroadsheetGrade {
   isRegistered?: boolean;
   status?: string | null;
   gradeLetter?: string;
+  evaluationStatusSource?: EvaluationStatusSource;
+  evaluationStatusCode?: string | null;
 }
 
 export interface BroadsheetRowSummary {

@@ -1,4 +1,4 @@
-import type { ScoreSheetRow } from "../types/score-sheet";
+import type { EvaluationStatusSource, ScoreSheetRow } from "../types/score-sheet";
 
 // ---------------------------------------------------------------------------
 // Action type constants
@@ -12,6 +12,8 @@ export const ScoreRowActionType = {
   ClearErrorCell: "CLEAR_ERROR_CELL",
   SetLocalEvalStatusId: "SET_LOCAL_EVAL_STATUS_ID",
   SetLocalEvalStatusCode: "SET_LOCAL_EVAL_STATUS_CODE",
+  SetLocalEvalStatusSource: "SET_LOCAL_EVAL_STATUS_SOURCE",
+  ClearLocalEvalStatus: "CLEAR_LOCAL_EVAL_STATUS",
   SetIsSavingEvalStatus: "SET_IS_SAVING_EVAL_STATUS",
   SetEvalStatusError: "SET_EVAL_STATUS_ERROR",
   Reset: "RESET",
@@ -21,13 +23,6 @@ export const ScoreRowActionType = {
 // State type
 // ---------------------------------------------------------------------------
 
-/**
- * Per-row UI state managed by the reducer.
- *
- * Computed fields (totalScore, grade, gradePoint, wasVetoed, vetoReason) are
- * intentionally absent — they come from the refetched `row` prop after RTK
- * Query cache invalidation, so no local copies are needed.
- */
 export type ScoreRowState = {
   /** Scores edited by the user that have not yet been persisted */
   dirtyScores: Record<string, number | null>;
@@ -39,7 +34,11 @@ export type ScoreRowState = {
   localEvalStatusId: number | null;
   /** Optimistically-updated evaluation status code (reverted on failure) */
   localEvalStatusCode: string;
-  /** Whether the evaluation-status PATCH request is in-flight */
+  /** Optimistically-updated evaluation status source ("SYSTEM" | "MANUAL" | null) */
+  localEvalStatusSource: EvaluationStatusSource;
+  /** Optimistically-updated display grade */
+  localDisplayGrade: string;
+  /** Whether the evaluation-status request is in-flight */
   isSavingEvalStatus: boolean;
   /** Error message from the most recent failed evaluation-status save, or null */
   evalStatusError: string | null;
@@ -69,11 +68,23 @@ export type ScoreRowAction =
     }
   | {
       type: typeof ScoreRowActionType.SetLocalEvalStatusId;
-      payload: { statusId: number | null; code?: string };
+      payload: {
+        statusId: number | null;
+        code?: string;
+        source?: EvaluationStatusSource;
+        displayGrade?: string;
+      };
     }
   | {
       type: typeof ScoreRowActionType.SetLocalEvalStatusCode;
       payload: { code: string };
+    }
+  | {
+      type: typeof ScoreRowActionType.SetLocalEvalStatusSource;
+      payload: { source: EvaluationStatusSource };
+    }
+  | {
+      type: typeof ScoreRowActionType.ClearLocalEvalStatus;
     }
   | {
       type: typeof ScoreRowActionType.SetIsSavingEvalStatus;
@@ -89,10 +100,6 @@ export type ScoreRowAction =
 // Initial state factory
 // ---------------------------------------------------------------------------
 
-/**
- * Seeds the UI state fields from the row prop.
- * Called once on mount (via the `useReducer` initializer argument).
- */
 export function initialScoreRowState(row: ScoreSheetRow): ScoreRowState {
   const defaultStatus = row.evaluationStatuses?.find((s) => s.isDefault);
   const initialStatusId =
@@ -113,12 +120,17 @@ export function initialScoreRowState(row: ScoreSheetRow): ScoreRowState {
     defaultStatus?.code ??
     "";
 
+  const initialSource = row.evaluationStatusSource ?? null;
+  const initialDisplayGrade = row.displayGrade ?? row.grade ?? "NR";
+
   return {
     dirtyScores: {},
     savingCells: new Set(),
     errorCells: {},
     localEvalStatusId: initialStatusId,
     localEvalStatusCode: initialCode,
+    localEvalStatusSource: initialSource,
+    localDisplayGrade: initialDisplayGrade,
     isSavingEvalStatus: false,
     evalStatusError: null,
   };
@@ -128,9 +140,6 @@ export function initialScoreRowState(row: ScoreSheetRow): ScoreRowState {
 // Reducer
 // ---------------------------------------------------------------------------
 
-/**
- * Pure reducer — always returns a new object reference; never mutates `state`.
- */
 export function scoreRowReducer(
   state: ScoreRowState,
   action: ScoreRowAction,
@@ -177,10 +186,23 @@ export function scoreRowReducer(
         ...state,
         localEvalStatusId: action.payload.statusId,
         ...(action.payload.code ? { localEvalStatusCode: action.payload.code } : {}),
+        ...(action.payload.source !== undefined ? { localEvalStatusSource: action.payload.source } : {}),
+        ...(action.payload.displayGrade !== undefined ? { localDisplayGrade: action.payload.displayGrade } : {}),
       };
 
     case ScoreRowActionType.SetLocalEvalStatusCode:
       return { ...state, localEvalStatusCode: action.payload.code };
+
+    case ScoreRowActionType.SetLocalEvalStatusSource:
+      return { ...state, localEvalStatusSource: action.payload.source };
+
+    case ScoreRowActionType.ClearLocalEvalStatus:
+      return {
+        ...state,
+        localEvalStatusId: null,
+        localEvalStatusCode: "",
+        localEvalStatusSource: null,
+      };
 
     case ScoreRowActionType.SetIsSavingEvalStatus:
       return { ...state, isSavingEvalStatus: action.payload.isSaving };
@@ -195,3 +217,4 @@ export function scoreRowReducer(
       return state;
   }
 }
+

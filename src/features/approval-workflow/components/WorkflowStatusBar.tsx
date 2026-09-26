@@ -15,6 +15,7 @@ import { Button, Flex, Popconfirm, Steps, Tag, Tooltip, Typography } from "antd"
 import type { ApiTagLiteral } from "@/shared/types/apiTagTypes";
 import { useWorkflowTransitions } from "../hooks/useWorkflowTransitions";
 import type { WorkflowTargetEntity } from "../types/approval-workflow";
+import { SubmissionGatingModal } from "./SubmissionGatingModal";
 import { TransitionCommentModal } from "./TransitionCommentModal";
 import { WorkflowAuditDrawer } from "./WorkflowAuditDrawer";
 
@@ -283,6 +284,13 @@ export function WorkflowStatusBar({
         onCommentChange={handleCommentChange}
         onConfirm={handleConfirmCommentModal}
         onCancel={handleCancelCommentModal}
+      />
+
+      {/* Submission Gating Modal for 422 Precondition Errors */}
+      <SubmissionGatingModal
+        open={state.isGatingModalOpen}
+        students={state.gatingStudents}
+        onClose={actions.handleCloseGatingModal}
       />
 
       {/* Audit Drawer */}

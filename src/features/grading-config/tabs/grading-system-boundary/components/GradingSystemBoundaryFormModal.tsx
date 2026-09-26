@@ -3,14 +3,14 @@ import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import { useToken } from "@/shared/hooks/useToken";
 import { ErrorAlert } from "@/shared/ui/ErrorAlert";
-import { Button, Form, Input, InputNumber, Modal, Switch } from "antd";
+import { Button, Form, Input, InputNumber, Modal, Select, Switch, Typography } from "antd";
 import { useGradingSystemBoundaryFormModal } from "../hooks/useGradingSystemBoundaryModal";
 import type { GradingSystemBoundary } from "../types/grading-system-boundary";
 import {
-    gradePointRules,
-    letterGradeRules,
-    maxScoreRules,
-    minScoreRules,
+  gradePointRules,
+  letterGradeRules,
+  maxScoreRules,
+  minScoreRules,
 } from "../utils/validators";
 
 type GradingSystemBoundaryFormModalProps = {
@@ -36,7 +36,13 @@ export function GradingSystemBoundaryFormModal({
     onClose,
     existingBoundaries,
   );
-  const { isEditMode, isSubmitting, overlapError } = state;
+  const {
+    isEditMode,
+    isSubmitting,
+    overlapError,
+    statusOptions,
+    isLoadingStatuses,
+  } = state;
   const { handleSubmit, handleCancel } = actions;
 
   return (
@@ -160,10 +166,34 @@ export function GradingSystemBoundaryFormModal({
             name="isPass"
             label="Pass"
             valuePropName="checked"
-            style={{ marginBottom: 0 }}
           >
             <Switch defaultChecked />
           </Form.Item>
+
+          {/* evaluationStatusId */}
+          <Form.Item
+            name="evaluationStatusId"
+            label="Evaluation Status (Optional Link)"
+          >
+            <Select
+              allowClear
+              placeholder="Select standard evaluation status..."
+              loading={isLoadingStatuses}
+              style={{ height: 40 }}
+              options={statusOptions}
+            />
+          </Form.Item>
+          <Typography.Text
+            type="secondary"
+            style={{
+              fontSize: token.fontSizeSM,
+              display: "block",
+              marginTop: -16,
+              marginBottom: 0,
+            }}
+          >
+            Links this boundary to a standard-graded evaluation status. When marked as a failing boundary, statuses that earn credit cannot be selected.
+          </Typography.Text>
         </Form>
       </div>
 

@@ -54,6 +54,16 @@ export function EvaluationStatusCard({
                 Default
               </Tag>
             </ConditionalRenderer>
+            <ConditionalRenderer when={status.isStandardPass}>
+              <Tag color="emerald" style={{ margin: 0, color: "#10b981", borderColor: "#10b981" }}>
+                Standard Pass
+              </Tag>
+            </ConditionalRenderer>
+            <ConditionalRenderer when={status.isStandardFail}>
+              <Tag color="red" style={{ margin: 0 }}>
+                Standard Fail
+              </Tag>
+            </ConditionalRenderer>
           </Flex>
         </Flex>
 

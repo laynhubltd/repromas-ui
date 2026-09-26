@@ -1,3 +1,4 @@
+import { EvaluationStatusSource } from "@/features/assessment/types/score-sheet";
 import { Tag, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import type {
@@ -78,8 +79,16 @@ export function buildMatrixColumns({
           align: "center",
           render: (_: unknown, row: BroadsheetRow) => {
             const g = row.grades?.[courseCode];
-            if (!g || g.isRegistered === false || g.grade === "NR") {
+            const effGrade = g?.displayGrade ?? g?.grade ?? g?.gradeLetter;
+            if (!g || g.isRegistered === false || effGrade === "NR") {
               return <span style={{ color: "#bfbfbf" }}>—</span>;
+            }
+            if (g.evaluationStatusSource === EvaluationStatusSource.MANUAL && g.displayGrade) {
+              return (
+                <span style={{ color: "#fa8c16", fontWeight: 600, fontSize: 11 }}>
+                  {g.displayGrade}
+                </span>
+              );
             }
             const isFail = g.isPass === false || g.status === "FAIL";
             return (
@@ -102,7 +111,8 @@ export function buildMatrixColumns({
           align: "center",
           render: (_: unknown, row: BroadsheetRow) => {
             const g = row.grades?.[courseCode];
-            if (!g || g.isRegistered === false || g.grade === "NR" || g.gradePoint === null || g.gradePoint === undefined) {
+            const effGrade = g?.displayGrade ?? g?.grade ?? g?.gradeLetter;
+            if (!g || g.isRegistered === false || effGrade === "NR" || g.gradePoint === null || g.gradePoint === undefined) {
               return <span style={{ color: "#bfbfbf" }}>—</span>;
             }
             return (
@@ -119,7 +129,8 @@ export function buildMatrixColumns({
           align: "center",
           render: (_: unknown, row: BroadsheetRow) => {
             const g = row.grades?.[courseCode];
-            if (!g || g.isRegistered === false || g.grade === "NR" || g.netPoint === null || g.netPoint === undefined) {
+            const effGrade = g?.displayGrade ?? g?.grade ?? g?.gradeLetter;
+            if (!g || g.isRegistered === false || effGrade === "NR" || g.netPoint === null || g.netPoint === undefined) {
               return <span style={{ color: "#bfbfbf" }}>—</span>;
             }
             return (

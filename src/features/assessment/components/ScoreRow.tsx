@@ -1,10 +1,16 @@
 // Feature: assessment
 import { ScoreInput } from "@/components/ui-kit";
 import { useToken } from "@/shared/hooks/useToken";
-import { ExclamationCircleFilled, LoadingOutlined } from "@ant-design/icons";
-import { Select, Tooltip } from "antd";
+import {
+  ClearOutlined,
+  CloseCircleOutlined,
+  ExclamationCircleFilled,
+  LoadingOutlined,
+  LockOutlined,
+} from "@ant-design/icons";
+import { Button, Flex, Popconfirm, Select, Tag, Tooltip } from "antd";
 import { useScoreRow } from "../hooks/useScoreRow";
-import type { ScoreColumn, ScoreSheetRow } from "../types/score-sheet";
+import { EvaluationStatusSource, type ScoreColumn, type ScoreSheetRow } from "../types/score-sheet";
 
 type ScoreRowProps = {
   row: ScoreSheetRow;
@@ -21,11 +27,38 @@ export function ScoreRow({ row, columns, rowIndex, isLocked = false }: ScoreRowP
     savingCells,
     errorCells,
     localEvalStatusId,
+    localEvalStatusCode,
+    localEvalStatusSource,
+    localDisplayGrade,
     isSavingEvalStatus,
     evalStatusError,
   } = state;
-  const { handleScoreChange, handleScoreSave, handleEvalStatusChange } =
-    actions;
+  const {
+    handleScoreChange,
+    handleScoreSave,
+    handleAssignEvalStatus,
+    handleClearEvalStatus,
+    handleWipeScores,
+  } = actions;
+
+  const isRowLocked = isLocked || row.isEditable === false;
+
+  const selectedStatus = row.evaluationStatuses?.find(
+    (s) => s.id === localEvalStatusId || s.code === localEvalStatusCode,
+  );
+  const isManual =
+    localEvalStatusSource === EvaluationStatusSource.MANUAL ||
+    (selectedStatus ? !selectedStatus.isStandardGraded : false);
+  const displayGrade =
+    localDisplayGrade ||
+    row.displayGrade ||
+    row.grade ||
+    (isManual ? selectedStatus?.code : null) ||
+    "NR";
+
+  const hasRecordedScores =
+    Object.values(row.scores ?? {}).some((v) => v !== null && v !== undefined) ||
+    Object.values(dirtyScores).some((v) => v !== null && v !== undefined);
 
   // ─── Flatten columns to leaf codes in API order ───────────────────────────
   const leafCodes: string[] = columns.flatMap((col) =>
@@ -70,7 +103,16 @@ export function ScoreRow({ row, columns, rowIndex, isLocked = false }: ScoreRowP
           fontSize: token.fontSizeSM,
         }}
       >
-        {rowIndex + 1}
+        {row.isEditable === false ? (
+          <Tooltip title="Locked — score sheet is in a non-editable state">
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 2 }}>
+              <LockOutlined style={{ color: token.colorWarning, fontSize: token.fontSizeSM }} />
+              {rowIndex + 1}
+            </span>
+          </Tooltip>
+        ) : (
+          rowIndex + 1
+        )}
       </td>
 
       {/* Reg No */}
@@ -105,17 +147,13 @@ export function ScoreRow({ row, columns, rowIndex, isLocked = false }: ScoreRowP
         const isSaving = savingCells.has(key);
         const errorMsg = errorCells[key];
         const hasError = Boolean(errorMsg);
-        // const hasValue = displayScore !== null && displayScore !== undefined;
-
-        // Cell background tint by score band
-        // const scoreBg = hasValue && !hasError ? rowBg : token.colorErrorBg;
 
         const scoreInputEl = (
           <ScoreInput
             scoreKey={key}
             value={displayScore}
             saving={isSaving}
-            disabled={isLocked}
+            disabled={isRowLocked || isManual}
             error={errorMsg}
             onChange={handleScoreChange}
             onSave={handleScoreSave}
@@ -128,7 +166,6 @@ export function ScoreRow({ row, columns, rowIndex, isLocked = false }: ScoreRowP
             key={key}
             style={{
               ...tdBase,
-              // background: scoreBg,
               position: "relative",
               minWidth: 90,
               padding: 0,
@@ -182,7 +219,7 @@ export function ScoreRow({ row, columns, rowIndex, isLocked = false }: ScoreRowP
       >
         <Tooltip
           title={row.wasVetoed ? row.vetoReason : undefined}
-          color={token.colorWarning}
+          color={row.wasVetoed ? token.colorWarning : undefined}
         >
           <span
             style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
@@ -200,18 +237,35 @@ export function ScoreRow({ row, columns, rowIndex, isLocked = false }: ScoreRowP
         </Tooltip>
       </td>
 
-      {/* Grade */}
+      {/* Grade (Display Grade) */}
       <td
         style={{
           ...tdBase,
           textAlign: "center",
           fontWeight: 700,
           fontSize: token.fontSize,
-          color: row.grade ? token.colorText : token.colorTextTertiary,
-          minWidth: 72,
+          minWidth: 80,
         }}
       >
-        {row.grade || "—"}
+        {isManual ? (
+          <Tooltip title="Administrative Override">
+            <Tag color="orange" style={{ margin: 0, fontWeight: 700 }}>
+              {displayGrade}
+            </Tag>
+          </Tooltip>
+        ) : displayGrade === "NR" ? (
+          <Tag color="default" style={{ margin: 0, color: token.colorTextTertiary }}>
+            NR
+          </Tag>
+        ) : displayGrade === "F" || row.wasVetoed ? (
+          <Tag color="error" style={{ margin: 0, fontWeight: 700 }}>
+            {displayGrade}
+          </Tag>
+        ) : (
+          <Tag color="success" style={{ margin: 0, fontWeight: 700 }}>
+            {displayGrade}
+          </Tag>
+        )}
       </td>
 
       {/* Grade Point */}
@@ -225,71 +279,94 @@ export function ScoreRow({ row, columns, rowIndex, isLocked = false }: ScoreRowP
           minWidth: 72,
         }}
       >
-        {row.grade ? row.gradePoint.toFixed(1) : "—"}
+        {row.gradePoint !== null && row.gradePoint !== undefined && (row.grade || row.gradePoint > 0 || isManual)
+          ? row.gradePoint.toFixed(1)
+          : "—"}
       </td>
 
-      {/* Eval Status — last column */}
+      {/* Eval Status & Actions — last column */}
       <td
         style={{
           ...tdBase,
           padding: `${token.paddingXXS}px ${token.paddingXS}px`,
-          minWidth: 160,
+          minWidth: 190,
           outline: evalStatusError
             ? `1.5px solid ${token.colorError}`
             : undefined,
         }}
       >
-        {(() => {
-          const defaultStatus = row.evaluationStatuses?.find((s) => s.isDefault);
-          const activeStatusId =
-            localEvalStatusId ??
-            row.evaluationStatusId ??
-            defaultStatus?.id ??
-            undefined;
-
-          return (
-            <Select
-              value={activeStatusId}
-              onChange={(statusId: number) => {
-                console.log("[ScoreRow] Select onChange with statusId:", statusId);
-                handleEvalStatusChange(statusId);
-              }}
-              loading={isSavingEvalStatus}
-              disabled={isLocked || isSavingEvalStatus}
-              size="small"
-              variant="borderless"
-              style={{ width: "100%", minWidth: 140 }}
-              placeholder="—"
-              aria-label="Evaluation status"
-              options={row.evaluationStatuses.map((s) => ({
-                value: s.id,
-                label: (
-                  <span>
-                    <span
-                      style={{
-                        fontFamily: "monospace",
-                        fontWeight: 600,
-                        marginRight: token.marginXXS,
-                        color: token.colorPrimary,
-                      }}
-                    >
-                      {s.code}
-                    </span>
-                    <span
-                      style={{
-                        color: token.colorTextSecondary,
-                        fontSize: token.fontSizeSM,
-                      }}
-                    >
-                      {s.name}
-                    </span>
-                  </span>
-                ),
-              }))}
-            />
-          );
-        })()}
+        <Flex align="center" justify="space-between" gap={4}>
+          <Select
+            value={localEvalStatusId ?? undefined}
+            onChange={(statusId: number) => {
+              const selected = row.evaluationStatuses?.find((s) => s.id === statusId);
+              if (selected && !selected.isStandardGraded) {
+                handleAssignEvalStatus(statusId);
+              } else {
+                handleClearEvalStatus();
+              }
+            }}
+            loading={isSavingEvalStatus}
+            disabled={isRowLocked || isSavingEvalStatus}
+            size="small"
+            variant="borderless"
+            style={{ flex: 1, minWidth: 120 }}
+            placeholder="Select status…"
+            allowClear={false}
+            aria-label="Evaluation status"
+            options={row.evaluationStatuses?.map((s) => ({
+              value: s.id,
+              label: s.code,
+              title: `${s.code} — ${s.name}`,
+            }))}
+          />
+          {isManual && (
+            <Popconfirm
+              title="Clear Override"
+              description="Clear administrative mark and re-evaluate numeric scores?"
+              okText="Clear"
+              cancelText="Cancel"
+              okButtonProps={{ danger: true, loading: isSavingEvalStatus }}
+              onConfirm={handleClearEvalStatus}
+              disabled={isRowLocked || isSavingEvalStatus}
+            >
+              <Button
+                type="text"
+                danger
+                size="small"
+                icon={<CloseCircleOutlined />}
+                loading={isSavingEvalStatus}
+                disabled={isRowLocked}
+                title="Clear manual override"
+              >
+                Clear
+              </Button>
+            </Popconfirm>
+          )}
+          {hasRecordedScores && !isRowLocked && (
+            <Popconfirm
+              title="Clear all scores?"
+              description="This will clear all numeric component scores and reset display grade to Not Recorded (NR). Any manual administrative override will be preserved."
+              okText="Clear All"
+              cancelText="Cancel"
+              okButtonProps={{ danger: true, loading: isSavingEvalStatus }}
+              onConfirm={handleWipeScores}
+              disabled={isRowLocked || isSavingEvalStatus}
+            >
+              <Button
+                type="text"
+                danger
+                size="small"
+                icon={<ClearOutlined />}
+                loading={isSavingEvalStatus}
+                disabled={isRowLocked}
+                title="Clear all scores (wipe)"
+              />
+            </Popconfirm>
+          )}
+        </Flex>
       </td>
     </tr>
   );
 }
+
