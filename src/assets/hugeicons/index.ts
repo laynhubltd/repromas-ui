@@ -109,6 +109,8 @@ import FolderLibrary from "./svg/stroke/files-folders/folder-library.svg?react";
 import UserAccount from "./svg/stroke/users/user-account.svg?react";
 import UserCheck from "./svg/stroke/users/user-check-01.svg?react";
 import UserGroup from "./svg/stroke/users/user-group.svg?react";
+import SidebarLeft from "./svg/stroke/programming-language/sidebar-left-01.svg?react";
+import SidebarRight from "./svg/stroke/programming-language/sidebar-right-01.svg?react";
 
 export const icons = {
     arrange: Arrange,
@@ -226,6 +228,8 @@ export const icons = {
     "user-account": UserAccount,
     "user-check": UserCheck,
     "user-group": UserGroup,
+    "sidebar-left": SidebarLeft,
+    "sidebar-right": SidebarRight,
 };
 
 export type HugeiconsIcon = keyof typeof icons;
