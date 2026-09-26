@@ -79,10 +79,11 @@ export default function StudentShell() {
     [routeMenuItems, wrapWithLink],
   );
 
+  // Prefer the user's name (full or partial) — email is the last resort only.
   const displayName =
-    userProfile?.firstName && userProfile?.lastName
-      ? `${userProfile.firstName} ${userProfile.lastName}`
-      : (userProfile?.email ?? "User");
+    [userProfile?.firstName, userProfile?.lastName].filter(Boolean).join(" ") ||
+    userProfile?.email ||
+    "User";
 
   const userMenuItems = useMemo<ItemType[]>(() => {
     const items: ItemType[] = [

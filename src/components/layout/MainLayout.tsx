@@ -1,18 +1,17 @@
+import { AppIcon } from "@/shared/ui/AppIcon";
 import {
-  MenuFoldOutlined,
-  MenuUnfoldOutlined,
-} from "@ant-design/icons";
-import {
+  Breadcrumb,
   Button,
+  Divider,
   Drawer,
   Dropdown,
   Layout,
   Menu,
-  Tag,
   theme,
 } from "antd";
+import type { MenuProps } from "antd";
 import { UserAvatar } from "@/shared/ui/UserAvatar";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { RepromasLogo } from "./RepromasLogo";
 import { SidebarIllustration } from "./SidebarIllustration";
@@ -39,8 +38,41 @@ export default function MainLayout({
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenuVisible, setMobileMenuVisible] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 2);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Route-derived breadcrumbs: labels resolved from the sidebar menu items,
+  // falling back to a humanised path segment for routes not in the menu.
+  const breadcrumbItems = useMemo(() => {
+    const labelByKey = new Map<string, React.ReactNode>();
+    const collect = (items?: MenuProps["items"]) => {
+      items?.forEach((item) => {
+        if (!item) return;
+        const key = "key" in item && item.key != null ? String(item.key) : null;
+        const label = "label" in item ? item.label : null;
+        if (key && label != null) labelByKey.set(key, label);
+        if ("children" in item) collect(item.children as MenuProps["items"]);
+      });
+    };
+    collect(menuItems);
+    collect(bottomMenuItems);
+
+    const segments = location.pathname.split("/").filter(Boolean);
+    return segments.map((segment, i) => {
+      const path = "/" + segments.slice(0, i + 1).join("/");
+      const humanised =
+        segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, " ");
+      return { title: labelByKey.get(path) ?? humanised };
+    });
+  }, [location.pathname, menuItems, bottomMenuItems]);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -220,31 +252,37 @@ export default function MainLayout({
       >
         <Header
           style={{
-            padding: isMobile ? "0 16px" : "0 24px",
+            padding: isMobile ? "0 12px" : "0 24px",
             background: token.colorBgContainer,
             display: "flex",
             alignItems: "center",
-            justifyContent: "space-between",
+            gap: 12,
             position: "sticky",
             top: 0,
             zIndex: 100,
+            height: 64,
             borderBottom: `1px solid ${token.colorBorderSecondary}`,
+            boxShadow: scrolled ? token.boxShadowTertiary : "none",
+            transition: "box-shadow 0.2s ease",
           }}
         >
+          {/* ── Left: navigation toggle + page context ─────────────── */}
           <Button
             type="text"
+            aria-label={
+              (isMobile ? mobileMenuVisible : !collapsed)
+                ? "Collapse navigation"
+                : "Open navigation"
+            }
             icon={
-              isMobile ? (
-                mobileMenuVisible ? (
-                  <MenuFoldOutlined />
-                ) : (
-                  <MenuUnfoldOutlined />
-                )
-              ) : collapsed ? (
-                <MenuUnfoldOutlined />
-              ) : (
-                <MenuFoldOutlined />
-              )
+              <AppIcon
+                name={
+                  (isMobile ? mobileMenuVisible : !collapsed)
+                    ? "sidebar-left"
+                    : "sidebar-right"
+                }
+                size="lg"
+              />
             }
             onClick={() =>
               isMobile
@@ -252,32 +290,40 @@ export default function MainLayout({
                 : setCollapsed((c) => !c)
             }
             style={{
-              fontSize: 18,
-              width: isMobile ? 48 : 64,
-              height: 64,
+              width: 40,
+              height: 40,
               color: token.colorText,
+              flexShrink: 0,
             }}
           />
+
+          {!isMobile && breadcrumbItems.length > 0 && (
+            <>
+              <Divider type="vertical" style={{ height: 24, margin: 0 }} />
+              <Breadcrumb items={breadcrumbItems} />
+            </>
+          )}
+
+          {/* Spacer: pushes utilities right, keeps the centre breathable.
+              Future utilities (notifications, theme toggle) mount after it. */}
+          <div style={{ flex: 1 }} />
+
+          {/* ── Right: user account menu ───────────────────────────── */}
           <Dropdown
             menu={{ items: userMenuItems }}
             placement="bottomRight"
             trigger={["click"]}
           >
-            <div
+            <Button
+              type="text"
+              aria-label={`Account menu for ${userDisplayName}`}
               style={{
-                cursor: "pointer",
+                height: 48,
+                padding: "4px 8px",
                 display: "flex",
                 alignItems: "center",
-                gap: 16,
-                padding: "8px 12px",
-                borderRadius: token.borderRadius,
-                transition: "background 0.2s",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = token.colorBgElevated;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "transparent";
+                gap: 10,
+                borderRadius: token.borderRadiusLG,
               }}
             >
               <UserAvatar
@@ -286,42 +332,51 @@ export default function MainLayout({
                 lastName={userLastName}
                 email={userEmail}
                 displayName={userDisplayName}
-                size={40}
+                size={36}
               />
               {!isMobile && (
-                <div
+                <span
                   style={{
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "flex-start",
-                    gap: 4,
-                    lineHeight: 1.2,
+                    lineHeight: 1.3,
                   }}
                 >
-                  {userRoleLabel ? (
-                    <Tag
-                      color="blue"
-                      style={{
-                        margin: 0,
-                        fontSize: token.fontSizeSM,
-                        lineHeight: "18px",
-                      }}
-                    >
-                      {userRoleLabel}
-                    </Tag>
-                  ) : null}
-
                   <span
                     style={{
                       color: token.colorText,
-                      fontWeight: 500,
+                      fontWeight: 600,
+                      fontSize: token.fontSize,
+                      maxWidth: 160,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
                     }}
                   >
                     {userDisplayName}
                   </span>
-                </div>
+                  {userRoleLabel && (
+                    <span
+                      style={{
+                        color: token.colorTextSecondary,
+                        fontSize: token.fontSizeSM,
+                        fontWeight: 400,
+                      }}
+                    >
+                      {userRoleLabel}
+                    </span>
+                  )}
+                </span>
               )}
-            </div>
+              {!isMobile && (
+                <AppIcon
+                  name="arrow-down-plain"
+                  size="sm"
+                  color={token.colorTextTertiary}
+                />
+              )}
+            </Button>
           </Dropdown>
         </Header>
         <Content
