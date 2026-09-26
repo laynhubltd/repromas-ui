@@ -153,7 +153,7 @@ export function ScoreSheetCard({
           }}
         >
           {row.isEditable === false ? (
-            <Tooltip title="Locked — score sheet is in a non-editable state">
+            <Tooltip title="Locked score sheet is in a non-editable state">
               <LockOutlined style={{ color: token.colorWarning, fontSize: 13 }} />
             </Tooltip>
           ) : (

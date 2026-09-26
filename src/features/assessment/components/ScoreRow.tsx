@@ -104,7 +104,7 @@ export function ScoreRow({ row, columns, rowIndex, isLocked = false }: ScoreRowP
         }}
       >
         {row.isEditable === false ? (
-          <Tooltip title="Locked — score sheet is in a non-editable state">
+          <Tooltip title="Locked score sheet is in a non-editable state">
             <span style={{ display: "inline-flex", alignItems: "center", gap: 2 }}>
               <LockOutlined style={{ color: token.colorWarning, fontSize: token.fontSizeSM }} />
               {rowIndex + 1}
