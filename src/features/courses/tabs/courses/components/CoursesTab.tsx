@@ -32,6 +32,7 @@ import {
   Row,
   Select,
   Space,
+  Spin,
   Switch,
   Tag,
   Typography,
@@ -159,10 +160,10 @@ export function CoursesTab() {
     courses,
     totalItems,
     isLoading,
+    isFetching,
     isError,
     sectionError,
     page,
-    itemsPerPage,
     codeSearch,
     titleSearch,
     departmentId,
@@ -182,6 +183,7 @@ export function CoursesTab() {
     handleShowInactiveChange,
     handleSortChange,
     handlePageChange,
+    getPaginationConfig,
     handleOpenCreate,
     handleOpenEdit,
     handleOpenDelete,
@@ -451,35 +453,34 @@ export function CoursesTab() {
             size="md"
             density="comfortable"
             scroll={{ x: true }}
+            loading={{ spinning: isFetching, delay: 150 }}
+            aria-busy={isFetching}
             onChange={handleTableChange}
-            pagination={{
-              current: page,
-              pageSize: itemsPerPage,
-              total: totalItems,
-              showSizeChanger: true,
-              onChange: handlePageChange,
-              onShowSizeChange: handlePageChange,
-            }}
+            pagination={getPaginationConfig()}
           />
         </ConditionalRenderer>
 
         <ConditionalRenderer when={!isError && hasData && groupByDepartment}>
-          <Accordion
-            items={accordionItems}
-            expansionMode="multiple"
-            size="md"
-            density="comfortable"
-            variant="default"
-          />
-          <Flex justify="flex-end" style={{ marginTop: 16 }}>
-            <Pagination
-              current={page}
-              pageSize={100}
-              total={totalItems}
-              onChange={(p) => handlePageChange(p, 100)}
-              showSizeChanger={false}
-            />
-          </Flex>
+          <Spin spinning={isFetching} delay={150}>
+            <div aria-busy={isFetching}>
+              <Accordion
+                items={accordionItems}
+                expansionMode="multiple"
+                size="md"
+                density="comfortable"
+                variant="default"
+              />
+              <Flex justify="flex-end" style={{ marginTop: 16 }}>
+                <Pagination
+                  current={page}
+                  pageSize={100}
+                  total={totalItems}
+                  onChange={(p) => handlePageChange(p, 100)}
+                  showSizeChanger={false}
+                />
+              </Flex>
+            </div>
+          </Spin>
         </ConditionalRenderer>
       </DataLoader>
 

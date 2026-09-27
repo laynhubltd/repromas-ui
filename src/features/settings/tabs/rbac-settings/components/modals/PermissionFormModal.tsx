@@ -3,6 +3,7 @@ import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import { useToken } from "@/shared/hooks/useToken";
 import { ErrorAlert } from "@/shared/ui/ErrorAlert";
+import { SelectNotFoundContent } from "@/shared/ui/SelectNotFoundContent";
 import { Button, Form, Input, Modal, Select } from "antd";
 import { usePermissionFormModal } from "../../hooks/usePermissionModal";
 import type { Permission as PermissionType } from "../../types/rbac";
@@ -106,9 +107,10 @@ export function PermissionFormModal({
                 }}
                 style={{ width: "100%" }}
                 notFoundContent={
-                  isCatalogueLoading
-                    ? "Searching…"
-                    : "No unactivated permissions found"
+                  <SelectNotFoundContent
+                    loading={isCatalogueLoading}
+                    emptyText="No unactivated permissions found"
+                  />
                 }
               />
             </Form.Item>

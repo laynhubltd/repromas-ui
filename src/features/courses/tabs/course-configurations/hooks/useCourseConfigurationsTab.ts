@@ -1,8 +1,9 @@
 import { useGetLevelsQuery } from "@/features/settings/tabs/level-config/api/levelApi";
 import type { Level } from "@/features/settings/tabs/level-config/types/level";
+import { useServerTableState } from "@/shared/hooks/useServerTableState";
 import { RequestScreen } from "@/shared/types/error-ui";
 import { deriveSectionErrorMessage } from "@/shared/utils/error/deriveSectionErrorMessage";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useGetCourseConfigurationsQuery } from "../api/courseConfigurationsApi";
 import type { CourseConfiguration, CurriculumGridRow } from "../types/course-configuration";
 
@@ -16,10 +17,6 @@ export function useCourseConfigurationsTab() {
   // ─── Filters ──────────────────────────────────────────────────────────────
   const [filterLevelId, setFilterLevelId] = useState<number | undefined>(undefined);
   const [filterSemesterTypeId, setFilterSemesterTypeId] = useState<number | undefined>(undefined);
-
-  // ─── Pagination ───────────────────────────────────────────────────────────
-  const [page, setPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(DEFAULT_PAGE_SIZE);
 
   // ─── Modal State ──────────────────────────────────────────────────────────
   const [formTarget, setFormTarget] = useState<CourseConfiguration | null>(null);
@@ -43,6 +40,20 @@ export function useCourseConfigurationsTab() {
   );
   const levels = levelsData?.member ?? [];
 
+  // ─── Pagination & Sort (Server Table State) ──────────────────────────────
+  const [rawTotalItems, setRawTotalItems] = useState(0);
+
+  const {
+    page,
+    pageSize: itemsPerPage,
+    handlePageChange,
+    resetPage,
+    getPaginationConfig,
+  } = useServerTableState({
+    defaultPageSize: DEFAULT_PAGE_SIZE,
+    totalItems: rawTotalItems,
+  });
+
   // ─── Query ────────────────────────────────────────────────────────────────
   const queryParams = bothSelected
     ? {
@@ -57,7 +68,7 @@ export function useCourseConfigurationsTab() {
       }
     : undefined;
 
-  const { data, isLoading, isError, error: queryError, refetch } = useGetCourseConfigurationsQuery(
+  const { data, isLoading, isFetching, isError, error: queryError, refetch } = useGetCourseConfigurationsQuery(
     queryParams!,
     { skip: !bothSelected },
   );
@@ -73,6 +84,12 @@ export function useCourseConfigurationsTab() {
 
   const configs = data?.member ?? [];
   const totalItems = data?.totalItems ?? 0;
+
+  useEffect(() => {
+    if (data?.totalItems !== undefined) {
+      setRawTotalItems(data.totalItems);
+    }
+  }, [data?.totalItems]);
 
   // ─── Grid Grouping ────────────────────────────────────────────────────────
   const gridRows = useMemo<CurriculumGridRow[]>(() => {
@@ -111,36 +128,31 @@ export function useCourseConfigurationsTab() {
     setSelectedVersionId(undefined);
     setFilterLevelId(undefined);
     setFilterSemesterTypeId(undefined);
-    setPage(1);
-  }, []);
+    resetPage();
+  }, [resetPage]);
 
   const handleVersionChange = useCallback((value: number | undefined) => {
     setSelectedVersionId(value);
     setFilterLevelId(undefined);
     setFilterSemesterTypeId(undefined);
-    setPage(1);
-  }, []);
+    resetPage();
+  }, [resetPage]);
 
   const handleLevelFilterChange = useCallback((value: number | undefined) => {
     setFilterLevelId(value);
-    setPage(1);
-  }, []);
+    resetPage();
+  }, [resetPage]);
 
   const handleSemesterTypeFilterChange = useCallback((value: number | undefined) => {
     setFilterSemesterTypeId(value);
-    setPage(1);
-  }, []);
+    resetPage();
+  }, [resetPage]);
 
   const handleClearFilters = useCallback(() => {
     setFilterLevelId(undefined);
     setFilterSemesterTypeId(undefined);
-    setPage(1);
-  }, []);
-
-  const handlePageChange = useCallback((newPage: number, newPageSize: number) => {
-    setPage(newPage);
-    setItemsPerPage(newPageSize);
-  }, []);
+    resetPage();
+  }, [resetPage]);
 
   const handleOpenCreate = useCallback(
     (levelId?: number, semesterTypeId?: number) => {
@@ -182,6 +194,7 @@ export function useCourseConfigurationsTab() {
       totalItems,
       levels,
       isLoading,
+      isFetching,
       isError,
       sectionError,
       selectedProgramId,
@@ -205,6 +218,7 @@ export function useCourseConfigurationsTab() {
       handleSemesterTypeFilterChange,
       handleClearFilters,
       handlePageChange,
+      getPaginationConfig,
       handleOpenCreate,
       handleOpenEdit,
       handleOpenDelete,

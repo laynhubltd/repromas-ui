@@ -1,4 +1,5 @@
-import { Select, Spin } from "antd";
+import { Select } from "antd";
+import { SelectNotFoundContent } from "@/shared/ui/SelectNotFoundContent";
 import { useOlevelSubjectPickerOptions } from "../../hooks/useOlevelSubjectPickerOptions";
 
 type OlevelSubjectPickerFieldProps = {
@@ -45,11 +46,10 @@ export function OlevelSubjectPickerField({
       loading={isLoading}
       disabled={!enabled}
       notFoundContent={
-        isLoading ? (
-          <Spin size="small" />
-        ) : (
-          <span style={{ fontSize: 12, color: "#999" }}>No subjects found</span>
-        )
+        <SelectNotFoundContent
+          loading={isLoading}
+          emptyText="No subjects found"
+        />
       }
     />
   );

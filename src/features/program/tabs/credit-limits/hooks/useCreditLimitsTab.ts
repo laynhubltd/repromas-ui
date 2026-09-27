@@ -7,7 +7,8 @@ import { useGetLevelsQuery } from "@/features/settings/tabs/level-config/api/lev
 import type { Level } from "@/features/settings/tabs/level-config/types/level";
 import { useGetTransitionStatusesQuery } from "@/features/settings/tabs/student-transition-status/api/studentTransitionStatusApi";
 import type { StudentTransitionStatus } from "@/features/settings/tabs/student-transition-status/types/student-transition-status";
-import { useMemo, useState } from "react";
+import { useServerTableState } from "@/shared/hooks/useServerTableState";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useListRegistrationCreditLimitsQuery } from "../api/registrationCreditLimitApi";
 import type {
     LevelOption,
@@ -30,30 +31,34 @@ type ActiveFilters = {
 };
 
 export function useCreditLimitsTab() {
-  // ── Pagination state ───────────────────────────────────────────────────────
-
-  const [page, setPage] = useState(1);
-
   // ── Filter state ───────────────────────────────────────────────────────────
-
   const [filters, setFilters] = useState<ActiveFilters>({});
 
   // ── Modal state ────────────────────────────────────────────────────────────
-
-  const [formTarget, setFormTarget] = useState<RegistrationCreditLimit | null>(
-    null,
-  );
-  const [deleteTarget, setDeleteTarget] =
-    useState<RegistrationCreditLimit | null>(null);
+  const [formTarget, setFormTarget] = useState<RegistrationCreditLimit | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<RegistrationCreditLimit | null>(null);
   const [formModalOpen, setFormModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
-  // ── Build query params ─────────────────────────────────────────────────────
+  // ── Pagination & Sort (Server Table State) ──────────────────────────────
+  const [rawTotalItems, setRawTotalItems] = useState(0);
 
+  const {
+    page,
+    pageSize: itemsPerPage,
+    handlePageChange,
+    resetPage,
+    getPaginationConfig,
+  } = useServerTableState({
+    defaultPageSize: ITEMS_PER_PAGE,
+    totalItems: rawTotalItems,
+  });
+
+  // ── Build query params ─────────────────────────────────────────────────────
   const queryParams = useMemo<RegistrationCreditLimitListParams>(() => {
     const params: RegistrationCreditLimitListParams = {
       page,
-      itemsPerPage: ITEMS_PER_PAGE,
+      itemsPerPage,
     };
     if (filters.programId !== undefined)
       params["exact[programId]"] = filters.programId;
@@ -66,11 +71,10 @@ export function useCreditLimitsTab() {
     if (filters.statusId !== undefined)
       params["exact[statusId]"] = filters.statusId;
     return params;
-  }, [page, filters]);
+  }, [page, itemsPerPage, filters]);
 
   // ── Queries ────────────────────────────────────────────────────────────────
-
-  const { data, isLoading, isError, refetch } =
+  const { data, isLoading, isFetching, isError, refetch } =
     useListRegistrationCreditLimitsQuery(queryParams);
 
   const { data: programsData, isLoading: programsLoading } =
@@ -97,9 +101,14 @@ export function useCreditLimitsTab() {
     });
 
   // ── Derived data ───────────────────────────────────────────────────────────
-
   const limits: RegistrationCreditLimit[] = data?.member ?? [];
   const totalLimits: number = data?.totalItems ?? 0;
+
+  useEffect(() => {
+    if (data?.totalItems !== undefined) {
+      setRawTotalItems(data.totalItems);
+    }
+  }, [data?.totalItems]);
 
   const programs: ProgramOption[] = useMemo(
     () => (programsData?.member ?? []).map((p) => ({ id: p.id, name: p.name })),
@@ -157,55 +166,48 @@ export function useCreditLimitsTab() {
   const pagination = {
     current: page,
     total: totalLimits,
-    pageSize: ITEMS_PER_PAGE,
-    onChange: (p: number) => setPage(p),
+    pageSize: itemsPerPage,
+    onChange: handlePageChange,
   };
 
   // ── Action handlers ────────────────────────────────────────────────────────
+  const handleFilterChange = useCallback(
+    (field: keyof ActiveFilters, value: number | undefined) => {
+      setFilters((prev) => ({ ...prev, [field]: value }));
+      resetPage();
+    },
+    [resetPage],
+  );
 
-  const handlePageChange = (p: number) => {
-    setPage(p);
-  };
-
-  const handleFilterChange = (
-    field: keyof ActiveFilters,
-    value: number | undefined,
-  ) => {
-    setFilters((prev) => ({ ...prev, [field]: value }));
-    setPage(1);
-  };
-
-  const handleClearFilters = () => {
+  const handleClearFilters = useCallback(() => {
     setFilters({});
-    setPage(1);
-  };
+    resetPage();
+  }, [resetPage]);
 
-  const handleOpenCreate = () => {
+  const handleOpenCreate = useCallback(() => {
     setFormTarget(null);
     setFormModalOpen(true);
-  };
+  }, []);
 
-  const handleOpenEdit = (record: RegistrationCreditLimit) => {
+  const handleOpenEdit = useCallback((record: RegistrationCreditLimit) => {
     setFormTarget(record);
     setFormModalOpen(true);
-  };
+  }, []);
 
-  const handleOpenDelete = (record: RegistrationCreditLimit) => {
+  const handleOpenDelete = useCallback((record: RegistrationCreditLimit) => {
     setDeleteTarget(record);
     setDeleteModalOpen(true);
-  };
+  }, []);
 
-  const handleCloseForm = () => {
+  const handleCloseForm = useCallback(() => {
     setFormModalOpen(false);
     setFormTarget(null);
-  };
+  }, []);
 
-  const handleCloseDelete = () => {
+  const handleCloseDelete = useCallback(() => {
     setDeleteModalOpen(false);
     setDeleteTarget(null);
-  };
-
-  // ── Return shape ───────────────────────────────────────────────────────────
+  }, []);
 
   return {
     state: {
@@ -216,6 +218,7 @@ export function useCreditLimitsTab() {
       semesterTypes,
       statuses,
       isLoading,
+      isFetching,
       isError,
       totalLimits,
       programsConfigured,
@@ -226,6 +229,7 @@ export function useCreditLimitsTab() {
       filters,
       activeFilterCount,
       pagination,
+      getPaginationConfig,
       programsLoading,
       levelsLoading,
       sessionsLoading,

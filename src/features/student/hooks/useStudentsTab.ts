@@ -1,11 +1,10 @@
 import { useGetTransitionStatusesQuery } from "@/features/settings/tabs/student-transition-status/api/studentTransitionStatusApi";
 import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
+import { useServerTableState } from "@/shared/hooks/useServerTableState";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useGetStudentsQuery } from "../api/studentsApi";
 import type { EntryMode, Student } from "../types/student";
 import { useStudentBulkUpload } from "./useStudentBulkUpload";
-
-const ITEMS_PER_PAGE = 10;
 
 export function useStudentsTab() {
   // ─── Reference Data (Transition Statuses) ──────────────────────────────────
@@ -15,11 +14,6 @@ export function useStudentsTab() {
   } = useGetTransitionStatusesQuery({ itemsPerPage: 100, sort: "name:asc" });
   const transitionStatuses = transitionStatusesData?.member ?? [];
   const defaultStatusInitialized = useRef(false);
-
-  // ─── Pagination & Sort ────────────────────────────────────────────────────
-  const [page, setPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(ITEMS_PER_PAGE);
-  const [sort, setSort] = useState("matricNumber:desc");
 
   // ─── Search ───────────────────────────────────────────────────────────────
   const [firstNameSearch, setFirstNameSearch] = useState("");
@@ -54,6 +48,23 @@ export function useStudentsTab() {
   const [formModalOpen, setFormModalOpen] = useState(false);
   const [drawerStudentId, setDrawerStudentId] = useState<number | null>(null);
 
+  // ─── Pagination & Sort (Server Table State) ──────────────────────────────
+  const [rawTotalItems, setRawTotalItems] = useState(0);
+
+  const {
+    page,
+    pageSize: itemsPerPage,
+    sort,
+    handlePageChange,
+    handleSortChange,
+    resetPage,
+    getPaginationConfig,
+  } = useServerTableState({
+    defaultPageSize: 10,
+    defaultSort: "matricNumber:desc",
+    totalItems: rawTotalItems,
+  });
+
   // ─── Query Params ─────────────────────────────────────────────────────────
   const queryParams = {
     page,
@@ -70,10 +81,16 @@ export function useStudentsTab() {
     ...(programFilter !== undefined ? { "exact[programId]": programFilter } : {}),
   };
 
-  const { data, isLoading, isError, refetch } = useGetStudentsQuery(queryParams);
+  const { data, isLoading, isFetching, isError, refetch } = useGetStudentsQuery(queryParams);
 
   const students = data?.member ?? [];
   const totalItems = data?.totalItems ?? 0;
+
+  useEffect(() => {
+    if (data?.totalItems !== undefined) {
+      setRawTotalItems(data.totalItems);
+    }
+  }, [data?.totalItems]);
 
   // ─── Flags ────────────────────────────────────────────────────────────────
   const hasData = students.length > 0;
@@ -89,44 +106,33 @@ export function useStudentsTab() {
   // ─── Actions ──────────────────────────────────────────────────────────────
   const handleFirstNameSearchChange = useCallback((value: string) => {
     setFirstNameSearch(value);
-    setPage(1);
-  }, []);
+    resetPage();
+  }, [resetPage]);
 
   const handleLastNameSearchChange = useCallback((value: string) => {
     setLastNameSearch(value);
-    setPage(1);
-  }, []);
+    resetPage();
+  }, [resetPage]);
 
   const handleMatricSearchChange = useCallback((value: string) => {
     setMatricSearch(value);
-    setPage(1);
-  }, []);
+    resetPage();
+  }, [resetPage]);
 
   const handleStatusFilterChange = useCallback((value: number | undefined) => {
     setStatusFilter(value);
-    setPage(1);
-  }, []);
+    resetPage();
+  }, [resetPage]);
 
   const handleEntryModeFilterChange = useCallback((value: EntryMode | undefined) => {
     setEntryModeFilter(value);
-    setPage(1);
-  }, []);
+    resetPage();
+  }, [resetPage]);
 
   const handleProgramFilterChange = useCallback((value: number | undefined) => {
     setProgramFilter(value);
-    setPage(1);
-  }, []);
-
-  const handleSortChange = useCallback((newSort: string) => {
-    setSort(newSort);
-  }, []);
-
-  const handlePageChange = useCallback((newPage: number, newPageSize?: number) => {
-    setPage(newPage);
-    if (newPageSize) {
-      setItemsPerPage(newPageSize);
-    }
-  }, []);
+    resetPage();
+  }, [resetPage]);
 
   const handleOpenBulkUpload = useCallback(() => {
     setBulkUploadModalOpen(true);
@@ -175,6 +181,7 @@ export function useStudentsTab() {
       students,
       totalItems,
       isLoading,
+      isFetching,
       isError,
       page,
       itemsPerPage,
@@ -202,6 +209,7 @@ export function useStudentsTab() {
       handleProgramFilterChange,
       handleSortChange,
       handlePageChange,
+      getPaginationConfig,
       handleOpenCreate,
       handleOpenEdit,
       handleOpenDelete,

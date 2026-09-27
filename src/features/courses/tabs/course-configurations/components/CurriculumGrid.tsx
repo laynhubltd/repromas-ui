@@ -4,7 +4,7 @@ import { Permission } from "@/features/access-control/permissions";
 import type { SemesterType } from "@/features/settings/tabs/academic-calendar/types/academic-calendar";
 import { useToken } from "@/shared/hooks/useToken";
 import { getOrdinalSemesterName } from "@/shared/utils/semesterOrdinal";
-import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
+import { DeleteOutlined, EditOutlined, LockOutlined } from "@ant-design/icons";
 import { Button, Flex, Tag, Tooltip, Typography } from "antd";
 import type { CourseConfiguration, CurriculumGridRow } from "../types/course-configuration";
 
@@ -134,73 +134,106 @@ export function CurriculumGrid({
                       </Typography.Text>
                     </Flex>
                     <Flex vertical gap={8}>
-                      {cellConfigs.map((config) => (
-                        <div
-                          key={config.id}
-                          style={{
-                            padding: `${token.paddingXXS}px ${token.paddingXS}px`,
-                            border: `1px solid ${token.colorBorderSecondary}`,
-                            borderRadius: token.borderRadius,
-                            background: token.colorBgLayout,
-                          }}
-                        >
-                          <Flex justify="space-between" align="flex-start" gap={4}>
-                            <Flex vertical gap={2} style={{ flex: 1, minWidth: 0 }}>
-                              <Typography.Text
-                                strong
-                                style={{ fontSize: token.fontSizeSM }}
-                                ellipsis
-                              >
-                                {config.course?.code ?? `#${config.courseId}`}
-                              </Typography.Text>
-                              <Typography.Text
-                                type="secondary"
-                                style={{ fontSize: token.fontSizeSM }}
-                                ellipsis
-                              >
-                                {config.course?.title ?? ""}
-                              </Typography.Text>
-                              <Flex gap={4} align="center" wrap="wrap">
-                                <Tag
-                                  color={COURSE_STATUS_COLOR[config.courseStatus] ?? "default"}
-                                  style={{ margin: 0, fontSize: token.fontSizeSM - 1 }}
+                      {cellConfigs.map((config) => {
+                        const displayTitle =
+                          config.effectiveTitle ||
+                          config.title ||
+                          config.course?.title ||
+                          "";
+                        const hasCustomTitle = Boolean(
+                          config.title &&
+                            config.course?.title &&
+                            config.title !== config.course.title,
+                        );
+
+                        return (
+                          <div
+                            key={config.id}
+                            style={{
+                              padding: `${token.paddingXXS}px ${token.paddingXS}px`,
+                              border: `1px solid ${token.colorBorderSecondary}`,
+                              borderRadius: token.borderRadius,
+                              background: token.colorBgLayout,
+                            }}
+                          >
+                            <Flex justify="space-between" align="flex-start" gap={4}>
+                              <Flex vertical gap={2} style={{ flex: 1, minWidth: 0 }}>
+                                <Flex align="center" gap={4}>
+                                  <Typography.Text
+                                    strong
+                                    style={{ fontSize: token.fontSizeSM }}
+                                    ellipsis
+                                  >
+                                    {config.course?.code ?? `#${config.courseId}`}
+                                  </Typography.Text>
+                                  {config.hasAnyScore && (
+                                    <Tooltip title="Score records exist — academic parameters are locked">
+                                      <LockOutlined
+                                        style={{
+                                          fontSize: 11,
+                                          color: token.colorWarningText,
+                                        }}
+                                      />
+                                    </Tooltip>
+                                  )}
+                                </Flex>
+                                <Tooltip
+                                  title={
+                                    hasCustomTitle
+                                      ? `Master title: ${config.course?.title}`
+                                      : undefined
+                                  }
                                 >
-                                  {config.courseStatus}
-                                </Tag>
-                                <Typography.Text
-                                  type="secondary"
-                                  style={{ fontSize: token.fontSizeSM }}
-                                >
-                                  {config.creditUnit} unit{config.creditUnit !== 1 ? "s" : ""}
-                                </Typography.Text>
+                                  <Typography.Text
+                                    type="secondary"
+                                    style={{ fontSize: token.fontSizeSM }}
+                                    ellipsis
+                                  >
+                                    {displayTitle}
+                                  </Typography.Text>
+                                </Tooltip>
+                                <Flex gap={4} align="center" wrap="wrap">
+                                  <Tag
+                                    color={COURSE_STATUS_COLOR[config.courseStatus] ?? "default"}
+                                    style={{ margin: 0, fontSize: token.fontSizeSM - 1 }}
+                                  >
+                                    {config.courseStatus}
+                                  </Tag>
+                                  <Typography.Text
+                                    type="secondary"
+                                    style={{ fontSize: token.fontSizeSM }}
+                                  >
+                                    {config.creditUnit} unit{config.creditUnit !== 1 ? "s" : ""}
+                                  </Typography.Text>
+                                </Flex>
+                              </Flex>
+                              <Flex gap={2} align="center" style={{ flexShrink: 0 }}>
+                                <PermissionGuard permission={Permission.CourseConfigsUpdate}>
+                                  <Tooltip title="Edit configuration">
+                                    <Button
+                                      type="text"
+                                      size="small"
+                                      icon={<EditOutlined style={{ fontSize: 13 }} />}
+                                      onClick={() => onEdit(config)}
+                                    />
+                                  </Tooltip>
+                                </PermissionGuard>
+                                <PermissionGuard permission={Permission.CourseConfigsDelete}>
+                                  <Tooltip title="Delete configuration">
+                                    <Button
+                                      type="text"
+                                      size="small"
+                                      danger
+                                      icon={<DeleteOutlined style={{ fontSize: 13 }} />}
+                                      onClick={() => onDelete(config)}
+                                    />
+                                  </Tooltip>
+                                </PermissionGuard>
                               </Flex>
                             </Flex>
-                            <Flex gap={2} align="center" style={{ flexShrink: 0 }}>
-                              <PermissionGuard permission={Permission.CourseConfigsUpdate}>
-                                <Tooltip title="Edit configuration">
-                                  <Button
-                                    type="text"
-                                    size="small"
-                                    icon={<EditOutlined style={{ fontSize: 13 }} />}
-                                    onClick={() => onEdit(config)}
-                                  />
-                                </Tooltip>
-                              </PermissionGuard>
-                              <PermissionGuard permission={Permission.CourseConfigsDelete}>
-                                <Tooltip title="Delete configuration">
-                                  <Button
-                                    type="text"
-                                    size="small"
-                                    danger
-                                    icon={<DeleteOutlined style={{ fontSize: 13 }} />}
-                                    onClick={() => onDelete(config)}
-                                  />
-                                </Tooltip>
-                              </PermissionGuard>
-                            </Flex>
-                          </Flex>
-                        </div>
-                      ))}
+                          </div>
+                        );
+                      })}
                     </Flex>
                   </td>
                 );

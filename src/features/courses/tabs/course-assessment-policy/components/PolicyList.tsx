@@ -18,6 +18,7 @@ import {
   Pagination,
   Row,
   Select,
+  Spin,
   Typography,
 } from "antd";
 import type {
@@ -32,6 +33,7 @@ import { PolicyCard } from "./PolicyCard";
 type PolicyListProps = {
   policies: CourseAssessmentPolicy[];
   isLoading: boolean;
+  isFetching?: boolean;
   isError: boolean;
   scopeFilter: ScopeFilter;
   expandedPolicyIds: Set<number>;
@@ -86,6 +88,7 @@ const SCOPE_OPTIONS: { value: ScopeFilter; label: string }[] = [
 export function PolicyList({
   policies,
   isLoading,
+  isFetching = false,
   isError,
   scopeFilter,
   expandedPolicyIds,
@@ -213,41 +216,45 @@ export function PolicyList({
 
         {/* Policy cards */}
         <ConditionalRenderer when={!isError && hasData}>
-          <Flex vertical gap={16}>
-            <Row gutter={[16, 16]}>
-              {sortedPolicies.map((policy) => (
-                <Col key={policy.id} xs={24} md={12}>
-                  <PolicyCard
-                    policy={policy}
-                    isExpanded={expandedPolicyIds.has(policy.id)}
-                    onExpandToggle={() => onExpandToggle(policy.id)}
-                    onEdit={() => onOpenEdit(policy)}
-                    onDelete={(componentCount) =>
-                      onOpenDelete(policy, componentCount)
-                    }
-                    onAddComponent={(totalWeight, usedWeight) =>
-                      onOpenAddComponent(policy.id, totalWeight, usedWeight)
-                    }
-                    onEditComponent={(component, totalWeight, usedWeight) =>
-                      onOpenEditComponent(component, totalWeight, usedWeight)
-                    }
-                    onDeleteComponent={onOpenDeleteComponent}
+          <Spin spinning={isFetching} delay={150}>
+            <div aria-busy={isFetching}>
+              <Flex vertical gap={16}>
+                <Row gutter={[16, 16]}>
+                  {sortedPolicies.map((policy) => (
+                    <Col key={policy.id} xs={24} md={12}>
+                      <PolicyCard
+                        policy={policy}
+                        isExpanded={expandedPolicyIds.has(policy.id)}
+                        onExpandToggle={() => onExpandToggle(policy.id)}
+                        onEdit={() => onOpenEdit(policy)}
+                        onDelete={(componentCount) =>
+                          onOpenDelete(policy, componentCount)
+                        }
+                        onAddComponent={(totalWeight, usedWeight) =>
+                          onOpenAddComponent(policy.id, totalWeight, usedWeight)
+                        }
+                        onEditComponent={(component, totalWeight, usedWeight) =>
+                          onOpenEditComponent(component, totalWeight, usedWeight)
+                        }
+                        onDeleteComponent={onOpenDeleteComponent}
+                      />
+                    </Col>
+                  ))}
+                </Row>
+                <Flex justify="flex-end">
+                  <Pagination
+                    current={page}
+                    pageSize={itemsPerPage}
+                    total={totalItems}
+                    showSizeChanger
+                    showTotal={(total) => `${total} policies`}
+                    onChange={onPageChange}
+                    onShowSizeChange={onPageChange}
                   />
-                </Col>
-              ))}
-            </Row>
-            <Flex justify="flex-end">
-              <Pagination
-                current={page}
-                pageSize={itemsPerPage}
-                total={totalItems}
-                showSizeChanger
-                showTotal={(total) => `${total} policies`}
-                onChange={onPageChange}
-                onShowSizeChange={onPageChange}
-              />
-            </Flex>
-          </Flex>
+                </Flex>
+              </Flex>
+            </div>
+          </Spin>
         </ConditionalRenderer>
       </DataLoader>
     </Flex>

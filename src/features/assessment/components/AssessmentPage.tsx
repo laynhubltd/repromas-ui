@@ -7,7 +7,7 @@ import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
 import { DataLoader } from "@/shared/ui/DataLoader";
 import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { SkeletonRows } from "@/shared/ui/SkeletonRows";
-import { Flex } from "antd";
+import { Flex, Spin } from "antd";
 import { useMemo } from "react";
 import { useAssessmentFilter } from "../hooks/useAssessmentFilter";
 import { useScoreSheet } from "../hooks/useScoreSheet";
@@ -49,8 +49,16 @@ export function AssessmentPage() {
 
   const { state: sheetState, actions: sheetActions } =
     useScoreSheet(selectedConfigId);
-  const { meta, columns, rows, isLoading, error404, error500, genericError } =
-    sheetState;
+  const {
+    meta,
+    columns,
+    rows,
+    isLoading,
+    isFetching,
+    error404,
+    error500,
+    genericError,
+  } = sheetState;
   const { refetch } = sheetActions;
 
   const selectedConfigOption = useMemo(() => {
@@ -146,15 +154,17 @@ export function AssessmentPage() {
 
             {/* Score sheet content */}
             {!error404 && !error500 && !genericError && meta && selectedConfigId !== null && (
-              <>
-                <ScoreSheetMeta meta={meta} studentCount={rows.length} />
-                <WorkflowStatusBar
-                  targetEntity="COURSE_SCORE_SHEET"
-                  targetId={selectedConfigId}
-                  targetTag={ApiTagTypes.StudentScoreSheetData}
-                />
-                <ScoreSheetTable columns={columns} rows={rows} />
-              </>
+              <Spin spinning={isFetching} delay={150}>
+                <div aria-busy={isFetching}>
+                  <ScoreSheetMeta meta={meta} studentCount={rows.length} />
+                  <WorkflowStatusBar
+                    targetEntity="COURSE_SCORE_SHEET"
+                    targetId={selectedConfigId}
+                    targetTag={ApiTagTypes.StudentScoreSheetData}
+                  />
+                  <ScoreSheetTable columns={columns} rows={rows} />
+                </div>
+              </Spin>
             )}
           </DataLoader>
         </ConditionalRenderer>

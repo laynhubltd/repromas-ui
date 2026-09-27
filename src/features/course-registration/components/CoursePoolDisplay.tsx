@@ -1,15 +1,18 @@
+import { PermissionGuard } from "@/features/access-control";
+import { Permission } from "@/features/access-control/permissions";
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
-import { WarningOutlined } from "@ant-design/icons";
-import { Alert, Checkbox, Flex, Tag, Typography } from "antd";
+import { DeleteOutlined, WarningOutlined } from "@ant-design/icons";
+import { Alert, Button, Checkbox, Flex, Tag, Typography } from "antd";
 import { useMemo } from "react";
 import { useCoursePoolDisplay } from "../hooks/useCoursePoolDisplay";
-import type { CoursePool } from "../types/course-registration";
+import type { CourseItem, CoursePool } from "../types/course-registration";
 
 export type CoursePoolDisplayProps = {
   coursePool: CoursePool | null;
   selectedCourseIds: number[];
   onCourseSelectionChange: (courseIds: number[]) => void;
+  onDropCourse?: (course: CourseItem) => void;
   isLateWindow: boolean;
   /** configIds of mandatory courses that are missing from the selection. */
   missingMandatoryCourseIds?: number[];
@@ -45,6 +48,7 @@ export function CoursePoolDisplay({
   coursePool,
   selectedCourseIds,
   onCourseSelectionChange,
+  onDropCourse,
   isLateWindow,
   missingMandatoryCourseIds = [],
   disabled = false,
@@ -237,7 +241,7 @@ export function CoursePoolDisplay({
                       >
                         {course.creditUnits} cr
                       </Typography.Text>
-                      {!bucket.isReadOnly && (
+                      {!bucket.isReadOnly ? (
                         <Checkbox
                           checked={isSelected}
                           disabled={isLocked || disabled}
@@ -250,6 +254,27 @@ export function CoursePoolDisplay({
                           onClick={(e) => e.stopPropagation()}
                           data-testid={`course-checkbox-${course.configId}`}
                         />
+                      ) : (
+                        Boolean(onDropCourse && course.registrationId) && (
+                          <PermissionGuard
+                            permission={Permission.StudentCourseRegistrationsDelete}
+                          >
+                            <Button
+                              danger
+                              size="small"
+                              type="text"
+                              icon={<DeleteOutlined />}
+                              disabled={disabled}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onDropCourse?.(course);
+                              }}
+                              data-testid={`drop-course-btn-${course.configId}`}
+                            >
+                              Drop
+                            </Button>
+                          </PermissionGuard>
+                        )
                       )}
                     </Flex>
                   </div>
@@ -358,6 +383,33 @@ export function CoursePoolDisplay({
                   >
                     {course.creditUnits} cr
                   </Typography.Text>
+
+                  {/* Drop button (registered bucket for admin) */}
+                  <ConditionalRenderer
+                    when={
+                      bucket.isReadOnly &&
+                      Boolean(onDropCourse && course.registrationId)
+                    }
+                  >
+                    <PermissionGuard
+                      permission={Permission.StudentCourseRegistrationsDelete}
+                    >
+                      <Button
+                        danger
+                        size="small"
+                        type="text"
+                        icon={<DeleteOutlined />}
+                        disabled={disabled}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDropCourse?.(course);
+                        }}
+                        data-testid={`drop-course-btn-${course.configId}`}
+                      >
+                        Drop
+                      </Button>
+                    </PermissionGuard>
+                  </ConditionalRenderer>
                 </div>
               );
             })}

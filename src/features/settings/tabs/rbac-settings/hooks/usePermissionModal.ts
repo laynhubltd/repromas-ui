@@ -70,10 +70,13 @@ export function usePermissionFormModal(
     ? { "search[slug]": debouncedCatalogueSearch }
     : {};
 
-  const { data: catalogueData, isLoading: isCatalogueLoading } =
-    useGetPermissionCatalogueQuery(catalogueQueryParams, {
-      skip: isEditMode || !open,
-    });
+  const {
+    data: catalogueData,
+    isLoading: isCatalogueLoading,
+    isFetching: isCatalogueFetching,
+  } = useGetPermissionCatalogueQuery(catalogueQueryParams, {
+    skip: isEditMode || !open,
+  });
   const catalogueEntries = catalogueData?.member ?? [];
 
   // Pre-fill form in edit mode
@@ -150,13 +153,16 @@ export function usePermissionFormModal(
     onClose();
   };
 
+  const isDebouncing = catalogueSearch !== debouncedCatalogueSearch;
+
   return {
     state: {
       isEditMode,
       isSubmitting,
       formError,
       catalogueEntries,
-      isCatalogueLoading,
+      isCatalogueLoading:
+        isCatalogueLoading || isCatalogueFetching || isDebouncing,
       catalogueSearch,
     },
     actions: {

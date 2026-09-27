@@ -1,7 +1,8 @@
 // Feature: settings-timeframe
 import { useInstitutionTerminology } from "@/shared/hooks/useInstitutionTerminology";
-import { Select, Spin } from "antd";
+import { Select } from "antd";
 import { useEffect, useState } from "react";
+import { SelectNotFoundContent } from "@/shared/ui/SelectNotFoundContent";
 import { useReferencePickerOptions } from "../hooks/useReferencePickerOptions";
 import type { Scope } from "../types/system-timeframe";
 
@@ -66,13 +67,14 @@ export function ReferencePickerField({ scope, value = null, onChange }: Referenc
       options={selectOptions}
       loading={isLoading}
       notFoundContent={
-        isLoading ? (
-          <Spin size="small" />
-        ) : isStudent && !search ? (
-          <span style={{ fontSize: 12, color: "#999" }}>Type a matric number to search</span>
-        ) : (
-          <span style={{ fontSize: 12, color: "#999" }}>No results found</span>
-        )
+        <SelectNotFoundContent
+          loading={isLoading}
+          emptyText={
+            isStudent && !search
+              ? "Type a matric number to search"
+              : "No results found"
+          }
+        />
       }
     />
   );

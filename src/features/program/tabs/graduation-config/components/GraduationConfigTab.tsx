@@ -125,9 +125,8 @@ export function GraduationConfigTab() {
     requirements,
     totalItems,
     isLoading,
+    isFetching,
     isError,
-    page,
-    itemsPerPage,
     programFilter,
     curriculumVersionFilter,
     formTarget,
@@ -138,7 +137,7 @@ export function GraduationConfigTab() {
     handleProgramFilterChange,
     handleCurriculumVersionFilterChange,
     handleSortChange,
-    handlePageChange,
+    getPaginationConfig,
     handleOpenCreate,
     handleOpenEdit,
     handleOpenDelete,
@@ -306,15 +305,10 @@ export function GraduationConfigTab() {
             size="md"
             density="comfortable"
             scroll={{ x: true }}
+            loading={{ spinning: isFetching, delay: 150 }}
+            aria-busy={isFetching}
             onChange={handleTableChange}
-            pagination={{
-              current: page,
-              pageSize: itemsPerPage,
-              total: totalItems,
-              showSizeChanger: true,
-              onChange: handlePageChange,
-              onShowSizeChange: handlePageChange,
-            }}
+            pagination={getPaginationConfig()}
           />
         </ConditionalRenderer>
       </DataLoader>

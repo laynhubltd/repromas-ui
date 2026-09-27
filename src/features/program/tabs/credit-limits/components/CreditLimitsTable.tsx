@@ -16,6 +16,8 @@ import type {
 } from "../types/credit-limits";
 import { countActiveDimensions, resolveId } from "../utils/helpers";
 
+import type { TablePaginationConfig } from "antd";
+
 export type CreditLimitsTableProps = {
   limits: RegistrationCreditLimit[];
   programs: ProgramOption[];
@@ -23,12 +25,8 @@ export type CreditLimitsTableProps = {
   sessions: SessionOption[];
   semesterTypes: SemesterTypeOption[];
   statuses: StatusOption[];
-  pagination: {
-    current: number;
-    total: number;
-    pageSize: number;
-    onChange: (page: number) => void;
-  };
+  pagination: TablePaginationConfig | false;
+  isFetching?: boolean;
   onEdit: (record: RegistrationCreditLimit) => void;
   onDelete: (record: RegistrationCreditLimit) => void;
 };
@@ -48,6 +46,7 @@ export function CreditLimitsTable({
   semesterTypes,
   statuses,
   pagination,
+  isFetching,
   onEdit,
   onDelete,
 }: CreditLimitsTableProps) {
@@ -159,6 +158,8 @@ export function CreditLimitsTable({
       rowKey="id"
       dataSource={limits}
       columns={columns}
+      loading={{ spinning: isFetching, delay: 150 }}
+      aria-busy={isFetching}
       pagination={pagination}
     />
   );

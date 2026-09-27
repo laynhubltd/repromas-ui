@@ -6,10 +6,11 @@ import type {
 } from "../types/score-sheet";
 
 export function useScoreSheet(selectedConfigId: number | null) {
-  const { data, isLoading, error, refetch } = useGetScoreSheetDataQuery(
-    { courseConfigId: selectedConfigId! },
-    { skip: selectedConfigId === null },
-  );
+  const { data, isLoading, isFetching, error, refetch } =
+    useGetScoreSheetDataQuery(
+      { courseConfigId: selectedConfigId! },
+      { skip: selectedConfigId === null },
+    );
 
   // ─── Extract data from member[0] ──────────────────────────────────────────
   const sheetData = data?.member[0];
@@ -44,6 +45,7 @@ export function useScoreSheet(selectedConfigId: number | null) {
       columns,
       rows,
       isLoading,
+      isFetching,
       error404,
       error500,
       genericError,

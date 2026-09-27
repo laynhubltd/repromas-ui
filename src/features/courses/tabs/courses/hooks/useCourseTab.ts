@@ -1,13 +1,13 @@
 import { useAccessControl } from "@/features/access-control";
 import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
+import { useServerTableState } from "@/shared/hooks/useServerTableState";
 import { RequestScreen } from "@/shared/types/error-ui";
 import { deriveSectionErrorMessage } from "@/shared/utils/error/deriveSectionErrorMessage";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useGetCoursesQuery } from "../api/coursesApi";
 import type { Course } from "../types/course";
 import { useCourseBulkUpload } from "./useCourseBulkUpload";
 
-const ITEMS_PER_PAGE = 10;
 export const GROUP_BY_ITEMS_PER_PAGE = 100;
 
 // ─── Pure helper functions (exported for property-based testing) ──────────────
@@ -43,7 +43,7 @@ export function buildGroupedCourses(courses: Course[]): Map<number, Course[]> {
 export function buildQueryParams(params: {
   page: number;
   itemsPerPage: number;
-  sort: string;
+  sort?: string;
   groupByDepartment: boolean;
   showDepartmentColumn: boolean;
   showDepartmentFilter: boolean;
@@ -55,7 +55,7 @@ export function buildQueryParams(params: {
   const {
     page,
     itemsPerPage,
-    sort,
+    sort = "code:asc",
     groupByDepartment,
     showDepartmentColumn,
     showDepartmentFilter,
@@ -86,11 +86,6 @@ export function useCourseTab() {
   const { showDepartmentColumn, showDepartmentFilter, showGroupByToggle } =
     computeScopeFlags(activeRole);
 
-  // ─── Pagination & Sort ────────────────────────────────────────────────────
-  const [page, setPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(ITEMS_PER_PAGE);
-  const [sort, setSort] = useState("code:asc");
-
   // ─── Search ───────────────────────────────────────────────────────────────
   const [codeSearch, setCodeSearch] = useState("");
   const debouncedCode = useDebouncedValue(codeSearch, 500);
@@ -112,6 +107,23 @@ export function useCourseTab() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [bulkUploadModalOpen, setBulkUploadModalOpen] = useState(false);
 
+  // ─── Pagination & Sort (Server Table State) ──────────────────────────────
+  const [rawTotalItems, setRawTotalItems] = useState(0);
+
+  const {
+    page,
+    pageSize: itemsPerPage,
+    sort,
+    handlePageChange,
+    handleSortChange,
+    resetPage,
+    getPaginationConfig,
+  } = useServerTableState({
+    defaultPageSize: 10,
+    defaultSort: "code:asc",
+    totalItems: rawTotalItems,
+  });
+
   // ─── Query Params ─────────────────────────────────────────────────────────
   const queryParams = buildQueryParams({
     page,
@@ -126,7 +138,7 @@ export function useCourseTab() {
     debouncedTitle,
   });
 
-  const { data, isLoading, isError, error: queryError, refetch } = useGetCoursesQuery(queryParams);
+  const { data, isLoading, isFetching, isError, error: queryError, refetch } = useGetCoursesQuery(queryParams);
 
   const sectionError = useMemo(
     () =>
@@ -139,6 +151,12 @@ export function useCourseTab() {
 
   const courses = data?.member ?? [];
   const totalItems = data?.totalItems ?? 0;
+
+  useEffect(() => {
+    if (data?.totalItems !== undefined) {
+      setRawTotalItems(data.totalItems);
+    }
+  }, [data?.totalItems]);
 
   // ─── Group by Department (client-side) ────────────────────────────────────
   const groupedCourses = useMemo<Map<number, Course[]>>(() => {
@@ -161,34 +179,23 @@ export function useCourseTab() {
   // ─── Actions ──────────────────────────────────────────────────────────────
   const handleCodeSearchChange = useCallback((value: string) => {
     setCodeSearch(value);
-    setPage(1);
-  }, []);
+    resetPage();
+  }, [resetPage]);
 
   const handleTitleSearchChange = useCallback((value: string) => {
     setTitleSearch(value);
-    setPage(1);
-  }, []);
+    resetPage();
+  }, [resetPage]);
 
   const handleDepartmentFilterChange = useCallback((value: number | undefined) => {
     setDepartmentId(value);
-    setPage(1);
-  }, []);
+    resetPage();
+  }, [resetPage]);
 
   const handleShowInactiveChange = useCallback((checked: boolean) => {
     setShowInactive(checked);
-    setPage(1);
-  }, []);
-
-  const handleSortChange = useCallback((newSort: string) => {
-    setSort(newSort);
-  }, []);
-
-  const handlePageChange = useCallback((newPage: number, newPageSize?: number) => {
-    setPage(newPage);
-    if (newPageSize) {
-      setItemsPerPage(newPageSize);
-    }
-  }, []);
+    resetPage();
+  }, [resetPage]);
 
   const handleOpenCreate = useCallback(() => {
     setFormTarget(null);
@@ -219,16 +226,16 @@ export function useCourseTab() {
     setCodeSearch("");
     setTitleSearch("");
     setDepartmentId(undefined);
-    setPage(1);
-  }, []);
+    resetPage();
+  }, [resetPage]);
 
   const handleToggleGroupByDepartment = useCallback(() => {
     setGroupByDepartment((prev) => {
       const next = !prev;
-      if (next) setPage(1);
+      resetPage();
       return next;
     });
-  }, []);
+  }, [resetPage]);
 
   const handleOpenBulkUpload = useCallback(() => {
     setBulkUploadModalOpen(true);
@@ -246,6 +253,7 @@ export function useCourseTab() {
       courses,
       totalItems,
       isLoading,
+      isFetching,
       isError,
       sectionError,
       page,
@@ -270,6 +278,7 @@ export function useCourseTab() {
       handleShowInactiveChange,
       handleSortChange,
       handlePageChange,
+      getPaginationConfig,
       handleOpenCreate,
       handleOpenEdit,
       handleOpenDelete,

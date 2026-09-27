@@ -40,6 +40,7 @@ export function CreditLimitsTab() {
     semesterTypes,
     statuses,
     isLoading,
+    isFetching,
     isError,
     totalLimits,
     programsConfigured,
@@ -285,6 +286,7 @@ export function CreditLimitsTab() {
             semesterTypes={semesterTypes}
             statuses={statuses}
             pagination={pagination}
+            isFetching={isFetching}
             onEdit={handleOpenEdit}
             onDelete={handleOpenDelete}
           />

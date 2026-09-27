@@ -1,7 +1,7 @@
 import { useGetSemesterTypesQuery } from "@/features/settings/tabs/academic-calendar/api/academicCalendarApi";
 import { useGetLevelsQuery } from "@/features/settings/tabs/level-config/api/levelApi";
 import { useApiError } from "@/shared/hooks/useApiError";
-import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
+import { useDebouncedState } from "@/shared/hooks/useDebouncedValue";
 import { RequestScreen } from "@/shared/types/error-ui";
 import {
   mutationSuccessMessage,
@@ -26,6 +26,7 @@ type CourseConfigFormValues = {
   semesterTypeId: number;
   courseStatus: CourseStatus;
   creditUnit: number;
+  title?: string | null;
   prerequisiteIds?: number[];
 };
 
@@ -45,6 +46,7 @@ export function useCourseConfigFormModal(
   prefillSemesterTypeId?: number,
 ) {
   const isEditMode = target !== null;
+  const isScoreLocked = isEditMode && Boolean(target?.hasAnyScore);
   const [form] = Form.useForm<CourseConfigFormValues>();
   const [createCourseConfiguration, { isLoading: isCreating }] =
     useCreateCourseConfigurationMutation();
@@ -56,7 +58,10 @@ export function useCourseConfigFormModal(
 
   // ─── Course Search State ──────────────────────────────────────────────────
   const [courseSearch, setCourseSearch] = useState("");
-  const debouncedCourseSearch = useDebouncedValue(courseSearch, 500);
+  const {
+    debouncedValue: debouncedCourseSearch,
+    isDebouncing: isCourseDebouncing,
+  } = useDebouncedState(courseSearch, 500);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
 
   const handleCourseSearch = useCallback((value: string) => {
@@ -144,6 +149,7 @@ export function useCourseConfigFormModal(
         semesterTypeId: target.semesterTypeId,
         courseStatus: target.courseStatus,
         creditUnit: target.creditUnit,
+        title: target.title ?? null,
         prerequisiteIds: target.prerequisiteIds ?? [],
       });
     } else if (open && !target) {
@@ -183,6 +189,7 @@ export function useCourseConfigFormModal(
   const handleSubmit = async (programId: number, versionId: number) => {
     try {
       const values = await form.validateFields();
+      const normalizedTitle = values.title?.trim() ? values.title.trim() : null;
 
       if (isEditMode) {
         await updateCourseConfiguration({
@@ -191,6 +198,7 @@ export function useCourseConfigFormModal(
           semesterTypeId: values.semesterTypeId,
           courseStatus: values.courseStatus,
           creditUnit: values.creditUnit,
+          title: normalizedTitle,
           prerequisiteIds: values.prerequisiteIds ?? [],
         }).unwrap();
       } else {
@@ -202,6 +210,7 @@ export function useCourseConfigFormModal(
           semesterTypeId: values.semesterTypeId,
           courseStatus: values.courseStatus,
           creditUnit: values.creditUnit,
+          title: normalizedTitle,
           prerequisiteIds: values.prerequisiteIds ?? [],
         }).unwrap();
       }
@@ -237,8 +246,11 @@ export function useCourseConfigFormModal(
     state: {
       isLoading,
       isEditMode,
+      isScoreLocked,
       courseSearch,
-      isCoursesLoading: isCoursesLoading || isCoursesFetching,
+      selectedCourse,
+      isCoursesLoading:
+        isCoursesLoading || isCoursesFetching || isCourseDebouncing,
     },
     actions: {
       handleSubmit,

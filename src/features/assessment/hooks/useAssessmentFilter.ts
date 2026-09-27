@@ -62,6 +62,7 @@ export function useAssessmentFilter() {
   const {
     data: programsData,
     isLoading: programLoading,
+    isFetching: programFetching,
     error: programRawError,
   } = useGetProgramsQuery({
     sort: "name:asc",
@@ -139,6 +140,9 @@ export function useAssessmentFilter() {
     dispatch({ type: AssessmentActionType.Reset });
   }, []);
 
+  const isProgramDebouncing = programSearch !== debouncedProgramSearch;
+  const isCourseDebouncing = courseSearch !== debouncedCourseSearch;
+
   return {
     state: {
       selectedProgramId,
@@ -148,8 +152,9 @@ export function useAssessmentFilter() {
       courseSearch,
       programOptions,
       courseConfigGroupedOptions,
-      programLoading,
-      courseConfigLoading: courseConfigLoading || courseConfigFetching,
+      programLoading: programLoading || programFetching || isProgramDebouncing,
+      courseConfigLoading:
+        courseConfigLoading || courseConfigFetching || isCourseDebouncing,
       programError,
       courseConfigError,
       isCourseConfigDisabled,

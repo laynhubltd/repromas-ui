@@ -7,4 +7,7 @@ export { useCoursePoolDisplay } from "./hooks/useCoursePoolDisplay";
 export type { StudentHeaderInfo } from "./hooks/useCourseRegistrationPage";
 export { useCreditLimitsDisplay } from "./hooks/useCreditLimitsDisplay";
 export { useSemesterTypeSelector } from "./hooks/useSemesterTypeSelector";
-
+export {
+  studentCourseRegistrationsApi,
+  useDeleteStudentCourseRegistrationMutation,
+} from "./api/studentCourseRegistrationsApi";

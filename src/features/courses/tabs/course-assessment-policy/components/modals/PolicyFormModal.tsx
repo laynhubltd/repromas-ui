@@ -1,5 +1,6 @@
 import { CurriculumSelect } from "@/components/ui-kit/data-entry/CurriculumSelect";
 import { useToken } from "@/shared/hooks/useToken";
+import { SelectNotFoundContent } from "@/shared/ui/SelectNotFoundContent";
 import {
   Button,
   Checkbox,
@@ -239,6 +240,12 @@ export function PolicyFormModal({
                       : `Config #${config.id}`,
                   }))}
                   allowClear
+                  notFoundContent={
+                    <SelectNotFoundContent
+                      loading={isCourseConfigsLoading}
+                      emptyText="No course configurations match search"
+                    />
+                  }
                 />
               </Form.Item>
             </>

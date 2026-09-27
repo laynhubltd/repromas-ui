@@ -9,7 +9,8 @@ import type {
   CurriculumScope,
   CurriculumVersion,
 } from "@/features/settings/tabs/curriculum-version/types/curriculum-version";
-import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
+import { useDebouncedState } from "@/shared/hooks/useDebouncedValue";
+import { SelectNotFoundContent } from "@/shared/ui/SelectNotFoundContent";
 
 export interface CurriculumSelectProps
   extends Omit<SelectProps<number>, "options" | "loading" | "onChange" | "value"> {
@@ -52,20 +53,20 @@ export const CurriculumSelect = React.forwardRef<any, CurriculumSelectProps>(
     ref,
   ) => {
     const [search, setSearch] = useState("");
-    const debouncedSearch = useDebouncedValue(search, 500);
+    const { debouncedValue: debouncedSearch, isDebouncing } = useDebouncedState(search, 500);
 
     const queryParams = useMemo(() => {
       return programId
         ? {
-            forProgramId: programId,
-            include: "program",
-            itemsPerPage: 100,
-            ...(debouncedSearch ? { "search[name]": debouncedSearch } : {}),
-          }
+          forProgramId: programId,
+          include: "program",
+          itemsPerPage: 100,
+          ...(debouncedSearch ? { "search[name]": debouncedSearch } : {}),
+        }
         : {
-            itemsPerPage: 100,
-            ...(debouncedSearch ? { "search[name]": debouncedSearch } : {}),
-          };
+          itemsPerPage: 100,
+          ...(debouncedSearch ? { "search[name]": debouncedSearch } : {}),
+        };
     }, [programId, debouncedSearch]);
 
     const { data, isLoading, isFetching } = useGetCurriculumVersionsQuery(
@@ -105,11 +106,11 @@ export const CurriculumSelect = React.forwardRef<any, CurriculumSelectProps>(
 
       const programActive = programId
         ? versions.find(
-            (v) =>
-              v.scope === "PROGRAM" &&
-              v.referenceId === programId &&
-              v.isActiveForAdmission,
-          )
+          (v) =>
+            v.scope === "PROGRAM" &&
+            v.referenceId === programId &&
+            v.isActiveForAdmission,
+        )
         : null;
 
       const globalActive = versions.find(
@@ -170,6 +171,8 @@ export const CurriculumSelect = React.forwardRef<any, CurriculumSelectProps>(
       });
     }, [versions, showActiveBadge, showScopeBadge]);
 
+    const isSearching = isLoading || isFetching || isDebouncing;
+
     return (
       <Select
         ref={ref}
@@ -177,7 +180,7 @@ export const CurriculumSelect = React.forwardRef<any, CurriculumSelectProps>(
         value={value ?? undefined}
         onChange={(val, opt) => onChange?.(val ?? null, opt)}
         options={options}
-        loading={isLoading || isFetching}
+        loading={isSearching}
         disabled={disabled || isLoading}
         allowClear
         showSearch
@@ -185,6 +188,12 @@ export const CurriculumSelect = React.forwardRef<any, CurriculumSelectProps>(
         onSearch={(val) => setSearch(val)}
         filterOption={false}
         defaultActiveFirstOption={false}
+        notFoundContent={
+          <SelectNotFoundContent
+            loading={isSearching}
+            emptyText="No curriculum versions found"
+          />
+        }
         onOpenChange={(open) => {
           if (!open) {
             setSearch("");

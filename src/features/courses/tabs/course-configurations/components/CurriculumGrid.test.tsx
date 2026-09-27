@@ -53,6 +53,9 @@ describe("CurriculumGrid", () => {
     semesterTypeId: 1,
     courseStatus: "CORE",
     creditUnit: 3,
+    title: null,
+    effectiveTitle: "Calculus II",
+    hasAnyScore: false,
     prerequisiteIds: [],
     semester: {
       semesterTypeId: 1,
@@ -143,6 +146,58 @@ describe("CurriculumGrid", () => {
     expect(screen.getByText("ND II")).toBeInTheDocument();
     expect(screen.getByText("MTH211")).toBeInTheDocument();
     expect(screen.getAllByText("Third Semester").length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("renders effectiveTitle when title override is present", () => {
+    const overriddenConfig: CourseConfiguration = {
+      ...mockConfig,
+      title: "Calculus for Engineers",
+      effectiveTitle: "Calculus for Engineers",
+    };
+
+    const gridRows: CurriculumGridRow[] = [
+      {
+        level: mockLevel2,
+        cells: new Map([[1, [overriddenConfig]]]),
+      },
+    ];
+
+    render(
+      <CurriculumGrid
+        gridRows={gridRows}
+        semesterTypes={mockSemesterTypes}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Calculus for Engineers")).toBeInTheDocument();
+  });
+
+  it("renders lock icon when hasAnyScore is true", () => {
+    const lockedConfig: CourseConfiguration = {
+      ...mockConfig,
+      hasAnyScore: true,
+    };
+
+    const gridRows: CurriculumGridRow[] = [
+      {
+        level: mockLevel2,
+        cells: new Map([[1, [lockedConfig]]]),
+      },
+    ];
+
+    const { container } = render(
+      <CurriculumGrid
+        gridRows={gridRows}
+        semesterTypes={mockSemesterTypes}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+      />,
+    );
+
+    // LockOutlined icon is rendered
+    expect(container.querySelector(".anticon-lock")).toBeInTheDocument();
   });
 });
 

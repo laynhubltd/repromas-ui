@@ -3,7 +3,7 @@ import type { CourseConfiguration } from "@/features/courses/tabs/course-configu
 import { useGetProgramsQuery } from "@/features/program/tabs/programs/api/programsApi";
 import { useGetCurriculumVersionsQuery } from "@/features/settings/tabs/curriculum-version/api/curriculumVersionApi";
 import { useApiError } from "@/shared/hooks/useApiError";
-import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
+import { useDebouncedState } from "@/shared/hooks/useDebouncedValue";
 import { RequestScreen } from "@/shared/types/error-ui";
 import {
   mutationSuccessMessage,
@@ -66,43 +66,62 @@ export function usePolicyFormModal(
     number | undefined
   >(undefined);
   const [configSearch, setConfigSearch] = useState<string>("");
-  const debouncedConfigSearch = useDebouncedValue(configSearch, 500);
+  const {
+    debouncedValue: debouncedConfigSearch,
+    isDebouncing: isConfigDebouncing,
+  } = useDebouncedState(configSearch, 500);
 
   const isSubmitting = isCreating || isUpdating;
   const bothSelected =
     selectedProgramId !== undefined && selectedVersionId !== undefined;
 
   // Programs list
-  const { data: programsData, isLoading: isProgramsLoading } =
-    useGetProgramsQuery(
-      { sort: "name:asc", itemsPerPage: 100 },
-      { skip: !open },
-    );
+  const {
+    data: programsData,
+    isLoading: isProgramsLoading,
+    isFetching: isProgramsFetching,
+  } = useGetProgramsQuery(
+    { sort: "name:asc", itemsPerPage: 100 },
+    { skip: !open },
+  );
   const programs = programsData?.member ?? [];
 
   // Curriculum versions list (scoped to program if selected)
-  const { data: versionsData, isLoading: isVersionsLoading } =
-    useGetCurriculumVersionsQuery(
-      selectedProgramId
-        ? { forProgramId: selectedProgramId, include: "program", sort: "name:asc", itemsPerPage: 100 }
-        : { sort: "name:asc", itemsPerPage: 100 },
-      { skip: !open },
-    );
+  const {
+    data: versionsData,
+    isLoading: isVersionsLoading,
+    isFetching: isVersionsFetching,
+  } = useGetCurriculumVersionsQuery(
+    selectedProgramId
+      ? {
+          forProgramId: selectedProgramId,
+          include: "program",
+          sort: "name:asc",
+          itemsPerPage: 100,
+        }
+      : { sort: "name:asc", itemsPerPage: 100 },
+    { skip: !open },
+  );
   const versions = versionsData?.member ?? [];
 
   // Course configurations — only load when both program + version are selected and scope is COURSE
-  const { data: courseConfigsData, isLoading: isCourseConfigsLoading } =
-    useGetCourseConfigurationsQuery(
-      {
-        "exact[program]": selectedProgramId!,
-        "exact[version]": selectedVersionId!,
-        ...(debouncedConfigSearch ? { "search[course.code]": debouncedConfigSearch } : {}),
-        include: "course",
-        sort: "id:asc",
-        itemsPerPage: 50,
-      },
-      { skip: !open || !bothSelected || scopeValue !== "COURSE" },
-    );
+  const {
+    data: courseConfigsData,
+    isLoading: isCourseConfigsLoading,
+    isFetching: isCourseConfigsFetching,
+  } = useGetCourseConfigurationsQuery(
+    {
+      "exact[program]": selectedProgramId!,
+      "exact[version]": selectedVersionId!,
+      ...(debouncedConfigSearch
+        ? { "search[course.code]": debouncedConfigSearch }
+        : {}),
+      include: "course",
+      sort: "id:asc",
+      itemsPerPage: 50,
+    },
+    { skip: !open || !bothSelected || scopeValue !== "COURSE" },
+  );
   const courseConfigs: CourseConfiguration[] = courseConfigsData?.member ?? [];
 
   // ─── Program / version handlers ──────────────────────────────────────────
@@ -284,11 +303,12 @@ export function usePolicyFormModal(
     },
     form,
     programs,
-    isProgramsLoading,
+    isProgramsLoading: isProgramsLoading || isProgramsFetching,
     versions,
-    isVersionsLoading,
+    isVersionsLoading: isVersionsLoading || isVersionsFetching,
     courseConfigs,
-    isCourseConfigsLoading,
+    isCourseConfigsLoading:
+      isCourseConfigsLoading || isCourseConfigsFetching || isConfigDebouncing,
   };
 }
 

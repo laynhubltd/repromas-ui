@@ -1,7 +1,8 @@
 // Feature: course-management
 import { useToken } from "@/shared/hooks/useToken";
-import { Button, Form, InputNumber, Modal, Select, Spin } from "antd";
+import { Alert, Button, Form, Input, InputNumber, Modal, Select } from "antd";
 import { LevelSelect } from "@/components/ui-kit/data-entry/LevelSelect";
+import { SelectNotFoundContent } from "@/shared/ui/SelectNotFoundContent";
 import { useCourseConfigFormModal } from "../../hooks/useCourseConfigModal";
 import type { CourseConfiguration } from "../../types/course-configuration";
 import { courseStatusRules, creditUnitRules } from "../../utils/validators";
@@ -52,7 +53,14 @@ export function CourseConfigFormModal({
     prefillLevelId,
     prefillSemesterTypeId,
   );
-  const { isLoading, isEditMode, courseSearch, isCoursesLoading } = state;
+  const {
+    isLoading,
+    isEditMode,
+    isScoreLocked,
+    courseSearch,
+    selectedCourse,
+    isCoursesLoading,
+  } = state;
   const { handleSubmit, handleCancel, handleCourseChange, handleCourseSearch } = actions;
 
   const watchedLevelId = Form.useWatch("levelId", form);
@@ -86,6 +94,15 @@ export function CourseConfigFormModal({
       }}
     >
       <div style={{ padding: 24 }}>
+        {isScoreLocked && (
+          <Alert
+            type="warning"
+            showIcon
+            title="Score Records Exist"
+            description="This course configuration has recorded student scores or published score sheets. Academic parameters (Level, Semester, Status, Credit Units, Prerequisites) are locked. Only the title override can be updated."
+            style={{ marginBottom: 16 }}
+          />
+        )}
         <Form
           form={form}
           layout="vertical"
@@ -114,16 +131,31 @@ export function CourseConfigFormModal({
               searchValue={courseSearch}
               onSearch={handleCourseSearch}
               loading={isCoursesLoading}
-              style={{ height: 40 }}
               options={courseOptions}
               onChange={!isEditMode ? handleCourseChange : undefined}
               notFoundContent={
-                isCoursesLoading ? (
-                  <div style={{ textAlign: "center", padding: 8 }}>
-                    <Spin size="small" />
-                  </div>
-                ) : undefined
+                <SelectNotFoundContent
+                  loading={isCoursesLoading}
+                  emptyText="No courses match search"
+                />
               }
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="title"
+            label="Course Title Override (Optional)"
+            extra="Leave empty to use the master course title. Set a custom title if this program adapts/borrows this course."
+          >
+            <Input
+              placeholder={
+                selectedCourse?.title
+                  ? `Defaults to: ${selectedCourse.title}`
+                  : "Enter custom course title"
+              }
+              allowClear
+              maxLength={255}
+              showCount
             />
           </Form.Item>
 
@@ -138,7 +170,7 @@ export function CourseConfigFormModal({
           >
             <LevelSelect
               placeholder="Select level"
-              style={{ height: 40 }}
+              disabled={isScoreLocked}
             />
           </Form.Item>
 
@@ -154,9 +186,9 @@ export function CourseConfigFormModal({
             <Select
               placeholder="Select semester type"
               loading={isSemesterTypesLoading}
+              disabled={isScoreLocked}
               showSearch
               optionFilterProp="label"
-              style={{ height: 40 }}
               options={semesterTypeOptions}
             />
           </Form.Item>
@@ -172,7 +204,7 @@ export function CourseConfigFormModal({
           >
             <Select
               placeholder="Select course status"
-              style={{ height: 40 }}
+              disabled={isScoreLocked}
               options={COURSE_STATUS_OPTIONS}
             />
           </Form.Item>
@@ -186,7 +218,12 @@ export function CourseConfigFormModal({
             }
             rules={creditUnitRules}
           >
-            <InputNumber min={1} precision={0} style={{ width: "100%", height: 40 }} />
+            <InputNumber
+              min={1}
+              precision={0}
+              disabled={isScoreLocked}
+              style={{ width: "100%" }}
+            />
           </Form.Item>
 
           <Form.Item
@@ -197,9 +234,9 @@ export function CourseConfigFormModal({
             <Select
               mode="multiple"
               placeholder="Select prerequisites (optional)"
+              disabled={isScoreLocked}
               showSearch
               optionFilterProp="label"
-              style={{ minHeight: 40 }}
               options={prerequisiteOptions}
             />
           </Form.Item>
