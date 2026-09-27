@@ -25,6 +25,9 @@ export type CourseConfiguration = {
   semesterTypeId: number;
   courseStatus: CourseStatus;
   creditUnit: number;
+  title: string | null;
+  effectiveTitle: string;
+  hasAnyScore: boolean;
   prerequisiteIds: number[];
   semester?: FormattedSemester | null;
   createdAt: string;
@@ -60,6 +63,7 @@ export type CreateCourseConfigRequest = {
   semesterTypeId: number;
   courseStatus: CourseStatus;
   creditUnit: number;
+  title?: string | null;
   prerequisiteIds?: number[];
 };
 
@@ -69,6 +73,7 @@ export type UpdateCourseConfigRequest = {
   semesterTypeId: number;
   courseStatus: CourseStatus;
   creditUnit: number;
+  title?: string | null;
   prerequisiteIds?: number[];
 };
 

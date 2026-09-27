@@ -2,7 +2,10 @@ import { appPaths } from "@/app/routing/app-path";
 import { useBillingWorkflowDecision } from "@/features/billing/hooks/useBillingWorkflowDecision";
 import type { WorkflowPayNowPayload } from "@/features/billing/types/workflow-step-decision";
 import { RequestScreen } from "@/shared/types/error-ui";
-import { notification } from "antd";
+import {
+  mutationSuccessMessage,
+  notifyMutationSuccess,
+} from "@/shared/utils/feedback/notifyMutationSuccess";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -10,6 +13,7 @@ import {
   useSubmitCourseRegistrationMutation,
 } from "../api/courseRegistrationFactoryApi";
 import type {
+  CourseItem,
   CoursePool,
   RegistrationErrorState,
   ValidationErrors,
@@ -106,6 +110,8 @@ export function useRegistrationInterface(
   const [serverMissingConfigIds, setServerMissingConfigIds] = useState<
     number[]
   >([]);
+  const [dropTarget, setDropTarget] = useState<CourseItem | null>(null);
+  const [dropModalOpen, setDropModalOpen] = useState(false);
 
   /**
    * Tracks which (studentId, semesterTypeId) pair the current state belongs to.
@@ -476,9 +482,14 @@ export function useRegistrationInterface(
         setRegistrationIds(result.registrationIds);
         setSubmitSuccess(true);
         setLastSubmitAttempt(null);
-        notification.success({
-          message: "Course registration submitted successfully.",
-        });
+        setSelectedCourseIds([]);
+        setSubmitAttempted(false);
+        if (shouldFetch) {
+          refetch();
+        }
+        notifyMutationSuccess(
+          mutationSuccessMessage("Course registration", "created"),
+        );
       } catch (err: unknown) {
         handleSubmitError(err, doSubmit);
       }
@@ -495,6 +506,8 @@ export function useRegistrationInterface(
     selectedCourseIds,
     submitCourseRegistration,
     handleSubmitError,
+    shouldFetch,
+    refetch,
   ]);
 
   /**
@@ -548,9 +561,14 @@ export function useRegistrationInterface(
         setRegistrationIds(result.registrationIds);
         setSubmitSuccess(true);
         setLastSubmitAttempt(null);
-        notification.success({
-          message: "Course registration submitted successfully.",
-        });
+        setSelectedCourseIds([]);
+        setSubmitAttempted(false);
+        if (shouldFetch) {
+          refetch();
+        }
+        notifyMutationSuccess(
+          mutationSuccessMessage("Course registration", "created"),
+        );
       } catch (err: unknown) {
         handleSubmitError(err, doRetry);
       }
@@ -563,7 +581,19 @@ export function useRegistrationInterface(
     semesterTypeId,
     submitCourseRegistration,
     handleSubmitError,
+    shouldFetch,
+    refetch,
   ]);
+
+  const handleOpenDrop = useCallback((course: CourseItem) => {
+    setDropTarget(course);
+    setDropModalOpen(true);
+  }, []);
+
+  const handleCloseDrop = useCallback(() => {
+    setDropModalOpen(false);
+    setDropTarget(null);
+  }, []);
 
   // ─── Return Shape ─────────────────────────────────────────────────────────
 
@@ -578,6 +608,8 @@ export function useRegistrationInterface(
       mandatoryCourses,
       isLoading,
       isSubmitting,
+      dropTarget,
+      dropModalOpen,
       /** User-facing error message. null when no error. */
       error: effectiveErrorState.message,
       /**
@@ -597,6 +629,8 @@ export function useRegistrationInterface(
     actions: {
       handleCourseSelectionChange,
       handleSubmitRegistration,
+      handleOpenDrop,
+      handleCloseDrop,
       handleRetry,
       handleRetrySubmit,
       handleBillingPayNow,

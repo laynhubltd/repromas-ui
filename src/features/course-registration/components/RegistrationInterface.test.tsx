@@ -10,6 +10,17 @@ vi.mock("../api/courseRegistrationFactoryApi", () => ({
   useSubmitCourseRegistrationMutation: vi.fn(() => [vi.fn(), { isLoading: false }]),
 }));
 
+vi.mock("../api/studentCourseRegistrationsApi", () => ({
+  useDeleteStudentCourseRegistrationMutation: () => [
+    vi.fn(() => ({ unwrap: vi.fn() })),
+    { isLoading: false },
+  ],
+}));
+
+vi.mock("@/shared/hooks/useApiError", () => ({
+  useApiError: () => vi.fn(),
+}));
+
 vi.mock("@/features/settings/tabs/level-config/api/levelSemestersApi", () => ({
   useGetLevelSemestersQuery: vi.fn(),
 }));

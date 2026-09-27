@@ -16,6 +16,7 @@ import { useRegistrationInterface } from "../hooks/useRegistrationInterface";
 import { LevelSemesterSelect } from "@/components/ui-kit/data-entry/LevelSemesterSelect";
 import { CoursePoolDisplay } from "./CoursePoolDisplay";
 import { CreditLimitsDisplay } from "./CreditLimitsDisplay";
+import { DropCourseModal } from "./modals/DropCourseModal";
 
 export type RegistrationInterfaceProps = {
   studentId: number | null;
@@ -517,6 +518,7 @@ export function RegistrationInterface({
                   coursePool={state.coursePool}
                   selectedCourseIds={state.selectedCourseIds}
                   onCourseSelectionChange={actions.handleCourseSelectionChange}
+                  onDropCourse={actions.handleOpenDrop}
                   isLateWindow={state.studentContext?.isLateWindow ?? false}
                   missingMandatoryCourseIds={allMissingMandatoryIds}
                   disabled={state.isSubmitting}
@@ -541,6 +543,16 @@ export function RegistrationInterface({
                   Submit Registration
                 </Button>
               </BillingWorkflowDecisionGuard>
+
+              {/* Admin Drop Course Confirmation Modal */}
+              <DropCourseModal
+                open={state.dropModalOpen}
+                target={state.dropTarget}
+                studentId={studentId}
+                semesterTypeId={semesterTypeId}
+                studentName={studentInfo?.fullName}
+                onClose={actions.handleCloseDrop}
+              />
             </ConditionalRenderer>
           </DataLoader>
         </ConditionalRenderer>

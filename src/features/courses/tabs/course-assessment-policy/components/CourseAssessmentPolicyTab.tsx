@@ -29,6 +29,7 @@ export function CourseAssessmentPolicyTab() {
       <PolicyList
         policies={state.policies}
         isLoading={state.isLoading}
+        isFetching={state.isFetching}
         isError={state.isError}
         scopeFilter={state.scopeFilter}
         expandedPolicyIds={state.expandedPolicyIds}

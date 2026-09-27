@@ -10,7 +10,7 @@ import { DataLoader } from "@/shared/ui/DataLoader";
 import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { SkeletonRows } from "@/shared/ui/SkeletonRows";
 import { DeleteOutlined, EditOutlined, PlusOutlined } from "@ant-design/icons";
-import { Button, Col, Flex, Input, Pagination, Row, Select, Switch, Typography } from "antd";
+import { Button, Col, Flex, Input, Pagination, Row, Select, Spin, Switch, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import type { SorterResult } from "antd/es/table/interface";
 import type { ReactNode } from "react";
@@ -221,10 +221,10 @@ export function ProgramsTab() {
     programs,
     totalItems,
     isLoading,
+    isFetching,
     isError,
     sectionError,
     page,
-    itemsPerPage,
     nameSearch,
     codeSearch,
     degreeTitleSearch,
@@ -242,6 +242,7 @@ export function ProgramsTab() {
     handleDepartmentFilterChange,
     handleSortChange,
     handlePageChange,
+    getPaginationConfig,
     handleOpenCreate,
     handleOpenEdit,
     handleOpenDelete,
@@ -467,35 +468,34 @@ export function ProgramsTab() {
             size="md"
             density="comfortable"
             scroll={{ x: true }}
+            loading={{ spinning: isFetching, delay: 150 }}
+            aria-busy={isFetching}
             onChange={handleTableChange}
-            pagination={{
-              current: page,
-              pageSize: itemsPerPage,
-              total: totalItems,
-              showSizeChanger: true,
-              onChange: handlePageChange,
-              onShowSizeChange: handlePageChange,
-            }}
+            pagination={getPaginationConfig()}
           />
         </ConditionalRenderer>
 
         <ConditionalRenderer when={!isError && hasData && groupByDepartment}>
-          <Accordion
-            items={accordionItems}
-            expansionMode="multiple"
-            size="md"
-            density="comfortable"
-            variant="default"
-          />
-          <Flex justify="flex-end" style={{ marginTop: 16 }}>
-            <Pagination
-              current={page}
-              pageSize={100}
-              total={totalItems}
-              onChange={(p) => handlePageChange(p, 100)}
-              showSizeChanger={false}
-            />
-          </Flex>
+          <Spin spinning={isFetching} delay={150}>
+            <div aria-busy={isFetching}>
+              <Accordion
+                items={accordionItems}
+                expansionMode="multiple"
+                size="md"
+                density="comfortable"
+                variant="default"
+              />
+              <Flex justify="flex-end" style={{ marginTop: 16 }}>
+                <Pagination
+                  current={page}
+                  pageSize={100}
+                  total={totalItems}
+                  onChange={(p) => handlePageChange(p, 100)}
+                  showSizeChanger={false}
+                />
+              </Flex>
+            </div>
+          </Spin>
         </ConditionalRenderer>
       </DataLoader>
 

@@ -2,7 +2,7 @@ import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { SkeletonRows } from "@/shared/ui/SkeletonRows";
-import { Alert, Card, Empty, Flex, Tabs, Typography } from "antd";
+import { Alert, Card, Empty, Flex, Spin, Tabs, Typography } from "antd";
 import { type BroadsheetCellMode } from "@/components/ui-kit";
 import { useToken } from "@/shared/hooks/useToken";
 import { useCallback, useState } from "react";
@@ -248,12 +248,16 @@ export function ResultBroadsheetPage() {
             styles={{ body: { padding: "12px 14px" } }}
             style={{ width: "100%", maxWidth: "100%", minWidth: 0, overflow: "hidden" }}
           >
-            <Tabs
-              activeKey={activeTabKey}
-              onChange={setActiveTabKey}
-              items={tabItems}
-              style={{ width: "100%", maxWidth: "100%", minWidth: 0 }}
-            />
+            <Spin spinning={reportState.isFetching} delay={150}>
+              <div aria-busy={reportState.isFetching}>
+                <Tabs
+                  activeKey={activeTabKey}
+                  onChange={setActiveTabKey}
+                  items={tabItems}
+                  style={{ width: "100%", maxWidth: "100%", minWidth: 0 }}
+                />
+              </div>
+            </Spin>
           </Card>
         )}
       </Flex>

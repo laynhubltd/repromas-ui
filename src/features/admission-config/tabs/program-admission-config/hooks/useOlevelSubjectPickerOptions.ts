@@ -4,7 +4,7 @@ import {
 } from "@/features/admission-config/tabs/olevel-subject/api/olevelSubjectApi";
 import { OLEVEL_SUBJECT_SORT_DEFAULT } from "@/shared/constants/olevelSubjectOptions";
 import { OLEVEL_SUBJECT_PICKER_ITEMS_PER_PAGE } from "@/shared/constants/programAdmissionConfigOptions";
-import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
+import { useDebouncedState } from "@/shared/hooks/useDebouncedValue";
 import { useMemo, useState } from "react";
 
 export type OlevelSubjectPickerOption = {
@@ -22,9 +22,16 @@ export function useOlevelSubjectPickerOptions(
   setSearch: (value: string) => void;
 } {
   const [search, setSearch] = useState("");
-  const debouncedSearch = useDebouncedValue(search, 500);
+  const { debouncedValue: debouncedSearch, isDebouncing } = useDebouncedState(
+    search,
+    500,
+  );
 
-  const { data: listData, isLoading: isListLoading } = useGetOlevelSubjectsQuery(
+  const {
+    data: listData,
+    isLoading: isListLoading,
+    isFetching: isListFetching,
+  } = useGetOlevelSubjectsQuery(
     {
       itemsPerPage: OLEVEL_SUBJECT_PICKER_ITEMS_PER_PAGE,
       sort: OLEVEL_SUBJECT_SORT_DEFAULT,
@@ -70,7 +77,8 @@ export function useOlevelSubjectPickerOptions(
 
   return {
     options,
-    isLoading: isListLoading || isSelectedLoading,
+    isLoading:
+      isListLoading || isListFetching || isSelectedLoading || isDebouncing,
     search,
     setSearch,
   };

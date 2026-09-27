@@ -16,7 +16,7 @@ import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { SkeletonRows } from "@/shared/ui/SkeletonRows";
 import { getOrdinalSemesterName } from "@/shared/utils/semesterOrdinal";
 import { CopyOutlined, FilterOutlined, PlusOutlined } from "@ant-design/icons";
-import { Badge, Button, Col, Flex, Form, Pagination, Popover, Row, Select, Space, Typography } from "antd";
+import { Badge, Button, Col, Flex, Form, Pagination, Popover, Row, Select, Space, Spin, Typography } from "antd";
 import { useMemo, useState } from "react";
 import { useCourseConfigurationsTab } from "../hooks/useCourseConfigurationsTab";
 import type { FormattedSemester } from "../types/course-configuration";
@@ -33,6 +33,7 @@ export function CourseConfigurationsTab() {
     totalItems,
     levels,
     isLoading,
+    isFetching,
     isError,
     sectionError,
     selectedProgramId,
@@ -312,26 +313,30 @@ export function CourseConfigurationsTab() {
         </ConditionalRenderer>
 
         <ConditionalRenderer when={!isError && bothSelected && hasData}>
-          <Flex vertical gap={16}>
-            <CurriculumGrid
-              gridRows={gridRows}
-              semesterTypes={semesterTypes}
-              semesters={semesters}
-              onEdit={handleOpenEdit}
-              onDelete={handleOpenDelete}
-            />
-            <Flex justify="flex-end">
-              <Pagination
-                current={page}
-                pageSize={itemsPerPage}
-                total={totalItems}
-                showSizeChanger
-                showTotal={(total) => `${total} configurations`}
-                onChange={handlePageChange}
-                onShowSizeChange={handlePageChange}
-              />
-            </Flex>
-          </Flex>
+          <Spin spinning={isFetching} delay={150}>
+            <div aria-busy={isFetching}>
+              <Flex vertical gap={16}>
+                <CurriculumGrid
+                  gridRows={gridRows}
+                  semesterTypes={semesterTypes}
+                  semesters={semesters}
+                  onEdit={handleOpenEdit}
+                  onDelete={handleOpenDelete}
+                />
+                <Flex justify="flex-end">
+                  <Pagination
+                    current={page}
+                    pageSize={itemsPerPage}
+                    total={totalItems}
+                    showSizeChanger
+                    showTotal={(total) => `${total} configurations`}
+                    onChange={handlePageChange}
+                    onShowSizeChange={handlePageChange}
+                  />
+                </Flex>
+              </Flex>
+            </div>
+          </Spin>
         </ConditionalRenderer>
       </DataLoader>
 

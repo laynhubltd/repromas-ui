@@ -1,13 +1,13 @@
 import { useAccessControl } from "@/features/access-control";
 import { useAppSelector } from "@/app/hooks";
 import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
+import { useServerTableState } from "@/shared/hooks/useServerTableState";
 import { RequestScreen } from "@/shared/types/error-ui";
 import { deriveSectionErrorMessage } from "@/shared/utils/error/deriveSectionErrorMessage";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useGetProgramsQuery } from "../api/programsApi";
 import type { Program } from "../types/program";
 
-const ITEMS_PER_PAGE = 10;
 const GROUP_BY_ITEMS_PER_PAGE = 100;
 
 export function useProgramsTab() {
@@ -16,11 +16,6 @@ export function useProgramsTab() {
   const hasLevelCategory = useAppSelector(
     (state) => state.systemConfig.configs.HAS_LEVEL_CATEGORY === true
   );
-
-  // ─── Pagination & Sort ────────────────────────────────────────────────────
-  const [page, setPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(ITEMS_PER_PAGE);
-  const [sort, setSort] = useState("name:asc");
 
   // ─── Search ───────────────────────────────────────────────────────────────
   const [nameSearch, setNameSearch] = useState("");
@@ -46,6 +41,23 @@ export function useProgramsTab() {
     activeRole?.scope === "GLOBAL" || activeRole?.scope === "FACULTY";
   const showGroupByToggle = showDepartmentFilter;
 
+  // ─── Pagination & Sort (Server Table State) ──────────────────────────────
+  const [rawTotalItems, setRawTotalItems] = useState(0);
+
+  const {
+    page,
+    pageSize: itemsPerPage,
+    sort,
+    handlePageChange,
+    handleSortChange,
+    resetPage,
+    getPaginationConfig,
+  } = useServerTableState({
+    defaultPageSize: 10,
+    defaultSort: "name:asc",
+    totalItems: rawTotalItems,
+  });
+
   // ─── Query Params ─────────────────────────────────────────────────────────
   const effectiveItemsPerPage = groupByDepartment ? GROUP_BY_ITEMS_PER_PAGE : itemsPerPage;
 
@@ -64,7 +76,7 @@ export function useProgramsTab() {
     ...(includes.length > 0 ? { include: includes.join(",") } : {}),
   };
 
-  const { data, isLoading, isError, error: queryError, refetch } = useGetProgramsQuery(queryParams);
+  const { data, isLoading, isFetching, isError, error: queryError, refetch } = useGetProgramsQuery(queryParams);
 
   const sectionError = useMemo(
     () =>
@@ -77,6 +89,12 @@ export function useProgramsTab() {
 
   const programs = data?.member ?? [];
   const totalItems = data?.totalItems ?? 0;
+
+  useEffect(() => {
+    if (data?.totalItems !== undefined) {
+      setRawTotalItems(data.totalItems);
+    }
+  }, [data?.totalItems]);
 
   // ─── Group by Department (client-side) ────────────────────────────────────
   const groupedPrograms = useMemo<Map<number, Program[]>>(() => {
@@ -98,32 +116,23 @@ export function useProgramsTab() {
   // ─── Actions ──────────────────────────────────────────────────────────────
   const handleNameSearchChange = useCallback((value: string) => {
     setNameSearch(value);
-    setPage(1);
-  }, []);
+    resetPage();
+  }, [resetPage]);
 
   const handleDegreeTitleSearchChange = useCallback((value: string) => {
     setDegreeTitleSearch(value);
-    setPage(1);
-  }, []);
+    resetPage();
+  }, [resetPage]);
 
   const handleCodeSearchChange = useCallback((value: string) => {
     setCodeSearch(value);
-    setPage(1);
-  }, []);
+    resetPage();
+  }, [resetPage]);
 
   const handleDepartmentFilterChange = useCallback((departmentId: number | undefined) => {
     setDepartmentFilter(departmentId);
-    setPage(1);
-  }, []);
-
-  const handleSortChange = useCallback((newSort: string) => {
-    setSort(newSort);
-  }, []);
-
-  const handlePageChange = useCallback((newPage: number, newPageSize: number) => {
-    setPage(newPage);
-    setItemsPerPage(newPageSize);
-  }, []);
+    resetPage();
+  }, [resetPage]);
 
   const handleOpenCreate = useCallback((defaults?: Partial<Program>) => {
     setFormTarget(defaults ? ({ ...defaults } as Program) : null);
@@ -151,16 +160,17 @@ export function useProgramsTab() {
   const handleToggleGroupByDepartment = useCallback(() => {
     setGroupByDepartment((prev) => {
       const next = !prev;
-      if (next) setPage(1);
+      resetPage();
       return next;
     });
-  }, []);
+  }, [resetPage]);
 
   return {
     state: {
       programs,
       totalItems,
       isLoading,
+      isFetching,
       isError,
       sectionError,
       page,
@@ -183,6 +193,7 @@ export function useProgramsTab() {
       handleDepartmentFilterChange,
       handleSortChange,
       handlePageChange,
+      getPaginationConfig,
       handleOpenCreate,
       handleOpenEdit,
       handleOpenDelete,

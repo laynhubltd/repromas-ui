@@ -1,15 +1,9 @@
-import { useCallback, useState } from "react";
+import { useServerTableState } from "@/shared/hooks/useServerTableState";
+import { useCallback, useEffect, useState } from "react";
 import { useGetGraduationRequirementsQuery } from "../api/graduationRequirementsApi";
 import type { ProgramGraduationRequirement } from "../types/graduation-requirement";
 
-const ITEMS_PER_PAGE = 10;
-
 export function useGraduationConfigTab() {
-  // ─── Pagination & Sort ────────────────────────────────────────────────────
-  const [page, setPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(ITEMS_PER_PAGE);
-  const [sort, setSort] = useState("createdAt:desc");
-
   // ─── Filters ──────────────────────────────────────────────────────────────
   const [programFilter, setProgramFilter] = useState<number | undefined>(undefined);
   const [curriculumVersionFilter, setCurriculumVersionFilter] = useState<number | undefined>(undefined);
@@ -18,6 +12,23 @@ export function useGraduationConfigTab() {
   const [formTarget, setFormTarget] = useState<ProgramGraduationRequirement | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ProgramGraduationRequirement | null>(null);
   const [formModalOpen, setFormModalOpen] = useState(false);
+
+  // ─── Pagination & Sort (Server Table State) ──────────────────────────────
+  const [rawTotalItems, setRawTotalItems] = useState(0);
+
+  const {
+    page,
+    pageSize: itemsPerPage,
+    sort,
+    handlePageChange,
+    handleSortChange,
+    resetPage,
+    getPaginationConfig,
+  } = useServerTableState({
+    defaultPageSize: 10,
+    defaultSort: "createdAt:desc",
+    totalItems: rawTotalItems,
+  });
 
   // ─── Query Params ─────────────────────────────────────────────────────────
   const queryParams = {
@@ -31,10 +42,16 @@ export function useGraduationConfigTab() {
       : {}),
   };
 
-  const { data, isLoading, isError, refetch } = useGetGraduationRequirementsQuery(queryParams);
+  const { data, isLoading, isFetching, isError, refetch } = useGetGraduationRequirementsQuery(queryParams);
 
   const requirements = data?.member ?? [];
   const totalItems = data?.totalItems ?? 0;
+
+  useEffect(() => {
+    if (data?.totalItems !== undefined) {
+      setRawTotalItems(data.totalItems);
+    }
+  }, [data?.totalItems]);
 
   // ─── Flags ────────────────────────────────────────────────────────────────
   const hasData = requirements.length > 0;
@@ -43,25 +60,16 @@ export function useGraduationConfigTab() {
   // ─── Actions ──────────────────────────────────────────────────────────────
   const handleProgramFilterChange = useCallback((programId: number | undefined) => {
     setProgramFilter(programId);
-    setPage(1);
-  }, []);
+    resetPage();
+  }, [resetPage]);
 
   const handleCurriculumVersionFilterChange = useCallback(
     (curriculumVersionId: number | undefined) => {
       setCurriculumVersionFilter(curriculumVersionId);
-      setPage(1);
+      resetPage();
     },
-    [],
+    [resetPage],
   );
-
-  const handleSortChange = useCallback((newSort: string) => {
-    setSort(newSort);
-  }, []);
-
-  const handlePageChange = useCallback((newPage: number, newPageSize: number) => {
-    setPage(newPage);
-    setItemsPerPage(newPageSize);
-  }, []);
 
   const handleOpenCreate = useCallback(() => {
     setFormTarget(null);
@@ -91,6 +99,7 @@ export function useGraduationConfigTab() {
       requirements,
       totalItems,
       isLoading,
+      isFetching,
       isError,
       page,
       itemsPerPage,
@@ -106,6 +115,7 @@ export function useGraduationConfigTab() {
       handleCurriculumVersionFilterChange,
       handleSortChange,
       handlePageChange,
+      getPaginationConfig,
       handleOpenCreate,
       handleOpenEdit,
       handleOpenDelete,

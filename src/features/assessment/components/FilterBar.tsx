@@ -6,13 +6,14 @@ import type { Program } from "@/features/program/tabs/programs/types/program";
 import { LevelSelect } from "@/components/ui-kit/data-entry/LevelSelect";
 import { useToken } from "@/shared/hooks/useToken";
 import { ErrorAlert } from "@/shared/ui/ErrorAlert";
+import { SelectNotFoundContent } from "@/shared/ui/SelectNotFoundContent";
 import {
   CloudUploadOutlined,
   DownloadOutlined,
   UploadOutlined,
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
-import { Button, Dropdown, Flex, Select, Spin } from "antd";
+import { Button, Dropdown, Flex, Select } from "antd";
 
 export type FilterBarProps = {
   // Program selector
@@ -104,6 +105,12 @@ export function FilterBar({
             onChange={(val: number | undefined) => onProgramChange(val ?? null)}
             allowClear
             onClear={() => onProgramChange(null)}
+            notFoundContent={
+              <SelectNotFoundContent
+                loading={programLoading}
+                emptyText="No programs found"
+              />
+            }
             style={{
               minWidth: 240,
               flex: 1,
@@ -152,7 +159,10 @@ export function FilterBar({
             }}
             disabled={isCourseConfigDisabled}
             notFoundContent={
-              courseConfigLoading ? <Spin size="small" /> : "No courses found"
+              <SelectNotFoundContent
+                loading={courseConfigLoading}
+                emptyText="No courses found"
+              />
             }
             style={{
               minWidth: 280,

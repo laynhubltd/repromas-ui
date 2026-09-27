@@ -58,9 +58,8 @@ export function StaffPage() {
     staff,
     totalItems,
     isLoading,
+    isFetching,
     isError,
-    page,
-    itemsPerPage,
     fileNumberSearch,
     departmentFilter,
     formTarget,
@@ -72,7 +71,7 @@ export function StaffPage() {
     handleFileNumberSearchChange,
     handleDepartmentFilterChange,
     handleSortChange,
-    handlePageChange,
+    getPaginationConfig,
     handleOpenCreate,
     handleOpenEdit,
     handleOpenDelete,
@@ -366,15 +365,10 @@ export function StaffPage() {
             size="md"
             density="comfortable"
             scroll={{ x: true }}
+            loading={{ spinning: isFetching, delay: 150 }}
+            aria-busy={isFetching}
             onChange={handleTableChange}
-            pagination={{
-              current: page,
-              pageSize: itemsPerPage,
-              total: totalItems,
-              showSizeChanger: true,
-              onChange: handlePageChange,
-              onShowSizeChange: handlePageChange,
-            }}
+            pagination={getPaginationConfig()}
           />
         </ConditionalRenderer>
       </DataLoader>

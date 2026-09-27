@@ -32,7 +32,7 @@ export function useCourseAssessmentPolicyTab() {
     }),
   };
 
-  const { data, isLoading, isError, refetch } =
+  const { data, isLoading, isFetching, isError, refetch } =
     useGetCourseAssessmentPoliciesQuery(queryParams);
 
   const policies = data?.member ?? [];
@@ -133,6 +133,7 @@ export function useCourseAssessmentPolicyTab() {
       policies,
       totalItems,
       isLoading,
+      isFetching,
       isError,
       scopeFilter: state.scopeFilter,
       courseCodeSearch: state.courseCodeSearch,

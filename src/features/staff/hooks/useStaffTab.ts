@@ -1,16 +1,10 @@
 import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
-import { useCallback, useState } from "react";
+import { useServerTableState } from "@/shared/hooks/useServerTableState";
+import { useCallback, useEffect, useState } from "react";
 import { useGetStaffListQuery } from "../api/staffApi";
 import type { Staff } from "../types/staff";
 
-const ITEMS_PER_PAGE = 10;
-
 export function useStaffTab() {
-  // ─── Pagination & Sort ────────────────────────────────────────────────────
-  const [page, setPage] = useState(1);
-  const itemsPerPage = ITEMS_PER_PAGE;
-  const [sort, setSort] = useState("createdAt:desc");
-
   // ─── Search ───────────────────────────────────────────────────────────────
   const [fileNumberSearch, setFileNumberSearch] = useState("");
   const debouncedFileNumber = useDebouncedValue(fileNumberSearch, 500);
@@ -24,6 +18,23 @@ export function useStaffTab() {
   const [formModalOpen, setFormModalOpen] = useState(false);
   const [drawerStaffId, setDrawerStaffId] = useState<number | null>(null);
 
+  // ─── Pagination & Sort (Server Table State) ──────────────────────────────
+  const [rawTotalItems, setRawTotalItems] = useState(0);
+
+  const {
+    page,
+    pageSize: itemsPerPage,
+    sort,
+    handlePageChange,
+    handleSortChange,
+    resetPage,
+    getPaginationConfig,
+  } = useServerTableState({
+    defaultPageSize: 10,
+    defaultSort: "createdAt:desc",
+    totalItems: rawTotalItems,
+  });
+
   // ─── Query Params ─────────────────────────────────────────────────────────
   const queryParams = {
     page,
@@ -34,10 +45,16 @@ export function useStaffTab() {
     ...(departmentFilter !== undefined ? { "exact[department]": departmentFilter } : {}),
   };
 
-  const { data, isLoading, isError, refetch } = useGetStaffListQuery(queryParams);
+  const { data, isLoading, isFetching, isError, refetch } = useGetStaffListQuery(queryParams);
 
   const staff = data?.member ?? [];
   const totalItems = data?.totalItems ?? 0;
+
+  useEffect(() => {
+    if (data?.totalItems !== undefined) {
+      setRawTotalItems(data.totalItems);
+    }
+  }, [data?.totalItems]);
 
   // ─── Flags ────────────────────────────────────────────────────────────────
   const hasData = staff.length > 0;
@@ -47,21 +64,13 @@ export function useStaffTab() {
   // ─── Actions ──────────────────────────────────────────────────────────────
   const handleFileNumberSearchChange = useCallback((value: string) => {
     setFileNumberSearch(value);
-    setPage(1);
-  }, []);
+    resetPage();
+  }, [resetPage]);
 
   const handleDepartmentFilterChange = useCallback((value: number | undefined) => {
     setDepartmentFilter(value);
-    setPage(1);
-  }, []);
-
-  const handleSortChange = useCallback((newSort: string) => {
-    setSort(newSort);
-  }, []);
-
-  const handlePageChange = useCallback((newPage: number) => {
-    setPage(newPage);
-  }, []);
+    resetPage();
+  }, [resetPage]);
 
   const handleOpenCreate = useCallback(() => {
     setFormTarget(null);
@@ -96,14 +105,15 @@ export function useStaffTab() {
 
   const clearAllFilters = useCallback(() => {
     setDepartmentFilter(undefined);
-    setPage(1);
-  }, []);
+    resetPage();
+  }, [resetPage]);
 
   return {
     state: {
       staff,
       totalItems,
       isLoading,
+      isFetching,
       isError,
       page,
       itemsPerPage,
@@ -120,6 +130,7 @@ export function useStaffTab() {
       handleDepartmentFilterChange,
       handleSortChange,
       handlePageChange,
+      getPaginationConfig,
       handleOpenCreate,
       handleOpenEdit,
       handleOpenDelete,

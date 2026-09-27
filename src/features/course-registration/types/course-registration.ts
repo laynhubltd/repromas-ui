@@ -2,6 +2,8 @@
 
 export type CourseItem = {
   configId: number;
+  registrationId?: number | null;
+  courseId?: number;
   courseCode: string;
   courseTitle: string;
   creditUnits: number;

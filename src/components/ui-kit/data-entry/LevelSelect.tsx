@@ -35,19 +35,31 @@ function useLevelSelectionLogic({
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | undefined>(undefined);
 
   // If HAS_LEVEL_CATEGORY is false, fetch all levels
-  const { data: allLevelsData, isLoading: isLoadingAllLevels } = dataHooks.useLevelsQuery(
+  const {
+    data: allLevelsData,
+    isLoading: isLoadingAllLevels,
+    isFetching: isFetchingAllLevels,
+  } = dataHooks.useLevelsQuery(
     { itemsPerPage: 1000 },
     { skip: hasLevelCategory }
   );
 
   // If HAS_LEVEL_CATEGORY is true, fetch categories
-  const { data: categoriesData, isLoading: isLoadingCategories } = dataHooks.useCategoriesQuery(
+  const {
+    data: categoriesData,
+    isLoading: isLoadingCategories,
+    isFetching: isFetchingCategories,
+  } = dataHooks.useCategoriesQuery(
     { itemsPerPage: 1000 },
     { skip: !hasLevelCategory }
   );
 
   // If HAS_LEVEL_CATEGORY is true and a category is selected, fetch those levels
-  const { data: categoryLevelsData, isLoading: isLoadingCategoryLevels, isFetching: isFetchingCategoryLevels } = dataHooks.useLevelsQuery(
+  const {
+    data: categoryLevelsData,
+    isLoading: isLoadingCategoryLevels,
+    isFetching: isFetchingCategoryLevels,
+  } = dataHooks.useLevelsQuery(
     { "exact[category]": selectedCategoryId, itemsPerPage: 1000 },
     { skip: !hasLevelCategory || !selectedCategoryId }
   );
@@ -75,17 +87,22 @@ function useLevelSelectionLogic({
 
   if (hasLevelCategory) {
     levels = categoryLevelsData?.member || [];
-    isLoadingLevels = isLoadingCategories || isLoadingCategoryLevels || isFetchingCategoryLevels || false;
+    isLoadingLevels =
+      isLoadingCategories ||
+      isFetchingCategories ||
+      isLoadingCategoryLevels ||
+      isFetchingCategoryLevels ||
+      false;
   } else {
     levels = allLevelsData?.member || [];
-    isLoadingLevels = isLoadingAllLevels;
+    isLoadingLevels = isLoadingAllLevels || isFetchingAllLevels || false;
   }
 
   return {
     categories,
     levels,
     isLoadingLevels,
-    isLoadingCategories,
+    isLoadingCategories: isLoadingCategories || isFetchingCategories || false,
     selectedCategoryId,
     setSelectedCategoryId,
   };

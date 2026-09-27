@@ -3,6 +3,10 @@ import { describe, expect, it, vi } from "vitest";
 import { CoursePoolDisplay } from "./CoursePoolDisplay";
 import type { CoursePool } from "../types/course-registration";
 
+vi.mock("@/features/access-control", () => ({
+  PermissionGuard: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
 const mockCoursePool: CoursePool = {
   registered: [
     {
@@ -142,3 +146,59 @@ describe("CoursePoolDisplay - Select All functionality", () => {
     expect(electivesSelectAll).toBeDisabled();
   });
 });
+
+describe("CoursePoolDisplay - Drop Course functionality", () => {
+  const mockPoolWithRegistrationId: CoursePool = {
+    registered: [
+      {
+        registrationId: 1554380,
+        configId: 1,
+        courseCode: "CSC 101",
+        courseTitle: "Introduction to Computer Science",
+        creditUnits: 3,
+        isMandatory: true,
+      },
+    ],
+    carryovers: [],
+    arrears: [],
+    currentCore: [],
+    electives: [],
+  };
+
+  it("renders Drop button when registrationId is present and onDropCourse is provided", () => {
+    const handleDrop = vi.fn();
+    render(
+      <CoursePoolDisplay
+        coursePool={mockPoolWithRegistrationId}
+        selectedCourseIds={[]}
+        onCourseSelectionChange={vi.fn()}
+        onDropCourse={handleDrop}
+        isLateWindow={false}
+      />,
+    );
+
+    const dropButton = screen.getByTestId("drop-course-btn-1");
+    expect(dropButton).toBeInTheDocument();
+
+    fireEvent.click(dropButton);
+    expect(handleDrop).toHaveBeenCalledWith(
+      mockPoolWithRegistrationId.registered[0],
+    );
+  });
+
+  it("does not render Drop button when registrationId is missing", () => {
+    const handleDrop = vi.fn();
+    render(
+      <CoursePoolDisplay
+        coursePool={mockCoursePool} // has no registrationId
+        selectedCourseIds={[]}
+        onCourseSelectionChange={vi.fn()}
+        onDropCourse={handleDrop}
+        isLateWindow={false}
+      />,
+    );
+
+    expect(screen.queryByText("Drop")).not.toBeInTheDocument();
+  });
+});
+
