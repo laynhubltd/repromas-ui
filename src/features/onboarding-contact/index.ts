@@ -1,2 +1,2 @@
 export { default as ContactPage } from "./components/ContactPage";
-export { useContactContent } from "./hooks/use-contact-content";
+export { useContactPage } from "./hooks/useContactPage";

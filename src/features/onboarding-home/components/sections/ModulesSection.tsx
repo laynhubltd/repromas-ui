@@ -1,235 +1,108 @@
-import type { UseTokenReturn } from '@/shared/hooks/useToken';
-import { ThunderboltOutlined } from '@ant-design/icons';
-import type { Breakpoint } from 'antd';
-import { Col, Row, Typography } from 'antd';
-import React, { useState } from 'react';
-import type { ModuleCard } from '../../hooks/use-landing-page';
-
-const PRIMARY = '#6B21A8';
-const PRIMARY_PALE = '#F3E8FF';
+import { Fragment } from "react";
+import { Link } from "react-router-dom";
+import { MarketingModuleIcon } from "@/assets/illustrations/MarketingModuleIcons";
+import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
+import { HighlightMark, MarketingContainer, MarketingSection, PillLink, SectionHeading } from "@/shared/ui/marketing";
+import type { HomeModuleFoundation, HomeModuleLane, HomeModuleTile } from "../../types";
+import type { HOME_MODULES_HEADING } from "../../utils/home-content";
+import styles from "../HomePage.module.css";
 
 type ModulesSectionProps = {
-  modules: ModuleCard[];
-  token: UseTokenReturn;
-  breakpoints: Partial<Record<Breakpoint, boolean>>;
+  heading: typeof HOME_MODULES_HEADING;
+  lanes: HomeModuleLane[];
+  foundation: HomeModuleFoundation;
+  allModulesUrl: string;
 };
 
-type ModuleCardItemProps = {
-  module: ModuleCard;
-};
-
-const ModuleCardItem: React.FC<ModuleCardItemProps> = ({ module }) => {
-  const [isHovered, setIsHovered] = useState(false);
-
+function ModuleTile({ module, href }: { module: HomeModuleTile; href: string }) {
   return (
-    <div
-      data-testid="module-card"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      style={{
-        height: '100%',
-        padding: '28px 24px',
-        borderRadius: 12,
-        background: isHovered ? '#f9f5ff' : '#ffffff',
-        border: `1.5px solid ${isHovered ? PRIMARY : '#e9d5ff'}`,
-        boxShadow: isHovered
-          ? `0 8px 32px ${PRIMARY}22, 0 2px 8px ${PRIMARY}11`
-          : '0 1px 4px rgba(0,0,0,0.04)',
-        transform: isHovered ? 'translateY(-6px)' : 'translateY(0)',
-        transition: 'all 0.22s ease',
-        cursor: 'default',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 14,
-      }}
-    >
-      {/* Icon bubble */}
-      <div style={{
-        width: 48,
-        height: 48,
-        borderRadius: 12,
-        background: isHovered ? PRIMARY : PRIMARY_PALE,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: 22,
-        color: isHovered ? '#ffffff' : PRIMARY,
-        transition: 'all 0.22s ease',
-        flexShrink: 0,
-      }}>
-        {module.icon}
-      </div>
-
-      <div>
-        <Typography.Text
-          data-testid="module-title"
-          strong
-          style={{
-            display: 'block',
-            fontSize: 16,
-            fontWeight: 700,
-            color: '#111827',
-            marginBottom: 8,
-            letterSpacing: '-0.01em',
-          }}
-        >
-          {module.title}
-        </Typography.Text>
-        <Typography.Text
-          data-testid="module-description"
-          style={{
-            color: '#6B7280',
-            fontSize: 14,
-            lineHeight: 1.65,
-            display: 'block',
-          }}
-        >
-          {module.description}
-        </Typography.Text>
-      </div>
-    </div>
+    <Link to={href} className={styles.mod} data-testid="module-tile">
+      <MarketingModuleIcon id={module.id} />
+      <span>{module.label}</span>
+    </Link>
   );
-};
+}
 
-export const ModulesSection: React.FC<ModulesSectionProps> = ({ modules, breakpoints }) => {
-  const gutter = breakpoints.md ? ([24, 24] as [number, number]) : ([16, 16] as [number, number]);
-
+function HandoffChevron() {
   return (
-    <section
-      id="modules"
-      style={{
-        background: '#ffffff',
-        padding: breakpoints.lg ? '96px 0' : '56px 0',
-      }}
-    >
-      <div
-        style={{
-          maxWidth: 1280,
-          margin: '0 auto',
-          padding: breakpoints.md ? '0 32px' : '0 16px',
-        }}
-      >
-        {/* Admission Engine pitch card */}
-        <div style={{ marginBottom: breakpoints.md ? 56 : 36 }}>
-          <div style={{
-            borderRadius: 20,
-            background: `linear-gradient(135deg, ${PRIMARY} 0%, #9333EA 60%, #C084FC 100%)`,
-            padding: breakpoints.md ? '52px 56px' : '36px 24px',
-            display: 'flex',
-            flexDirection: breakpoints.lg ? 'row' : 'column',
-            alignItems: breakpoints.lg ? 'center' : 'flex-start',
-            gap: breakpoints.lg ? 48 : 28,
-          }}>
-            {/* Icon */}
-            <div style={{
-              width: 72,
-              height: 72,
-              borderRadius: 18,
-              background: 'rgba(255,255,255,0.15)',
-              border: '1.5px solid rgba(255,255,255,0.3)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 32,
-              color: '#ffffff',
-              flexShrink: 0,
-            }}>
-              <ThunderboltOutlined />
-            </div>
+    <svg viewBox="0 0 10 10" aria-hidden="true" focusable="false">
+      <path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
 
-            {/* Text */}
-            <div style={{ flex: 1 }}>
-              <div style={{
-                display: 'inline-block',
-                background: 'rgba(255,255,255,0.2)',
-                color: '#ffffff',
-                fontWeight: 600,
-                fontSize: 12,
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
-                padding: '4px 12px',
-                borderRadius: 999,
-                marginBottom: 14,
-              }}>
-                New · Intelligent Admission Engine
+export function ModulesSection({ heading, lanes, foundation, allModulesUrl }: ModulesSectionProps) {
+  return (
+    <MarketingSection id="modules" className={styles.modulesSection}>
+      <MarketingContainer>
+        <SectionHeading
+          title={
+            <>
+              {heading.titleLead} <HighlightMark>{heading.titleMark}</HighlightMark> {heading.titleTail}
+            </>
+          }
+          description={heading.text}
+        />
+        <div className={styles.flow}>
+          {lanes.map((lane, index) => (
+            <Fragment key={lane.title}>
+              <div
+                className={[styles.lane, index === lanes.length - 1 ? styles.laneLast : ""].join(" ")}
+                role="group"
+                aria-labelledby={`modules-lane-${index}`}
+                data-testid="module-lane"
+              >
+                <div className={styles.laneHead}>
+                  <span className={styles.step} aria-hidden="true">
+                    {index + 1}
+                  </span>
+                  <h3 id={`modules-lane-${index}`}>{lane.title}</h3>
+                  <span className={styles.laneOwner}>{lane.owner}</span>
+                  <Link to={lane.href} className={styles.laneLink}>
+                    See all {lane.featureCount} features →
+                  </Link>
+                </div>
+                <div className={styles.laneMods}>
+                  {lane.modules.map((module) => (
+                    <ModuleTile key={module.id} module={module} href={lane.href} />
+                  ))}
+                </div>
               </div>
-              <Typography.Title
-                level={3}
-                style={{
-                  color: '#ffffff',
-                  fontWeight: 800,
-                  fontSize: breakpoints.md ? 26 : 20,
-                  letterSpacing: '-0.02em',
-                  marginBottom: 12,
-                  marginTop: 0,
-                }}
-              >
-                Stop Drowning in Spreadsheets. Let the Engine Decide.
-              </Typography.Title>
-              <Typography.Paragraph
-                style={{
-                  color: 'rgba(255,255,255,0.85)',
-                  fontSize: 15,
-                  lineHeight: 1.75,
-                  margin: 0,
-                  maxWidth: 680,
-                }}
-              >
-                Sorting thousands of applications, cross-checking subject combinations, balancing cut-off marks, and managing quotas — all manually. Where there are spreadsheets, there are errors, delays, and bias. Our <strong style={{ color: '#ffffff' }}>Intelligent Automated Admission Engine</strong> evaluates thousands of prospective students in the time it takes to pour your morning coffee.
-              </Typography.Paragraph>
+              <ConditionalRenderer when={Boolean(lane.handoff)}>
+                <div className={styles.handoff}>
+                  <span className={styles.handoffDot}>
+                    <HandoffChevron />
+                  </span>
+                  <p>
+                    <b>{heading.handoffLabel}</b>
+                    <span>{lane.handoff}</span>
+                  </p>
+                </div>
+              </ConditionalRenderer>
+            </Fragment>
+          ))}
+          <div className={styles.foundation} role="group" aria-labelledby="modules-lane-foundation">
+            <div className={styles.foundationHead}>
+              <h3 id="modules-lane-foundation">{foundation.title}</h3>
+              <p>{foundation.text}</p>
+              <Link to={foundation.href} className={styles.laneLink}>
+                {foundation.linkLabel} →
+              </Link>
+            </div>
+            <div className={styles.laneMods}>
+              {foundation.modules.map((module) => (
+                <ModuleTile key={module.id} module={module} href={module.href} />
+              ))}
             </div>
           </div>
         </div>
-
-        {/* Section header */}
-        <div style={{ textAlign: 'center', marginBottom: breakpoints.md ? 56 : 36 }}>
-          <div style={{
-            display: 'inline-block',
-            background: PRIMARY_PALE,
-            color: PRIMARY,
-            fontWeight: 600,
-            fontSize: 13,
-            letterSpacing: '0.06em',
-            textTransform: 'uppercase',
-            padding: '5px 14px',
-            borderRadius: 999,
-            marginBottom: 16,
-          }}>
-            Core Modules
-          </div>
-          <Typography.Title
-            level={2}
-            style={{
-              fontSize: breakpoints.md ? 36 : 26,
-              fontWeight: 800,
-              color: '#111827',
-              letterSpacing: '-0.02em',
-              marginBottom: 12,
-            }}
-          >
-            The Foundation of Excellence
-          </Typography.Title>
-          <Typography.Paragraph
-            style={{
-              fontSize: 17,
-              color: '#6B7280',
-              maxWidth: 560,
-              margin: '0 auto',
-              lineHeight: 1.7,
-            }}
-          >
-            Eight powerful engines orchestrating every aspect of your institution — from security to graduation.
-          </Typography.Paragraph>
+        <div className={styles.flowFoot}>
+          <p>{heading.footNote}</p>
+          <PillLink to={allModulesUrl} variant="outline">
+            {heading.allLabel}
+          </PillLink>
         </div>
-
-        <Row gutter={gutter}>
-          {modules.map((module) => (
-            <Col key={module.key} xs={24} sm={12} lg={6} style={{ marginBottom: 0 }}>
-              <ModuleCardItem module={module} />
-            </Col>
-          ))}
-        </Row>
-      </div>
-    </section>
+      </MarketingContainer>
+    </MarketingSection>
   );
-};
+}
