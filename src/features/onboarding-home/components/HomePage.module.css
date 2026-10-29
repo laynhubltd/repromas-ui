@@ -4,10 +4,12 @@
   isolation: isolate;
   overflow: hidden;
   padding-top: 56px;
+  color: #e2d9f3;
+  border-bottom: 1px solid rgba(196, 181, 253, 0.16);
   background:
-    radial-gradient(48% 58% at 76% 46%, rgba(196, 181, 253, 0.34), transparent 70%),
-    radial-gradient(70% 45% at 50% 0%, rgba(46, 16, 101, 0.05), transparent 70%),
-    linear-gradient(180deg, #f6f4fc 0%, #ffffff 100%);
+    radial-gradient(48% 58% at 76% 46%, rgba(139, 92, 246, 0.28), transparent 70%),
+    radial-gradient(60% 50% at 15% 20%, rgba(109, 40, 217, 0.22), transparent 70%),
+    linear-gradient(135deg, #160736 0%, #2e1065 55%, #3b1578 100%);
 }
 
 /* A 1px grid that fades out from the journey diagram (structure borrowed from bergmans.ng, in our violet). */
@@ -18,8 +20,8 @@
   z-index: -1;
   pointer-events: none;
   background-image:
-    linear-gradient(to right, rgba(109, 40, 217, 0.07) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(109, 40, 217, 0.07) 1px, transparent 1px);
+    linear-gradient(to right, rgba(196, 181, 253, 0.09) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(196, 181, 253, 0.09) 1px, transparent 1px);
   background-size: 44px 44px;
   background-position: -1px -1px;
   mask-image: radial-gradient(ellipse 62% 70% at 72% 46%, #000, transparent 75%);
@@ -58,11 +60,25 @@
 
 .heroCopy h1 {
   font-size: clamp(2.2rem, 4.2vw, 3rem);
-  line-height: 1.2;
+  line-height: 1.22;
+  color: var(--mk-white);
+}
+
+.heroCopy h1 span {
+  color: #fbbf24;
+}
+
+.heroCopy h1 span::after {
+  bottom: -5px;
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #f4b740 0%, rgba(244, 183, 64, 0.28) 100%);
 }
 
 .lead {
   max-width: 576px;
+  color: #e2d9f3;
+  font-size: 1.05rem;
 }
 
 .ctas {
@@ -71,15 +87,41 @@
   gap: 14px;
 }
 
+.heroCopy .ctas a:first-child {
+  background: #fbbf24;
+  border-color: #fbbf24;
+  color: #140630;
+  box-shadow: 0 10px 28px rgba(10, 3, 26, 0.35);
+}
+
+.heroCopy .ctas a:first-child:hover {
+  background: #f59e0b;
+  border-color: #f59e0b;
+  color: #140630;
+}
+
+.heroCopy .ctas a:last-child {
+  background: var(--mk-white);
+  border-color: var(--mk-white);
+  color: var(--mk-brand-deep);
+  box-shadow: 0 10px 26px rgba(10, 3, 26, 0.28);
+}
+
+.heroCopy .ctas a:last-child:hover {
+  background: var(--mk-brand-tint);
+  border-color: var(--mk-brand-tint);
+  color: var(--mk-brand-deep);
+}
+
 .fine {
   font-size: 0.85rem;
-  color: var(--mk-muted);
+  color: var(--mk-lilac);
 }
 
 .badges {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px 26px;
+  gap: 10px 14px;
   align-items: center;
 }
 
@@ -87,12 +129,17 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.92rem;
+  font-size: 0.88rem;
+  color: #ede9fe;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(196, 181, 253, 0.22);
+  border-radius: 999px;
+  padding: 5px 14px 5px 6px;
 }
 
 .badge strong {
-  font: 700 1.05rem var(--mk-head-font);
-  color: var(--mk-head);
+  font: 700 0.98rem var(--mk-head-font);
+  color: var(--mk-white);
 }
 
 .badge svg {
@@ -113,6 +160,11 @@
   position: relative;
   width: 100%;
   max-width: 500px;
+  background: var(--mk-white);
+  border-radius: 24px;
+  padding: 16px;
+  border: 1px solid rgba(196, 181, 253, 0.35);
+  box-shadow: 0 28px 60px rgba(10, 3, 26, 0.45), 0 0 0 6px rgba(255, 255, 255, 0.07);
 }
 
 /* Desktop: the hero fills the screen below the 88px sticky header, content centred, and the diagram shrinks on
@@ -329,18 +381,18 @@
 }
 
 .vetting {
-  background: #fef3c7;
-  color: #92400e;
+  background: #e4ddf7;
+  color: #2e1065;
 }
 
 .senate {
   background: #ede9fe;
-  color: #5b21b6;
+  color: #4c1d95;
 }
 
 .draft {
-  background: #eeedf2;
-  color: #57534e;
+  background: #f3f1f9;
+  color: #685794;
 }
 
 /* ---------- trusted ---------- */
@@ -401,7 +453,8 @@
 
 /* ---------- modules ---------- */
 section.modulesSection {
-  padding-top: 24px;
+  padding-top: 88px;
+  padding-bottom: 72px;
 }
 
 .mod {
@@ -594,10 +647,13 @@ section.modulesSection {
 }
 
 .foundation {
-  margin-top: 20px;
-  padding-block: 28px;
-  background: var(--mk-grey);
+  margin-top: 24px;
+  padding-block: 32px;
+  padding-inline: 28px;
+  background: linear-gradient(135deg, #2e1065 0%, #4c1d95 100%);
+  border: 1px solid rgba(196, 181, 253, 0.25);
   border-radius: var(--mk-radius);
+  box-shadow: 0 18px 40px rgba(30, 11, 69, 0.16);
 }
 
 .foundationHead {
@@ -606,13 +662,32 @@ section.modulesSection {
   align-content: start;
 }
 
+.foundationHead h3 {
+  color: var(--mk-white);
+}
+
 .foundationHead p {
   margin: 0;
   font-size: 0.9rem;
+  color: #e2d9f3;
+}
+
+.foundation .laneLink {
+  color: var(--mk-lilac);
+}
+
+.foundation .laneLink:hover {
+  color: var(--mk-white);
+}
+
+.foundation .mod {
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 6px 16px rgba(10, 3, 26, 0.18);
 }
 
 .foundation .mod:hover {
   background: var(--mk-white);
+  transform: translateY(-2px);
 }
 
 .flowFoot {
@@ -763,6 +838,7 @@ section.modulesSection {
 .area {
   break-inside: avoid;
   background: #fff;
+  border: 1px solid var(--mk-card-line);
   border-radius: var(--mk-radius);
   box-shadow: var(--mk-shadow);
   padding: 28px;
@@ -814,7 +890,7 @@ section.modulesSection {
   height: 18px;
   margin-top: 3px;
   border-radius: 50%;
-  background: #e6e3ee url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M5.5 10.5l3 3 6-6.5' fill='none' stroke='%236B6680' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/14px no-repeat;
+  background: #ede9fe url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M5.5 10.5l3 3 6-6.5' fill='none' stroke='%234C1D95' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/14px no-repeat;
 }
 
 .mock {
@@ -917,6 +993,14 @@ section.modulesSection {
 }
 
 /* ---------- why ---------- */
+.whySection {
+  background:
+    radial-gradient(45% 60% at 85% 30%, rgba(139, 92, 246, 0.24), transparent 70%),
+    linear-gradient(135deg, #1a083e 0%, #2e1065 60%, #3b1578 100%);
+  color: #e2d9f3;
+  padding-bottom: 112px;
+}
+
 .why {
   display: grid;
   grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
@@ -939,6 +1023,33 @@ section.modulesSection {
 .whyCopy h2 {
   font-size: clamp(1.8rem, 3.2vw, 2.375rem);
   line-height: 1.25;
+  color: var(--mk-white);
+}
+
+.whyCopy h2 span {
+  color: #fbbf24;
+}
+
+.whyCopy h2 span::after {
+  bottom: -5px;
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #f4b740 0%, rgba(244, 183, 64, 0.28) 100%);
+}
+
+.whyCopy p {
+  color: #e2d9f3;
+}
+
+.whyCopy a {
+  background: var(--mk-white);
+  color: var(--mk-brand-deep);
+  box-shadow: 0 10px 26px rgba(10, 3, 26, 0.35);
+}
+
+.whyCopy a:hover {
+  background: var(--mk-brand-tint);
+  color: var(--mk-brand-deep);
 }
 
 .cards2 {
@@ -963,13 +1074,14 @@ section.modulesSection {
 
 .card {
   background: #fff;
+  color: var(--mk-text);
   border-radius: var(--mk-radius);
-  box-shadow: var(--mk-shadow);
+  box-shadow: 0 20px 40px rgba(10, 3, 26, 0.28);
   padding: 25px;
   display: grid;
   gap: 12px;
   align-content: start;
-  border: 1px solid #f1eff6;
+  border: 1px solid rgba(196, 181, 253, 0.3);
 }
 
 .card svg {
@@ -979,6 +1091,7 @@ section.modulesSection {
 
 .card h3 {
   font-size: 1.1rem;
+  color: var(--mk-head);
 }
 
 .card p {
@@ -987,7 +1100,10 @@ section.modulesSection {
 
 /* ---------- verify ---------- */
 section.verifySection {
-  padding-top: 40px;
+  padding-block: 80px;
+  background: #f5f3ff;
+  border-top: 1px solid var(--mk-mist);
+  border-bottom: 1px solid var(--mk-mist);
 }
 
 .verify {
@@ -1009,11 +1125,13 @@ section.verifySection {
 }
 
 .vcard {
-  border: 1px solid var(--mk-line);
-  border-radius: 12px;
-  padding: 20px;
+  background: var(--mk-white);
+  border: 1px solid var(--mk-mist);
+  border-radius: 14px;
+  padding: 24px;
+  box-shadow: var(--mk-shadow);
   display: grid;
-  gap: 8px;
+  gap: 10px;
   align-content: start;
 }
 
@@ -1036,7 +1154,7 @@ section.verifySection {
 .quotesSection {
   background:
     radial-gradient(50% 60% at 90% 10%, rgba(196, 181, 253, 0.35), transparent 70%),
-    radial-gradient(40% 50% at 0% 100%, rgba(244, 183, 64, 0.16), transparent 70%),
+    radial-gradient(40% 50% at 0% 100%, rgba(139, 92, 246, 0.12), transparent 70%),
     #faf9fd;
 }
 

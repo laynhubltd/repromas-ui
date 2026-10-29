@@ -3,26 +3,28 @@
    `.root` adds the page background and base type. */
 .root,
 .tokens {
-  --mk-head: #212121;
-  --mk-text: #4a4a4a;
-  --mk-muted: #6b6b6b;
-  --mk-line: #e7e5ee;
-  --mk-card-line: #dee2e6;
-  --mk-grey: #f5f5f5;
+  --mk-head: #1e1b4b;
+  --mk-text: #334155;
+  --mk-muted: #64748b;
+  --mk-line: #e2e8f0;
+  --mk-card-line: #e2e8f0;
+  --mk-grey: #f1f5f9;
   --mk-white: #ffffff;
-  --mk-cta: #f4b740;
-  --mk-cta-ink: #3a2400;
-  --mk-cta-hover: #ffc85a;
+  --mk-cta: #6d28d9;
+  --mk-cta-ink: #ffffff;
+  --mk-cta-hover: #4c1d95;
   --mk-brand: #6d28d9;
-  --mk-brand-hover: #5b21b6;
+  --mk-brand-hover: #4c1d95;
   --mk-brand-deep: #2e1065;
-  --mk-brand-tint: #f1ecfc;
+  --mk-brand-bright: #8b5cf6;
+  --mk-brand-tint: #ede9fe;
+  --mk-mist: #ddd6fe;
   --mk-lilac: #c4b5fd;
-  --mk-navy: #140630;
+  --mk-navy: #0f0720;
   --mk-head-font: "Nunito", ui-rounded, system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
   --mk-body-font: "Rubik", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
   --mk-radius: 16px;
-  --mk-shadow: 0 2px 4px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --mk-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.06), 0 4px 10px -4px rgba(15, 23, 42, 0.04);
 }
 
 .root {
@@ -110,22 +112,22 @@
 
 .mark {
   position: relative;
+  display: inline-block;
   white-space: nowrap;
+  color: var(--mk-brand);
   z-index: 0;
 }
 
 .mark::after {
   content: "";
   position: absolute;
-  left: -2%;
-  right: -2%;
-  bottom: 0.02em;
-  height: 0.26em;
-  background: var(--mk-cta);
-  opacity: 0.75;
-  border-radius: 20px 6px 18px 8px;
+  left: 0;
+  right: 0;
+  bottom: -4px;
+  height: 4px;
+  background: linear-gradient(90deg, var(--mk-brand) 0%, var(--mk-lilac) 100%);
+  border-radius: 999px;
   z-index: -1;
-  transform: rotate(-0.6deg);
 }
 
 .btn {
@@ -141,7 +143,7 @@
   border: 1px solid transparent;
   white-space: nowrap;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  transition: background 0.15s, color 0.15s, border-color 0.15s, box-shadow 0.15s;
 }
 
 .btnLarge {
@@ -157,6 +159,7 @@
 .cta {
   background: var(--mk-cta);
   color: var(--mk-cta-ink);
+  box-shadow: 0 6px 18px rgba(46, 16, 101, 0.18);
 }
 
 .cta:hover {
@@ -165,14 +168,15 @@
 }
 
 .outline {
-  border-color: var(--mk-brand);
-  color: var(--mk-brand);
+  border-color: var(--mk-lilac);
+  color: var(--mk-brand-deep);
   background: transparent;
 }
 
 .outline:hover {
   background: var(--mk-brand-tint);
-  color: var(--mk-brand);
+  border-color: var(--mk-brand);
+  color: var(--mk-brand-deep);
 }
 
 .solid {
@@ -198,8 +202,12 @@
 }
 
 .finalCta {
-  background: #f8f7fb;
+  background:
+    radial-gradient(50% 70% at 50% 0%, rgba(139, 92, 246, 0.25), transparent 70%),
+    linear-gradient(135deg, #3b1578 0%, #2e1065 55%, #1a083e 100%);
+  color: #e2d9f3;
   text-align: center;
+  border-top: 1px solid rgba(196, 181, 253, 0.18);
 }
 
 .finalInner {
@@ -212,6 +220,31 @@
 
 .finalInner h2 {
   font-size: clamp(1.6rem, 2.6vw, 1.875rem);
+  color: var(--mk-white);
+}
+
+.finalCta .cta,
+.finalCta .solid {
+  background: var(--mk-white);
+  color: var(--mk-brand-deep);
+  box-shadow: 0 10px 26px rgba(10, 3, 26, 0.35);
+}
+
+.finalCta .cta:hover,
+.finalCta .solid:hover {
+  background: var(--mk-brand-tint);
+  color: var(--mk-brand-deep);
+}
+
+.finalCta .outline {
+  border-color: rgba(196, 181, 253, 0.45);
+  color: var(--mk-white);
+}
+
+.finalCta .outline:hover {
+  background: rgba(237, 233, 254, 0.12);
+  border-color: var(--mk-lilac);
+  color: var(--mk-white);
 }
 
 .ctaRow {
@@ -224,6 +257,10 @@
 .fine {
   font-size: 0.85rem;
   color: var(--mk-muted);
+}
+
+.finalCta .fine {
+  color: var(--mk-mist);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -56,7 +56,7 @@ export const PRICING_FAQ: FaqItem[] = [
   },
   {
     question: "Is the pilot really free?",
-    answer: "Yes. The 90-day pilot on one faculty costs nothing and needs no procurement. You decide afterwards whether to continue.",
+    answer: "Yes. You can test a full results cycle on your own curriculum first with zero upfront commitment, and decide afterwards how to roll out across your institution.",
   },
   {
     question: "Are payment gateway charges included?",

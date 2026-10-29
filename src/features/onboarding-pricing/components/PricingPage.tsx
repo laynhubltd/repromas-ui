@@ -16,24 +16,24 @@ import { QuoteSummary } from "./QuoteSummary";
 
 const VALUE_ICONS: ReactElement[] = [
   <svg key="modules" viewBox="0 0 44 44" aria-hidden="true">
-    <rect x="4" y="4" width="16" height="16" rx="4" fill="#6D28D9" />
-    <rect x="24" y="4" width="16" height="16" rx="4" fill="#C4B5FD" />
-    <rect x="4" y="24" width="16" height="16" rx="4" fill="#F4B740" />
-    <rect x="24" y="24" width="16" height="16" rx="4" fill="#34D399" />
+    <rect x="4" y="4" width="16" height="16" rx="4" fill="#2E1065" />
+    <rect x="24" y="4" width="16" height="16" rx="4" fill="#6D28D9" />
+    <rect x="4" y="24" width="16" height="16" rx="4" fill="#8B5CF6" />
+    <rect x="24" y="24" width="16" height="16" rx="4" fill="#C4B5FD" />
   </svg>,
   <svg key="naira" viewBox="0 0 44 44" aria-hidden="true">
     <circle cx="22" cy="22" r="17" fill="#EDE9FE" />
-    <text x="22" y="29" textAnchor="middle" fontFamily="Nunito, sans-serif" fontWeight="800" fontSize="20" fill="#6D28D9">
+    <text x="22" y="29" textAnchor="middle" fontFamily="Nunito, sans-serif" fontWeight="800" fontSize="20" fill="#2E1065">
       ₦
     </text>
   </svg>,
   <svg key="fees" viewBox="0 0 44 44" aria-hidden="true">
     <rect x="8" y="5" width="28" height="34" rx="5" fill="#C4B5FD" />
-    <path d="M15 22l5 5 9-10" fill="none" stroke="#6D28D9" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M15 22l5 5 9-10" fill="none" stroke="#4C1D95" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
   </svg>,
   <svg key="growth" viewBox="0 0 44 44" aria-hidden="true">
-    <path d="M6 34l10-10 7 7 15-17" fill="none" stroke="#34D399" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M30 14h8v8" fill="none" stroke="#34D399" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M6 34l10-10 7 7 15-17" fill="none" stroke="#6D28D9" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M30 14h8v8" fill="none" stroke="#2E1065" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
   </svg>,
 ];
 
@@ -235,7 +235,7 @@ export default function PricingPage() {
           { label: "Configure My Quote", to: "#quote", variant: "cta" },
           { label: "Talk to an Advisor", to: links.advisor, variant: "outline" },
         ]}
-        fineprint="Free 90-day pilot. No procurement needed to start."
+        fineprint="Test a full results cycle on your own curriculum first, then roll out across your institution at your own pace."
       />
     </>
   );

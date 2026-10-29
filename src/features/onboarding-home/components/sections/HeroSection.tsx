@@ -14,8 +14,8 @@ type HeroSectionProps = {
 const BADGE_ICONS: Record<(typeof HOME_HERO)["badges"][number]["tone"], ReactElement> = {
   green: (
     <svg viewBox="0 0 26 26" aria-hidden="true">
-      <circle cx="13" cy="13" r="12" fill="#DCFCE7" />
-      <path d="M7.5 13.5l3.5 3.5 7.5-8" fill="none" stroke="#16A34A" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="13" cy="13" r="12" fill="#EDE9FE" />
+      <path d="M7.5 13.5l3.5 3.5 7.5-8" fill="none" stroke="#4C1D95" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   ),
   violet: (
@@ -26,9 +26,9 @@ const BADGE_ICONS: Record<(typeof HOME_HERO)["badges"][number]["tone"], ReactEle
   ),
   gold: (
     <svg viewBox="0 0 26 26" aria-hidden="true">
-      <circle cx="13" cy="13" r="12" fill="#FEF3C7" />
-      <rect x="6.5" y="9" width="13" height="9" rx="2" fill="#F4B740" />
-      <rect x="6.5" y="11" width="13" height="2" fill="#B9780C" />
+      <circle cx="13" cy="13" r="12" fill="#EDE9FE" />
+      <rect x="6.5" y="9" width="13" height="9" rx="2" fill="#8B5CF6" />
+      <rect x="6.5" y="11" width="13" height="2" fill="#2E1065" />
     </svg>
   ),
 };

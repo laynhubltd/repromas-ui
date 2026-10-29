@@ -253,7 +253,7 @@ export const PLATFORM_CATEGORIES: PlatformCategory[] = [
 
 export const PLATFORM_FINAL_CTA = {
   title: "Ready to See Your Programmes Running on REPROMAS?",
-  text: "Book a 30-minute demo on the demo institution, then start a free 90-day pilot on one faculty.",
+  text: "Book a 30-minute demo on the demo institution, then test a full results cycle on your own curriculum before campus-wide rollout.",
 };
 
 export const PLATFORM_SEO = {

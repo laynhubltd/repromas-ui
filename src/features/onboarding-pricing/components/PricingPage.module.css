@@ -1,7 +1,11 @@
 .hero {
-  background: linear-gradient(180deg, #f3f1fb 0%, #ffffff 100%);
+  background:
+    radial-gradient(50% 70% at 50% 0%, rgba(139, 92, 246, 0.26), transparent 70%),
+    linear-gradient(135deg, #160736 0%, #2e1065 55%, #3b1578 100%);
+  color: #e2d9f3;
   padding-block: 72px 56px;
   text-align: center;
+  border-bottom: 1px solid rgba(196, 181, 253, 0.18);
 }
 
 .heroInner,
@@ -13,14 +17,26 @@
   text-align: center;
 }
 
+.heroInner > span:first-child {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ede9fe;
+  border: 1px solid rgba(196, 181, 253, 0.28);
+}
+
 .heroInner h1 {
   font-size: clamp(2rem, 3.6vw, 2.75rem);
   line-height: 1.2;
+  color: var(--mk-white);
+}
+
+.heroInner p {
+  color: #e2d9f3;
 }
 
 .intro {
-  padding-block: 24px 48px;
-  border-bottom: 1px solid #efedf4;
+  padding-block: 48px;
+  background: #f8fafc;
+  border-bottom: 1px solid var(--mk-line);
 }
 
 .introInner h2 {
@@ -488,8 +504,8 @@
 
 .draftNotice {
   font-size: 0.76rem;
-  color: #92400e;
-  background: #fef3c7;
+  color: var(--mk-brand-deep);
+  background: var(--mk-brand-tint);
   border-radius: 8px;
   padding: 6px 10px;
   text-align: center;
