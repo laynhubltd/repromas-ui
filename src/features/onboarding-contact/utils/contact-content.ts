@@ -25,7 +25,7 @@ export const CONTACT_NEXT_STEPS: ContactStep[] = [
   },
   {
     title: "A pilot plan or a quotation",
-    text: "Start with a free 90-day pilot on one faculty, or take a quotation to your management.",
+    text: "Test a full results cycle on your own curriculum first, or take a formal quotation to your management.",
   },
 ];
 

@@ -19,8 +19,8 @@ import type {
 export const HOME_HERO = {
   titleLead: "One System to Run Your Institution's",
   titleMark: "Academic Record",
-  lead: "From JAMB admission and Remita payments to senate-approved results and graduation, REPROMAS replaces spreadsheets and disconnected portals with one governed record, so your registry can focus on students, not re-typing broadsheets.",
-  fine: "Free 90-day pilot on one faculty. No procurement needed to start.",
+  lead: "From candidate admission and fee payments to senate-approved results and graduation, REPROMAS replaces spreadsheets and disconnected portals with one governed record, so your registry can focus on students, not re-typing broadsheets.",
+  fine: "Test a full results cycle on your own curriculum first, then roll out across your institution at your own pace.",
   badges: [
     { tone: "green", strong: "99.5%", text: "uptime in contract" },
     { tone: "violet", strong: "NDPA 2023", text: "aligned" },
@@ -34,7 +34,7 @@ export const HOME_HERO = {
  */
 export const HOME_JOURNEY: OfficeJourney = {
   title:
-    "A graduating student at the centre, with every office around them reading and writing the same record, from admission to published results on the student portal",
+    "The REPROMAS dashboard at the centre, with every office around it reading and writing the same record, from admission to published results on the student portal",
   offices: [
     { id: "portal", name: "Student Portal", role: "The student", icon: "student-portal", angle: 90 },
     { id: "bursary", name: "Bursary", role: "Fees & payments", icon: "online-payments", angle: 141.43 },
@@ -204,7 +204,7 @@ export const HOME_AREAS_HEADING = {
 export const HOME_PRODUCT_AREAS: ProductArea[] = [
   {
     label: "ADMISSIONS",
-    title: "From JAMB List to Student Record",
+    title: "From Candidate Application to Student Record",
     text: "Screen candidates by cycle and batch, admit on merit, and create the student record automatically once fees are paid.",
     checks: ["Admission cycles and batches", "Screening and merit decisions", "Matric numbers in your format"],
     singleColumnChecks: true,
@@ -278,11 +278,11 @@ export const HOME_PRODUCT_AREAS: ProductArea[] = [
     snippet: {
       kind: "chips",
       chips: [
-        { label: "Remita", colour: "#F87171" },
-        { label: "Flutterwave", colour: "#F4B740" },
-        { label: "Excel round-trip", colour: "#34D399" },
-        { label: "JAMB CAPS import", colour: "#60A5FA" },
-        { label: "Paystack (on request)", colour: "#C4B5FD" },
+        { label: "Remita", colour: "#2E1065" },
+        { label: "Flutterwave", colour: "#4C1D95" },
+        { label: "Excel round-trip", colour: "#6D28D9" },
+        { label: "JAMB CAPS import", colour: "#8B5CF6" },
+        { label: "Paystack (on request)", colour: "#A78BFA" },
       ],
     },
   },
@@ -356,7 +356,7 @@ export const GUIDES: Guide[] = [
     readMinutes: 8,
     status: "planned",
     thumbLabel: "5.0 → First Class",
-    thumbGradient: ["#6D28D9", "#8B5CF6"],
+    thumbGradient: ["#2E1065", "#6D28D9"],
   },
   {
     category: "Curriculum",
@@ -366,7 +366,7 @@ export const GUIDES: Guide[] = [
     readMinutes: 10,
     status: "planned",
     thumbLabel: "CCMAS",
-    thumbGradient: ["#F4B740", "#F59E0B"],
+    thumbGradient: ["#4C1D95", "#8B5CF6"],
   },
   {
     category: "Compliance",
@@ -375,13 +375,13 @@ export const GUIDES: Guide[] = [
     readMinutes: 9,
     status: "planned",
     thumbLabel: "NDPA 2023",
-    thumbGradient: ["#10B981", "#34D399"],
+    thumbGradient: ["#6D28D9", "#A78BFA"],
   },
 ];
 
 export const HOME_FINAL_CTA = {
   title: "Ready to Run Your Next Results Cycle on REPROMAS?",
-  text: "See a full cycle on your own course names in 30 minutes, then start a free 90-day pilot on one faculty.",
+  text: "See a full cycle on your own course names in 30 minutes, then pilot on your own curriculum before campus-wide rollout.",
 };
 
 export const HOME_SEO = {

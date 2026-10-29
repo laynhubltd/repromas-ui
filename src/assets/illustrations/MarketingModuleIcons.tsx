@@ -1,8 +1,8 @@
 import type { ReactElement } from "react";
 
 /**
- * Flat two-tone module illustrations for the public marketing site (Home module grid, Platform cards).
- * Drawn for REPROMAS; colours are the marketing palette, not the tenant theme.
+ * Flat tonal module illustrations for the public marketing site (Home module grid, Platform cards).
+ * Uses the official REPROMAS Brand Kit monochromatic purple scale (src/assets/brand-kit/README.txt).
  */
 export type MarketingIconId =
   | "admission-cycles"
@@ -23,15 +23,15 @@ export type MarketingIconId =
   | "roles-permissions"
   | "student-portal";
 
-const V = "#6D28D9";
-const L = "#C4B5FD";
-const G = "#F4B740";
-const GD = "#B9780C";
-const M = "#34D399";
-const S = "#60A5FA";
-const C = "#F87171";
-const I = "#2E1065";
-const T = "#EDE9FE";
+const I = "#2E1065";  // Deep purple (primary)
+const GD = "#4C1D95"; // Royal purple
+const V = "#6D28D9";  // Violet
+const G = "#8B5CF6";  // Bright violet
+const M = "#A78BFA";  // Lilac
+const L = "#C4B5FD";  // Pale lilac
+const S = "#8B5CF6";  // Bright violet (tonal pair)
+const C = "#DDD6FE";  // Mist
+const T = "#EDE9FE";  // Shell (light surface)
 
 const ICONS: Record<MarketingIconId, ReactElement> = {
   "admission-cycles": (
@@ -46,20 +46,20 @@ const ICONS: Record<MarketingIconId, ReactElement> = {
   "matric-numbers": (
     <>
       <rect x="8" y="16" width="56" height="40" rx="8" fill={G} />
-      <rect x="15" y="25" width="16" height="20" rx="4" fill={V} />
+      <rect x="15" y="25" width="16" height="20" rx="4" fill={I} />
       <rect x="36" y="27" width="20" height="4" rx="2" fill="#fff" />
-      <rect x="36" y="36" width="14" height="4" rx="2" fill="#fff" />
+      <rect x="36" y="36" width="14" height="4" rx="2" fill={T} />
     </>
   ),
   "fee-events": (
     <>
-      <rect x="6" y="18" width="60" height="36" rx="7" fill={M} />
-      <circle cx="36" cy="36" r="10" fill="#fff" />
-      <text x="36" y="41" textAnchor="middle" fontFamily="Nunito, sans-serif" fontWeight="800" fontSize="13" fill="#059669">
+      <rect x="6" y="18" width="60" height="36" rx="7" fill={GD} />
+      <circle cx="36" cy="36" r="10" fill={T} />
+      <text x="36" y="41" textAnchor="middle" fontFamily="Nunito, sans-serif" fontWeight="800" fontSize="13" fill={I}>
         ₦
       </text>
-      <circle cx="15" cy="36" r="3" fill="#fff" />
-      <circle cx="57" cy="36" r="3" fill="#fff" />
+      <circle cx="15" cy="36" r="3" fill={L} />
+      <circle cx="57" cy="36" r="3" fill={L} />
     </>
   ),
   invoices: (

@@ -1,8 +1,12 @@
 /* ---------- hero ---------- */
 .hero {
-  background: linear-gradient(180deg, #f3f1fb 0%, #ffffff 100%);
-  padding-block: 64px 40px;
+  background:
+    radial-gradient(50% 70% at 50% 0%, rgba(139, 92, 246, 0.26), transparent 70%),
+    linear-gradient(135deg, #160736 0%, #2e1065 55%, #3b1578 100%);
+  color: #e2d9f3;
+  padding-block: 72px 56px;
   text-align: center;
+  border-bottom: 1px solid rgba(196, 181, 253, 0.18);
 }
 
 .heroInner {
@@ -12,14 +16,27 @@
   justify-items: center;
 }
 
+.heroInner > span:first-child {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ede9fe;
+  border: 1px solid rgba(196, 181, 253, 0.28);
+}
+
 .heroInner h1 {
   font-size: clamp(2rem, 3.6vw, 2.75rem);
   line-height: 1.2;
+  color: var(--mk-white);
+}
+
+.heroInner p {
+  color: #e2d9f3;
+  font-size: 1.05rem;
 }
 
 /* ---------- layout: form card + reassurance panel ---------- */
 .body {
-  padding-block: 8px 96px;
+  background: #f8fafc;
+  padding-block: 56px 96px;
 }
 
 .layout {
@@ -134,11 +151,15 @@
   background: var(--mk-cta);
   color: var(--mk-cta-ink);
   font: 700 1rem var(--mk-head-font);
+  box-shadow: 0 6px 18px rgba(46, 16, 101, 0.18);
+  transition: background 0.18s, transform 0.18s, box-shadow 0.18s;
 }
 
 .submit:hover:not(:disabled) {
   background: var(--mk-cta-hover) !important;
   color: var(--mk-cta-ink) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(46, 16, 101, 0.26);
 }
 
 @media (max-width: 640px) {
@@ -179,12 +200,12 @@
 }
 
 .successIcon circle {
-  fill: #dcfce7;
+  fill: var(--mk-brand-tint);
 }
 
 .successIcon path {
   fill: none;
-  stroke: #16a34a;
+  stroke: var(--mk-brand);
   stroke-width: 3.5;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -256,9 +277,11 @@
 .direct {
   display: grid;
   gap: 12px;
-  padding: 20px;
+  padding: 22px;
   border-radius: var(--mk-radius);
-  background: var(--mk-grey);
+  background: var(--mk-white);
+  border: 1px solid var(--mk-line);
+  box-shadow: var(--mk-shadow);
 }
 
 .direct h3 {

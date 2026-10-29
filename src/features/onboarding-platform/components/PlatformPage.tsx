@@ -63,7 +63,7 @@ export default function PlatformPage() {
           { label: "See It in Action", to: links.demo, variant: "solid" },
           { label: "Talk to an Advisor", to: links.advisor, variant: "outline" },
         ]}
-        fineprint="Free 90-day pilot. No procurement needed to start."
+        fineprint="Test a full results cycle on your own curriculum first, then roll out across your institution at your own pace."
       />
     </>
   );
