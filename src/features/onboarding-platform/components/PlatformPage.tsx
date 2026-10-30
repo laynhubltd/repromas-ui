@@ -18,7 +18,7 @@ export default function PlatformPage() {
           <p>{content.hero.text}</p>
           <div className={styles.ctas}>
             <PillLink to={links.demo} variant="solid" size="large">
-              See It in Action
+              Try for Free
             </PillLink>
             <PillLink to={links.advisor} variant="outline" size="large">
               Talk to an Advisor
@@ -60,7 +60,7 @@ export default function PlatformPage() {
         title={content.finalCta.title}
         text={content.finalCta.text}
         actions={[
-          { label: "See It in Action", to: links.demo, variant: "solid" },
+          { label: "Try for Free", to: links.demo, variant: "solid" },
           { label: "Talk to an Advisor", to: links.advisor, variant: "outline" },
         ]}
         fineprint="Test a full results cycle on your own curriculum first, then roll out across your institution at your own pace."

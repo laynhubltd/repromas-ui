@@ -1,8 +1,15 @@
 import type { ReactElement } from "react";
+import { Link } from "react-router-dom";
 import { HighlightMark, MarketingContainer, MarketingSection, PillLink } from "@/shared/ui/marketing";
 import type { WhyCard } from "../../types";
 import type { HOME_WHY } from "../../utils/home-content";
 import styles from "../HomePage.module.css";
+
+const INSTITUTION_TIERS = [
+  { label: "Universities · NUC CCMAS", to: "/about#institutions" },
+  { label: "Polytechnics · NBTE ND & HND", to: "/about#institutions" },
+  { label: "Colleges · NCCE NCE", to: "/about#institutions" },
+] as const;
 
 type WhySectionProps = {
   why: typeof HOME_WHY;
@@ -50,8 +57,15 @@ export function WhySection({ why, cards, demoUrl }: WhySectionProps) {
             {why.titleLead} <HighlightMark>{why.titleMark}</HighlightMark>
           </h2>
           <p>{why.text}</p>
+          <div className={styles.whyTiers}>
+            {INSTITUTION_TIERS.map((tier) => (
+              <Link key={tier.label} to={tier.to} className={styles.whyTierPill}>
+                {tier.label}
+              </Link>
+            ))}
+          </div>
           <PillLink to={demoUrl} variant="cta">
-            Book a Demo
+            Try for Free
           </PillLink>
         </div>
         <div className={styles.cards2}>

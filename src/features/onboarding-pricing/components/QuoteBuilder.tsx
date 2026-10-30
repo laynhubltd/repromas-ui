@@ -211,7 +211,7 @@ export function QuoteBuilder({ content, state, format, flags, actions, links }: 
               <span>One faculty, real data, a full mock results cycle in 30 days.</span>
             </span>
             <PillLink to={links.demo} variant="outline">
-              Book a Demo
+              Try for Free
             </PillLink>
           </div>
         </ConditionalRenderer>

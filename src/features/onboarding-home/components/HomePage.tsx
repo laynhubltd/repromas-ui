@@ -43,7 +43,7 @@ export default function HomePage() {
         title={content.finalCta.title}
         text={content.finalCta.text}
         actions={[
-          { label: "Book a Demo", to: links.demo, variant: "cta" },
+          { label: "Try for Free", to: links.demo, variant: "cta" },
           { label: "Talk to an Advisor", to: links.advisor, variant: "outline" },
         ]}
         fineprint="Test a full results cycle on your own curriculum first, then roll out across your institution at your own pace."

@@ -78,7 +78,7 @@ export default function OnboardingShell() {
                 Sign in
               </button>
               <PillLink to={content.demoUrl} variant="cta">
-                Book a Demo
+                Try for Free
               </PillLink>
               <PillLink to={content.advisorUrl} variant="outline">
                 Talk to an Advisor
@@ -121,7 +121,7 @@ export default function OnboardingShell() {
               Sign in to your institution
             </button>
             <PillLink to={content.demoUrl} variant="cta" fullWidth>
-              Book a Demo
+              Try for Free
             </PillLink>
             <PillLink to={content.advisorUrl} variant="outline" fullWidth>
               Talk to an Advisor
@@ -171,7 +171,7 @@ export default function OnboardingShell() {
           <MarketingContainer className={styles.stickyInner}>
             <p>Ready to modernise your results process?</p>
             <PillLink to={content.demoUrl} variant="cta">
-              Book a Demo
+              Try for Free
             </PillLink>
             <PillLink to={content.advisorUrl} variant="outline">
               Talk to an Advisor
