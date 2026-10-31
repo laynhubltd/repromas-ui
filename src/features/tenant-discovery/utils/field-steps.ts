@@ -59,3 +59,4 @@ export function getFirstStepWithError(fieldNames: string[]): number | null {
   }
   return minStep;
 }
+

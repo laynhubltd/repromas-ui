@@ -73,3 +73,4 @@ export function buildSignupFormData(
 
   return formData;
 }
+

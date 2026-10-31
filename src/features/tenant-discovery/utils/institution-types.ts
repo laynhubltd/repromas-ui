@@ -38,3 +38,4 @@ export const INSTITUTION_CATEGORIES: InstitutionCategory[] = [
   "Basic Education",
   "Other",
 ];
+
