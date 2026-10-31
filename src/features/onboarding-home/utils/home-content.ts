@@ -324,9 +324,10 @@ export const HOME_VERIFY_HEADING = {
 
 export const HOME_VERIFY_CARDS: VerifyCard[] = [
   {
-    title: "Try the Demo Institution",
-    text: "Get a login to the demo institution and run a score sheet all the way to a senate-approved broadsheet.",
-    linkLabel: "Request access →",
+    title: "Try It on Your Own Workspace",
+    text: "Create your institution's workspace in two minutes and run a score sheet all the way to a senate-approved broadsheet.",
+    linkLabel: "Try for free →",
+    href: "/tenant-signup",
   },
   {
     title: "Ask for Any Score's History",

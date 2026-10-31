@@ -20,7 +20,7 @@ export function VerifySection({ heading, cards, contactUrl }: VerifySectionProps
             <div key={card.title} className={styles.vcard}>
               <h3>{card.title}</h3>
               <p>{card.text}</p>
-              <Link to={contactUrl}>{card.linkLabel}</Link>
+              <Link to={card.href ?? contactUrl}>{card.linkLabel}</Link>
             </div>
           ))}
         </div>

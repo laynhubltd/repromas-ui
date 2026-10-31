@@ -1,17 +1,13 @@
 import { baseApi } from "@/app/api/baseApi";
-import type { TenantSignupRequest, TenantSignupResponse } from "../types";
+import type { TenantSignupResponse } from "../types";
 
 const tenantSignupApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    createTenant: builder.mutation<TenantSignupResponse, TenantSignupRequest>({
-      query: (body) => ({
+    createTenant: builder.mutation<TenantSignupResponse, FormData>({
+      query: (formData) => ({
         url: "/tenant-signup",
         method: "POST",
-        data: body,
-        headers: {
-          "Content-Type": "application/ld+json",
-          "Accept": "application/ld+json",
-        },
+        data: formData,
       }),
     }),
   }),

@@ -37,7 +37,9 @@ describe("marketing shell", () => {
     renderApex("/");
     const nav = screen.getByRole("navigation", { name: "Main" });
     expect(within(nav).queryByRole("link", { name: "Pricing" })).not.toBeInTheDocument();
-    expect(screen.getAllByRole("link", { name: "Book a Demo" }).length).toBeGreaterThan(0);
+    const tryForFreeLinks = screen.getAllByRole("link", { name: "Try for Free" });
+    expect(tryForFreeLinks.length).toBeGreaterThan(0);
+    expect(tryForFreeLinks[0]).toHaveAttribute("href", "/tenant-signup");
     expect(screen.getAllByRole("link", { name: "Talk to an Advisor" }).length).toBeGreaterThan(0);
   });
 

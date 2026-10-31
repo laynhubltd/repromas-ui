@@ -1,6 +1,6 @@
 /** Contact and conversion links for the public marketing site, shared by the shell and every page. */
 
-export const DEMO_BOOKING_URL = import.meta.env.VITE_DEMO_BOOKING_URL || "/contact";
+export const DEMO_BOOKING_URL = import.meta.env.VITE_DEMO_BOOKING_URL || "/tenant-signup";
 export const ADVISOR_URL = "/contact";
 
 /** Opens the contact form with "Pricing & quotation" already chosen. */

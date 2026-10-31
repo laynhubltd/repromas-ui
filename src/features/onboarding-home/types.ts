@@ -89,6 +89,7 @@ export type VerifyCard = {
   title: string;
   text: string;
   linkLabel: string;
+  href?: string;
 };
 
 export type Testimonial = {

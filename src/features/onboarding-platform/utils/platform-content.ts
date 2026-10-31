@@ -180,7 +180,7 @@ export const PLATFORM_CATEGORIES: PlatformCategory[] = [
       {
         title: "Student Records",
         icon: "matric-numbers",
-        text: "One record per student with matric number, programme, level, curriculum version and full academic history.",
+        text: "One record per student with matric number, programme, level, curriculum version and full semester-by-semester transcript history.",
       },
       {
         title: "Student Portal",
@@ -244,7 +244,7 @@ export const PLATFORM_CATEGORIES: PlatformCategory[] = [
       {
         title: "Verified Transcripts",
         icon: "result-broadsheet",
-        text: "One-click transcripts with QR verification for employers and universities, plus digitising historical records.",
+        text: "Public QR verification for employers and receiving universities, plus digitising historical paper archives onto the governed record.",
         rollingOut: "Rolling out 2026/27",
       },
     ],
