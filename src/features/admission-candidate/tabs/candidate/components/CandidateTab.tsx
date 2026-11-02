@@ -107,7 +107,6 @@ export function CandidateTab() {
     handleGenderFilterChange,
     handleStateFilterChange,
     handleEntryModeFilterChange,
-    handleSortChange,
     handlePageChange,
     handleTableChange,
     handleOpenCreate,

@@ -35,7 +35,6 @@ export function UserRolesPanel({ userId, open, onClose }: UserRolesPanelProps) {
   const { state, actions, flags } = useUserRolesPanel(userId);
   const {
     userRoles,
-    totalItems,
     isLoading,
     isError,
     assignModalOpen,

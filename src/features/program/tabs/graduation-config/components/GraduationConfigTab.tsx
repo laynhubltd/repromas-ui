@@ -135,7 +135,6 @@ export function GraduationConfigTab() {
   const {
     handleProgramFilterChange,
     handleCurriculumVersionFilterChange,
-    handleSortChange,
     handleTableChange,
     getPaginationConfig,
     handleOpenCreate,

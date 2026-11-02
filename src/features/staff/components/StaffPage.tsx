@@ -69,7 +69,6 @@ export function StaffPage() {
   const {
     handleFileNumberSearchChange,
     handleDepartmentFilterChange,
-    handleSortChange,
     handleTableChange,
     getPaginationConfig,
     handleOpenCreate,

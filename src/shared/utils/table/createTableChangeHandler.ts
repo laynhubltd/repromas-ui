@@ -5,7 +5,7 @@ import type {
   TableCurrentDataSource,
 } from "antd/es/table/interface";
 
-export interface TableChangeHandlerOptions<RecordType extends object> {
+export interface TableChangeHandlerOptions {
   onPageChange: (page: number, pageSize?: number) => void;
   onSortChange: (sort: string) => void;
   defaultSort?: string;
@@ -16,12 +16,12 @@ export interface TableChangeHandlerOptions<RecordType extends object> {
  * createTableChangeHandler — Reusable, strongly-typed Ant Design Table onChange handler
  * that properly separates pagination and sorting state changes.
  */
-export function createTableChangeHandler<RecordType extends object>({
+export function createTableChangeHandler<RecordType extends object = object>({
   onPageChange,
   onSortChange,
   defaultSort,
   isSortFieldAllowed,
-}: TableChangeHandlerOptions<RecordType>) {
+}: TableChangeHandlerOptions) {
   return (
     pagination: TablePaginationConfig,
     _filters: Record<string, FilterValue | null>,

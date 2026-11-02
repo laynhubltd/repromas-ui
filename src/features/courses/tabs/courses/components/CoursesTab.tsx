@@ -180,7 +180,6 @@ export function CoursesTab() {
     handleTitleSearchChange,
     handleDepartmentFilterChange,
     handleShowInactiveChange,
-    handleSortChange,
     handlePageChange,
     handleTableChange,
     getPaginationConfig,

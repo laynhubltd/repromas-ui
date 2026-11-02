@@ -92,7 +92,6 @@ export function StudentPage() {
     handleStatusFilterChange,
     handleEntryModeFilterChange,
     handleProgramFilterChange,
-    handleSortChange,
     handleTableChange,
     getPaginationConfig,
     handleOpenCreate,

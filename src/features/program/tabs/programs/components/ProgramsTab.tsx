@@ -239,7 +239,6 @@ export function ProgramsTab() {
     handleCodeSearchChange,
     handleDegreeTitleSearchChange,
     handleDepartmentFilterChange,
-    handleSortChange,
     handlePageChange,
     handleTableChange,
     getPaginationConfig,

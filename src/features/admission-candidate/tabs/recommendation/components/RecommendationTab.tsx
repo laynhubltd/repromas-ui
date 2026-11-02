@@ -70,7 +70,6 @@ export function RecommendationTab() {
     handleCycleChange,
     handleProgramChange,
     handleQuotaFilterChange,
-    handleSortChange,
     handlePageChange,
     handleTableChange,
     clearAllFilters,

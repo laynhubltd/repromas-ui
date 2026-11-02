@@ -73,11 +73,11 @@ export function LevelPanel({
   const handleTableChange = useMemo(
     () =>
       createTableChangeHandler<Level>({
-        onPageChange,
+        onPageChange: (p, ps) => onPageChange(p, ps ?? itemsPerPage),
         onSortChange,
         defaultSort: "rankOrder:asc",
       }),
-    [onPageChange, onSortChange],
+    [itemsPerPage, onPageChange, onSortChange],
   );
 
   const columns: ColumnsType<Level> = [
