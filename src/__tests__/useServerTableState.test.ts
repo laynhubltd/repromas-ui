@@ -178,4 +178,96 @@ describe("useServerTableState", () => {
       expect(config.showTotal?.(50, [1, 10])).toBe("1-10 of 50 items");
     });
   });
+
+  describe("Unified Table onChange handling (Ant Design Table)", () => {
+    it("updates only page when extra.action is paginate", () => {
+      const { result } = renderHook(() =>
+        useServerTableState({
+          initialPage: 1,
+          initialPageSize: 10,
+          defaultSort: "code:asc",
+          totalItems: 100,
+        }),
+      );
+
+      act(() => {
+        result.current.handleTableChange(
+          { current: 2, pageSize: 10 },
+          {},
+          {},
+          { action: "paginate", currentDataSource: [] },
+        );
+      });
+
+      expect(result.current.page).toBe(2);
+      expect(result.current.sort).toBe("code:asc");
+    });
+
+    it("resets page to 1 when extra.action is paginate and pageSize changes", () => {
+      const { result } = renderHook(() =>
+        useServerTableState({
+          initialPage: 3,
+          initialPageSize: 10,
+          totalItems: 100,
+        }),
+      );
+
+      act(() => {
+        result.current.handleTableChange(
+          { current: 3, pageSize: 20 },
+          {},
+          {},
+          { action: "paginate", currentDataSource: [] },
+        );
+      });
+
+      expect(result.current.page).toBe(1);
+      expect(result.current.pageSize).toBe(20);
+    });
+
+    it("updates sort and resets page to 1 when extra.action is sort", () => {
+      const { result } = renderHook(() =>
+        useServerTableState({
+          initialPage: 3,
+          initialPageSize: 10,
+          defaultSort: "code:asc",
+          totalItems: 100,
+        }),
+      );
+
+      act(() => {
+        result.current.handleTableChange(
+          { current: 3, pageSize: 10 },
+          {},
+          { columnKey: "title", order: "descend" },
+          { action: "sort", currentDataSource: [] },
+        );
+      });
+
+      expect(result.current.sort).toBe("title:desc");
+      expect(result.current.page).toBe(1);
+    });
+
+    it("reverts to defaultSort when extra.action is sort and order is cleared", () => {
+      const { result } = renderHook(() =>
+        useServerTableState({
+          initialPage: 2,
+          defaultSort: "code:asc",
+          totalItems: 100,
+        }),
+      );
+
+      act(() => {
+        result.current.handleTableChange(
+          { current: 2, pageSize: 10 },
+          {},
+          { columnKey: "title", order: undefined },
+          { action: "sort", currentDataSource: [] },
+        );
+      });
+
+      expect(result.current.sort).toBe("code:asc");
+      expect(result.current.page).toBe(1);
+    });
+  });
 });

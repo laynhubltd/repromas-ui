@@ -37,7 +37,6 @@ import {
   Typography,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import type { SorterResult } from "antd/es/table/interface";
 import { useState } from "react";
 import { useTransitionStatusTab } from "../hooks/useTransitionStatusTab";
 import type {
@@ -110,8 +109,8 @@ export function TransitionStatusTab() {
     handleManagedByFilterChange,
     handleIsDefaultFilterChange,
     handleClearFilters,
-    handleSortChange,
     handlePageChange,
+    handleTableChange,
     handleOpenCreate,
     handleOpenEdit,
     handleOpenDelete,
@@ -137,22 +136,6 @@ export function TransitionStatusTab() {
     statuses.length > 0
       ? `P: ${categoryBreakdown.POSITIVE ?? 0} · N: ${categoryBreakdown.NEGATIVE ?? 0} · Neutral: ${categoryBreakdown.NEUTRAL ?? 0}`
       : "—";
-
-  const handleTableChange = (
-    _: unknown,
-    __: unknown,
-    sorter: SorterResult<StudentTransitionStatus> | SorterResult<StudentTransitionStatus>[],
-  ) => {
-    const s = Array.isArray(sorter) ? sorter[0] : sorter;
-    if (!s.columnKey || !s.order) {
-      handleSortChange("name:asc");
-      return;
-    }
-    const field = String(s.columnKey);
-    if (isSortFieldAllowed(field)) {
-      handleSortChange(`${field}:${s.order === "ascend" ? "asc" : "desc"}`);
-    }
-  };
 
   const [sortField, sortOrder] = sort.split(":");
   const antSortOrder = (sortOrder === "asc" ? "ascend" : "descend") as

@@ -35,7 +35,6 @@ export function UserRolesPanel({ userId, open, onClose }: UserRolesPanelProps) {
   const { state, actions, flags } = useUserRolesPanel(userId);
   const {
     userRoles,
-    totalItems,
     isLoading,
     isError,
     assignModalOpen,
@@ -178,11 +177,14 @@ export function UserRolesPanel({ userId, open, onClose }: UserRolesPanelProps) {
                 columns={columns}
                 size="md"
                 density="comfortable"
-                pagination={{
-                  pageSize: 30,
-                  total: totalItems,
-                  showSizeChanger: false,
-                }}
+                pagination={
+                  userRoles.length > 30
+                    ? {
+                        pageSize: 30,
+                        showSizeChanger: false,
+                      }
+                    : false
+                }
               />
             </ConditionalRenderer>
           </DataLoader>

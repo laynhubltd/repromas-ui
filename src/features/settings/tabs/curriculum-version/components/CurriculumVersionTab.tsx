@@ -52,7 +52,7 @@ export function CurriculumVersionTab() {
     handleFilterChange,
     handleScopeFilterChange,
     handleActivate,
-    handleSortChange,
+    handleTableChange,
     setCreateModalOpen,
     setCloneTarget,
     setEditTarget,
@@ -201,7 +201,7 @@ export function CurriculumVersionTab() {
         size="md"
         density="comfortable"
         scroll={{ x: true }}
-        onChange={handleSortChange}
+        onChange={handleTableChange}
         pagination={
           totalItems > ITEMS_PER_PAGE
             ? {

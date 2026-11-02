@@ -29,7 +29,6 @@ import {
   Typography,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import type { SorterResult } from "antd/es/table/interface";
 import { useRecommendationTab } from "../hooks/useRecommendationTab";
 import type {
   AdmissionRecommendedCandidate,
@@ -71,8 +70,8 @@ export function RecommendationTab() {
     handleCycleChange,
     handleProgramChange,
     handleQuotaFilterChange,
-    handleSortChange,
     handlePageChange,
+    handleTableChange,
     clearAllFilters,
     handleOpenDrawer,
     handleCloseDrawer,
@@ -85,23 +84,6 @@ export function RecommendationTab() {
   const { hasData, isFilterActive, isDownloading } = flags;
 
   const cardState = isLoading ? "loading" : "default";
-
-  const handleTableChange = (
-    _: unknown,
-    __: unknown,
-    sorter:
-      | SorterResult<AdmissionRecommendedCandidate>
-      | SorterResult<AdmissionRecommendedCandidate>[],
-  ) => {
-    const s = Array.isArray(sorter) ? sorter[0] : sorter;
-    if (!s.columnKey || !s.order) {
-      handleSortChange("aggregateScore:desc");
-      return;
-    }
-    handleSortChange(
-      `${String(s.columnKey)}:${s.order === "ascend" ? "asc" : "desc"}`,
-    );
-  };
 
   const columns: ColumnsType<AdmissionRecommendedCandidate> = [
     {

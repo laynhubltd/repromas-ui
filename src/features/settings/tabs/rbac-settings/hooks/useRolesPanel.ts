@@ -1,6 +1,6 @@
 import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
-import type { SorterResult } from "antd/es/table/interface";
-import { useCallback, useState } from "react";
+import { createTableChangeHandler } from "@/shared/utils/table/createTableChangeHandler";
+import { useCallback, useMemo, useState } from "react";
 import { useGetRolesQuery } from "../api/rbacSettingsApi";
 import type { Role, RoleScope } from "../types/rbac";
 
@@ -47,15 +47,16 @@ export function useRolesPanel() {
   const roles = data?.member ?? [];
   const totalItems = data?.totalItems ?? 0;
 
-  const handleSortChange = useCallback(
-    (sorter: SorterResult<Role> | SorterResult<Role>[]) => {
-      const s = Array.isArray(sorter) ? sorter[0] : sorter;
-      if (!s.columnKey || !s.order) {
-        setSort("createdAt:desc");
-        return;
-      }
-      setSort(`${String(s.columnKey)}:${s.order === "ascend" ? "asc" : "desc"}`);
-    },
+  const handleTableChange = useMemo(
+    () =>
+      createTableChangeHandler<Role>({
+        onPageChange: (p) => setPage(p),
+        onSortChange: (newSort) => {
+          setSort(newSort);
+          setPage(1);
+        },
+        defaultSort: "createdAt:desc",
+      }),
     [],
   );
 
@@ -90,7 +91,7 @@ export function useRolesPanel() {
     actions: {
       handleSearchChange,
       handleScopeFilterChange,
-      handleSortChange,
+      handleTableChange,
       handleManagePermissions,
       clearAllFilters,
       closeDrawer,

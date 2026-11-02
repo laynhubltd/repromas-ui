@@ -1,6 +1,7 @@
 import { useApiError } from "@/shared/hooks/useApiError";
 import { RequestScreen } from "@/shared/types/error-ui";
 import { deriveSectionErrorMessage } from "@/shared/utils/error/deriveSectionErrorMessage";
+import { createTableChangeHandler } from "@/shared/utils/table/createTableChangeHandler";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   useGetTransitionStatusesQuery,
@@ -13,6 +14,7 @@ import type {
   StudentTransitionStatus,
   TransitionStatusListParams,
 } from "../types/student-transition-status";
+import { isSortFieldAllowed } from "../utils/sortFieldAllowlist";
 import { sortDisplayStatuses } from "../utils/sortDisplayStatuses";
 
 export function useTransitionStatusTab() {
@@ -159,6 +161,17 @@ export function useTransitionStatusTab() {
     setItemsPerPage(pageSize);
   }, []);
 
+  const handleTableChange = useMemo(
+    () =>
+      createTableChangeHandler<StudentTransitionStatus>({
+        onPageChange: (p, ps) => handlePageChange(p, ps ?? itemsPerPage),
+        onSortChange: handleSortChange,
+        defaultSort: "name:asc",
+        isSortFieldAllowed,
+      }),
+    [handlePageChange, handleSortChange, itemsPerPage],
+  );
+
   const handleOpenCreate = useCallback(() => {
     setFormTarget(null);
     setUsageCount(0);
@@ -258,6 +271,7 @@ export function useTransitionStatusTab() {
       handleClearFilters,
       handleSortChange,
       handlePageChange,
+      handleTableChange,
       handleOpenCreate,
       handleOpenEdit,
       handleOpenDelete,

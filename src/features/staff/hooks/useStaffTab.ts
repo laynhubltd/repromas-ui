@@ -27,6 +27,7 @@ export function useStaffTab() {
     sort,
     handlePageChange,
     handleSortChange,
+    handleTableChange,
     resetPage,
     getPaginationConfig,
   } = useServerTableState({
@@ -130,6 +131,7 @@ export function useStaffTab() {
       handleDepartmentFilterChange,
       handleSortChange,
       handlePageChange,
+      handleTableChange,
       getPaginationConfig,
       handleOpenCreate,
       handleOpenEdit,

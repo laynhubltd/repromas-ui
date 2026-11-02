@@ -43,7 +43,6 @@ import {
   Typography,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import type { SorterResult } from "antd/es/table/interface";
 import { useState } from "react";
 import { useStudentsTab } from "../hooks/useStudentsTab";
 import type { Student } from "../types/student";
@@ -93,7 +92,7 @@ export function StudentPage() {
     handleStatusFilterChange,
     handleEntryModeFilterChange,
     handleProgramFilterChange,
-    handleSortChange,
+    handleTableChange,
     getPaginationConfig,
     handleOpenCreate,
     handleOpenEdit,
@@ -238,21 +237,6 @@ export function StudentPage() {
       s.status?.toLowerCase().includes("active") ||
       s.status?.toLowerCase().includes("enrolled"),
   ).length;
-
-  const handleTableChange = (
-    _: unknown,
-    __: unknown,
-    sorter: SorterResult<Student> | SorterResult<Student>[],
-  ) => {
-    const s = Array.isArray(sorter) ? sorter[0] : sorter;
-    if (!s.columnKey || !s.order) {
-      handleSortChange("matricNumber:desc");
-      return;
-    }
-    handleSortChange(
-      `${String(s.columnKey)}:${s.order === "ascend" ? "asc" : "desc"}`,
-    );
-  };
 
   const columns: ColumnsType<Student> = [
     {

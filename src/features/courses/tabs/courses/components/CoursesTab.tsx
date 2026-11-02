@@ -38,7 +38,6 @@ import {
   Typography,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import type { SorterResult } from "antd/es/table/interface";
 import { useState } from "react";
 import { useCourseTab } from "../hooks/useCourseTab";
 import type { Course } from "../types/course";
@@ -181,8 +180,8 @@ export function CoursesTab() {
     handleTitleSearchChange,
     handleDepartmentFilterChange,
     handleShowInactiveChange,
-    handleSortChange,
     handlePageChange,
+    handleTableChange,
     getPaginationConfig,
     handleOpenCreate,
     handleOpenEdit,
@@ -233,19 +232,6 @@ export function CoursesTab() {
     { skip: !filterOpen && departmentId === undefined },
   );
   const departments = departmentsData?.member ?? [];
-
-  const handleTableChange = (
-    _: unknown,
-    __: unknown,
-    sorter: SorterResult<Course> | SorterResult<Course>[],
-  ) => {
-    const s = Array.isArray(sorter) ? sorter[0] : sorter;
-    if (!s.columnKey || !s.order) {
-      handleSortChange("code:asc");
-      return;
-    }
-    handleSortChange(`${String(s.columnKey)}:${s.order === "ascend" ? "asc" : "desc"}`);
-  };
 
   const flatColumns = buildColumns(handleOpenEdit, handleOpenDelete).filter(
     (col) => showDepartmentColumn || col.key !== "department",

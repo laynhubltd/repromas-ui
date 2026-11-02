@@ -51,7 +51,7 @@ export function RolesPanel() {
   const {
     handleSearchChange,
     handleScopeFilterChange,
-    handleSortChange,
+    handleTableChange,
     handleManagePermissions,
     clearAllFilters,
     closeDrawer,
@@ -290,7 +290,7 @@ export function RolesPanel() {
                   columns={columns}
                   size="md"
                   density="comfortable"
-                  onChange={(_pagination, _filters, sorter) => handleSortChange(sorter)}
+                  onChange={handleTableChange}
                   rowClassName={(record) =>
                     record.id === selectedRoleId ? "ant-table-row-selected" : ""
                   }

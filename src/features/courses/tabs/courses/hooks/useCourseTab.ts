@@ -116,6 +116,7 @@ export function useCourseTab() {
     sort,
     handlePageChange,
     handleSortChange,
+    handleTableChange,
     resetPage,
     getPaginationConfig,
   } = useServerTableState({
@@ -278,6 +279,7 @@ export function useCourseTab() {
       handleShowInactiveChange,
       handleSortChange,
       handlePageChange,
+      handleTableChange,
       getPaginationConfig,
       handleOpenCreate,
       handleOpenEdit,

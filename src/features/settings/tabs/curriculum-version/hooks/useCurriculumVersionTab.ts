@@ -2,8 +2,8 @@ import { useApiError } from "@/shared/hooks/useApiError";
 import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
 import { RequestScreen } from "@/shared/types/error-ui";
 import { deriveSectionErrorMessage } from "@/shared/utils/error/deriveSectionErrorMessage";
+import { createTableChangeHandler } from "@/shared/utils/table/createTableChangeHandler";
 import { notification } from "antd";
-import type { SorterResult } from "antd/es/table/interface";
 import { useCallback, useMemo, useState } from "react";
 import {
   useActivateCurriculumVersionMutation,
@@ -125,18 +125,18 @@ export function useCurriculumVersionTab() {
     }
   };
 
-  const handleSortChange = (
-    _: unknown,
-    __: unknown,
-    sorter: SorterResult<CurriculumVersion> | SorterResult<CurriculumVersion>[],
-  ) => {
-    const s = Array.isArray(sorter) ? sorter[0] : sorter;
-    if (!s.columnKey || !s.order) {
-      setSort("createdAt:desc");
-      return;
-    }
-    setSort(`${String(s.columnKey)}:${s.order === "ascend" ? "asc" : "desc"}`);
-  };
+  const handleTableChange = useMemo(
+    () =>
+      createTableChangeHandler<CurriculumVersion>({
+        onPageChange: (p) => setPage(p),
+        onSortChange: (newSort) => {
+          setSort(newSort);
+          setPage(1);
+        },
+        defaultSort: "createdAt:desc",
+      }),
+    [],
+  );
 
   return {
     state: {
@@ -160,7 +160,7 @@ export function useCurriculumVersionTab() {
       handleFilterChange,
       handleScopeFilterChange,
       handleActivate,
-      handleSortChange,
+      handleTableChange,
       setCreateModalOpen,
       setCloneTarget,
       setEditTarget,
