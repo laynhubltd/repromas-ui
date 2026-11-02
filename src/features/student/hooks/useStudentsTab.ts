@@ -57,6 +57,7 @@ export function useStudentsTab() {
     sort,
     handlePageChange,
     handleSortChange,
+    handleTableChange,
     resetPage,
     getPaginationConfig,
   } = useServerTableState({
@@ -209,6 +210,7 @@ export function useStudentsTab() {
       handleProgramFilterChange,
       handleSortChange,
       handlePageChange,
+      handleTableChange,
       getPaginationConfig,
       handleOpenCreate,
       handleOpenEdit,

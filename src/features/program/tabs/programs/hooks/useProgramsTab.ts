@@ -50,6 +50,7 @@ export function useProgramsTab() {
     sort,
     handlePageChange,
     handleSortChange,
+    handleTableChange,
     resetPage,
     getPaginationConfig,
   } = useServerTableState({
@@ -193,6 +194,7 @@ export function useProgramsTab() {
       handleDepartmentFilterChange,
       handleSortChange,
       handlePageChange,
+      handleTableChange,
       getPaginationConfig,
       handleOpenCreate,
       handleOpenEdit,

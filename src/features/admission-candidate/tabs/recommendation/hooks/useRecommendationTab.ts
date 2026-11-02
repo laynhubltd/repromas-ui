@@ -11,6 +11,7 @@ import {
 import { useApiError } from "@/shared/hooks/useApiError";
 import { RequestScreen } from "@/shared/types/error-ui";
 import { deriveSectionErrorMessage } from "@/shared/utils/error/deriveSectionErrorMessage";
+import { createTableChangeHandler } from "@/shared/utils/table/createTableChangeHandler";
 import { useCallback, useMemo, useReducer, useState } from "react";
 import { useStore } from "react-redux";
 import { useGetRecommendedCandidatesQuery, downloadRecommendedCandidates } from "../api/admissionRecommendedCandidateApi";
@@ -128,6 +129,16 @@ export function useRecommendationTab() {
     dispatch({ type: RecommendationPageActionType.SetPage, page });
   }, []);
 
+  const handleTableChange = useMemo(
+    () =>
+      createTableChangeHandler<AdmissionRecommendedCandidate>({
+        onPageChange: handlePageChange,
+        onSortChange: handleSortChange,
+        defaultSort: RECOMMENDATION_SORT_DEFAULT,
+      }),
+    [handlePageChange, handleSortChange],
+  );
+
   const clearAllFilters = useCallback(() => {
     dispatch({
       type: RecommendationPageActionType.SetProgramId,
@@ -210,6 +221,7 @@ export function useRecommendationTab() {
       handleQuotaFilterChange,
       handleSortChange,
       handlePageChange,
+      handleTableChange,
       clearAllFilters,
       handleOpenDrawer,
       handleCloseDrawer,

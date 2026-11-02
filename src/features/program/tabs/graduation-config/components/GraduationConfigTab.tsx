@@ -11,7 +11,6 @@ import { SkeletonRows } from "@/shared/ui/SkeletonRows";
 import { DeleteOutlined, EditOutlined, PlusOutlined } from "@ant-design/icons";
 import { Button, Col, Flex, Row, Select, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import type { SorterResult } from "antd/es/table/interface";
 import { useGraduationConfigTab } from "../hooks/useGraduationConfigTab";
 import type { ProgramGraduationRequirement } from "../types/graduation-requirement";
 import { DeleteGraduationRequirementModal } from "./modals/DeleteGraduationRequirementModal";
@@ -137,6 +136,7 @@ export function GraduationConfigTab() {
     handleProgramFilterChange,
     handleCurriculumVersionFilterChange,
     handleSortChange,
+    handleTableChange,
     getPaginationConfig,
     handleOpenCreate,
     handleOpenEdit,
@@ -163,21 +163,6 @@ export function GraduationConfigTab() {
         .map((r) => [r.curriculumVersionId, r.curriculumVersion!]),
     ).values(),
   ).map((v) => ({ value: v.id, label: v.name }));
-
-  const handleTableChange = (
-    _: unknown,
-    __: unknown,
-    sorter:
-      | SorterResult<ProgramGraduationRequirement>
-      | SorterResult<ProgramGraduationRequirement>[],
-  ) => {
-    const s = Array.isArray(sorter) ? sorter[0] : sorter;
-    if (!s.columnKey || !s.order) {
-      handleSortChange("createdAt:desc");
-      return;
-    }
-    handleSortChange(`${String(s.columnKey)}:${s.order === "ascend" ? "asc" : "desc"}`);
-  };
 
   const columns = buildColumns(programs, handleOpenEdit, handleOpenDelete);
 

@@ -1,7 +1,12 @@
 import type { TablePaginationConfig } from "antd";
+import type {
+  FilterValue,
+  SorterResult,
+  TableCurrentDataSource,
+} from "antd/es/table/interface";
 import { useCallback, useEffect, useState } from "react";
 
-export interface ServerTableStateOptions<TFilters extends Record<string, any> = Record<string, any>> {
+export interface ServerTableStateOptions<TFilters extends Record<string, unknown> = Record<string, unknown>> {
   /** Initial page number (default: 1) */
   initialPage?: number;
   /** Initial page size (default: 10) */
@@ -18,7 +23,7 @@ export interface ServerTableStateOptions<TFilters extends Record<string, any> = 
   totalItems?: number;
 }
 
-export interface UseServerTableStateResult<TFilters extends Record<string, any> = Record<string, any>> {
+export interface UseServerTableStateResult<TFilters extends Record<string, unknown> = Record<string, unknown>> {
   page: number;
   setPage: (page: number | ((prev: number) => number)) => void;
   resetPage: () => void;
@@ -29,6 +34,12 @@ export interface UseServerTableStateResult<TFilters extends Record<string, any> 
   updateSort: (newSort: string | undefined) => void;
   handleSortChange: (newSort: string | undefined) => void;
   handlePageChange: (newPage: number, newPageSize?: number) => void;
+  handleTableChange: <RecordType extends object = Record<string, unknown>>(
+    pagination: TablePaginationConfig,
+    filters: Record<string, FilterValue | null>,
+    sorter: SorterResult<RecordType> | SorterResult<RecordType>[],
+    extra: TableCurrentDataSource<RecordType>,
+  ) => void;
   filters: TFilters;
   updateFilters: (
     updater: Partial<TFilters> | ((prev: TFilters) => TFilters),
@@ -49,7 +60,7 @@ export interface UseServerTableStateResult<TFilters extends Record<string, any> 
  * 3. P3: Reactive page clamp — steps back when data shrinks due to single/bulk deletes or external mutations.
  * 4. P4: Standard Ant Design pagination configuration with `showTotal` and `showSizeChanger`.
  */
-export function useServerTableState<TFilters extends Record<string, any> = Record<string, any>>({
+export function useServerTableState<TFilters extends Record<string, unknown> = Record<string, unknown>>({
   initialPage = 1,
   initialPageSize,
   defaultPageSize = 10,
@@ -135,6 +146,40 @@ export function useServerTableState<TFilters extends Record<string, any> = Recor
     [page, pageSize, totalItems, handlePageChange],
   );
 
+  const handleTableChange = useCallback(
+    <RecordType extends object = Record<string, unknown>>(
+      pagination: TablePaginationConfig,
+      _filters: Record<string, FilterValue | null>,
+      sorter: SorterResult<RecordType> | SorterResult<RecordType>[],
+      extra: TableCurrentDataSource<RecordType>,
+    ) => {
+      if (extra?.action === "paginate") {
+        handlePageChange(pagination.current ?? 1, pagination.pageSize);
+        return;
+      }
+
+      if (extra?.action === "sort") {
+        const s = Array.isArray(sorter) ? sorter[0] : sorter;
+        if (!s || !s.columnKey || !s.order) {
+          updateSort(effectiveSort);
+          return;
+        }
+        updateSort(`${String(s.columnKey)}:${s.order === "ascend" ? "asc" : "desc"}`);
+        return;
+      }
+
+      // Defensive fallback for synthetic calls lacking extra.action
+      if (
+        !extra?.action &&
+        ((pagination.current !== undefined && pagination.current !== page) ||
+          (pagination.pageSize !== undefined && pagination.pageSize !== pageSize))
+      ) {
+        handlePageChange(pagination.current ?? 1, pagination.pageSize);
+      }
+    },
+    [handlePageChange, updateSort, effectiveSort, page, pageSize],
+  );
+
   return {
     page,
     setPage,
@@ -146,6 +191,7 @@ export function useServerTableState<TFilters extends Record<string, any> = Recor
     updateSort,
     handleSortChange: updateSort,
     handlePageChange,
+    handleTableChange,
     filters,
     updateFilters,
     resetFilters,

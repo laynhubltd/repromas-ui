@@ -22,6 +22,7 @@ export function useGraduationConfigTab() {
     sort,
     handlePageChange,
     handleSortChange,
+    handleTableChange,
     resetPage,
     getPaginationConfig,
   } = useServerTableState({
@@ -115,6 +116,7 @@ export function useGraduationConfigTab() {
       handleCurriculumVersionFilterChange,
       handleSortChange,
       handlePageChange,
+      handleTableChange,
       getPaginationConfig,
       handleOpenCreate,
       handleOpenEdit,

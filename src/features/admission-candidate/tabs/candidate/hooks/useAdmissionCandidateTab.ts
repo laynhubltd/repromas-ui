@@ -8,6 +8,7 @@ import {
   CANDIDATE_INGEST_ALLOWED_STATUSES,
 } from "@/shared/constants/admissionCandidateOptions";
 import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
+import { createTableChangeHandler } from "@/shared/utils/table/createTableChangeHandler";
 import { useCallback, useMemo, useReducer } from "react";
 import { useGetAdmissionCandidatesQuery } from "../api/admissionCandidateApi";
 import {
@@ -192,6 +193,16 @@ export function useAdmissionCandidateTab() {
     dispatch({ type: AdmissionCandidatePageActionType.SetPage, page });
   }, []);
 
+  const handleTableChange = useMemo(
+    () =>
+      createTableChangeHandler<AdmissionCandidate>({
+        onPageChange: handlePageChange,
+        onSortChange: handleSortChange,
+        defaultSort: ADMISSION_CANDIDATE_SORT_DEFAULT,
+      }),
+    [handlePageChange, handleSortChange],
+  );
+
   const handleOpenCreate = useCallback(() => {
     dispatch({
       type: AdmissionCandidatePageActionType.SetFormModalOpen,
@@ -339,6 +350,7 @@ export function useAdmissionCandidateTab() {
       handleEntryModeFilterChange,
       handleSortChange,
       handlePageChange,
+      handleTableChange,
       handleOpenCreate,
       handleCloseForm,
       handleCandidateCreated,
