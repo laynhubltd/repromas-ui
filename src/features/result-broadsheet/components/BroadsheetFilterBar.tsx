@@ -44,6 +44,13 @@ export interface BroadsheetFilterBarProps {
   curriculumVersionId?: number;
   visibleCourseCodes?: string[];
   cellMode?: BroadsheetCellMode;
+  scope?: "ACTIVE" | "TERMINAL" | "EXEMPT" | "ALL";
+  isSpillover?: boolean;
+  spilloverYear?: number;
+  isRepeated?: boolean;
+  status?: string;
+  totalCohortCount?: number;
+  filteredCount?: number;
   courses: BroadsheetCourseColumn[];
   sessions: AcademicSession[];
   semesterTypes: SemesterType[];
@@ -58,6 +65,10 @@ export interface BroadsheetFilterBarProps {
   onProgramChange: (id: number | undefined) => void;
   onLevelChange: (id: number | undefined) => void;
   onCurriculumVersionChange: (id: number | undefined) => void;
+  onScopeChange?: (scope: "ACTIVE" | "TERMINAL" | "EXEMPT" | "ALL" | undefined) => void;
+  onSpilloverFilterChange?: (isSpillover: boolean | undefined, spilloverYear: number | undefined) => void;
+  onIsRepeatedChange?: (isRepeated: boolean | undefined) => void;
+  onResetCohortFilters?: () => void;
   onVisibleCourseCodesChange: (codes: string[] | undefined) => void;
   onCellModeChange?: (mode: BroadsheetCellMode) => void;
   onRefresh: () => void;
@@ -72,6 +83,13 @@ export function BroadsheetFilterBar({
   curriculumVersionId,
   visibleCourseCodes,
   cellMode = "score-gp-np",
+  scope,
+  isSpillover,
+  spilloverYear,
+  isRepeated,
+  status,
+  totalCohortCount,
+  filteredCount,
   courses,
   sessions,
   semesterTypes,
@@ -86,6 +104,10 @@ export function BroadsheetFilterBar({
   onProgramChange,
   onLevelChange,
   onCurriculumVersionChange,
+  onScopeChange,
+  onSpilloverFilterChange,
+  onIsRepeatedChange,
+  onResetCohortFilters,
   onVisibleCourseCodesChange,
   onCellModeChange,
   onRefresh,
@@ -271,6 +293,66 @@ export function BroadsheetFilterBar({
             </div>
           )}
         </Flex>
+
+        {/* Row 4: Optional Cohort Status & Spillover Filtering */}
+        <Flex gap={8}>
+          <div style={{ flex: "1 1 50%" }}>
+            <Typography.Text style={{ fontSize: token.fontSizeSM - 1, display: "block", marginBottom: 4, fontWeight: 500 }}>
+              Cohort Scope
+            </Typography.Text>
+            <Select
+              placeholder="All Active Students"
+              allowClear
+              value={scope}
+              onChange={(val) => onScopeChange?.(val)}
+              style={{ width: "100%" }}
+              options={[
+                { value: "ACTIVE", label: "Active Cohort" },
+                { value: "TERMINAL", label: "Terminal / Graduated" },
+                { value: "ALL", label: "All Records" },
+              ]}
+            />
+          </div>
+
+          <div style={{ flex: "1 1 50%" }}>
+            <Typography.Text style={{ fontSize: token.fontSizeSM - 1, display: "block", marginBottom: 4, fontWeight: 500 }}>
+              Tenure / Spillover
+            </Typography.Text>
+            <Select
+              placeholder="All Students"
+              allowClear
+              value={
+                isSpillover === false
+                  ? "regular"
+                  : isSpillover === true && spilloverYear !== undefined
+                  ? `spillover_${spilloverYear}`
+                  : isSpillover === true
+                  ? "spillover_any"
+                  : undefined
+              }
+              onChange={(val) => {
+                if (!val) {
+                  onSpilloverFilterChange?.(undefined, undefined);
+                } else if (val === "regular") {
+                  onSpilloverFilterChange?.(false, undefined);
+                } else if (val === "spillover_any") {
+                  onSpilloverFilterChange?.(true, undefined);
+                } else if (val === "spillover_1") {
+                  onSpilloverFilterChange?.(true, 1);
+                } else if (val === "spillover_2") {
+                  onSpilloverFilterChange?.(true, 2);
+                }
+              }}
+              style={{ width: "100%" }}
+              options={[
+                { value: "regular", label: "Regular Finalists Only" },
+                { value: "spillover_any", label: "All Spillover Students" },
+                { value: "spillover_1", label: "Spillover 1 Only" },
+                { value: "spillover_2", label: "Spillover 2 Only" },
+              ]}
+            />
+          </div>
+        </Flex>
       </Flex>
 
       <Divider style={{ margin: "14px 0 10px 0" }} />
@@ -280,9 +362,16 @@ export function BroadsheetFilterBar({
         <Typography.Text type="secondary" style={{ fontSize: token.fontSizeSM - 1 }}>
           {isScopeComplete ? "Ready to view broadsheet" : "All 4 parameters required"}
         </Typography.Text>
-        <Button size="small" type="primary" onClick={() => setIsPopoverOpen(false)}>
-          Done
-        </Button>
+        <Flex gap={8} align="center">
+          {(scope || isSpillover !== undefined || spilloverYear !== undefined || isRepeated !== undefined) && (
+            <Button size="small" onClick={onResetCohortFilters}>
+              Reset Filters
+            </Button>
+          )}
+          <Button size="small" type="primary" onClick={() => setIsPopoverOpen(false)}>
+            Done
+          </Button>
+        </Flex>
       </Flex>
     </div>
   );
@@ -387,42 +476,61 @@ export function BroadsheetFilterBar({
         justify="space-between"
         style={{ width: "100%", minWidth: 0 }}
       >
-        {/* Left: Unified Scope Trigger Button with Popover */}
-        <Popover
-          content={popoverContent}
-          trigger="click"
-          placement="bottomLeft"
-          open={isPopoverOpen}
-          onOpenChange={setIsPopoverOpen}
-        >
-          <Button
-            icon={<BookOutlined style={{ color: isScopeComplete ? token.colorPrimary : token.colorWarning }} />}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              maxWidth: "100%",
-              minWidth: 260,
-              textAlign: "left",
-              padding: "4px 10px",
-              borderColor: isScopeComplete ? token.colorBorder : token.colorWarningBorder,
-              background: isScopeComplete ? token.colorBgContainer : token.colorWarningBg,
-            }}
+        {/* Left: Unified Scope Trigger Button with Popover and Active Filters */}
+        <Flex align="center" gap={8} style={{ minWidth: 0, overflow: "hidden" }}>
+          <Popover
+            content={popoverContent}
+            trigger="click"
+            placement="bottomLeft"
+            open={isPopoverOpen}
+            onOpenChange={setIsPopoverOpen}
           >
-            <span
+            <Button
+              icon={<BookOutlined style={{ color: isScopeComplete ? token.colorPrimary : token.colorWarning }} />}
               style={{
-                flex: "1 1 auto",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-                fontSize: token.fontSizeSM,
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                maxWidth: "100%",
+                minWidth: 260,
+                textAlign: "left",
+                padding: "4px 10px",
+                borderColor: isScopeComplete ? token.colorBorder : token.colorWarningBorder,
+                background: isScopeComplete ? token.colorBgContainer : token.colorWarningBg,
               }}
             >
-              {scopeSummaryText}
-            </span>
-            <DownOutlined style={{ fontSize: 10, color: token.colorTextSecondary, marginLeft: 4 }} />
-          </Button>
-        </Popover>
+              <span
+                style={{
+                  flex: "1 1 auto",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  fontSize: token.fontSizeSM,
+                }}
+              >
+                {scopeSummaryText}
+              </span>
+              <DownOutlined style={{ fontSize: 10, color: token.colorTextSecondary, marginLeft: 4 }} />
+            </Button>
+          </Popover>
+
+          {Boolean(scope || isSpillover !== undefined || isRepeated !== undefined) && (
+            <Tag
+              color="purple"
+              closable={Boolean(onResetCohortFilters)}
+              onClose={onResetCohortFilters}
+              style={{ margin: 0, fontSize: token.fontSizeSM - 1 }}
+            >
+              {isSpillover ? (spilloverYear ? `Spillover ${spilloverYear}` : "Spillover") : isSpillover === false ? "Regular" : "Filtered"}
+            </Tag>
+          )}
+
+          {totalCohortCount !== undefined && filteredCount !== undefined && totalCohortCount !== filteredCount && (
+            <Tag color="blue" style={{ margin: 0, fontSize: token.fontSizeSM - 1 }}>
+              {filteredCount} of {totalCohortCount}
+            </Tag>
+          )}
+        </Flex>
 
         {/* Right: Settings Popover, Refresh, and Export Controls */}
         <Flex

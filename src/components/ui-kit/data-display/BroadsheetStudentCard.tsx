@@ -129,7 +129,29 @@ export function BroadsheetStudentCard<RecordType extends object = BroadsheetRowB
               {renderHighlightedText(matricNo, searchQuery)}
             </Typography.Text>
           </div>
-          {renderedStandingBadge}
+          <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
+            {renderedStandingBadge}
+            {summary?.isSpillover && (
+              <Tag color="orange" style={{ margin: 0, fontWeight: 600, fontSize: 10, lineHeight: "16px", padding: "0 4px" }}>
+                {summary.spilloverLabel || `Spillover ${summary.spilloverYear || 1}`}
+              </Tag>
+            )}
+            {summary?.isRepeated && (
+              <Tag color="magenta" style={{ margin: 0, fontWeight: 600, fontSize: 10, lineHeight: "16px", padding: "0 4px" }}>
+                Repeat{summary.repeatCount && summary.repeatCount > 1 ? ` ${summary.repeatCount}` : ""}
+              </Tag>
+            )}
+            {summary?.isGraduated && (
+              <Tag color="cyan" style={{ margin: 0, fontWeight: 600, fontSize: 10, lineHeight: "16px", padding: "0 4px" }}>
+                Graduated
+              </Tag>
+            )}
+            {summary?.isManualOverride && (
+              <Tag color="purple" style={{ margin: 0, fontWeight: 600, fontSize: 10, lineHeight: "16px", padding: "0 4px" }}>
+                Override
+              </Tag>
+            )}
+          </div>
         </div>
 
         {(showStudentName || Boolean(student.fullName)) && (

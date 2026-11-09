@@ -35,6 +35,11 @@ export function useBroadsheetFilters() {
   const [programId, setProgramId] = useState<number | undefined>(undefined);
   const [levelId, setLevelId] = useState<number | undefined>(undefined);
   const [curriculumVersionId, setCurriculumVersionId] = useState<number | undefined>(undefined);
+  const [scope, setScope] = useState<"ACTIVE" | "TERMINAL" | "EXEMPT" | "ALL" | undefined>(undefined);
+  const [isSpillover, setIsSpillover] = useState<boolean | undefined>(undefined);
+  const [spilloverYear, setSpilloverYear] = useState<number | undefined>(undefined);
+  const [isRepeated, setIsRepeated] = useState<boolean | undefined>(undefined);
+  const [status, setStatus] = useState<string | undefined>(undefined);
 
   // Queries for filter dropdowns
   const { data: sessionsData, isLoading: isSessionsLoading } = useGetAcademicSessionsQuery({
@@ -90,7 +95,7 @@ export function useBroadsheetFilters() {
   }, [explicitSemesterTypeId, semesterTypes]);
 
   // Cohort key tracking: Pure derivation of visibleCourseCodes without effect cascades
-  const cohortKey = `${sessionId ?? ""}:${semesterTypeId ?? ""}:${programId ?? ""}:${levelId ?? ""}:${curriculumVersionId ?? ""}`;
+  const cohortKey = `${sessionId ?? ""}:${semesterTypeId ?? ""}:${programId ?? ""}:${levelId ?? ""}:${curriculumVersionId ?? ""}:${scope ?? ""}:${isSpillover ?? ""}:${spilloverYear ?? ""}:${isRepeated ?? ""}:${status ?? ""}`;
 
   const [courseVisibilityState, setCourseVisibilityState] = useState<{
     cohortKey: string;
@@ -115,6 +120,14 @@ export function useBroadsheetFilters() {
     setCurriculumVersionId(undefined);
   }, []);
 
+  const resetCohortFilters = useCallback(() => {
+    setScope(undefined);
+    setIsSpillover(undefined);
+    setSpilloverYear(undefined);
+    setIsRepeated(undefined);
+    setStatus(undefined);
+  }, []);
+
   const isFilterComplete = Boolean(programId && levelId && sessionId && semesterTypeId);
 
   const filterParams: BroadsheetFilterParams | null = useMemo(() => {
@@ -125,8 +138,25 @@ export function useBroadsheetFilters() {
       sessionId,
       semesterTypeId,
       curriculumVersionId,
+      ...(scope ? { scope } : {}),
+      ...(isSpillover !== undefined ? { isSpillover } : {}),
+      ...(spilloverYear !== undefined ? { spilloverYear } : {}),
+      ...(isRepeated !== undefined ? { isRepeated } : {}),
+      ...(status ? { status } : {}),
     };
-  }, [isFilterComplete, programId, levelId, sessionId, semesterTypeId, curriculumVersionId]);
+  }, [
+    isFilterComplete,
+    programId,
+    levelId,
+    sessionId,
+    semesterTypeId,
+    curriculumVersionId,
+    scope,
+    isSpillover,
+    spilloverYear,
+    isRepeated,
+    status,
+  ]);
 
   return {
     state: {
@@ -135,6 +165,14 @@ export function useBroadsheetFilters() {
       programId,
       levelId,
       curriculumVersionId,
+      scope,
+      isSpillover,
+      spilloverYear,
+      isRepeated,
+      status,
+      hasCohortFilters: Boolean(
+        scope || isSpillover !== undefined || spilloverYear !== undefined || isRepeated !== undefined || status,
+      ),
       visibleCourseCodes,
       isFilterComplete,
       cohortKey,
@@ -159,6 +197,12 @@ export function useBroadsheetFilters() {
       setProgramId: handleProgramChange,
       setLevelId,
       setCurriculumVersionId,
+      setScope,
+      setIsSpillover,
+      setSpilloverYear,
+      setIsRepeated,
+      setStatus,
+      resetCohortFilters,
       setVisibleCourseCodes,
     },
   };

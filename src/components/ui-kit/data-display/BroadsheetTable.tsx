@@ -1,5 +1,5 @@
 import { AppstoreOutlined, SearchOutlined, TableOutlined } from "@ant-design/icons";
-import { Button, Empty, Input, Segmented, Typography, theme } from "antd";
+import { Button, Empty, Input, Segmented, Tag, Typography, theme } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { useIsMobile } from "@/hooks/useBreakpoint";
@@ -55,6 +55,13 @@ export interface BroadsheetSummaryValue {
   academicStandingCategory?: "POSITIVE" | "NEGATIVE" | "NEUTRAL" | string;
   carryoverCourses?: string[];
   unclearedCarryovers?: string[];
+  isSpillover?: boolean;
+  spilloverYear?: number;
+  spilloverLabel?: string | null;
+  isRepeated?: boolean;
+  repeatCount?: number;
+  isGraduated?: boolean;
+  isManualOverride?: boolean;
 }
 
 export interface BroadsheetRowBase {
@@ -686,8 +693,28 @@ export function BroadsheetTable<RecordType extends object = BroadsheetRowBase>({
           const carryovers = s?.unclearedCarryovers ?? s?.carryoverCourses ?? [];
 
           return (
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
               <span style={{ whiteSpace: "nowrap" }}>{standingText}</span>
+              {s?.isSpillover && (
+                <Tag color="orange" style={{ margin: 0, fontSize: 10, lineHeight: "16px", padding: "0 4px" }}>
+                  {s.spilloverLabel || `Spillover ${s.spilloverYear || 1}`}
+                </Tag>
+              )}
+              {s?.isRepeated && (
+                <Tag color="magenta" style={{ margin: 0, fontSize: 10, lineHeight: "16px", padding: "0 4px" }}>
+                  Repeat{s.repeatCount && s.repeatCount > 1 ? ` ${s.repeatCount}` : ""}
+                </Tag>
+              )}
+              {s?.isGraduated && (
+                <Tag color="cyan" style={{ margin: 0, fontSize: 10, lineHeight: "16px", padding: "0 4px" }}>
+                  Graduated
+                </Tag>
+              )}
+              {s?.isManualOverride && (
+                <Tag color="purple" style={{ margin: 0, fontSize: 10, lineHeight: "16px", padding: "0 4px" }}>
+                  Override
+                </Tag>
+              )}
               {carryovers.length > 0 && (
                 <div style={{ display: "inline-flex", flexWrap: "nowrap", gap: 3 }}>
                   {carryovers.map((code) => (

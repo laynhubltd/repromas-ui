@@ -1,6 +1,8 @@
 import { useToken } from "@/shared/hooks/useToken";
 import {
+  AuditOutlined,
   CheckCircleOutlined,
+  ClockCircleOutlined,
   EditOutlined,
   RiseOutlined,
   TeamOutlined,
@@ -28,6 +30,9 @@ export function BroadsheetMetricsRow({
   const probationCount = statistics?.probationCount ?? 0;
   const repeatCount = statistics?.repeatCount ?? 0;
   const withdrawnCount = statistics?.withdrawnCount ?? 0;
+  const spillOverCount = statistics?.spillOverCount ?? 0;
+  const spilloverBreakdown = statistics?.spilloverBreakdown ?? [];
+  const graduatedCount = statistics?.graduatedCount ?? 0;
   const successRate = statistics?.successRate ?? 0;
 
   const atRiskTotal = probationCount + repeatCount + withdrawnCount;
@@ -156,9 +161,64 @@ export function BroadsheetMetricsRow({
           </Flex>
         </Tooltip>
 
+        {/* 5. Spillover */}
+        {spillOverCount > 0 && (
+          <>
+            <Divider type="vertical" style={{ margin: 0 }} />
+            <Tooltip
+              title={
+                spilloverBreakdown.length > 0 ? (
+                  <div>
+                    <div style={{ fontWeight: 600, marginBottom: 4 }}>Spillover Breakdown:</div>
+                    {spilloverBreakdown.map((sb) => (
+                      <div key={sb.spilloverYear}>
+                        {sb.label}: {sb.count}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  `Spillover candidates: ${spillOverCount}`
+                )
+              }
+            >
+              <Flex align="center" gap={token.marginXS} style={{ cursor: "pointer" }}>
+                <ClockCircleOutlined style={{ color: token.colorWarning, fontSize: 13 }} />
+                <Typography.Text type="secondary" style={{ fontSize: token.fontSizeSM }}>
+                  Spillover:
+                </Typography.Text>
+                <Typography.Text
+                  strong
+                  style={{ fontSize: token.fontSize, color: token.colorWarningText }}
+                >
+                  {spillOverCount}
+                </Typography.Text>
+              </Flex>
+            </Tooltip>
+          </>
+        )}
+
+        {/* 6. Graduated */}
+        {graduatedCount > 0 && (
+          <>
+            <Divider type="vertical" style={{ margin: 0 }} />
+            <Flex align="center" gap={token.marginXS}>
+              <AuditOutlined style={{ color: token.colorInfo, fontSize: 13 }} />
+              <Typography.Text type="secondary" style={{ fontSize: token.fontSizeSM }}>
+                Graduated:
+              </Typography.Text>
+              <Typography.Text
+                strong
+                style={{ fontSize: token.fontSize, color: token.colorInfo }}
+              >
+                {graduatedCount}
+              </Typography.Text>
+            </Flex>
+          </>
+        )}
+
         <Divider type="vertical" style={{ margin: 0 }} />
 
-        {/* 5. Success Rate */}
+        {/* 7. Success Rate */}
         <Flex align="center" gap={token.marginXS}>
           <RiseOutlined style={{ color: token.colorPrimary, fontSize: 13 }} />
           <Typography.Text type="secondary" style={{ fontSize: token.fontSizeSM }}>
