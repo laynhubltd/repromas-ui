@@ -87,7 +87,6 @@ export function BroadsheetFilterBar({
   isSpillover,
   spilloverYear,
   isRepeated,
-  status,
   totalCohortCount,
   filteredCount,
   courses,
@@ -353,6 +352,34 @@ export function BroadsheetFilterBar({
             />
           </div>
         </Flex>
+
+        {/* Row 5: Repeat Filter */}
+        {onIsRepeatedChange && (
+          <div>
+            <Typography.Text style={{ fontSize: token.fontSizeSM - 1, display: "block", marginBottom: 4, fontWeight: 500 }}>
+              Repeat Status
+            </Typography.Text>
+            <Select
+              placeholder="All Students"
+              allowClear
+              value={isRepeated === undefined ? undefined : isRepeated ? "repeated" : "non_repeated"}
+              onChange={(val) => {
+                if (!val) {
+                  onIsRepeatedChange(undefined);
+                } else if (val === "repeated") {
+                  onIsRepeatedChange(true);
+                } else {
+                  onIsRepeatedChange(false);
+                }
+              }}
+              style={{ width: "100%" }}
+              options={[
+                { value: "repeated", label: "Repeated Students Only" },
+                { value: "non_repeated", label: "First-Attempt Students" },
+              ]}
+            />
+          </div>
+        )}
       </Flex>
 
       <Divider style={{ margin: "14px 0 10px 0" }} />
