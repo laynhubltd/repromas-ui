@@ -170,6 +170,13 @@ export function ResultBroadsheetPage() {
           curriculumVersionId={filterState.curriculumVersionId}
           visibleCourseCodes={filterState.visibleCourseCodes}
           cellMode={cellMode}
+          scope={filterState.scope}
+          isSpillover={filterState.isSpillover}
+          spilloverYear={filterState.spilloverYear}
+          isRepeated={filterState.isRepeated}
+          status={filterState.status}
+          totalCohortCount={reportState.meta?.totalCohortCount}
+          filteredCount={reportState.meta?.filteredCount}
           courses={reportState.courses}
           sessions={filterData.sessions}
           semesterTypes={filterData.semesterTypes}
@@ -184,6 +191,13 @@ export function ResultBroadsheetPage() {
           onProgramChange={filterActions.setProgramId}
           onLevelChange={filterActions.setLevelId}
           onCurriculumVersionChange={filterActions.setCurriculumVersionId}
+          onScopeChange={filterActions.setScope}
+          onSpilloverFilterChange={(isSp, spYr) => {
+            filterActions.setIsSpillover(isSp);
+            filterActions.setSpilloverYear(spYr);
+          }}
+          onIsRepeatedChange={filterActions.setIsRepeated}
+          onResetCohortFilters={filterActions.resetCohortFilters}
           onVisibleCourseCodesChange={filterActions.setVisibleCourseCodes}
           onCellModeChange={handleCellModeChange}
           onRefresh={reportActions.refetch}

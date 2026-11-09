@@ -42,6 +42,13 @@ export function CohortStatisticsCards({ statistics }: CohortStatisticsCardsProps
                 {passed}
               </span>
             </Descriptions.Item>
+            {Boolean(statistics.graduatedCount) && (
+              <Descriptions.Item label="Graduated Students">
+                <span style={{ fontVariantNumeric: "tabular-nums", color: "#13c2c2", fontWeight: 600 }}>
+                  {statistics.graduatedCount}
+                </span>
+              </Descriptions.Item>
+            )}
             <Descriptions.Item label="Failed / Below Standard">
               <span style={{ fontVariantNumeric: "tabular-nums", color: "#ff4d4f" }}>
                 {failed}
@@ -75,6 +82,11 @@ export function CohortStatisticsCards({ statistics }: CohortStatisticsCardsProps
             <Descriptions.Item label="Spillover Count">
               <span style={{ fontVariantNumeric: "tabular-nums" }}>
                 {statistics.spillOverCount}
+                {statistics.spilloverBreakdown && statistics.spilloverBreakdown.length > 0 && (
+                  <span style={{ color: "#8c8c8c", marginLeft: 8, fontSize: 12 }}>
+                    ({statistics.spilloverBreakdown.map((b) => `${b.label}: ${b.count}`).join(", ")})
+                  </span>
+                )}
               </span>
             </Descriptions.Item>
             <Descriptions.Item label="With Carryovers / Clear">

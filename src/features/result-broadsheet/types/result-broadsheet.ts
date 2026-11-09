@@ -12,6 +12,9 @@ export interface BroadsheetMeta {
   semesterTypeName?: string;
   totalRegisteredStudents?: number;
   generatedAt?: string;
+  appliedFilters?: Record<string, unknown> | null;
+  totalCohortCount?: number;
+  filteredCount?: number;
 }
 
 export interface BroadsheetCourseColumn {
@@ -51,8 +54,19 @@ export interface BroadsheetRowSummary {
   totalEarnedUnits?: number;
   remark: string;
   academicStanding?: string;
+  standingCategory?: "POSITIVE" | "NEGATIVE" | "NEUTRAL" | string;
   carryoverCourses?: string[];
   unclearedCarryovers?: string[];
+  isSpillover?: boolean;
+  spilloverYear?: number;
+  spilloverLabel?: string | null;
+  isRepeated?: boolean;
+  repeatCount?: number;
+  isGraduated?: boolean;
+  periodStatusId?: number | null;
+  periodStatusName?: string | null;
+  periodTransitionReason?: string | null;
+  isManualOverride?: boolean;
 }
 
 export interface BroadsheetRow {
@@ -73,6 +87,12 @@ export interface GradeDistributionItem {
   unknownCount?: number;
 }
 
+export interface SpilloverBreakdownItem {
+  spilloverYear: number;
+  label: string;
+  count: number;
+}
+
 export interface CohortStatistics {
   totalStudents?: number;
   totalRegistered: number;
@@ -88,6 +108,8 @@ export interface CohortStatistics {
   withoutCarryoverCount: number;
   cgpaAboveThresholdCount: number;
   successRate: number;
+  graduatedCount?: number;
+  spilloverBreakdown?: SpilloverBreakdownItem[];
 }
 
 export interface SpecialHighlight {
@@ -130,6 +152,14 @@ export interface BroadsheetFilterParams {
   semesterTypeId?: number;
   semesterId?: number;
   curriculumVersionId?: number;
+  scope?: "ACTIVE" | "TERMINAL" | "EXEMPT" | "ALL";
+  status?: string;
+  statusId?: number;
+  transitionReason?: string;
+  isSpillover?: boolean;
+  spilloverYear?: number;
+  isRepeated?: boolean;
+  projectedStanding?: string;
 }
 
 export type BroadsheetSourceType = "LIVE" | "SNAPSHOT";
