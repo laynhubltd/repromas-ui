@@ -87,7 +87,7 @@ export function AssignmentPanel() {
     return {
       value: cycle.id,
       disabled: !isEligible,
-      label: isEligible ? cycle.name : `${cycle.name} — lane not configured`,
+      label: isEligible ? cycle.name : `${cycle.name} — entry mode not configured`,
     };
   });
 
@@ -224,12 +224,14 @@ export function AssignmentPanel() {
       },
     },
     {
-      title: "Effective lane resolution",
+      title: "Effective entry mode resolution",
       key: "effectiveResolution",
       render: (_, record) => {
         const lanes = record.entryModes ?? [];
         if (lanes.length === 0) {
-          return <Typography.Text type="secondary">No lanes</Typography.Text>;
+          return (
+            <Typography.Text type="secondary">No entry modes</Typography.Text>
+          );
         }
 
         return (
@@ -501,8 +503,8 @@ export function AssignmentPanel() {
         destroyOnHidden
         title={
           previewTarget
-            ? `Lane Runtime Preview — ${previewTarget.cycleName} (${getCandidateEntryModeLabel(previewTarget.entryMode)})`
-            : "Lane Runtime Preview"
+            ? `Entry Mode Runtime Preview — ${previewTarget.cycleName} (${getCandidateEntryModeLabel(previewTarget.entryMode)})`
+            : "Entry Mode Runtime Preview"
         }
       >
         <DataLoader
@@ -512,7 +514,7 @@ export function AssignmentPanel() {
           <ConditionalRenderer when={Boolean(previewErrorMessage)}>
             <ErrorAlert
               variant="section"
-              error={previewErrorMessage ?? "No form resolved for this lane."}
+              error={previewErrorMessage ?? "No form resolved for this entry mode."}
             />
           </ConditionalRenderer>
           <ConditionalRenderer

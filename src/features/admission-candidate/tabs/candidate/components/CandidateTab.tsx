@@ -378,7 +378,7 @@ export function CandidateTab() {
       <ExplainerCallout
         intent="info"
         title="Admission Candidates"
-        body="Import and manage UTME, Direct Entry, and Transfer candidates for an admission cycle. Use bulk upload for CAPS spreadsheets or create a single candidate in any configured lane. Offer and matriculate from the row menu or detail drawer."
+        body="Import and manage UTME, Direct Entry, and Transfer candidates for an admission cycle. Use bulk upload for CAPS spreadsheets or create a single candidate in any configured entry mode. Offer and matriculate from the row menu or detail drawer."
         dismissible
         collapsible
       />

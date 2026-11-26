@@ -21,6 +21,10 @@ export const passwordRules: Rule[] = [
   },
 ];
 
+export const loginPasswordRules: Rule[] = [
+  { required: true, message: "Please enter your password" },
+];
+
 export const confirmPasswordRules = (getPassword: () => unknown): Rule[] => [
   { required: true, message: "Please confirm your password" },
   {

@@ -16,7 +16,7 @@ export const entryModesRules: Rule[] = [
     validator: (_, value: AdmissionCycleLaneConfig[] | undefined) => {
       if (!Array.isArray(value) || value.length < 1) {
         return Promise.reject(
-          new Error("Select at least one entry mode lane for this cycle."),
+          new Error("Select at least one entry mode for this cycle."),
         );
       }
 

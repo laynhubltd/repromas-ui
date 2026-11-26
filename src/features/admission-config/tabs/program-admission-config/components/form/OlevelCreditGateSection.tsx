@@ -36,7 +36,7 @@ export function OlevelCreditGateSection({
                 type="secondary"
                 style={{ display: "block", marginBottom: 12 }}
               >
-                Applied before program O-Level subject rules on the Direct Entry lane.
+                Applied before program O-Level subject rules on the Direct Entry mode.
               </Typography.Text>
 
               <Form.Item

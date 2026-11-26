@@ -66,7 +66,7 @@ export const formatLaneLabel = formatEntryBatchLabel;
 export function formatCycleLanesSummary(
   entryModes: AdmissionCycleLaneConfig[] | undefined,
 ): string {
-  if (!entryModes || entryModes.length === 0) return "No lanes";
+  if (!entryModes || entryModes.length === 0) return "No entry modes";
   return entryModes
     .map((l) => {
       const short =

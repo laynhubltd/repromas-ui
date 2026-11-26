@@ -12,7 +12,7 @@ export function JambFloorField() {
         style={{ display: "block", marginBottom: 8 }}
       >
         Minimum JAMB score (out of 400) applied to UTME (JAMB/CAPS) applicants
-        only; skipped for Direct Entry, Transfer, and Open lanes. Leave empty to
+        only; skipped for Direct Entry, Transfer, and Open entry modes. Leave empty to
         disable.
       </Typography.Text>
       <Form.Item

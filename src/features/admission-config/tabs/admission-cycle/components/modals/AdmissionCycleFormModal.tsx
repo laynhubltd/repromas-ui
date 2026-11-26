@@ -263,7 +263,7 @@ export function AdmissionCycleFormModal({
             name="entryModes"
             label={
               <span>
-                Entry mode lanes{" "}
+                Entry modes{" "}
                 <span style={{ color: token.colorError, fontWeight: 700 }}>
                   *
                 </span>

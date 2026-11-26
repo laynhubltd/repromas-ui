@@ -178,7 +178,7 @@ export function AdmissionCycleTab() {
       render: (lanes: AdmissionCycleLaneConfig[] | undefined) => (
         <Flex gap={4} wrap="wrap">
           <ConditionalRenderer when={!lanes || lanes.length === 0}>
-            <Typography.Text type="secondary">No lanes</Typography.Text>
+            <Typography.Text type="secondary">No entry modes</Typography.Text>
           </ConditionalRenderer>
           {(lanes ?? []).map((lane) => {
             const props = getLaneTagProps(lane);
@@ -319,7 +319,7 @@ export function AdmissionCycleTab() {
         intent="info"
         collapsible
         title="Admission Cycles"
-        body="Each admission cycle represents one unified admission batch per session and can run UTME, Direct Entry, and Transfer lanes simultaneously. Choose JAMB/CAPS or Open admission per lane (Transfer always uses Open), pause or resume individual lanes without closing the cycle, and configure a GLOBAL scoring strategy for every active UTME or Direct Entry lane. Only one cycle per session may be open for applications at a time; a lane's identity mode locks once candidates exist in that lane."
+        body="Each admission cycle represents one unified admission batch per session and can run UTME, Direct Entry, and Transfer entry modes simultaneously. Choose JAMB/CAPS or Open admission per entry mode (Transfer always uses Open), pause or resume individual entry modes without closing the cycle, and configure a GLOBAL scoring strategy for every active UTME or Direct Entry mode. Only one cycle per session may be open for applications at a time; an entry mode's identity mode locks once candidates exist in that entry mode."
       />
 
       <Row gutter={[16, 16]}>

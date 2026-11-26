@@ -119,15 +119,15 @@ export const ADMISSION_CYCLE_ITEMS_PER_PAGE = 30;
 /** User-facing labels — admission-office language, not API/internal terms. */
 export const ADMISSION_CYCLE_UI_COPY = {
   batchColumn: "Batch",
-  lanesColumn: "Entry mode lanes",
+  lanesColumn: "Entry modes",
   batchFieldLabel: "Batch",
   openForApplicationsMetric: "Open for applications",
   duplicateCycleAlertTitle: "A cycle already exists for this session and batch",
   duplicateCycleAlertDescription:
-    "Each session allows one cycle per batch number (each cycle can enable UTME, Direct Entry, and Transfer lanes). Choose a different batch number.",
+    "Each session allows one cycle per batch number (each cycle can enable UTME, Direct Entry, and Transfer entry modes). Choose a different batch number.",
   supersedesPlaceholder: "None — first batch in this session",
   batchImmutableHint: "Academic session and batch number are fixed after creation.",
-  laneLockedHint: "Locked — candidates exist in this lane",
+  laneLockedHint: "Locked — candidates exist in this entry mode",
   transferOpenOnlyHint: "Transfer admissions require Open identity mode",
 } as const;
 
@@ -136,7 +136,7 @@ export const ADMISSION_CYCLE_TRANSITION_WARNINGS: Partial<
   Record<AdmissionCycleStatus, string>
 > = {
   APPLICATION_OPEN:
-    "Candidates can begin applying on any enabled lane once open. Lanes with existing candidates lock their identity mode; pausing or resuming a lane's Accepting Applications toggle stays available.",
+    "Candidates can begin applying on any enabled entry mode once open. Entry modes with existing candidates lock their identity mode; pausing or resuming an entry mode's Accepting Applications toggle stays available.",
   SCREENING:
     "Starting screening will block further candidate ingestion (CAPS upload). Ensure all candidates are loaded before proceeding.",
   CLOSED:
@@ -150,5 +150,5 @@ export const ADMISSION_CYCLE_ROLLBACK_WARNINGS: Partial<
   APPLICATION_OPEN:
     "Re-opening applications may fail if another cycle for the same session is already open for applications.",
   PRE_PROCESSING:
-    "Rolling back to pre-processing re-opens candidate setup across configured lanes.",
+    "Rolling back to pre-processing re-opens candidate setup across configured entry modes.",
 };

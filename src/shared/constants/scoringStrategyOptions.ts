@@ -423,7 +423,7 @@ export const SCORING_STRATEGY_PRESET_CATALOG: ScoringStrategyPresetCatalogItem[]
       key: "prior-qual-only",
       lane: "DIRECT_ENTRY",
       title: "Prior Qual Only",
-      description: "Direct Entry lane with prior qualification only.",
+      description: "Direct Entry mode with prior qualification only.",
       splitLabel: "100% Prior qual",
     },
     {

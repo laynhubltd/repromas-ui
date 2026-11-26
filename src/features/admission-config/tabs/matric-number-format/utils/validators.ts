@@ -3,7 +3,7 @@ import type { Rule } from "antd/es/form";
 export const entryModeRules: Rule[] = [
   {
     required: true,
-    message: "Lane / slot is required",
+    message: "Entry mode is required",
   },
 ];
 

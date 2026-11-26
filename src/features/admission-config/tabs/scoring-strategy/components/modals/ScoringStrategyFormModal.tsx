@@ -245,7 +245,7 @@ export function ScoringStrategyFormModal({
               </ConditionalRenderer>
               <div>
                 <Typography.Text type="secondary" style={{ fontSize: token.fontSizeSM }}>
-                  Lane
+                  Entry mode
                 </Typography.Text>
                 <div style={{ marginTop: 4 }}>
                   <Typography.Text strong>{editLaneLabel}</Typography.Text>
@@ -303,7 +303,7 @@ export function ScoringStrategyFormModal({
               name="laneProfile"
               label={
                 <span>
-                  Lane{" "}
+                  Entry mode{" "}
                   <span style={{ color: token.colorError, fontWeight: 700 }}>
                     *
                   </span>
@@ -312,7 +312,7 @@ export function ScoringStrategyFormModal({
               rules={laneProfileRules}
             >
               <Select
-                placeholder="Select lane"
+                placeholder="Select entry mode"
                 style={{ height: 40 }}
                 options={LANE_PROFILE_OPTIONS}
                 onChange={handleLaneChange}

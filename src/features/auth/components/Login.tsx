@@ -1,41 +1,63 @@
 import { appPaths } from "@/app/routing/app-path";
 import { AuthPageLayout } from "@/components/auth/AuthPageLayout";
-import { AdmissionApplicationOpenNotice } from "@/features/auth/candidate-signup/components/AdmissionApplicationOpenNotice";
+import { AdmissionProcessTour } from "@/features/auth/candidate-signup/components/AdmissionProcessTour";
+import { AdmissionsOpenEditorialPanel } from "@/features/auth/candidate-signup/components/AdmissionsOpenEditorialPanel";
+import { AdmissionsOpenMobileBanner } from "@/features/auth/candidate-signup/components/AdmissionsOpenMobileBanner";
 import { useLogin } from "@/features/auth/hooks/useLogin";
-import { consumeIdleLogoutReason } from "@/features/auth/idle-session/idle-session";
+import {
+  emailRules,
+  loginPasswordRules,
+} from "@/features/auth/utils/validators";
+import { CANDIDATE_SIGNUP_UI_COPY } from "@/shared/constants/candidateSignupOptions";
 import { useToken } from "@/shared/hooks/useToken";
-import { validators } from "@/shared/utils/validators";
+import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
 import { LockOutlined, UserOutlined } from "@ant-design/icons";
 import { Alert, Button, Form, Input, Typography } from "antd";
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 const { Title, Text } = Typography;
 
 export default function Login() {
   const [form] = Form.useForm();
   const t = useToken();
-  const navigate = useNavigate();
-  // Read-and-clear on first render so the banner shows exactly once.
-  const [wasIdleLogout] = useState(() => consumeIdleLogoutReason());
   const { state, actions, flags } = useLogin();
   const {
     isLoading,
     isError,
-    error,
-    isSignupConfigLoading,
-    admissionCycleName,
+    errorMessage,
+    wasIdleLogout,
+    admissionEditorial,
+    tourCtaElement,
   } = state;
-  const { login } = actions;
-  const { isCandidateSignupAvailable } = flags;
+  const {
+    handleFinish,
+    setTourCtaRef,
+    handleDismissTour,
+    handleFormFocus,
+    handleOpenGuide,
+    handleStartRegistration,
+  } = actions;
+  const { isCandidateSignupAvailable, isTourOpen } = flags;
 
-  const onFinish = async (values: { email: string; password: string }) => {
-    await login({ email: values.email, password: values.password }).unwrap();
-  };
+  const hasOpenAdmissions =
+    isCandidateSignupAvailable && admissionEditorial !== null;
 
   return (
-    <AuthPageLayout illustration="login">
-      <div style={{ textAlign: "center", marginBottom: t.sizeXXL * 1.5 }}>
+    <AuthPageLayout
+      illustration="login"
+      illustrationDimmed={isTourOpen}
+      bottomPanel={
+        hasOpenAdmissions ? (
+          <AdmissionsOpenEditorialPanel
+            model={admissionEditorial}
+            onCtaRef={setTourCtaRef}
+            onCtaClick={handleDismissTour}
+            onOpenGuide={handleOpenGuide}
+          />
+        ) : undefined
+      }
+    >
+      <div style={{ textAlign: "center", marginBottom: t.sizeXL }}>
         <Title
           level={2}
           style={{
@@ -56,7 +78,7 @@ export default function Login() {
         </Text>
       </div>
 
-      {wasIdleLogout && !isError && (
+      <ConditionalRenderer when={wasIdleLogout && !isError}>
         <Alert
           type="info"
           message="You were signed out due to inactivity"
@@ -64,43 +86,30 @@ export default function Login() {
           style={{ marginBottom: t.sizeMD }}
           showIcon
         />
-      )}
+      </ConditionalRenderer>
 
-      {isError && (
+      <ConditionalRenderer when={isError && errorMessage !== null}>
         <Alert
           type="error"
-          message={
-            error && "data" in error
-              ? (error.data as { message?: string })?.message ?? "Login failed"
-              : "Login failed"
-          }
+          message={errorMessage ?? "Login failed"}
           style={{ marginBottom: t.sizeMD }}
           showIcon
         />
-      )}
+      </ConditionalRenderer>
 
       <Form
         form={form}
         name="login"
-        onFinish={onFinish}
+        onFinish={handleFinish}
+        onFocusCapture={handleFormFocus}
         layout="vertical"
         size="large"
         requiredMark={false}
       >
         <Form.Item
           name="email"
-          rules={[
-            { required: true, message: "Please enter your email address" },
-            {
-              validator: (_, value) =>
-                !value || validators.email(value)
-                  ? Promise.resolve()
-                  : Promise.reject(
-                      new Error("Please enter a valid email address"),
-                    ),
-            },
-          ]}
-          style={{ marginBottom: t.sizeLG }}
+          rules={emailRules}
+          style={{ marginBottom: t.sizeMD }}
         >
           <Input
             prefix={<UserOutlined style={{ color: t.colorTextTertiary }} />}
@@ -115,8 +124,8 @@ export default function Login() {
 
         <Form.Item
           name="password"
-          rules={[{ required: true, message: "Please enter your password" }]}
-          style={{ marginBottom: t.sizeMD }}
+          rules={loginPasswordRules}
+          style={{ marginBottom: t.sizeSM }}
         >
           <Input.Password
             prefix={<LockOutlined style={{ color: t.colorTextTertiary }} />}
@@ -132,7 +141,7 @@ export default function Login() {
           style={{
             display: "flex",
             justifyContent: "flex-end",
-            marginBottom: t.sizeLG,
+            marginBottom: t.sizeMD,
           }}
         >
           <Link
@@ -148,7 +157,7 @@ export default function Login() {
           </Link>
         </div>
 
-        <Form.Item style={{ marginBottom: t.sizeLG }}>
+        <Form.Item style={{ marginBottom: t.sizeMD }}>
           <Button
             type="primary"
             htmlType="submit"
@@ -165,30 +174,50 @@ export default function Login() {
         </Form.Item>
       </Form>
 
-      {!isSignupConfigLoading && isCandidateSignupAvailable && (
-        <div
-          style={{
-            paddingTop: t.sizeLG,
-            borderTop: `1px solid ${t.colorBorderSecondary}`,
-          }}
-        >
-          <AdmissionApplicationOpenNotice cycleName={admissionCycleName} />
-          <Button
-            block
-            onClick={() => navigate(appPaths.candidateSignUp)}
-            style={{
-              height: t.controlHeightLG,
-              fontSize: t.fontSize,
-              fontWeight: t.fontWeightStrong,
-              background: t.colorBgContainer,
-              borderColor: t.colorPrimary,
-              color: t.colorPrimary,
-            }}
-          >
-            Candidate sign-up
-          </Button>
+      <ConditionalRenderer when={hasOpenAdmissions}>
+        <div className="auth-mobile-only">
+          {admissionEditorial ? (
+            <AdmissionsOpenMobileBanner
+              model={admissionEditorial}
+              onApply={handleStartRegistration}
+            />
+          ) : null}
         </div>
-      )}
+      </ConditionalRenderer>
+
+      <ConditionalRenderer when={hasOpenAdmissions}>
+        <div
+          className="auth-desktop-only"
+          style={{ textAlign: "center", paddingTop: t.sizeXS }}
+        >
+          <Text type="secondary" style={{ fontSize: t.fontSizeSM }}>
+            {CANDIDATE_SIGNUP_UI_COPY.loginInlinePrompt}{" "}
+            <Link
+              to={admissionEditorial?.signUpHref ?? appPaths.candidateSignUp}
+              onClick={handleDismissTour}
+              style={{
+                color: t.colorPrimary,
+                fontWeight: t.fontWeightStrong,
+                textDecoration: "none",
+              }}
+            >
+              {CANDIDATE_SIGNUP_UI_COPY.loginInlineLink}
+            </Link>
+          </Text>
+        </div>
+      </ConditionalRenderer>
+
+      <ConditionalRenderer when={hasOpenAdmissions}>
+        {admissionEditorial ? (
+          <AdmissionProcessTour
+            open={isTourOpen}
+            target={tourCtaElement}
+            model={admissionEditorial}
+            onClose={handleDismissTour}
+            onStartRegistration={handleStartRegistration}
+          />
+        ) : null}
+      </ConditionalRenderer>
     </AuthPageLayout>
   );
 }

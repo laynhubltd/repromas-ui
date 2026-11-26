@@ -86,9 +86,9 @@ export function ScoringStrategyTab() {
             style={{ width: "100%" }}
           />
         </Form.Item>
-        <Form.Item label="Lane" style={{ marginBottom: 0 }}>
+        <Form.Item label="Entry mode" style={{ marginBottom: 0 }}>
           <Select
-            placeholder="Any lane"
+            placeholder="Any entry mode"
             allowClear
             value={laneFilter}
             onChange={handleLaneFilterChange}
