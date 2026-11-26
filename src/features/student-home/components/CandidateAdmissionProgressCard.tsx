@@ -82,6 +82,7 @@ export function CandidateAdmissionProgressCard({
       <AdmissionProgressHero
         portalDisplay={portalDisplay}
         cycleStatus={progress.cycleStatus}
+        entryMode={progress.entryMode}
         progressPercent={progressPercent}
         activeStepNumber={activeStepNumber}
         totalSteps={totalSteps}

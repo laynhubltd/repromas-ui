@@ -1,8 +1,9 @@
 import type { Dayjs } from "dayjs";
 import type {
-    CandidateIntakeMode,
-    CreateAdmissionCandidateRequest,
-    JambScoreInput,
+  CandidateEntryMode,
+  CandidateIntakeMode,
+  CreateAdmissionCandidateRequest,
+  JambScoreInput,
 } from "../types/admission-candidate";
 
 export type JambScoreFormRow = {
@@ -12,6 +13,7 @@ export type JambScoreFormRow = {
 
 export type CreateCandidateFormValues = {
   cycleId: number;
+  entryMode?: CandidateEntryMode;
   intakeMode?: CandidateIntakeMode;
   jambRegNo?: string;
   firstName: string;
@@ -88,6 +90,7 @@ export function buildCreateCandidatePayload(
 
   const base: CreateAdmissionCandidateRequest = {
     cycleId: values.cycleId,
+    ...(values.entryMode ? { entryMode: values.entryMode } : {}),
     firstName: values.firstName.trim(),
     lastName: values.lastName.trim(),
     stateId: values.stateId,

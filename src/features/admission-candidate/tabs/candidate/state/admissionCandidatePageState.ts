@@ -149,7 +149,12 @@ export function admissionCandidatePageReducer(
 ): AdmissionCandidatePageState {
   switch (action.type) {
     case AdmissionCandidatePageActionType.SetCycleId:
-      return { ...state, cycleId: action.cycleId, page: 1 };
+      return {
+        ...state,
+        cycleId: action.cycleId,
+        entryModeFilter: undefined,
+        page: 1,
+      };
     case AdmissionCandidatePageActionType.SetFirstNameSearch:
       return { ...state, firstNameSearch: action.value, page: 1 };
     case AdmissionCandidatePageActionType.SetDebouncedFirstName:

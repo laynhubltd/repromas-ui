@@ -67,11 +67,11 @@ export function CreateMatricNumberFormatModal({
             name="entryMode"
             label={
               <span>
-                Lane / slot <span style={{ color: token.colorError, fontWeight: 700 }}>*</span>
+                Entry mode <span style={{ color: token.colorError, fontWeight: 700 }}>*</span>
               </span>
             }
             rules={entryModeRules}
-            extra="Which admission lane this format serves. Default is the fallback when no lane-specific format is live."
+            extra="Which entry mode this format serves. Default is the fallback when no entry-mode-specific format is live."
           >
             <Radio.Group disabled={lanePresetLocked}>
               {slotOptions.map((option) => (

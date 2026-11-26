@@ -25,7 +25,7 @@ describe("validateStrategyPayload", () => {
       requires_jamb: false,
     });
     expect(result.valid).toBe(false);
-    expect(result.message).toContain("not allowed for this lane");
+    expect(result.message).toContain("not allowed for this entry mode");
   });
 
   it("accepts UTME_OPEN 50/50 with requires_jamb false", () => {

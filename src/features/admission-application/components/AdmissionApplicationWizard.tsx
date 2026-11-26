@@ -6,6 +6,7 @@ import {
   resolveStepProgressPercent,
 } from "@/features/dynamic-form/utils/dynamicFormLayout";
 import { useToken } from "@/shared/hooks/useToken";
+import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
 import { DataLoader } from "@/shared/ui/DataLoader";
 import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { SkeletonRows } from "@/shared/ui/SkeletonRows";
@@ -92,6 +93,13 @@ export function AdmissionApplicationWizard() {
           Version {renderPackage.form.version}
         </Typography.Paragraph>
       )}
+
+      <ConditionalRenderer when={wizardState.laneClosedMessage !== null}>
+        <ErrorAlert
+          variant="section"
+          error={wizardState.laneClosedMessage ?? ""}
+        />
+      </ConditionalRenderer>
 
       {wizardState.versionMismatch && (
         <ErrorAlert

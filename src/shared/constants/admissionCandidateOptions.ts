@@ -4,7 +4,7 @@ import type {
   CandidateIntakeMode,
   OfferDecision,
   SeatBucket,
-} from "@/features/admission-candidate/tabs/candidate/types/admission-candidate";
+} from "@/shared/types/admission-lane";
 import { humanizeEnumValue } from "@/shared/constants/billingDisplayLabels";
 
 export const CANDIDATE_GENDER_OPTIONS: {
@@ -26,7 +26,19 @@ export const CANDIDATE_GENDER_FORM_OPTIONS: { value: string; label: string }[] =
 export const CANDIDATE_ENTRY_MODE_OPTIONS: {
   value: CandidateEntryMode;
   label: string;
-}[] = [{ value: "JAMB", label: "JAMB" }];
+}[] = [
+  { value: "UTME", label: "UTME" },
+  { value: "DIRECT_ENTRY", label: "Direct Entry" },
+  { value: "TRANSFER", label: "Transfer" },
+];
+
+export function isRealJambRegNo(
+  value: string | null | undefined,
+): value is string {
+  if (!value) return false;
+  const trimmed = value.trim();
+  return trimmed.length > 0 && !/^APP-/i.test(trimmed);
+}
 
 export const ADMISSION_CANDIDATE_SORT_DEFAULT = "createdAt:desc";
 

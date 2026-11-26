@@ -101,6 +101,7 @@ export function AdmissionApplicationPage() {
               showOfferCard: flags.showOfferCard,
               showScreeningSection: flags.showScreeningSection,
               showScreeningPending: flags.showScreeningPending,
+              showJambCard: flags.showJambCard,
               showJambSection: flags.showJambSection,
               showCandidateMetadata: flags.showCandidateMetadata,
             }}

@@ -7,6 +7,7 @@ export const AdmissionWizardActionType = {
   SetFieldErrors: "SET_FIELD_ERRORS",
   SetLastSavedAt: "SET_LAST_SAVED_AT",
   SetVersionMismatch: "SET_VERSION_MISMATCH",
+  SetLaneClosedMessage: "SET_LANE_CLOSED_MESSAGE",
   SetSubmitting: "SET_SUBMITTING",
   MarkSectionClean: "MARK_SECTION_CLEAN",
   Reset: "RESET",
@@ -20,6 +21,7 @@ export type AdmissionWizardState = {
   fieldErrors: Record<string, string>;
   lastSavedAt: string | null;
   versionMismatch: boolean;
+  laneClosedMessage: string | null;
   submitting: boolean;
   sortedSections: RenderSection[];
 };
@@ -40,6 +42,10 @@ export type AdmissionWizardAction =
       type: typeof AdmissionWizardActionType.SetVersionMismatch;
       value: boolean;
     }
+  | {
+      type: typeof AdmissionWizardActionType.SetLaneClosedMessage;
+      message: string | null;
+    }
   | { type: typeof AdmissionWizardActionType.SetSubmitting; value: boolean }
   | {
       type: typeof AdmissionWizardActionType.MarkSectionClean;
@@ -56,6 +62,7 @@ export type AdmissionWizardAction =
       sections: RenderSection[];
       payload: Record<number, Record<string, unknown>>;
       prefill: Record<string, Record<string, unknown>>;
+      refreshCleanFromServer?: boolean;
     };
 
 export const initialAdmissionWizardState: AdmissionWizardState = {
@@ -65,6 +72,7 @@ export const initialAdmissionWizardState: AdmissionWizardState = {
   fieldErrors: {},
   lastSavedAt: null,
   versionMismatch: false,
+  laneClosedMessage: null,
   submitting: false,
   sortedSections: [],
 };
@@ -76,6 +84,19 @@ export function isSectionDirty(
   return state.dirtySectionIds[sectionId] === true;
 }
 
+function buildNormalizedSectionValue(
+  section: RenderSection,
+  payload: Record<number, Record<string, unknown>>,
+  prefill: Record<string, Record<string, unknown>>,
+): Record<string, unknown> {
+  const saved = payload[section.id];
+  const prefilled = prefill[String(section.id)];
+  return normalizeSectionValuesForForm(section, {
+    ...(prefilled ?? {}),
+    ...(saved ?? {}),
+  });
+}
+
 function buildSectionValuesFromServer(
   sections: RenderSection[],
   payload: Record<number, Record<string, unknown>>,
@@ -83,12 +104,11 @@ function buildSectionValuesFromServer(
 ): Record<number, Record<string, unknown>> {
   const sectionValues: Record<number, Record<string, unknown>> = {};
   for (const section of sections) {
-    const saved = payload[section.id];
-    const prefilled = prefill[String(section.id)];
-    sectionValues[section.id] = normalizeSectionValuesForForm(section, {
-      ...(prefilled ?? {}),
-      ...(saved ?? {}),
-    });
+    sectionValues[section.id] = buildNormalizedSectionValue(
+      section,
+      payload,
+      prefill,
+    );
   }
   return sectionValues;
 }
@@ -123,12 +143,14 @@ export function admissionWizardReducer(
       return { ...state, lastSavedAt: action.at };
     case AdmissionWizardActionType.SetVersionMismatch:
       return { ...state, versionMismatch: action.value };
+    case AdmissionWizardActionType.SetLaneClosedMessage:
+      return { ...state, laneClosedMessage: action.message };
     case AdmissionWizardActionType.SetSubmitting:
       return { ...state, submitting: action.value };
     case AdmissionWizardActionType.MarkSectionClean: {
       if (!state.dirtySectionIds[action.sectionId]) return state;
-      const { [action.sectionId]: _removed, ...dirtySectionIds } =
-        state.dirtySectionIds;
+      const dirtySectionIds = { ...state.dirtySectionIds };
+      delete dirtySectionIds[action.sectionId];
       return { ...state, dirtySectionIds };
     }
     case AdmissionWizardActionType.Reset: {
@@ -143,23 +165,54 @@ export function admissionWizardReducer(
       };
     }
     case AdmissionWizardActionType.SyncRenderPackage: {
-      const sectionValues = { ...state.sectionValues };
+      let sectionValues = state.sectionValues;
+      const cloneSectionValuesIfNeeded = () => {
+        if (sectionValues === state.sectionValues) {
+          sectionValues = { ...state.sectionValues };
+        }
+        return sectionValues;
+      };
+
       for (const section of action.sections) {
-        if (section.id in sectionValues) continue;
-        const saved = action.payload[section.id];
-        const prefilled = action.prefill[String(section.id)];
-        sectionValues[section.id] = normalizeSectionValuesForForm(section, {
-          ...(prefilled ?? {}),
-          ...(saved ?? {}),
-        });
+        const isMissing = !(section.id in sectionValues);
+        const shouldRefreshClean =
+          !isMissing &&
+          action.refreshCleanFromServer === true &&
+          state.lastSavedAt === null &&
+          !state.dirtySectionIds[section.id];
+
+        if (isMissing || shouldRefreshClean) {
+          cloneSectionValuesIfNeeded()[section.id] = buildNormalizedSectionValue(
+            section,
+            action.payload,
+            action.prefill,
+          );
+        }
       }
 
-      const dirtySectionIds = { ...state.dirtySectionIds };
-      for (const sectionId of Object.keys(dirtySectionIds)) {
+      let dirtySectionIds = state.dirtySectionIds;
+      for (const sectionId of Object.keys(state.dirtySectionIds)) {
         const id = Number(sectionId);
         if (!action.sections.some((section) => section.id === id)) {
+          if (dirtySectionIds === state.dirtySectionIds) {
+            dirtySectionIds = { ...state.dirtySectionIds };
+          }
           delete dirtySectionIds[id];
         }
+      }
+
+      const nextStep = clampCurrentStep(
+        state.currentStep,
+        action.sections.length,
+      );
+
+      if (
+        action.sections === state.sortedSections &&
+        sectionValues === state.sectionValues &&
+        dirtySectionIds === state.dirtySectionIds &&
+        nextStep === state.currentStep
+      ) {
+        return state;
       }
 
       return {
@@ -167,10 +220,7 @@ export function admissionWizardReducer(
         sortedSections: action.sections,
         sectionValues,
         dirtySectionIds,
-        currentStep: clampCurrentStep(
-          state.currentStep,
-          action.sections.length,
-        ),
+        currentStep: nextStep,
       };
     }
   }

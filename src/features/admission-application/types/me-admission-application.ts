@@ -1,3 +1,8 @@
+import type {
+  AdmissionCycleLaneConfig,
+  CandidateEntryMode,
+} from "@/shared/types/admission-lane";
+
 export type MeApplicationStatus =
   | "DRAFT"
   | "SUBMITTED"
@@ -13,7 +18,7 @@ export type MeFinalDecision =
 
 export type MeAdmissionCandidateGender = "MALE" | "FEMALE" | "OTHER";
 
-export type MeAdmissionCandidateEntryMode = "JAMB" | string;
+export type MeAdmissionCandidateEntryMode = CandidateEntryMode | string;
 
 export type MeAdmissionRef = {
   id: number;
@@ -28,6 +33,8 @@ export type MeAdmissionCycleEmbed = {
   sessionId: number;
   name: string;
   status: string;
+  entryModes?: AdmissionCycleLaneConfig[];
+  batchNo?: number;
   startDate: string | null;
   endDate: string | null;
   createdAt?: string;
@@ -118,6 +125,7 @@ export type MeAdmissionApplication = {
   candidateId: number;
   appliedProgramId: number;
   offeredProgramId: number | null;
+  entryMode: CandidateEntryMode | null;
   applicationStatus: MeApplicationStatus | string;
   finalDecision: MeFinalDecision | string;
   isMatriculated: boolean;

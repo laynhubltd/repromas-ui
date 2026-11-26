@@ -1,15 +1,15 @@
 import { DashCard, ExplainerCallout, Table } from "@/components/ui-kit";
 import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
-import { formatCycleOptionLabel } from "@/features/admission-config/tabs/admission-cycle/utils/admissionCycleDisplay";
-import { useGetStatesQuery } from "@/features/admission-config/tabs/geography-rule/api/statesApi";
+import { formatCycleOptionLabel } from "@/shared/utils/format/admissionCycleDisplay";
 import {
-  CANDIDATE_ENTRY_MODE_OPTIONS,
   CANDIDATE_GENDER_OPTIONS,
   FINAL_DECISION_TAG_COLORS,
   getApplicationStatusLabel,
+  getCandidateEntryModeLabel,
   getCandidateGenderLabel,
   getFinalDecisionLabel,
+  isRealJambRegNo,
 } from "@/shared/constants/admissionCandidateOptions";
 import { useToken } from "@/shared/hooks/useToken";
 import {
@@ -77,9 +77,12 @@ export function CandidateTab() {
     totalItems,
     isLoading,
     isError,
+    sectionError,
     skipList,
     cycles,
+    states,
     selectedCycle,
+    entryModeFilterOptions,
     cycleId,
     firstNameSearch,
     lastNameSearch,
@@ -139,9 +142,6 @@ export function CandidateTab() {
   } = bulkUpload;
 
   const [filterOpen, setFilterOpen] = useState(false);
-
-  const { data: statesData } = useGetStatesQuery({ itemsPerPage: 100 });
-  const states = statesData?.member ?? [];
 
   const uploadMenuItems = [
     {
@@ -203,11 +203,11 @@ export function CandidateTab() {
             value={entryModeFilter}
             onChange={(val) => handleEntryModeFilterChange(val)}
             style={{ width: "100%" }}
-            options={CANDIDATE_ENTRY_MODE_OPTIONS}
+            options={entryModeFilterOptions}
           />
         </Form.Item>
       </Form>
-      {activeFilterCount > 0 && (
+      <ConditionalRenderer when={activeFilterCount > 0}>
         <Button
           type="link"
           size="small"
@@ -216,7 +216,7 @@ export function CandidateTab() {
         >
           Clear all filters
         </Button>
-      )}
+      </ConditionalRenderer>
     </Flex>
   );
 
@@ -228,7 +228,12 @@ export function CandidateTab() {
       sorter: true,
       sortDirections: ["ascend", "descend"],
       fixed: "left",
-      render: (v: string) => <Typography.Text copyable>{v}</Typography.Text>,
+      render: (v: string | null) =>
+        isRealJambRegNo(v) ? (
+          <Typography.Text copyable>{v}</Typography.Text>
+        ) : (
+          <Typography.Text type="secondary">—</Typography.Text>
+        ),
     },
     {
       title: "Name",
@@ -237,6 +242,16 @@ export function CandidateTab() {
         <Typography.Text strong>
           {r.firstName} {r.lastName}
         </Typography.Text>
+      ),
+    },
+    {
+      title: "Entry Mode",
+      dataIndex: "entryMode",
+      key: "entryMode",
+      sorter: true,
+      sortDirections: ["ascend", "descend"],
+      render: (v: string) => (
+        <Tag color="blue">{getCandidateEntryModeLabel(v)}</Tag>
       ),
     },
     {
@@ -363,7 +378,7 @@ export function CandidateTab() {
       <ExplainerCallout
         intent="info"
         title="Admission Candidates"
-        body="Import and manage JAMB CAPS candidates for an admission cycle. Use bulk upload for CAPS spreadsheets or create a single candidate when needed. Offer and matriculate from the row menu or detail drawer."
+        body="Import and manage UTME, Direct Entry, and Transfer candidates for an admission cycle. Use bulk upload for CAPS spreadsheets or create a single candidate in any configured entry mode. Offer and matriculate from the row menu or detail drawer."
         dismissible
         collapsible
       />
@@ -507,7 +522,7 @@ export function CandidateTab() {
           <ConditionalRenderer when={isError}>
             <ErrorAlert
               variant="section"
-              error="Failed to load admission candidates"
+              error={sectionError ?? "Failed to load admission candidates"}
               onRetry={refetch}
             />
           </ConditionalRenderer>
@@ -614,6 +629,9 @@ export function CandidateTab() {
         open={bulkUploadModalOpen}
         onClose={handleCloseBulkUploadModal}
         selectedFile={bulkState.selectedFile}
+        uploadEntryMode={bulkState.uploadEntryMode}
+        entryModeOptions={bulkState.entryModeOptions}
+        onUploadEntryModeChange={bulkActions.handleUploadEntryModeChange}
         isUploading={bulkState.isUploading}
         hasFile={bulkFlags.hasFile}
         canUpload={bulkFlags.canUpload}

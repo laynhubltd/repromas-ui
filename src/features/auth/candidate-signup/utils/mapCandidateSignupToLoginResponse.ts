@@ -5,7 +5,10 @@ import type {
   LoginResponse,
 } from "@/features/auth/types";
 import { AUTH_ROLE_SCOPES } from "@/features/auth/types/role-entity";
-import type { CandidateSignupResponse } from "../types/candidate-signup";
+import type {
+  AdmissionEntryMode,
+  CandidateSignupResponse,
+} from "../types/candidate-signup";
 
 function toAuthRoleScope(scope: string): AuthRoleScope {
   return (AUTH_ROLE_SCOPES as readonly string[]).includes(scope)
@@ -28,6 +31,7 @@ function mapSignupRole(
 
 export function mapCandidateSignupToLoginResponse(
   data: CandidateSignupResponse,
+  entryMode: AdmissionEntryMode = "UTME",
 ): LoginResponse {
   const roles: ApiRole[] =
     data.roles && data.roles.length > 0
@@ -49,7 +53,7 @@ export function mapCandidateSignupToLoginResponse(
               lgaId: null,
               email: data.user.email,
               phone: null,
-              entryMode: "UTME",
+              entryMode,
               metadata: null,
               createdAt: "",
               application: null,

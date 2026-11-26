@@ -56,10 +56,12 @@ const candidateSignupApi = baseApi.injectEndpoints({
         data: body,
       }),
       transformResponse: (raw) => mapCandidateSignupResponse(raw),
-      async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
-          dispatch(userLoggedIn(mapCandidateSignupToLoginResponse(data)));
+          dispatch(
+            userLoggedIn(mapCandidateSignupToLoginResponse(data, arg.entryMode)),
+          );
         } catch {
           // handled by component/hook
         }

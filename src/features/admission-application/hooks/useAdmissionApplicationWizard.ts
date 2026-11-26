@@ -1,16 +1,20 @@
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
+import { appPaths } from "@/app/routing/app-path";
 import { StudentPortalScope } from "@/features/access-control/student-portal-scopes";
 import { useAccessControl } from "@/features/access-control/use-access-control";
+import { useGetOlevelSubjectsQuery } from "@/features/admission-config/tabs/olevel-subject/api/olevelSubjectApi";
 import type { WorkflowPayNowPayload } from "@/features/billing/types/workflow-step-decision";
 import { useGetMeAdmissionCandidateQuery } from "@/features/candidate-profile/api/candidateProfileApi";
-import { isFormVersionMismatch } from "@/features/dynamic-form/utils/isFormVersionMismatch";
+import { useDynamicFormLayout } from "@/features/dynamic-form/hooks/useDynamicFormLayout";
+import { useGeographyFieldOptions } from "@/features/dynamic-form/hooks/useGeographyFieldOptions";
 import type { RenderSection } from "@/features/dynamic-form/types";
-import { mapViolationToFieldErrors } from "@/features/dynamic-form/utils/mapViolationToFieldErrors";
-import { sortSectionsByStepOrder } from "@/features/dynamic-form/utils/sortSectionsByStepOrder";
 import {
   isStateGeographyFieldKey,
   lgaFieldKeysInSection,
 } from "@/features/dynamic-form/utils/geographyFieldKeys";
+import { isFormVersionMismatch } from "@/features/dynamic-form/utils/isFormVersionMismatch";
+import { mapViolationToFieldErrors } from "@/features/dynamic-form/utils/mapViolationToFieldErrors";
+import { sortSectionsByStepOrder } from "@/features/dynamic-form/utils/sortSectionsByStepOrder";
 import { validateSanitizedSectionPayload } from "@/features/dynamic-form/utils/validateJsonSchema";
 import {
   sanitizeSectionDataForSchemaValidation,
@@ -21,9 +25,7 @@ import {
   sectionValuesToSubmitPayload,
 } from "@/features/dynamic-form/utils/widgetPayloadMappers";
 import { useGetProgramsQuery } from "@/features/program/tabs/programs/api/programsApi";
-import { useGetOlevelSubjectsQuery } from "@/features/admission-config/tabs/olevel-subject/api/olevelSubjectApi";
-import { useDynamicFormLayout } from "@/features/dynamic-form/hooks/useDynamicFormLayout";
-import { useGeographyFieldOptions } from "@/features/dynamic-form/hooks/useGeographyFieldOptions";
+import { useGetMeAdmissionProgressQuery } from "@/features/student-home/api/meAdmissionProgressApi";
 import {
   DYNAMIC_FORM_NO_ASSIGNMENT_MESSAGE,
   DYNAMIC_FORM_SUBMIT_SUCCESS,
@@ -43,10 +45,10 @@ import {
   useState,
 } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { appPaths } from "@/app/routing/app-path";
 import {
   useCreateSubmissionMutation,
   useGetRenderPackageQuery,
+  useGetSubmissionQuery,
   usePatchSubmissionMutation,
   useSubmitSubmissionMutation,
 } from "../api/dynamicFormRuntimeApi";
@@ -63,6 +65,9 @@ import {
   isSectionDirty,
 } from "../state/admissionWizardState";
 
+const DEFAULT_LANE_CLOSED_MESSAGE =
+  "Applications are currently closed for your entry mode. Changes cannot be saved or submitted.";
+
 export function useAdmissionApplicationWizard() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -71,7 +76,10 @@ export function useAdmissionApplicationWizard() {
   const isCandidate = hasStudentPortalScope([StudentPortalScope.Candidate]);
   const handleApiError = useApiError();
   const legacyMigrationAttemptedRef = useRef<number | null>(null);
-  const packageHydratedRef = useRef(false);
+  const prevCycleIdRef = useRef<number | null>(null);
+  const dismissedSubmissionIdsRef = useRef<Set<number>>(new Set());
+  const hydratedAssignmentIdRef = useRef<number | null>(null);
+  const hydratedSubmissionIdRef = useRef<number | null>(null);
   const stepRestoredRef = useRef(false);
   const [isPersistingBeforePay, setIsPersistingBeforePay] = useState(false);
 
@@ -80,10 +88,11 @@ export function useAdmissionApplicationWizard() {
     initialAdmissionWizardState,
   );
 
-  const {
-    data: candidate,
-    isLoading: isCandidateLoading,
-  } = useGetMeAdmissionCandidateQuery(undefined, { skip: !isCandidate });
+  const { data: candidate, isLoading: isCandidateLoading } =
+    useGetMeAdmissionCandidateQuery(undefined, { skip: !isCandidate });
+
+  const { data: progress, refetch: refetchProgress } =
+    useGetMeAdmissionProgressQuery(undefined, { skip: !isCandidate });
 
   const cycleId = candidate?.cycleId ?? null;
   const storedSubmissionId = useAppSelector((state) =>
@@ -91,16 +100,43 @@ export function useAdmissionApplicationWizard() {
   );
 
   useEffect(() => {
+    if (prevCycleIdRef.current !== cycleId) {
+      prevCycleIdRef.current = cycleId;
+      dismissedSubmissionIdsRef.current.clear();
+      hydratedAssignmentIdRef.current = null;
+      hydratedSubmissionIdRef.current = null;
+      stepRestoredRef.current = false;
+    }
+  }, [cycleId]);
+
+  useEffect(() => {
     if (cycleId == null) return;
     if (storedSubmissionId != null) return;
+
+    const serverSubmissionId = progress?.formSubmissionId ?? null;
+    if (
+      serverSubmissionId != null &&
+      !dismissedSubmissionIdsRef.current.has(serverSubmissionId)
+    ) {
+      reduxDispatch(
+        setSubmissionId({ cycleId, submissionId: serverSubmissionId }),
+      );
+      return;
+    }
+
     if (legacyMigrationAttemptedRef.current === cycleId) return;
 
     legacyMigrationAttemptedRef.current = cycleId;
     const legacyId = readLegacySessionStorageSubmissionId(cycleId);
-    if (legacyId != null) {
+    if (legacyId != null && !dismissedSubmissionIdsRef.current.has(legacyId)) {
       reduxDispatch(setSubmissionId({ cycleId, submissionId: legacyId }));
     }
-  }, [cycleId, storedSubmissionId, reduxDispatch]);
+  }, [
+    cycleId,
+    storedSubmissionId,
+    progress?.formSubmissionId,
+    reduxDispatch,
+  ]);
 
   const {
     data: renderPackage,
@@ -118,6 +154,43 @@ export function useAdmissionApplicationWizard() {
     },
     { skip: !isCandidate || !cycleId },
   );
+
+  const { data: existingSubmission } = useGetSubmissionQuery(
+    storedSubmissionId!,
+    { skip: !isCandidate || storedSubmissionId == null },
+  );
+
+  // Guard against stale or mode-mismatched submissionIds persisted across lane/form changes.
+  useEffect(() => {
+    if (cycleId == null || storedSubmissionId == null) return;
+
+    if (isPackageError && packageError) {
+      const parsed = parseApiError(packageError);
+      if (parsed.status === 403 || parsed.status === 404) {
+        dismissedSubmissionIdsRef.current.add(storedSubmissionId);
+        reduxDispatch(clearSubmissionId(cycleId));
+        return;
+      }
+    }
+
+    if (
+      existingSubmission &&
+      renderPackage &&
+      existingSubmission.id === storedSubmissionId &&
+      existingSubmission.assignmentId !== renderPackage.assignment.id
+    ) {
+      dismissedSubmissionIdsRef.current.add(existingSubmission.id);
+      reduxDispatch(clearSubmissionId(cycleId));
+    }
+  }, [
+    cycleId,
+    storedSubmissionId,
+    isPackageError,
+    packageError,
+    existingSubmission,
+    renderPackage,
+    reduxDispatch,
+  ]);
 
   const { data: programsData } = useGetProgramsQuery(
     { itemsPerPage: 100, sort: "name:asc" },
@@ -148,7 +221,8 @@ export function useAdmissionApplicationWizard() {
   );
 
   const [createSubmission] = useCreateSubmissionMutation();
-  const [patchSubmission, { isLoading: isPatching }] = usePatchSubmissionMutation();
+  const [patchSubmission, { isLoading: isPatching }] =
+    usePatchSubmissionMutation();
   const [submitSubmission] = useSubmitSubmissionMutation();
 
   const sortedSections = useMemo(
@@ -157,32 +231,46 @@ export function useAdmissionApplicationWizard() {
   );
 
   useEffect(() => {
-    packageHydratedRef.current = false;
     stepRestoredRef.current = false;
   }, [cycleId, storedSubmissionId]);
 
   useEffect(() => {
     if (!renderPackage || sortedSections.length === 0) return;
 
+    const matchingSubmission =
+      existingSubmission &&
+      existingSubmission.assignmentId === renderPackage.assignment.id
+        ? existingSubmission
+        : null;
+    const serverPayload = (matchingSubmission?.payload ??
+      {}) as unknown as Record<number, Record<string, unknown>>;
     const prefill = renderPackage.prefill ?? {};
-    if (!packageHydratedRef.current) {
-      packageHydratedRef.current = true;
+
+    if (hydratedAssignmentIdRef.current !== renderPackage.assignment.id) {
+      hydratedAssignmentIdRef.current = renderPackage.assignment.id;
+      hydratedSubmissionIdRef.current = matchingSubmission?.id ?? null;
       dispatch({
         type: AdmissionWizardActionType.Reset,
         sections: sortedSections,
-        payload: {},
+        payload: serverPayload,
         prefill,
       });
       return;
     }
 
+    const nextSubmissionId = matchingSubmission?.id ?? null;
+    const submissionChanged =
+      hydratedSubmissionIdRef.current !== nextSubmissionId;
+    hydratedSubmissionIdRef.current = nextSubmissionId;
+
     dispatch({
       type: AdmissionWizardActionType.SyncRenderPackage,
       sections: sortedSections,
-      payload: {},
+      payload: serverPayload,
       prefill,
+      refreshCleanFromServer: submissionChanged && nextSubmissionId !== null,
     });
-  }, [renderPackage, sortedSections]);
+  }, [renderPackage, sortedSections, existingSubmission]);
 
   useEffect(() => {
     if (wizardState.sortedSections.length === 0) return;
@@ -210,13 +298,10 @@ export function useAdmissionApplicationWizard() {
       nextParams.delete("step");
       setSearchParams(nextParams, { replace: true });
     }
-  }, [
-    wizardState.sortedSections.length,
-    searchParams,
-    setSearchParams,
-  ]);
+  }, [wizardState.sortedSections.length, searchParams, setSearchParams]);
 
-  const currentSection = wizardState.sortedSections[wizardState.currentStep] ?? null;
+  const currentSection =
+    wizardState.sortedSections[wizardState.currentStep] ?? null;
   const currentValues = useMemo(
     () =>
       currentSection
@@ -231,10 +316,25 @@ export function useAdmissionApplicationWizard() {
   });
 
   const noAssignment = useMemo(() => {
+    if (storedSubmissionId != null) return false;
     if (!isPackageError || !packageError) return false;
     const parsed = parseApiError(packageError);
     return parsed.status === 404;
-  }, [isPackageError, packageError]);
+  }, [storedSubmissionId, isPackageError, packageError]);
+
+  const handleLaneClosedError = useCallback(
+    (err: unknown): boolean => {
+      const parsed = parseApiError(err);
+      if (parsed.status !== 422) return false;
+      dispatch({
+        type: AdmissionWizardActionType.SetLaneClosedMessage,
+        message: parsed.message || DEFAULT_LANE_CLOSED_MESSAGE,
+      });
+      void refetchProgress();
+      return true;
+    },
+    [refetchProgress],
+  );
 
   const ensureSubmission = useCallback(async (): Promise<number | null> => {
     if (storedSubmissionId != null) return storedSubmissionId;
@@ -251,12 +351,21 @@ export function useAdmissionApplicationWizard() {
       );
       return created.id;
     } catch (err: unknown) {
-      handleApiError(err, {
-        context: { screen: RequestScreen.Action, method: "POST" },
-      });
+      if (!handleLaneClosedError(err)) {
+        handleApiError(err, {
+          context: { screen: RequestScreen.Action, method: "POST" },
+        });
+      }
       return null;
     }
-  }, [storedSubmissionId, cycleId, createSubmission, reduxDispatch, handleApiError]);
+  }, [
+    storedSubmissionId,
+    cycleId,
+    createSubmission,
+    reduxDispatch,
+    handleLaneClosedError,
+    handleApiError,
+  ]);
 
   const saveCurrentSection = useCallback(
     async (values?: Record<string, unknown>): Promise<boolean> => {
@@ -290,6 +399,10 @@ export function useAdmissionApplicationWizard() {
           type: AdmissionWizardActionType.MarkSectionClean,
           sectionId: currentSection.id,
         });
+        dispatch({
+          type: AdmissionWizardActionType.SetLaneClosedMessage,
+          message: null,
+        });
         return true;
       } catch (err: unknown) {
         const parsed = parseApiError(err);
@@ -298,7 +411,7 @@ export function useAdmissionApplicationWizard() {
             type: AdmissionWizardActionType.SetVersionMismatch,
             value: true,
           });
-        } else {
+        } else if (!handleLaneClosedError(err)) {
           handleApiError(err, {
             context: { screen: RequestScreen.Action, method: "PATCH" },
           });
@@ -313,6 +426,7 @@ export function useAdmissionApplicationWizard() {
       wizardState,
       ensureSubmission,
       patchSubmission,
+      handleLaneClosedError,
       handleApiError,
     ],
   );
@@ -486,18 +600,22 @@ export function useAdmissionApplicationWizard() {
           type: AdmissionWizardActionType.SetVersionMismatch,
           value: true,
         });
-      } else if (parsed.status === 400 && "violations" in parsed.raw) {
-        const violations = (
-          parsed.raw as { violations: Array<{ propertyPath: string; message: string }> }
-        ).violations;
-        dispatch({
-          type: AdmissionWizardActionType.SetFieldErrors,
-          errors: mapViolationToFieldErrors(violations),
-        });
-      } else {
-        handleApiError(err, {
-          context: { screen: RequestScreen.Action, method: "POST" },
-        });
+      } else if (!handleLaneClosedError(err)) {
+        if (parsed.status === 400 && "violations" in parsed.raw) {
+          const violations = (
+            parsed.raw as {
+              violations: Array<{ propertyPath: string; message: string }>;
+            }
+          ).violations;
+          dispatch({
+            type: AdmissionWizardActionType.SetFieldErrors,
+            errors: mapViolationToFieldErrors(violations),
+          });
+        } else {
+          handleApiError(err, {
+            context: { screen: RequestScreen.Action, method: "POST" },
+          });
+        }
       }
     } finally {
       dispatch({ type: AdmissionWizardActionType.SetSubmitting, value: false });
@@ -513,6 +631,7 @@ export function useAdmissionApplicationWizard() {
     submitSubmission,
     reduxDispatch,
     navigate,
+    handleLaneClosedError,
     handleApiError,
   ]);
 

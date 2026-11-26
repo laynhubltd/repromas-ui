@@ -124,9 +124,9 @@ export function MatricNumberFormatTab() {
             }))}
           />
         </Form.Item>
-        <Form.Item label="Lane" style={{ marginBottom: 0 }}>
+        <Form.Item label="Entry mode" style={{ marginBottom: 0 }}>
           <Select
-            placeholder="Any lane"
+            placeholder="Any entry mode"
             value={entryModeFilterKey}
             onChange={(value: string) => {
               if (value === "ANY") {
@@ -161,7 +161,7 @@ export function MatricNumberFormatTab() {
       render: (code: string) => <Typography.Text strong>{code}</Typography.Text>,
     },
     {
-      title: "Lane",
+      title: "Entry mode",
       dataIndex: "entryMode",
       key: "entryMode",
       render: (entryMode: MatricNumberFormat["entryMode"]) => (

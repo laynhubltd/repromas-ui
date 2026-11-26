@@ -146,7 +146,7 @@ export function ScoringStrategyDrawer({
                 </Typography.Text>
               )}
             </Descriptions.Item>
-            <Descriptions.Item label="Lane">
+            <Descriptions.Item label="Entry mode">
               {laneProfile && (
                 <Tag color={LANE_TAG_COLORS[laneProfile]}>
                   {getLaneProfileLabel(laneProfile)}

@@ -2,6 +2,8 @@ import {
   ADMISSION_CYCLE_ITEMS_PER_PAGE,
   ADMISSION_CYCLE_SORT_DEFAULT,
 } from "@/shared/constants/admissionCycleOptions";
+import { RequestScreen } from "@/shared/types/error-ui";
+import { deriveSectionErrorMessage } from "@/shared/utils/error/deriveSectionErrorMessage";
 import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
 import {
   useGetAcademicSessionsForCyclesQuery,
@@ -16,6 +18,8 @@ import type {
   AcademicSessionOption,
   AdmissionCycle,
   AdmissionCycleListParams,
+  AdmissionCycleStatus,
+  AdmissionEntryMode,
   TransitionDirection,
 } from "../types/admission-cycle";
 
@@ -41,10 +45,16 @@ export function useAdmissionCycleTab() {
     };
   }, []);
 
+  const isClientEntryModeFiltering = state.entryModeFilter !== undefined;
+
   const listQueryParams = useMemo((): AdmissionCycleListParams => {
     const params: AdmissionCycleListParams = {
-      page: state.page,
-      itemsPerPage: ADMISSION_CYCLE_ITEMS_PER_PAGE,
+      // Force page=1 with itemsPerPage=100 when filtering entryModes client-side
+      // so navigating to Page 2 never fetches empty server rows 101–200.
+      page: isClientEntryModeFiltering ? 1 : state.page,
+      itemsPerPage: isClientEntryModeFiltering
+        ? METRICS_ITEMS_PER_PAGE
+        : ADMISSION_CYCLE_ITEMS_PER_PAGE,
       sort: ADMISSION_CYCLE_SORT_DEFAULT,
     };
 
@@ -57,20 +67,17 @@ export function useAdmissionCycleTab() {
     if (state.sessionFilter !== undefined) {
       params["exact[sessionId]"] = state.sessionFilter;
     }
-    if (state.entryModeFilter !== undefined) {
-      params["exact[entryMode]"] = state.entryModeFilter;
-    }
     if (state.batchNoFilter !== undefined) {
       params["exact[batchNo]"] = state.batchNoFilter;
     }
 
     return params;
   }, [
+    isClientEntryModeFiltering,
     state.page,
     state.debouncedSearch,
     state.statusFilter,
     state.sessionFilter,
-    state.entryModeFilter,
     state.batchNoFilter,
   ]);
 
@@ -78,6 +85,7 @@ export function useAdmissionCycleTab() {
     data: cyclesData,
     isLoading: isCyclesLoading,
     isError: isCyclesError,
+    error: cyclesError,
     refetch,
   } = useGetAdmissionCyclesQuery(listQueryParams);
 
@@ -90,8 +98,14 @@ export function useAdmissionCycleTab() {
   const { data: sessionsData, isLoading: isSessionsLoading } =
     useGetAcademicSessionsForCyclesQuery();
 
-  const sessions: AcademicSessionOption[] = sessionsData?.member ?? [];
-  const existingCycles = metricsData?.member ?? [];
+  const sessions: AcademicSessionOption[] = useMemo(
+    () => sessionsData?.member ?? [],
+    [sessionsData?.member],
+  );
+  const existingCycles = useMemo(
+    () => metricsData?.member ?? [],
+    [metricsData?.member],
+  );
 
   const sessionsById = useMemo(() => {
     const map = new Map<number, AcademicSessionOption>();
@@ -113,13 +127,46 @@ export function useAdmissionCycleTab() {
     [sessionsById],
   );
 
-  const cycles = useMemo(
-    () => (cyclesData?.member ?? []).map(enrichCycle),
-    [cyclesData?.member, enrichCycle],
-  );
+  const { cycles, totalItems, effectivePage } = useMemo(() => {
+    const rawMembers = cyclesData?.member ?? [];
+    if (!state.entryModeFilter) {
+      return {
+        cycles: rawMembers.map(enrichCycle),
+        totalItems: cyclesData?.totalItems ?? 0,
+        effectivePage: state.page,
+      };
+    }
 
-  const totalItems = cyclesData?.totalItems ?? 0;
-  const allCycles = metricsData?.member ?? [];
+    const filtered = rawMembers.filter((cycle) =>
+      cycle.entryModes?.some((lane) => lane.entryMode === state.entryModeFilter),
+    );
+    const totalPages = Math.max(
+      1,
+      Math.ceil(filtered.length / ADMISSION_CYCLE_ITEMS_PER_PAGE),
+    );
+    const clampedPage = Math.min(state.page, totalPages);
+    const start = (clampedPage - 1) * ADMISSION_CYCLE_ITEMS_PER_PAGE;
+    const sliced = filtered.slice(start, start + ADMISSION_CYCLE_ITEMS_PER_PAGE);
+
+    return {
+      cycles: sliced.map(enrichCycle),
+      totalItems: filtered.length,
+      effectivePage: clampedPage,
+    };
+  }, [
+    cyclesData?.member,
+    cyclesData?.totalItems,
+    state.entryModeFilter,
+    state.page,
+    enrichCycle,
+  ]);
+
+  const sectionError = deriveSectionErrorMessage(isCyclesError, cyclesError, {
+    screen: RequestScreen.List,
+    method: "GET",
+  });
+
+  const allCycles = existingCycles;
 
   const totalCyclesCount = metricsData?.totalItems ?? allCycles.length;
   const activeCyclesCount = allCycles.filter((c) => c.status !== "CLOSED").length;
@@ -147,7 +194,7 @@ export function useAdmissionCycleTab() {
   }, []);
 
   const handleStatusFilterChange = useCallback(
-    (value: typeof state.statusFilter) => {
+    (value: AdmissionCycleStatus | undefined) => {
       dispatch({
         type: AdmissionCycleTabActionType.SetStatusFilter,
         value,
@@ -164,7 +211,7 @@ export function useAdmissionCycleTab() {
   }, []);
 
   const handleEntryModeFilterChange = useCallback(
-    (value: typeof state.entryModeFilter) => {
+    (value: AdmissionEntryMode | undefined) => {
       dispatch({
         type: AdmissionCycleTabActionType.SetEntryModeFilter,
         value,
@@ -276,12 +323,13 @@ export function useAdmissionCycleTab() {
       totalItems,
       isLoading,
       isError: isCyclesError,
+      sectionError,
       search: state.search,
       statusFilter: state.statusFilter,
       sessionFilter: state.sessionFilter,
       entryModeFilter: state.entryModeFilter,
       batchNoFilter: state.batchNoFilter,
-      page: state.page,
+      page: effectivePage,
       formTarget: state.formTarget,
       formOpen: state.formOpen,
       deleteTarget: state.deleteTarget,

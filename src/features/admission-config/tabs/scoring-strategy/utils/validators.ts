@@ -1,7 +1,7 @@
 import type { Rule } from "antd/es/form";
 
 export const laneProfileRules: Rule[] = [
-  { required: true, message: "Please select a lane" },
+  { required: true, message: "Please select an entry mode" },
 ];
 
 export const descriptionRules: Rule[] = [

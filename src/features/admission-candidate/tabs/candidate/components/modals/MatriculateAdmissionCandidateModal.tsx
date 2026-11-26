@@ -1,4 +1,10 @@
-import { Modal, Typography } from "antd";
+import {
+  getCandidateEntryModeLabel,
+  isRealJambRegNo,
+} from "@/shared/constants/admissionCandidateOptions";
+import { useToken } from "@/shared/hooks/useToken";
+import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
+import { Flex, Modal, Tag, Typography } from "antd";
 import { useMatriculateAdmissionCandidateModal } from "../../hooks/useAdmissionCandidateModal";
 import type { AdmissionCandidate } from "../../types/admission-candidate";
 
@@ -13,6 +19,7 @@ export function MatriculateAdmissionCandidateModal({
   candidate,
   onClose,
 }: MatriculateAdmissionCandidateModalProps) {
+  const token = useToken();
   const { state, actions } = useMatriculateAdmissionCandidateModal(
     candidate,
     open,
@@ -29,14 +36,28 @@ export function MatriculateAdmissionCandidateModal({
       confirmLoading={state.isLoading}
       destroyOnHidden
     >
-      <Typography.Paragraph>
-        Matriculate{" "}
-        <strong>
-          {candidate?.firstName} {candidate?.lastName}
-        </strong>{" "}
-        ({candidate?.jambRegNo})? This marks the application as matriculated and
-        triggers downstream student creation.
-      </Typography.Paragraph>
+      <Flex vertical gap={12}>
+        <Flex align="center" gap={8} wrap="wrap">
+          <Tag color="blue">
+            {getCandidateEntryModeLabel(candidate?.entryMode)}
+          </Tag>
+        </Flex>
+        <Typography.Paragraph style={{ marginBottom: 0 }}>
+          Matriculate{" "}
+          <strong>
+            {candidate?.firstName} {candidate?.lastName}
+          </strong>
+          <ConditionalRenderer when={isRealJambRegNo(candidate?.jambRegNo)}>
+            {` (${candidate?.jambRegNo})`}
+          </ConditionalRenderer>
+          ? This marks the application as matriculated and triggers downstream
+          student creation.
+        </Typography.Paragraph>
+        <Typography.Text type="secondary" style={{ fontSize: token.fontSizeSM }}>
+          Matriculation number generation slot and intake level placement follow
+          this candidate&apos;s entry mode.
+        </Typography.Text>
+      </Flex>
     </Modal>
   );
 }

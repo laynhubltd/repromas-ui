@@ -1,6 +1,18 @@
-export type CandidateGender = "MALE" | "FEMALE" | "OTHER";
+import type {
+  AdmissionCycleLaneConfig,
+  CandidateEntryMode,
+  CandidateGender,
+  OfferDecision,
+  SeatBucket,
+} from "@/shared/types/admission-lane";
 
-export type CandidateEntryMode = "JAMB";
+export type {
+  CandidateEntryMode,
+  CandidateGender,
+  CandidateIntakeMode,
+  OfferDecision,
+  SeatBucket,
+} from "@/shared/types/admission-lane";
 
 export type ApplicationStatus =
   | "PENDING"
@@ -12,15 +24,6 @@ export type ApplicationStatus =
 export type FinalDecision = "PENDING" | "OFFER_ADMISSION" | "REJECTED" | string;
 
 // ─── Offer admission (POST /admission-candidates/{id}/offer) ───────────────
-
-export type OfferDecision =
-  | "ADMIT_MERIT"
-  | "ADMIT_CATCHMENT"
-  | "ADMIT_ELDS"
-  | "OFFER_CHANGE_OF_COURSE"
-  | "REJECTED";
-
-export type SeatBucket = "MERIT" | "CATCHMENT" | "ELDS";
 
 export type OfferDecisionSource = "RECOMMENDATION" | "MANUAL_OVERRIDE";
 
@@ -47,6 +50,7 @@ export type AdmissionApplication = {
   candidateId: number;
   appliedProgramId: number;
   offeredProgramId: number | null;
+  entryMode?: CandidateEntryMode;
   applicationStatus: ApplicationStatus;
   finalDecision: FinalDecision;
   isMatriculated: boolean;
@@ -83,6 +87,8 @@ export type AdmissionCycleRef = {
   id: number;
   name: string;
   status?: string;
+  entryModes?: AdmissionCycleLaneConfig[];
+  batchNo?: number;
 };
 
 export type OlevelSubjectRef = {
@@ -171,6 +177,7 @@ export type JambScoreInput = {
 
 export type CreateAdmissionCandidateRequest = {
   cycleId: number;
+  entryMode?: CandidateEntryMode;
   firstName: string;
   lastName: string;
   stateId: number;
@@ -192,7 +199,33 @@ export type CreateAdmissionCandidateResponse = {
   warnings: CapsUploadIssue[];
 };
 
-export type CandidateIntakeMode = "manual" | "jamb";
+export type CandidatePriorQualificationTypeSummary = {
+  id: number;
+  code: string;
+  name: string;
+  assessmentFormat:
+  | "POINTS"
+  | "CLASSIFICATION"
+  | "CGPA"
+  | "PASS_FAIL"
+  | string;
+  scaleDefinition?: Record<string, unknown>;
+  isActive?: boolean;
+};
+
+export type CandidatePriorQualification = {
+  id: number;
+  candidateId: number;
+  priorQualificationTypeId: number;
+  institutionName: string;
+  matriculationNumber: string | null;
+  yearAwarded: number;
+  assessedValue: Record<string, unknown>;
+  verificationStatus: string;
+  metadata: Record<string, unknown> | null;
+  createdAt: string;
+  priorQualificationType?: CandidatePriorQualificationTypeSummary | null;
+};
 
 export type PatchAdmissionCandidateMetadataRequest = {
   metadata: Record<string, unknown> | null;

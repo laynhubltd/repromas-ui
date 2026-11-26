@@ -1,4 +1,8 @@
 import type { DocumentUpload } from "@/features/dynamic-form/api/documentUploadApi";
+import {
+  getCandidateEntryModeLabel,
+  isRealJambRegNo,
+} from "@/shared/constants/admissionCandidateOptions";
 import type { MeAdmissionApplication } from "../types/me-admission-application";
 import type { PrintableApplicationDocumentModel } from "../types/acknowledgement-slip";
 import { buildAcknowledgementReference } from "./buildAcknowledgementReference";
@@ -42,6 +46,7 @@ export function buildPrintableApplicationModel({
   const statusDisplay = resolveApplicationStatusDisplay(
     application.applicationStatus,
   );
+  const rawEntryMode = application.entryMode ?? candidate.entryMode;
 
   return {
     acknowledgementNumber: buildAcknowledgementReference({
@@ -51,7 +56,9 @@ export function buildPrintableApplicationModel({
     }),
     applicantName,
     profilePictureUrl: profilePictureUrl?.trim() || null,
-    jambRegNo: candidate.jambRegNo,
+    jambRegNo: isRealJambRegNo(candidate.jambRegNo)
+      ? candidate.jambRegNo
+      : null,
     dateOfBirth: candidate.dateOfBirth,
     gender: candidate.gender,
     stateName: resolveRelatedName(candidate.state, candidate.stateId),
@@ -60,7 +67,7 @@ export function buildPrintableApplicationModel({
     phone: candidate.phone,
     programmeName: application.appliedProgram?.name ?? null,
     cycleName: candidate.cycle?.name ?? null,
-    entryMode: candidate.entryMode,
+    entryMode: rawEntryMode ? getCandidateEntryModeLabel(rawEntryMode) : null,
     applicationStatus: statusDisplay.label,
     submittedAt: resolveSubmittedAt(application),
     candidateId: candidate.id,

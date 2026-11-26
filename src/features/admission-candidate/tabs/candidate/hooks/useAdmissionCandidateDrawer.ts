@@ -1,5 +1,8 @@
 import { ADMISSION_CANDIDATE_DETAIL_INCLUDE } from "@/shared/constants/admissionCandidateOptions";
-import { useGetAdmissionCandidateQuery } from "../api/admissionCandidateApi";
+import {
+  useGetAdmissionCandidateQuery,
+  useGetCandidatePriorQualificationsQuery,
+} from "../api/admissionCandidateApi";
 
 export function useAdmissionCandidateDrawer(
   candidateId: number | null,
@@ -10,9 +13,26 @@ export function useAdmissionCandidateDrawer(
     { skip: candidateId === null || !open },
   );
 
+  const shouldFetchPriorQualifications =
+    open &&
+    candidateId !== null &&
+    (data?.entryMode === "DIRECT_ENTRY" || data?.entryMode === "TRANSFER");
+
+  const {
+    data: priorQualsData,
+    isLoading: isLoadingPriorQualifications,
+    isFetching: isFetchingPriorQualifications,
+  } = useGetCandidatePriorQualificationsQuery(
+    { candidateId: candidateId! },
+    { skip: !shouldFetchPriorQualifications },
+  );
+
   return {
     state: {
       candidate: data ?? null,
+      priorQualifications: priorQualsData?.member ?? [],
+      isLoadingPriorQualifications:
+        isLoadingPriorQualifications || isFetchingPriorQualifications,
       isLoading,
       isError,
     },

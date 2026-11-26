@@ -1,34 +1,37 @@
 import { describe, expect, it } from "vitest";
-import { resolveLaneProfileFromCycle } from "./resolveLaneProfileFromCycle";
+import { resolveLaneProfileFromLane } from "./resolveLaneProfileFromCycle";
 
-describe("resolveLaneProfileFromCycle", () => {
+describe("resolveLaneProfileFromLane", () => {
   it("maps UTME + JAMB to UTME_JAMB", () => {
     expect(
-      resolveLaneProfileFromCycle({
+      resolveLaneProfileFromLane({
         entryMode: "UTME",
-        admissionIdentityMode: "JAMB",
+        identityMode: "JAMB",
       }),
     ).toBe("UTME_JAMB");
   });
 
   it("maps UTME + OPEN to UTME_OPEN", () => {
     expect(
-      resolveLaneProfileFromCycle({
+      resolveLaneProfileFromLane({
         entryMode: "UTME",
-        admissionIdentityMode: "OPEN",
+        identityMode: "OPEN",
       }),
     ).toBe("UTME_OPEN");
   });
 
-  it("maps DIRECT_ENTRY to DIRECT_ENTRY", () => {
+  it("maps DIRECT_ENTRY (JAMB or OPEN) to DIRECT_ENTRY", () => {
     expect(
-      resolveLaneProfileFromCycle({ entryMode: "DIRECT_ENTRY" }),
+      resolveLaneProfileFromLane({ entryMode: "DIRECT_ENTRY", identityMode: "JAMB" }),
+    ).toBe("DIRECT_ENTRY");
+    expect(
+      resolveLaneProfileFromLane({ entryMode: "DIRECT_ENTRY", identityMode: "OPEN" }),
     ).toBe("DIRECT_ENTRY");
   });
 
   it("returns null for TRANSFER", () => {
     expect(
-      resolveLaneProfileFromCycle({ entryMode: "TRANSFER" }),
+      resolveLaneProfileFromLane({ entryMode: "TRANSFER", identityMode: "OPEN" }),
     ).toBeNull();
   });
 });

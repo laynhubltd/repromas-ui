@@ -295,7 +295,7 @@ export function ProgramAdmissionConfigTab() {
         intent="info"
         collapsible
         title="Admission Cut-offs and Quota"
-        body="Set per-program capacity, federal-character quota split (Merit/Catchment/ELDS), and minimum aggregate cut-offs used after scoring. O-Level credit gates are a pre-check on the Direct Entry lane before program subject rules apply."
+        body="Set per-program capacity, federal-character quota split (Merit/Catchment/ELDS), and minimum aggregate cut-offs used after scoring. O-Level credit gates are a pre-check on the Direct Entry mode before program subject rules apply."
       />
 
       <Flex gap={16} wrap="wrap">

@@ -28,7 +28,7 @@ export function validateStrategyPayload(
   if (!getAllowedMethodsForLane(laneProfile).includes(screening_method)) {
     return {
       valid: false,
-      message: `Screening method ${screening_method} is not allowed for this lane`,
+      message: `Screening method ${screening_method} is not allowed for this entry mode`,
     };
   }
 
@@ -54,7 +54,7 @@ export function validateStrategyPayload(
     if (requires_jamb === false) {
       return {
         valid: false,
-        message: "UTME (JAMB) lane requires JAMB for scoring",
+        message: "UTME (JAMB) entry mode requires JAMB for scoring",
       };
     }
     if (isUtmeLegacyMethod(screening_method) && max_jamb_score <= 0) {

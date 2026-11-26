@@ -5,6 +5,7 @@ import type {
 
 export type CandidateSignupStep =
   | "bootstrap"
+  | "select_entry_mode"
   | "jamb_lookup"
   | "jamb_details"
   | "open_form"
@@ -16,12 +17,15 @@ export type CandidateSignupBlockedReason =
   | "wrong_status";
 
 export type CandidateSignupLaneContext = {
-  entryMode: AdmissionEntryMode;
+  entryMode: AdmissionEntryMode | null;
   batchNo: number;
   sessionId?: number;
 };
 
 export const CandidateSignupActionType = {
+  BootstrapMultiLane: "BOOTSTRAP_MULTI_LANE",
+  SelectEntryMode: "SELECT_ENTRY_MODE",
+  SetOpenStateId: "SET_OPEN_STATE_ID",
   SetStep: "SET_STEP",
   SetLookupResult: "SET_LOOKUP_RESULT",
   SetJambRegNo: "SET_JAMB_REG_NO",
@@ -32,6 +36,8 @@ export const CandidateSignupActionType = {
 
 export type CandidateSignupState = {
   step: CandidateSignupStep;
+  selectedEntryMode: AdmissionEntryMode | null;
+  openStateId: number | undefined;
   jambRegNo: string;
   lookupResult: CandidateLookupResponse | null;
   laneContext: CandidateSignupLaneContext | null;
@@ -39,6 +45,21 @@ export type CandidateSignupState = {
 };
 
 export type CandidateSignupAction =
+  | {
+      type: typeof CandidateSignupActionType.BootstrapMultiLane;
+      laneContext: CandidateSignupLaneContext;
+      selectedEntryMode: AdmissionEntryMode | null;
+      step: "select_entry_mode" | "jamb_lookup" | "open_form";
+    }
+  | {
+      type: typeof CandidateSignupActionType.SelectEntryMode;
+      entryMode: AdmissionEntryMode | null;
+      step?: CandidateSignupStep;
+    }
+  | {
+      type: typeof CandidateSignupActionType.SetOpenStateId;
+      stateId: number | undefined;
+    }
   | { type: typeof CandidateSignupActionType.SetStep; step: CandidateSignupStep }
   | {
       type: typeof CandidateSignupActionType.SetLookupResult;
@@ -48,7 +69,7 @@ export type CandidateSignupAction =
   | {
       type: typeof CandidateSignupActionType.SetLaneContext;
       laneContext: CandidateSignupLaneContext;
-      step: "jamb_lookup" | "open_form";
+      step: "select_entry_mode" | "jamb_lookup" | "open_form";
     }
   | {
       type: typeof CandidateSignupActionType.SetFormError;
@@ -58,6 +79,8 @@ export type CandidateSignupAction =
 
 export const initialCandidateSignupState: CandidateSignupState = {
   step: "bootstrap",
+  selectedEntryMode: null,
+  openStateId: undefined,
   jambRegNo: "",
   lookupResult: null,
   laneContext: null,
@@ -69,6 +92,34 @@ export function candidateSignupReducer(
   action: CandidateSignupAction,
 ): CandidateSignupState {
   switch (action.type) {
+    case CandidateSignupActionType.BootstrapMultiLane:
+      return {
+        ...state,
+        laneContext: action.laneContext,
+        selectedEntryMode: action.selectedEntryMode,
+        step: action.step,
+        lookupResult: null,
+        jambRegNo: "",
+        openStateId: undefined,
+        formError: null,
+      };
+    case CandidateSignupActionType.SelectEntryMode:
+      return {
+        ...state,
+        selectedEntryMode: action.entryMode,
+        ...(action.step ? { step: action.step } : {}),
+        ...(state.laneContext
+          ? {
+              laneContext: {
+                ...state.laneContext,
+                entryMode: action.entryMode,
+              },
+            }
+          : {}),
+        formError: null,
+      };
+    case CandidateSignupActionType.SetOpenStateId:
+      return { ...state, openStateId: action.stateId };
     case CandidateSignupActionType.SetStep:
       return { ...state, step: action.step, formError: null };
     case CandidateSignupActionType.SetLookupResult:
@@ -91,7 +142,9 @@ export function candidateSignupReducer(
       return { ...state, formError: action.message };
     case CandidateSignupActionType.Reset:
       return initialCandidateSignupState;
-    default:
-      return state;
+    default: {
+      const _exhaustive: never = action;
+      return _exhaustive;
+    }
   }
 }

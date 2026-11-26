@@ -3,37 +3,32 @@
  * Requirements: 13.1–13.8
  */
 
-/**
- * The five lifecycle statuses for an admission cycle.
- * Forward: PRE_PROCESSING → APPLICATION_OPEN → SCREENING → LIST_RELEASED → CLOSED
- * Rollback: one step back with required reason.
- */
-export type AdmissionCycleStatus =
-  | "PRE_PROCESSING"
-  | "APPLICATION_OPEN"
-  | "SCREENING"
-  | "LIST_RELEASED"
-  | "CLOSED";
+import type {
+  AdmissionCycleLaneConfig,
+  AdmissionCycleLaneInput,
+  AdmissionCycleStatus,
+} from "@/shared/types/admission-lane";
 
-/** Lane within a session: UTME, DIRECT_ENTRY, or TRANSFER. */
-export type AdmissionEntryMode = "UTME" | "DIRECT_ENTRY" | "TRANSFER";
-
-/** Controls public candidate self-registration UX for the cycle. */
-export type AdmissionIdentityMode = "JAMB" | "OPEN";
+export type {
+  AdmissionCycleLaneConfig,
+  AdmissionCycleLaneInput,
+  AdmissionCycleStatus,
+  AdmissionEntryMode,
+  AdmissionIdentityMode,
+} from "@/shared/types/admission-lane";
 
 export type TransitionDirection = "forward" | "rollback";
 
 /**
- * Admission Cycle resource — top-level container for one admission exercise.
- * Identity is sessionId + entryMode + batchNo (lane slot).
+ * Admission Cycle resource — top-level container for one admission batch.
+ * Uniquely identified by sessionId + batchNo, with one or more configured entryModes.
  */
 export type AdmissionCycle = {
   id: number;
   sessionId: number; // immutable after creation
   name: string;
   status: AdmissionCycleStatus; // managed via transition endpoint only
-  admissionIdentityMode: AdmissionIdentityMode;
-  entryMode: AdmissionEntryMode;
+  entryModes: AdmissionCycleLaneConfig[];
   batchNo: number;
   supersedesCycleId: number | null;
   startDate: string | null; // ISO 8601 or null
@@ -47,8 +42,7 @@ export type AdmissionCycle = {
 export type CreateAdmissionCycleRequest = {
   sessionId: number;
   name: string;
-  admissionIdentityMode?: AdmissionIdentityMode;
-  entryMode?: AdmissionEntryMode;
+  entryModes?: AdmissionCycleLaneInput[];
   batchNo?: number;
   supersedesCycleId?: number | null;
   startDate?: string | null;
@@ -56,12 +50,12 @@ export type CreateAdmissionCycleRequest = {
 };
 
 /**
- * PUT body — sessionId, lane fields, and status are NOT sent.
+ * PUT body — sessionId, batchNo, and status are NOT sent.
  */
 export type UpdateAdmissionCycleRequest = {
   id: number;
   name: string;
-  admissionIdentityMode?: AdmissionIdentityMode;
+  entryModes?: AdmissionCycleLaneInput[];
   startDate?: string | null;
   endDate?: string | null;
 };
@@ -87,7 +81,6 @@ export type AdmissionCycleListParams = {
   "search[name]"?: string;
   "exact[status]"?: AdmissionCycleStatus;
   "exact[sessionId]"?: number;
-  "exact[entryMode]"?: AdmissionEntryMode;
   "exact[batchNo]"?: number;
 };
 

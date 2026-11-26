@@ -1,6 +1,8 @@
 import { Card } from "@/components/ui-kit";
 import { useIsMobile } from "@/hooks/useBreakpoint";
+import { getCandidateEntryModeLabel } from "@/shared/constants/admissionCandidateOptions";
 import { useToken } from "@/shared/hooks/useToken";
+import type { AdmissionEntryMode } from "@/shared/types/admission-lane";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
 import { ArrowRightOutlined } from "@ant-design/icons";
 import { Alert, Button, Flex, Progress, Tag, Typography } from "antd";
@@ -14,6 +16,7 @@ const { Text } = Typography;
 type AdmissionProgressHeroProps = {
   portalDisplay: StatusDisplay;
   cycleStatus?: string;
+  entryMode?: AdmissionEntryMode;
   progressPercent: number;
   activeStepNumber: number;
   totalSteps: number;
@@ -27,6 +30,7 @@ type AdmissionProgressHeroProps = {
 export function AdmissionProgressHero({
   portalDisplay,
   cycleStatus,
+  entryMode,
   progressPercent,
   activeStepNumber,
   totalSteps,
@@ -78,11 +82,20 @@ export function AdmissionProgressHero({
             >
               {portalDisplay.label}
             </Tag>
-            {cycleLabel ? (
-              <Text type="secondary" style={{ fontSize: token.fontSizeSM }}>
-                Admission cycle · {cycleLabel}
-              </Text>
-            ) : null}
+            <ConditionalRenderer when={cycleLabel !== null || entryMode !== undefined}>
+              <Flex align="center" gap={8} wrap="wrap">
+                <ConditionalRenderer when={cycleLabel !== null}>
+                  <Text type="secondary" style={{ fontSize: token.fontSizeSM }}>
+                    Admission cycle · {cycleLabel}
+                  </Text>
+                </ConditionalRenderer>
+                <ConditionalRenderer when={entryMode !== undefined}>
+                  <Tag color="blue" style={{ marginInlineEnd: 0 }}>
+                    {getCandidateEntryModeLabel(entryMode)}
+                  </Tag>
+                </ConditionalRenderer>
+              </Flex>
+            </ConditionalRenderer>
           </Flex>
         </Flex>
 

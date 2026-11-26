@@ -1,6 +1,7 @@
 import type {
   AdmissionCandidate,
   AdmissionScreening,
+  CandidateEntryMode,
   OfferCandidateRequest,
   OfferDecision,
   SeatBucket,
@@ -55,6 +56,7 @@ export type AdmissionApplicationEmbed = {
   candidateId: number;
   appliedProgramId: number;
   offeredProgramId: number | null;
+  entryMode?: CandidateEntryMode;
   applicationStatus: string;
   finalDecision: string;
   isMatriculated: boolean;
@@ -71,6 +73,7 @@ export type AdmissionRecommendedCandidate = {
   firstName: string;
   lastName: string;
   cycleId: number;
+  entryMode: CandidateEntryMode;
   appliedProgramId: number;
   aggregateScore: string;
   quotaCategory: QuotaCategory;
@@ -90,4 +93,5 @@ export type RecommendedCandidateListParams = {
   "exact[cycleId]"?: number;
   "exact[appliedProgramId]"?: number;
   "exact[quotaCategory]"?: QuotaCategory;
+  "exact[entryMode]"?: CandidateEntryMode;
 };

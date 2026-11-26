@@ -59,6 +59,7 @@ describe("mapMeAdmissionProgress", () => {
       portal_state: "form_only",
       cycle_id: 3,
       cycle_status: "APPLICATION_OPEN",
+      entry_mode: "TRANSFER",
       candidate_id: 10,
       application_id: null,
       form_submission_id: null,
@@ -70,6 +71,7 @@ describe("mapMeAdmissionProgress", () => {
     });
 
     expect(result.portalState).toBe("form_only");
+    expect(result.entryMode).toBe("TRANSFER");
     expect(result.applicationId).toBeNull();
     expect(result.formSubmissionId).toBeNull();
     expect(result.fee).toBeNull();
@@ -94,6 +96,7 @@ describe("mapMeAdmissionProgress", () => {
     const result = mapMeAdmissionProgress(null);
 
     expect(result.portalState).toBe("");
+    expect(result.entryMode).toBe("UTME");
     expect(result.steps).toEqual([]);
     expect(result.blockers).toEqual([]);
     expect(result.fee).toBeNull();

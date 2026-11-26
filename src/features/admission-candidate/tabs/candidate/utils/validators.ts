@@ -48,6 +48,10 @@ export const cycleIdRules: Rule[] = [
   { required: true, message: "Admission cycle is required" },
 ];
 
+export const candidateEntryModeRules: Rule[] = [
+  { required: true, message: "Entry mode is required" },
+];
+
 export const stateIdRules: Rule[] = [
   { required: true, message: "State is required" },
 ];

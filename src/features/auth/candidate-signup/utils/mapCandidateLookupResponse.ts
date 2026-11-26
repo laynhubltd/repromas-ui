@@ -1,4 +1,7 @@
-import type { CandidateLookupResponse } from "../types/candidate-signup";
+import type {
+  AdmissionEntryMode,
+  CandidateLookupResponse,
+} from "../types/candidate-signup";
 
 type RawRecord = Record<string, unknown>;
 
@@ -17,6 +20,12 @@ export function mapCandidateLookupResponse(raw: unknown): CandidateLookupRespons
     state: readString(data, "state", "state"),
     lga: readString(data, "lga", "lga"),
     appliedProgram: readString(data, "applied_program", "appliedProgram"),
-    verificationToken: readString(data, "verification_token", "verificationToken"),
+    entryMode: (readString(data, "entry_mode", "entryMode") ||
+      "UTME") as AdmissionEntryMode,
+    verificationToken: readString(
+      data,
+      "verification_token",
+      "verificationToken",
+    ),
   };
 }

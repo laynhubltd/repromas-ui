@@ -1,4 +1,9 @@
-import type { AdmissionSignupConfig } from "../types/candidate-signup";
+import type {
+  AdmissionEntryMode,
+  AdmissionIdentityMode,
+  AdmissionSignupConfig,
+  SignupConfigLane,
+} from "../types/candidate-signup";
 
 type RawRecord = Record<string, unknown>;
 
@@ -31,6 +36,25 @@ function readNullableString(
   return typeof value === "string" ? value : null;
 }
 
+function mapSignupLanes(raw: RawRecord): SignupConfigLane[] {
+  const rawList = raw.entry_modes ?? raw.entryModes;
+  if (!Array.isArray(rawList)) return [];
+
+  const lanes: SignupConfigLane[] = [];
+  for (const item of rawList) {
+    if (!item || typeof item !== "object") continue;
+    const rec = item as RawRecord;
+    const entryMode = readString(rec, "entry_mode", "entryMode");
+    const identityMode = readString(rec, "identity_mode", "identityMode");
+    if (!entryMode || !identityMode) continue;
+    lanes.push({
+      entryMode: entryMode as AdmissionEntryMode,
+      identityMode: identityMode as AdmissionIdentityMode,
+    });
+  }
+  return lanes;
+}
+
 export function mapAdmissionSignupConfig(raw: unknown): AdmissionSignupConfig {
   const data = (raw && typeof raw === "object" ? raw : {}) as RawRecord;
 
@@ -40,13 +64,7 @@ export function mapAdmissionSignupConfig(raw: unknown): AdmissionSignupConfig {
     cycleId: readNumber(data, "cycle_id", "cycleId"),
     name: readString(data, "name", "name"),
     status: readString(data, "status", "status"),
-    admissionIdentityMode: readString(
-      data,
-      "admission_identity_mode",
-      "admissionIdentityMode",
-    ) as AdmissionSignupConfig["admissionIdentityMode"],
-    entryMode: (readString(data, "entry_mode", "entryMode") ||
-      "UTME") as AdmissionSignupConfig["entryMode"],
+    entryModes: mapSignupLanes(data),
     batchNo: readNumber(data, "batch_no", "batchNo") || 1,
     ...(sessionId !== undefined ? { sessionId } : {}),
     startDate: readNullableString(data, "start_date", "startDate"),

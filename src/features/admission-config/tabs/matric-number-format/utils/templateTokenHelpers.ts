@@ -112,7 +112,7 @@ export function getActivationBlockers(input: {
   if (input.slotLocked !== undefined) {
     blockers.push({
       key: "slot-unlocked",
-      label: "Lane is not locked for intake in the current session",
+      label: "Entry mode is not locked for intake in the current session",
       met: !input.slotLocked,
     });
   }

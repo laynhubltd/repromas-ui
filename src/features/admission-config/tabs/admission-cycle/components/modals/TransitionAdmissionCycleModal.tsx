@@ -6,7 +6,7 @@ import { statusLabelByValue } from "@/shared/constants/admissionCycleOptions";
 import { Alert, Button, Form, Input, Modal, Typography } from "antd";
 import { useTransitionAdmissionCycleModal } from "../../hooks/useAdmissionCycleModal";
 import type { AdmissionCycle, TransitionDirection } from "../../types/admission-cycle";
-import { formatEntryBatchLabel } from "../../utils/admissionCycleDisplay";
+import { formatCycleBatchLabel } from "../../utils/admissionCycleDisplay";
 import { transitionReasonRules } from "../../utils/validators";
 
 type TransitionAdmissionCycleModalProps = {
@@ -79,15 +79,21 @@ export function TransitionAdmissionCycleModal({
             <Typography.Text strong>{toStatusLabel}</Typography.Text>?
           </Typography.Text>
 
-          {target !== null ? (
+          <ConditionalRenderer when={target !== null}>
             <Typography.Text
               type="secondary"
-              style={{ display: "block", marginBottom: 12, fontSize: token.fontSizeSM }}
+              style={{
+                display: "block",
+                marginBottom: 12,
+                fontSize: token.fontSizeSM,
+              }}
             >
               {sessionName ? `${sessionName} · ` : ""}
-              {formatEntryBatchLabel(target.entryMode, target.batchNo)}
+              {target
+                ? formatCycleBatchLabel(target.entryModes, target.batchNo)
+                : ""}
             </Typography.Text>
-          ) : null}
+          </ConditionalRenderer>
 
           <ConditionalRenderer when={warningMessage !== null}>
             <Alert

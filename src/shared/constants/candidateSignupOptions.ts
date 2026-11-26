@@ -1,5 +1,13 @@
 export const CANDIDATE_SIGNUP_UI_COPY = {
   pageTitleFallback: "Candidate registration",
+  selectEntryModeIntro:
+    "Choose the admission entry mode you are applying through.",
+  jambLaneDescription:
+    "Verify your JAMB registration number to pre-fill your details.",
+  openLaneDescription: "Register directly with your personal details.",
+  changeEntryModeLabel: "Change admission entry mode",
+  multiJambLookupHint:
+    "If you registered with JAMB, we will automatically match your entry mode when verifying your JAMB number.",
   jambLookupIntro:
     "Enter your JAMB registration number to verify your CAPS record.",
   openSignupIntro:
@@ -13,6 +21,12 @@ export const CANDIDATE_SIGNUP_UI_COPY = {
   signupSuccessMessage: "Registration successful",
   signupSuccessDescription: "Welcome! You are now signed in.",
   admissionOpenNoticeFallbackCycle: "Admission",
-  admissionOpenNoticeSuffix:
-    "is accepting applications, Candidate sign-up below to register and begin your application.",
+  loginEditorialCta: "Start candidate registration",
+  loginHowToApplyLabel: "How to apply",
+  loginTourTitle: "How to apply (3 quick steps)",
+  loginTourDismissLabel: "Got it",
+  loginTourStartLabel: "Start registration",
+  loginMobileCta: "Candidate sign-up",
+  loginInlinePrompt: "New applicant?",
+  loginInlineLink: "Start candidate registration",
 } as const;

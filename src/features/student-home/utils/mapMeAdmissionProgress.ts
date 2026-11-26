@@ -1,3 +1,4 @@
+import type { AdmissionEntryMode } from "@/shared/types/admission-lane";
 import type {
   MeAdmissionProgress,
   MeAdmissionProgressBlocker,
@@ -92,6 +93,8 @@ export function mapMeAdmissionProgress(raw: unknown): MeAdmissionProgress {
     portalState: readString(data, "portal_state", "portalState"),
     cycleId: readNumber(data, "cycle_id", "cycleId"),
     cycleStatus: readString(data, "cycle_status", "cycleStatus"),
+    entryMode: (readString(data, "entry_mode", "entryMode") ||
+      "UTME") as AdmissionEntryMode,
     candidateId: readNumber(data, "candidate_id", "candidateId"),
     applicationId: readNullableNumber(
       data,

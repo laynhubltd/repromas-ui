@@ -75,6 +75,22 @@ describe("admissionWizardReducer step navigation", () => {
     };
     expect(patchPayload).toEqual({ "10": { email: "a@b.com" } });
   });
+
+  it("tracks laneClosedMessage and clears it on Reset", () => {
+    const withMsg = admissionWizardReducer(initialAdmissionWizardState, {
+      type: AdmissionWizardActionType.SetLaneClosedMessage,
+      message: "Lane closed",
+    });
+    expect(withMsg.laneClosedMessage).toBe("Lane closed");
+
+    const reset = admissionWizardReducer(withMsg, {
+      type: AdmissionWizardActionType.Reset,
+      sections,
+      payload: {},
+      prefill: {},
+    });
+    expect(reset.laneClosedMessage).toBeNull();
+  });
 });
 
 describe("geography field keys on state change", () => {

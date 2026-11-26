@@ -155,7 +155,7 @@ export const MATRIC_FORMAT_SLOT_FILTER_OPTIONS: {
   value: MatricFormatSlot | "ANY";
   label: string;
 }[] = [
-  { value: "ANY", label: "Any lane" },
+  { value: "ANY", label: "Any entry mode" },
   ...MATRIC_FORMAT_SLOT_OPTIONS,
 ];
 
@@ -175,35 +175,35 @@ export function matricSlotLabel(entryMode: MatricFormatSlot): string {
 }
 
 export function formatActivateBodyForSlot(entryMode: MatricFormatSlot): string {
-  const lane = matricSlotLabel(entryMode);
-  return `This will become the live ${lane} matric format. The current active ${lane} format (if any) will be deactivated. Existing student matric numbers will not change.`;
+  const modeLabel = matricSlotLabel(entryMode);
+  return `This will become the live ${modeLabel} matric format. The current active ${modeLabel} format (if any) will be deactivated. Existing student matric numbers will not change.`;
 }
 
 export function formatDeactivateBodyForSlot(entryMode: MatricFormatSlot): string {
-  const lane = matricSlotLabel(entryMode);
-  return `This will retire the live ${lane} format. The ${lane} slot will have no live format until you activate or reactivate another. New matriculation for this lane may fail until a format is live again. Existing matric numbers will not change.`;
+  const modeLabel = matricSlotLabel(entryMode);
+  return `This will retire the live ${modeLabel} format. The ${modeLabel} slot will have no live format until you activate or reactivate another. New matriculation for this entry mode may fail until a format is live again. Existing matric numbers will not change.`;
 }
 
 export const MATRIC_NUMBER_FORMAT_UI_COPY = {
   explainerTitle: "Matric Number Format",
   explainerBody:
-    "Define how student registration numbers (matric numbers) are generated when candidates are matriculated after registration fee settlement. Each tenant can have one live format per admission lane (Default, UTME, Direct Entry, Transfer). Lane-specific formats fall back to the default when not configured. Format changes apply to new students only — existing matric numbers are never changed.",
+    "Define how student registration numbers (matric numbers) are generated when candidates are matriculated after registration fee settlement. Each tenant can have one live format per entry mode (Default, UTME, Direct Entry, Transfer). Entry-mode-specific formats fall back to the default when not configured. Format changes apply to new students only — existing matric numbers are never changed.",
   previewDisclaimer: "Sample — does not consume the next number.",
   activateTitle: "Activate Matric Number Format",
   activateConfirmDraft: "Activate draft",
-  activateSlotPeerNote: "This will replace the current live format in this lane.",
+  activateSlotPeerNote: "This will replace the current live format in this entry mode.",
   slotLockBanner:
-    "Intake has started in the current session for this lane. You cannot activate or deactivate a different format until the next academic session. Drafts can still be edited for next session.",
+    "Intake has started in the current session for this entry mode. You cannot activate or deactivate a different format until the next academic session. Drafts can still be edited for next session.",
   slotNotConfigured: "Not configured",
   slotMissingLocked: "Missing but locked",
   slotLive: "Live",
   slotLiveLocked: "Live (locked)",
   slotFallbackWarning:
-    "Candidates in this lane will use the default format until a lane-specific format is activated.",
+    "Candidates in this entry mode will use the default format until an entry-mode-specific format is activated.",
   slotCreateDraftCta: "Create draft for",
   currentSessionLabel: "Current session",
-  actionActivateSlotLocked: "Cannot activate — intake has started for this lane",
-  actionDeactivateSlotLocked: "Cannot deactivate — intake has started for this lane",
+  actionActivateSlotLocked: "Cannot activate — intake has started for this entry mode",
+  actionDeactivateSlotLocked: "Cannot deactivate — intake has started for this entry mode",
   reactivateTitle: "Reactivate Matric Number Format",
   reactivateBody:
     "This will restore this format as the live format for new students. Existing matric numbers will not change.",

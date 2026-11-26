@@ -6,35 +6,65 @@
 
 import { brandingLoaded, themeLoaded, themeReducer } from "@/app/state/theme-slice";
 import { AuthPageLayout } from "@/components/auth/AuthPageLayout";
+import { resolveAuthBrandDisplayName } from "@/components/auth/resolveAuthBrandDisplayName";
 import { configureStore } from "@reduxjs/toolkit";
 import { render } from "@testing-library/react";
 import { Provider } from "react-redux";
+import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 
 // ── Helper: build a minimal store with theme slice ────────────────────────────
 
-function makeStore(overrides: { primaryColor?: string; systemName?: string; logoUrl?: string } = {}) {
+function makeStore(
+  overrides: {
+    primaryColor?: string;
+    systemName?: string;
+    schoolName?: string;
+    tenantName?: string;
+    logoUrl?: string;
+  } = {},
+) {
   const store = configureStore({ reducer: { theme: themeReducer } });
   if (overrides.primaryColor) {
     store.dispatch(themeLoaded(overrides.primaryColor));
   }
-  if (overrides.systemName !== undefined || overrides.logoUrl !== undefined) {
-    store.dispatch(brandingLoaded({
-      systemName: overrides.systemName,
-      logoUrl: overrides.logoUrl,
-    }));
+  if (
+    overrides.systemName !== undefined ||
+    overrides.schoolName !== undefined ||
+    overrides.tenantName !== undefined ||
+    overrides.logoUrl !== undefined
+  ) {
+    store.dispatch(
+      brandingLoaded({
+        systemName: overrides.systemName,
+        schoolName: overrides.schoolName,
+        tenantName: overrides.tenantName,
+        logoUrl: overrides.logoUrl,
+      }),
+    );
   }
   return store;
 }
 
 function renderLayout(
   children: React.ReactNode = null,
-  storeOverrides: { primaryColor?: string; systemName?: string; logoUrl?: string } = {},
+  storeOverrides: {
+    primaryColor?: string;
+    systemName?: string;
+    schoolName?: string;
+    tenantName?: string;
+    logoUrl?: string;
+  } = {},
+  bottomPanel?: React.ReactNode,
 ) {
   const store = makeStore(storeOverrides);
   return render(
     <Provider store={store}>
-      <AuthPageLayout illustration="login">{children}</AuthPageLayout>
+      <MemoryRouter>
+        <AuthPageLayout illustration="login" bottomPanel={bottomPanel}>
+          {children}
+        </AuthPageLayout>
+      </MemoryRouter>
     </Provider>,
   );
 }
@@ -110,5 +140,42 @@ describe("AuthPageLayout — unit tests", () => {
       </Provider>,
     );
     expect(getByText("TestSystem")).toBeInTheDocument();
+  });
+
+  it("prioritizes schoolName and uppercases short lowercase tenant slugs", () => {
+    const { getByText, rerender } = renderLayout(null, {
+      schoolName: "Federal Polytechnic Bida",
+      systemName: "Repromas Portal",
+      tenantName: "fpb",
+    });
+    expect(getByText("Federal Polytechnic Bida")).toBeInTheDocument();
+
+    const slugOnlyStore = makeStore({ tenantName: "fpb" });
+    rerender(
+      <Provider store={slugOnlyStore}>
+        <MemoryRouter>
+          <AuthPageLayout illustration="login">{null}</AuthPageLayout>
+        </MemoryRouter>
+      </Provider>,
+    );
+    expect(getByText("FPB")).toBeInTheDocument();
+  });
+
+  it("falls back to #026125 when primaryColor is transparent and renders bottomPanel", () => {
+    const { container, getByText } = renderLayout(
+      null,
+      {},
+      <span>Admissions Open Editorial</span>,
+    );
+    const panel = container.querySelector(
+      ".auth-illustration-panel",
+    ) as HTMLElement;
+    expect(panel.style.background).toBe("rgb(2, 97, 37)");
+    expect(getByText("Admissions Open Editorial")).toBeInTheDocument();
+  });
+
+  it("falls back to formatted tenantSlug instead of default system name when branding is absent", () => {
+    expect(resolveAuthBrandDisplayName({ tenantSlug: "fpb" })).toBe("FPB");
+    expect(resolveAuthBrandDisplayName({})).toBe("Repromas Academic");
   });
 });

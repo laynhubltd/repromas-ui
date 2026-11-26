@@ -1,16 +1,21 @@
 import type {
-    AdmissionApplication,
-    CandidateGender,
-    LgaRef,
-    StateRef,
+  AdmissionApplication,
+  CandidateEntryMode,
+  CandidateGender,
+  LgaRef,
+  StateRef,
 } from "@/features/admission-candidate/tabs/candidate/types/admission-candidate";
-import type { AdmissionEntryMode } from "@/features/admission-config/tabs/admission-cycle/types/admission-cycle";
+import type {
+  AdmissionCycleLaneConfig,
+  AdmissionEntryMode,
+} from "@/shared/types/admission-lane";
 
 export type MeAdmissionCycleEmbed = {
   id: number;
   sessionId: number;
   name: string;
   status: string;
+  entryModes?: AdmissionCycleLaneConfig[];
   admissionIdentityMode?: "JAMB" | "OPEN";
   entryMode?: AdmissionEntryMode;
   batchNo?: number;
@@ -21,6 +26,7 @@ export type MeAdmissionCycleEmbed = {
 export type MeAdmissionCandidate = {
   id: number;
   cycleId: number;
+  entryMode: CandidateEntryMode;
   jambRegNo: string | null;
   firstName: string;
   lastName: string;

@@ -1,3 +1,4 @@
+import { isRealJambRegNo } from "@/shared/constants/admissionCandidateOptions";
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
 import {
@@ -66,7 +67,10 @@ export function OfferAdmissionCandidateModal({
           <Typography.Text strong>
             {candidate?.firstName} {candidate?.lastName}
           </Typography.Text>
-          {candidate?.jambRegNo ? ` (${candidate.jambRegNo})` : null}.
+          {isRealJambRegNo(candidate?.jambRegNo)
+            ? ` (${candidate.jambRegNo})`
+            : null}
+          .
         </Typography.Paragraph>
 
         <Alert

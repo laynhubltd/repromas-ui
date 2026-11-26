@@ -6,6 +6,7 @@ const fullDossierFixture = {
   candidateId: 130,
   appliedProgramId: 4,
   offeredProgramId: null,
+  entryMode: "UTME",
   applicationStatus: "SUBMITTED",
   finalDecision: "PENDING",
   isMatriculated: false,
@@ -32,6 +33,8 @@ const fullDossierFixture = {
       sessionId: 16,
       name: "2025/2026 Admission",
       status: "APPLICATION_OPEN",
+      entryModes: [{ entryMode: "UTME", identityMode: "JAMB", enabled: true }],
+      batchNo: 1,
       startDate: "2025-05-01T00:00:00+00:00",
       endDate: "2025-08-31T23:59:59+00:00",
       createdAt: "2026-01-10T08:00:00+00:00",
@@ -100,6 +103,10 @@ describe("mapMeAdmissionApplication", () => {
     const result = mapMeAdmissionApplication(fullDossierFixture);
 
     expect(result.id).toBe(54);
+    expect(result.entryMode).toBe("UTME");
+    expect(result.candidate?.cycle?.entryModes).toEqual([
+      { entryMode: "UTME", identityMode: "JAMB", enabled: true },
+    ]);
     expect(result.applicationStatus).toBe("SUBMITTED");
     expect(result.finalDecision).toBe("PENDING");
     expect(result.candidate?.firstName).toBe("Aisha");

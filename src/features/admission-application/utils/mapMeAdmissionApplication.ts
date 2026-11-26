@@ -1,4 +1,10 @@
 import type {
+  AdmissionCycleLaneConfig,
+  AdmissionEntryMode,
+  AdmissionIdentityMode,
+  CandidateEntryMode,
+} from "@/shared/types/admission-lane";
+import type {
   MeAdmissionApplication,
   MeAdmissionApplicationCandidate,
   MeAdmissionCycleEmbed,
@@ -81,14 +87,40 @@ function mapSubjectRef(raw: unknown): MeAdmissionSubjectRef | null {
   };
 }
 
+function mapCycleLanes(
+  raw: RawRecord,
+): AdmissionCycleLaneConfig[] | undefined {
+  const rawList = raw.entry_modes ?? raw.entryModes;
+  if (!Array.isArray(rawList)) return undefined;
+
+  const lanes: AdmissionCycleLaneConfig[] = [];
+  for (const item of rawList) {
+    if (!item || typeof item !== "object") continue;
+    const rec = item as RawRecord;
+    const entryMode = readString(rec, "entry_mode", "entryMode");
+    const identityMode = readString(rec, "identity_mode", "identityMode");
+    if (!entryMode || !identityMode) continue;
+    lanes.push({
+      entryMode: entryMode as AdmissionEntryMode,
+      identityMode: identityMode as AdmissionIdentityMode,
+      enabled: Boolean(rec.enabled ?? true),
+    });
+  }
+  return lanes;
+}
+
 function mapCycleEmbed(raw: unknown): MeAdmissionCycleEmbed | null {
   if (!raw || typeof raw !== "object") return null;
   const data = raw as RawRecord;
+  const entryModes = mapCycleLanes(data);
+  const batchNo = readOptionalNumber(data, "batch_no", "batchNo");
   return {
     id: readNumber(data, "id", "id"),
     sessionId: readNumber(data, "session_id", "sessionId"),
     name: readString(data, "name", "name"),
     status: readString(data, "status", "status"),
+    ...(entryModes !== undefined ? { entryModes } : {}),
+    ...(batchNo !== undefined ? { batchNo } : {}),
     startDate: readNullableString(data, "start_date", "startDate"),
     endDate: readNullableString(data, "end_date", "endDate"),
     createdAt: readNullableString(data, "created_at", "createdAt") ?? undefined,
@@ -258,12 +290,17 @@ export function mapMeAdmissionApplication(raw: unknown): MeAdmissionApplication 
   const offeredProgram = mapProgram(data.offered_program ?? data.offeredProgram);
   const screening = mapScreening(data.screening);
 
+  const entryModeRaw = readNullableString(data, "entry_mode", "entryMode");
+
   return {
     id: readNumber(data, "id", "id"),
     candidateId: readNumber(data, "candidate_id", "candidateId"),
     appliedProgramId: readNumber(data, "applied_program_id", "appliedProgramId"),
     offeredProgramId:
       typeof offeredProgramIdRaw === "number" ? offeredProgramIdRaw : null,
+    entryMode:
+      (entryModeRaw as CandidateEntryMode | null) ??
+      ((candidate?.entryMode as CandidateEntryMode | null | undefined) ?? null),
     applicationStatus: readString(
       data,
       "application_status",

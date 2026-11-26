@@ -1,6 +1,10 @@
 import { DashCard } from "@/components/ui-kit";
 import { BillingWorkflowDecisionGuard } from "@/features/billing";
 import type { WorkflowPayNowPayload } from "@/features/billing/types/workflow-step-decision";
+import {
+  getCandidateEntryModeLabel,
+  isRealJambRegNo,
+} from "@/shared/constants/admissionCandidateOptions";
 import { FEE_EVENT_CODE } from "@/shared/constants/feeEventOptions";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
 import { MetadataRenderer } from "@/shared/ui/MetadataRenderer";
@@ -48,6 +52,7 @@ type AdmissionApplicationDossierViewProps = {
     showOfferCard: boolean;
     showScreeningSection: boolean;
     showScreeningPending: boolean;
+    showJambCard: boolean;
     showJambSection: boolean;
     showCandidateMetadata: boolean;
   };
@@ -168,7 +173,9 @@ export function AdmissionApplicationDossierView({
               .join(" ") || "—"}
           </Descriptions.Item>
           <Descriptions.Item label={ME_APPLICATION_UI_COPY.jambRegNo}>
-            {application.candidate?.jambRegNo ?? "—"}
+            {isRealJambRegNo(application.candidate?.jambRegNo)
+              ? application.candidate?.jambRegNo
+              : "—"}
           </Descriptions.Item>
           <Descriptions.Item label={ME_APPLICATION_UI_COPY.cycle}>
             {application.candidate?.cycle?.name ?? "—"}
@@ -186,7 +193,9 @@ export function AdmissionApplicationDossierView({
             )}
           </Descriptions.Item>
           <Descriptions.Item label={ME_APPLICATION_UI_COPY.entryMode}>
-            {application.candidate?.entryMode ?? "—"}
+            {getCandidateEntryModeLabel(
+              application.entryMode ?? application.candidate?.entryMode,
+            )}
           </Descriptions.Item>
           <Descriptions.Item label="Email">
             {application.candidate?.email ?? "—"}
@@ -245,25 +254,27 @@ export function AdmissionApplicationDossierView({
         </Card>
       </ConditionalRenderer>
 
-      <Card title={ME_APPLICATION_UI_COPY.sectionJamb} size="small">
-        <ConditionalRenderer when={flags.showJambSection}>
-          <div style={{ overflowX: "auto" }}>
-            <Table<MeAdmissionJambScore>
-              rowKey="id"
-              dataSource={jambScoreRows}
-              columns={jambScoreColumns}
-              size="small"
-              pagination={false}
-              bordered
-            />
-          </div>
-        </ConditionalRenderer>
-        <ConditionalRenderer when={!flags.showJambSection}>
-          <Typography.Text type="secondary">
-            {ME_APPLICATION_UI_COPY.noJambScores}
-          </Typography.Text>
-        </ConditionalRenderer>
-      </Card>
+      <ConditionalRenderer when={flags.showJambCard}>
+        <Card title={ME_APPLICATION_UI_COPY.sectionJamb} size="small">
+          <ConditionalRenderer when={flags.showJambSection}>
+            <div style={{ overflowX: "auto" }}>
+              <Table<MeAdmissionJambScore>
+                rowKey="id"
+                dataSource={jambScoreRows}
+                columns={jambScoreColumns}
+                size="small"
+                pagination={false}
+                bordered
+              />
+            </div>
+          </ConditionalRenderer>
+          <ConditionalRenderer when={!flags.showJambSection}>
+            <Typography.Text type="secondary">
+              {ME_APPLICATION_UI_COPY.noJambScores}
+            </Typography.Text>
+          </ConditionalRenderer>
+        </Card>
+      </ConditionalRenderer>
 
       <Card title={ME_APPLICATION_UI_COPY.sectionOlevel} size="small">
         <ApplicationOlevelSection
