@@ -1,10 +1,17 @@
-import type { AdmissionEntryMode } from "@/features/admission-config/tabs/admission-cycle/types/admission-cycle";
+import type {
+  AdmissionCycleStatus as SharedAdmissionCycleStatus,
+  AdmissionEntryMode,
+  AdmissionIdentityMode,
+} from "@/shared/types/admission-lane";
 
-export type { AdmissionEntryMode };
+export type { AdmissionEntryMode, AdmissionIdentityMode };
 
-export type AdmissionCycleStatus = "APPLICATION_OPEN" | string;
+export type AdmissionCycleStatus = SharedAdmissionCycleStatus | string;
 
-export type AdmissionIdentityMode = "JAMB" | "OPEN";
+export type SignupConfigLane = {
+  entryMode: AdmissionEntryMode;
+  identityMode: AdmissionIdentityMode;
+};
 
 export type AdmissionLaneSelectors = {
   entryMode?: AdmissionEntryMode;
@@ -17,8 +24,7 @@ export type AdmissionSignupConfig = {
   cycleId: number;
   name: string;
   status: AdmissionCycleStatus;
-  admissionIdentityMode: AdmissionIdentityMode;
-  entryMode: AdmissionEntryMode;
+  entryModes: SignupConfigLane[];
   batchNo: number;
   sessionId?: number;
   startDate: string | null;
@@ -36,6 +42,7 @@ export type CandidateLookupResponse = {
   state: string;
   lga: string;
   appliedProgram: string;
+  entryMode: AdmissionEntryMode;
   verificationToken: string;
 };
 

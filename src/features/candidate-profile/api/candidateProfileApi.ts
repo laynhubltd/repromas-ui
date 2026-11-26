@@ -7,12 +7,21 @@ import type {
 } from "../types/me-admission-candidate";
 import { mapMeAdmissionCandidate } from "../utils/mapMeAdmissionCandidate";
 
+const DEFAULT_ME_CANDIDATE_INCLUDE =
+  "cycle,state,lga,application.appliedProgram";
+
 const candidateProfileApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getMeAdmissionCandidate: builder.query<MeAdmissionCandidate, void>({
-      query: () => ({
+    getMeAdmissionCandidate: builder.query<
+      MeAdmissionCandidate,
+      { include?: string } | void
+    >({
+      query: (arg) => ({
         url: "/me/admission-candidate",
         method: "GET",
+        params: {
+          include: arg?.include ?? DEFAULT_ME_CANDIDATE_INCLUDE,
+        },
       }),
       transformResponse: (raw) => mapMeAdmissionCandidate(raw),
       providesTags: [ApiTagTypes.MeAdmissionCandidate],

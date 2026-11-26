@@ -5,6 +5,7 @@ import type {
   AcademicSessionOption,
   AdmissionCycle,
   AdmissionCycleListParams,
+  AdmissionEntryMode,
   CreateAdmissionCycleRequest,
   UpdateAdmissionCycleRequest,
   TransitionAdmissionCycleRequest,
@@ -95,19 +96,21 @@ const admissionCycleApi = baseApi.injectEndpoints({
       providesTags: [ApiTagTypes.Session],
     }),
 
-    // GET /api/admission-candidates — candidate count guard for delete
+    // GET /api/admission-candidates — candidate count guard for delete & per-lane locks
     getAdmissionCandidateCount: builder.query<
       PaginatedResponse<{ id: number }>,
-      { cycleId: number }
+      { cycleId: number; entryMode?: AdmissionEntryMode }
     >({
-      query: ({ cycleId }) => ({
+      query: ({ cycleId, entryMode }) => ({
         url: "/admission-candidates",
         method: "GET",
         params: {
           "exact[cycleId]": cycleId,
+          ...(entryMode !== undefined ? { "exact[entryMode]": entryMode } : {}),
           itemsPerPage: 1,
         },
       }),
+      providesTags: [{ type: ApiTagTypes.AdmissionCandidate, id: "LIST" }],
     }),
   }),
 });

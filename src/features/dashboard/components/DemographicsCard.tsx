@@ -1,6 +1,8 @@
 import React from "react";
 import { Card, Col, Flex, Progress, Row, Skeleton, Typography } from "antd";
+import { getCandidateEntryModeLabel } from "@/shared/constants/admissionCandidateOptions";
 import { useToken } from "@/shared/hooks/useToken";
+import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
 import { formatCount } from "@/shared/utils/format/formatCount";
 import { safePercent } from "../utils/dashboardMath";
 import type { DemographicsCardProps } from "../types/dashboard";
@@ -51,7 +53,7 @@ export const DemographicsCard: React.FC<DemographicsCardProps> = ({
           <Flex vertical gap={10}>
             {Object.entries(entryMode).map(([mode, count]) => {
               const percent = safePercent(count, enrolledHeadcount);
-              const label = mode.replace("_", " ");
+              const label = getCandidateEntryModeLabel(mode);
               return (
                 <div key={mode}>
                   <Flex justify="space-between" style={{ fontSize: token.fontSizeSM, marginBottom: 2 }}>
@@ -83,7 +85,7 @@ export const DemographicsCard: React.FC<DemographicsCardProps> = ({
                   <strong>{formatCount(maleCount)}</strong> ({malePercent}%)
                 </span>
               </Flex>
-              <Progress percent={malePercent} showInfo={false} size="small" strokeColor="#1890ff" />
+              <Progress percent={malePercent} showInfo={false} size="small" strokeColor={token.colorPrimary} />
             </div>
 
             <div>
@@ -93,10 +95,10 @@ export const DemographicsCard: React.FC<DemographicsCardProps> = ({
                   <strong>{formatCount(femaleCount)}</strong> ({femalePercent}%)
                 </span>
               </Flex>
-              <Progress percent={femalePercent} showInfo={false} size="small" strokeColor="#eb2f96" />
+              <Progress percent={femalePercent} showInfo={false} size="small" strokeColor={token.colorError} />
             </div>
 
-            {otherCount > 0 && (
+            <ConditionalRenderer when={otherCount > 0}>
               <div>
                 <Flex justify="space-between" style={{ fontSize: token.fontSizeSM, marginBottom: 2 }}>
                   <span>Unspecified / Other</span>
@@ -106,7 +108,7 @@ export const DemographicsCard: React.FC<DemographicsCardProps> = ({
                 </Flex>
                 <Progress percent={otherPercent} showInfo={false} size="small" strokeColor={token.colorTextTertiary} />
               </div>
-            )}
+            </ConditionalRenderer>
           </Flex>
         </Col>
       </Row>

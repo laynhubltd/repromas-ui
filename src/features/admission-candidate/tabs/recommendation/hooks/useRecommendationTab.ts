@@ -4,26 +4,34 @@ import { Permission } from "@/features/access-control/permissions";
 import { useGetAdmissionCyclesQuery } from "@/features/admission-config/tabs/admission-cycle/api/admissionCycleApi";
 import { useGetProgramsQuery } from "@/features/program/tabs/programs/api/programsApi";
 import {
-    RECOMMENDATION_ITEMS_PER_PAGE,
-    RECOMMENDATION_LIST_INCLUDE,
-    RECOMMENDATION_SORT_DEFAULT,
+  CANDIDATE_ENTRY_MODE_OPTIONS,
+  getCandidateEntryModeLabel,
+} from "@/shared/constants/admissionCandidateOptions";
+import {
+  RECOMMENDATION_ITEMS_PER_PAGE,
+  RECOMMENDATION_LIST_INCLUDE,
+  RECOMMENDATION_SORT_DEFAULT,
 } from "@/shared/constants/admissionRecommendedCandidateOptions";
 import { useApiError } from "@/shared/hooks/useApiError";
+import type { CandidateEntryMode } from "@/shared/types/admission-lane";
 import { RequestScreen } from "@/shared/types/error-ui";
 import { deriveSectionErrorMessage } from "@/shared/utils/error/deriveSectionErrorMessage";
 import { createTableChangeHandler } from "@/shared/utils/table/createTableChangeHandler";
 import { useCallback, useMemo, useReducer, useState } from "react";
 import { useStore } from "react-redux";
-import { useGetRecommendedCandidatesQuery, downloadRecommendedCandidates } from "../api/admissionRecommendedCandidateApi";
 import {
-    RecommendationPageActionType,
-    initialRecommendationPageState,
-    recommendationPageReducer,
+  downloadRecommendedCandidates,
+  useGetRecommendedCandidatesQuery,
+} from "../api/admissionRecommendedCandidateApi";
+import {
+  RecommendationPageActionType,
+  initialRecommendationPageState,
+  recommendationPageReducer,
 } from "../state/recommendationPageState";
 import type {
-    AdmissionRecommendedCandidate,
-    QuotaCategory,
-    RecommendedCandidateListParams,
+  AdmissionRecommendedCandidate,
+  QuotaCategory,
+  RecommendedCandidateListParams,
 } from "../types/admission-recommended-candidate";
 
 export function useRecommendationTab() {
@@ -42,7 +50,21 @@ export function useRecommendationTab() {
     itemsPerPage: 100,
     sort: "createdAt:desc",
   });
-  const cycles = cyclesData?.member ?? [];
+  const cycles = useMemo(() => cyclesData?.member ?? [], [cyclesData?.member]);
+
+  const selectedCycle = useMemo(
+    () => cycles.find((c) => c.id === state.cycleId),
+    [cycles, state.cycleId],
+  );
+
+  const entryModeOptions = useMemo(() => {
+    const lanes = selectedCycle?.entryModes ?? [];
+    if (lanes.length === 0) return CANDIDATE_ENTRY_MODE_OPTIONS;
+    return lanes.map((lane) => ({
+      value: lane.entryMode,
+      label: getCandidateEntryModeLabel(lane.entryMode),
+    }));
+  }, [selectedCycle?.entryModes]);
 
   const { data: programsData } = useGetProgramsQuery(
     { itemsPerPage: 100, sort: "name:asc", include: "department" },
@@ -65,6 +87,9 @@ export function useRecommendationTab() {
     ...(state.quotaFilter !== undefined
       ? { "exact[quotaCategory]": state.quotaFilter }
       : {}),
+    ...(state.entryModeFilter !== undefined
+      ? { "exact[entryMode]": state.entryModeFilter }
+      : {}),
   };
 
   const {
@@ -75,7 +100,7 @@ export function useRecommendationTab() {
     refetch,
   } = useGetRecommendedCandidatesQuery(queryParams, { skip: skipList });
 
-  const rows = data?.member ?? [];
+  const rows = useMemo(() => data?.member ?? [], [data?.member]);
   const totalItems = data?.totalItems ?? 0;
 
   const sectionError = useMemo(
@@ -88,8 +113,12 @@ export function useRecommendationTab() {
   );
 
   // ─── Derived ──────────────────────────────────────────────────────────────
-  const isFilterActive =
-    state.programId !== undefined || state.quotaFilter !== undefined;
+  const activeFilterCount = [
+    state.programId,
+    state.quotaFilter,
+    state.entryModeFilter,
+  ].filter((v) => v !== undefined).length;
+  const isFilterActive = activeFilterCount > 0;
 
   const hasData = rows.length > 0;
 
@@ -121,6 +150,16 @@ export function useRecommendationTab() {
     [],
   );
 
+  const handleEntryModeFilterChange = useCallback(
+    (value: CandidateEntryMode | undefined) => {
+      dispatch({
+        type: RecommendationPageActionType.SetEntryModeFilter,
+        value,
+      });
+    },
+    [],
+  );
+
   const handleSortChange = useCallback((sort: string) => {
     dispatch({ type: RecommendationPageActionType.SetSort, sort });
   }, []);
@@ -146,6 +185,10 @@ export function useRecommendationTab() {
     });
     dispatch({
       type: RecommendationPageActionType.SetQuotaFilter,
+      value: undefined,
+    });
+    dispatch({
+      type: RecommendationPageActionType.SetEntryModeFilter,
       value: undefined,
     });
   }, []);
@@ -205,9 +248,11 @@ export function useRecommendationTab() {
       skipList,
       cycles,
       programs,
+      entryModeOptions,
       cycleId: state.cycleId,
       programId: state.programId,
       quotaFilter: state.quotaFilter,
+      entryModeFilter: state.entryModeFilter,
       page: state.page,
       itemsPerPage: RECOMMENDATION_ITEMS_PER_PAGE,
       offerTarget,
@@ -219,6 +264,7 @@ export function useRecommendationTab() {
       handleCycleChange,
       handleProgramChange,
       handleQuotaFilterChange,
+      handleEntryModeFilterChange,
       handleSortChange,
       handlePageChange,
       handleTableChange,
@@ -233,6 +279,7 @@ export function useRecommendationTab() {
     flags: {
       hasData,
       isFilterActive,
+      activeFilterCount,
       canOffer,
       isDownloading,
     },

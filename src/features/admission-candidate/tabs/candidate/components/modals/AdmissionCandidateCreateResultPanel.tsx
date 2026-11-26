@@ -1,9 +1,13 @@
 import { appPaths } from "@/app/routing/app-path";
-import { ADMISSION_CANDIDATE_CREATE_UI_COPY } from "@/shared/constants/admissionCandidateOptions";
+import {
+  ADMISSION_CANDIDATE_CREATE_UI_COPY,
+  getCandidateEntryModeLabel,
+  isRealJambRegNo,
+} from "@/shared/constants/admissionCandidateOptions";
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
 import { WarningOutlined } from "@ant-design/icons";
-import { Alert, Card, Flex, List, Typography } from "antd";
+import { Alert, Card, Flex, List, Tag, Typography } from "antd";
 import { Link } from "react-router-dom";
 import type { CreateAdmissionCandidateResponse } from "../../types/admission-candidate";
 import {
@@ -30,14 +34,17 @@ export function AdmissionCandidateCreateResultPanel({
 
   return (
     <Flex vertical gap={16}>
-      <Typography.Title level={5} style={{ marginTop: 0 }}>
-        {candidate.firstName} {candidate.lastName}
-        {candidate.jambRegNo ? (
-          <Typography.Text type="secondary" style={{ marginLeft: 8 }}>
+      <Flex align="center" gap={8} wrap="wrap">
+        <Typography.Title level={5} style={{ margin: 0 }}>
+          {candidate.firstName} {candidate.lastName}
+        </Typography.Title>
+        <Tag color="blue">{getCandidateEntryModeLabel(candidate.entryMode)}</Tag>
+        <ConditionalRenderer when={isRealJambRegNo(candidate.jambRegNo)}>
+          <Typography.Text type="secondary">
             ({candidate.jambRegNo})
           </Typography.Text>
-        ) : null}
-      </Typography.Title>
+        </ConditionalRenderer>
+      </Flex>
 
       <Card
         size="small"

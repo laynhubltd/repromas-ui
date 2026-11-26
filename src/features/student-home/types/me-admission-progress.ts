@@ -1,3 +1,5 @@
+import type { AdmissionEntryMode } from "@/shared/types/admission-lane";
+
 export type PortalState =
   | "form_only"
   | "application_started"
@@ -65,6 +67,7 @@ export type MeAdmissionProgress = {
   portalState: PortalState | string;
   cycleId: number;
   cycleStatus: string;
+  entryMode: AdmissionEntryMode;
   candidateId: number;
   applicationId: number | null;
   formSubmissionId: number | null;

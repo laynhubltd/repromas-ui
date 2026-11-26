@@ -1,4 +1,5 @@
 import type { Rule } from "antd/es/form";
+import type { AdmissionCycleLaneConfig } from "../types/admission-cycle";
 
 export const nameRules: Rule[] = [
   { required: true, message: "Cycle name is required" },
@@ -10,8 +11,34 @@ export const sessionIdRules: Rule[] = [
   { required: true, message: "Academic session is required" },
 ];
 
-export const entryModeRules: Rule[] = [
-  { required: true, message: "Entry mode is required" },
+export const entryModesRules: Rule[] = [
+  {
+    validator: (_, value: AdmissionCycleLaneConfig[] | undefined) => {
+      if (!Array.isArray(value) || value.length < 1) {
+        return Promise.reject(
+          new Error("Select at least one entry mode lane for this cycle."),
+        );
+      }
+
+      const seen = new Set<string>();
+      for (const lane of value) {
+        if (seen.has(lane.entryMode)) {
+          return Promise.reject(
+            new Error(`Duplicate entry mode configured: ${lane.entryMode}.`),
+          );
+        }
+        seen.add(lane.entryMode);
+
+        if (lane.entryMode === "TRANSFER" && lane.identityMode === "JAMB") {
+          return Promise.reject(
+            new Error("Transfer admissions must use Open identity mode."),
+          );
+        }
+      }
+
+      return Promise.resolve();
+    },
+  },
 ];
 
 export const batchNoRules: Rule[] = [

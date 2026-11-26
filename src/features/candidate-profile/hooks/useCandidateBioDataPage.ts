@@ -42,9 +42,13 @@ export function useCandidateBioDataPage() {
   const [patchProfile, { isLoading: isSavingProfile }] =
     usePatchMeProfileMutation();
 
+  const candidateLane = candidate?.cycle?.entryModes?.find(
+    (lane) => lane.entryMode === candidate.entryMode,
+  );
   const isJambLocked =
-    candidate?.cycle?.admissionIdentityMode === "JAMB" ||
-    (candidate?.jambRegNo !== null && candidate?.jambRegNo !== "");
+    candidateLane !== undefined
+      ? candidateLane.identityMode === "JAMB"
+      : candidate?.cycle?.admissionIdentityMode === "JAMB";
 
   const initialValues = useMemo((): BioDataFormValues | undefined => {
     if (!candidate) return undefined;

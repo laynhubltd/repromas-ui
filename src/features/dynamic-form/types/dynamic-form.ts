@@ -1,3 +1,5 @@
+import type { AdmissionEntryMode } from "@/shared/types/admission-lane";
+
 export type FormPurpose =
   | "ADMISSION_APPLICATION"
   | "STUDENT_ONBOARDING"
@@ -113,6 +115,7 @@ export type FormAssignment = {
   purpose: FormPurpose;
   assignmentScope: FormAssignmentScope;
   assignmentReferenceId: number | null;
+  entryMode: AdmissionEntryMode | null;
   priority: number;
   isActive: boolean;
   effectiveFrom: string | null;
@@ -169,6 +172,7 @@ export type RenderPackage = {
     purpose: FormPurpose;
     assignmentScope: FormAssignmentScope;
     assignmentReferenceId: number | null;
+    entryMode: AdmissionEntryMode | null;
   };
   form: {
     id: number;
@@ -193,6 +197,7 @@ export type Submission = {
   purpose: FormPurpose;
   assignmentScope: FormAssignmentScope;
   assignmentReferenceId: number | null;
+  entryMode: AdmissionEntryMode | null;
   status: SubmissionStatus;
   payload: SubmissionPayload;
   createdAt: string;
@@ -251,6 +256,7 @@ export type UpdateFormFieldRequest = Omit<CreateFormFieldRequest, "fieldKey">;
 export type BulkAssignRequest = {
   assignmentScope: FormAssignmentScope;
   assignmentReferenceIds?: number[];
+  entryMode?: AdmissionEntryMode | null;
   priority?: number;
 };
 
@@ -258,6 +264,7 @@ export type CreateSubmissionRequest = {
   purpose: FormPurpose;
   assignmentScope: FormAssignmentScope;
   assignmentReferenceId?: number | null;
+  entryMode?: AdmissionEntryMode | null;
   idempotencyKey?: string;
 };
 
@@ -270,6 +277,7 @@ export type RenderPackageParams = {
   assignmentScope: FormAssignmentScope;
   assignmentReferenceId?: number | null;
   submissionId?: number;
+  entryMode?: AdmissionEntryMode;
 };
 
 export type FormListParams = {
@@ -285,6 +293,7 @@ export type AssignmentListParams = {
   itemsPerPage?: number;
   "exact[purpose]"?: FormPurpose;
   "exact[assignmentScope]"?: FormAssignmentScope;
+  "exact[entryMode]"?: AdmissionEntryMode;
   "boolean[isActive]"?: boolean;
 };
 

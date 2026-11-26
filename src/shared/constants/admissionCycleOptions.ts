@@ -7,7 +7,7 @@ import type {
   AdmissionCycleStatus,
   AdmissionEntryMode,
   AdmissionIdentityMode,
-} from "@/features/admission-config/tabs/admission-cycle/types/admission-cycle";
+} from "@/shared/types/admission-lane";
 
 /**
  * Status options for admission cycle status badges and filter selects.
@@ -118,16 +118,17 @@ export const ADMISSION_CYCLE_ITEMS_PER_PAGE = 30;
 
 /** User-facing labels — admission-office language, not API/internal terms. */
 export const ADMISSION_CYCLE_UI_COPY = {
-  entryBatchColumn: "Entry & batch",
-  entryBatchFieldLabel: "Entry & batch",
+  batchColumn: "Batch",
+  lanesColumn: "Entry mode lanes",
+  batchFieldLabel: "Batch",
   openForApplicationsMetric: "Open for applications",
-  duplicateCycleAlertTitle:
-    "A cycle already exists for this entry mode and batch",
+  duplicateCycleAlertTitle: "A cycle already exists for this session and batch",
   duplicateCycleAlertDescription:
-    "Each session allows one cycle per entry mode and batch number. Choose a different batch or entry mode.",
-  supersedesPlaceholder: "None — first batch for this entry mode",
-  entryBatchImmutableHint:
-    "Entry mode and batch number are fixed after the cycle is created.",
+    "Each session allows one cycle per batch number (each cycle can enable UTME, Direct Entry, and Transfer lanes). Choose a different batch number.",
+  supersedesPlaceholder: "None — first batch in this session",
+  batchImmutableHint: "Academic session and batch number are fixed after creation.",
+  laneLockedHint: "Locked — candidates exist in this lane",
+  transferOpenOnlyHint: "Transfer admissions require Open identity mode",
 } as const;
 
 /** Warnings shown when advancing to a target status. */
@@ -135,7 +136,7 @@ export const ADMISSION_CYCLE_TRANSITION_WARNINGS: Partial<
   Record<AdmissionCycleStatus, string>
 > = {
   APPLICATION_OPEN:
-    "Identity mode cannot be changed after this step. JAMB mode requires CAPS upload; OPEN mode uses bio-based signup without JAMB lookup.",
+    "Candidates can begin applying on any enabled lane once open. Lanes with existing candidates lock their identity mode; pausing or resuming a lane's Accepting Applications toggle stays available.",
   SCREENING:
     "Starting screening will block further candidate ingestion (CAPS upload). Ensure all candidates are loaded before proceeding.",
   CLOSED:
@@ -147,7 +148,7 @@ export const ADMISSION_CYCLE_ROLLBACK_WARNINGS: Partial<
   Record<AdmissionCycleStatus, string>
 > = {
   APPLICATION_OPEN:
-    "Re-opening applications may fail if another cycle for the same session and entry mode is already accepting applications.",
+    "Re-opening applications may fail if another cycle for the same session is already open for applications.",
   PRE_PROCESSING:
-    "Rolling back to pre-processing re-enables identity mode editing and candidate setup.",
+    "Rolling back to pre-processing re-opens candidate setup across configured lanes.",
 };

@@ -7,8 +7,6 @@ import {
   ADMISSION_CYCLE_ITEMS_PER_PAGE,
   ADMISSION_CYCLE_STATUS_OPTIONS,
   ADMISSION_CYCLE_UI_COPY,
-  identityModeColorByValue,
-  identityModeLabelByValue,
 } from "@/shared/constants/admissionCycleOptions";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
 import { DataLoader } from "@/shared/ui/DataLoader";
@@ -38,8 +36,7 @@ import type { ColumnsType } from "antd/es/table";
 import { useMemo, useState } from "react";
 import { useAdmissionCycleTab } from "../hooks/useAdmissionCycleTab";
 import type { AdmissionCycleRow } from "../hooks/useAdmissionCycleTab";
-import type { AdmissionIdentityMode } from "../types/admission-cycle";
-import { formatEntryBatchLabel } from "../utils/admissionCycleDisplay";
+import type { AdmissionCycleLaneConfig } from "../types/admission-cycle";
 import { AdmissionCycleRowActions } from "./AdmissionCycleStatusAction";
 import { AdmissionCycleFormModal } from "./modals/AdmissionCycleFormModal";
 import { DeleteAdmissionCycleModal } from "./modals/DeleteAdmissionCycleModal";
@@ -53,6 +50,10 @@ const statusLabelByValue = Object.fromEntries(
   ADMISSION_CYCLE_STATUS_OPTIONS.map((opt) => [opt.value, opt.label]),
 ) as Record<string, string>;
 
+const entryModeShortLabelByValue = Object.fromEntries(
+  ADMISSION_CYCLE_ENTRY_MODE_OPTIONS.map((opt) => [opt.value, opt.shortLabel]),
+) as Record<string, string>;
+
 function formatDate(value: string | null): string {
   if (!value) return "—";
   return new Date(value).toLocaleDateString(undefined, {
@@ -60,6 +61,26 @@ function formatDate(value: string | null): string {
     month: "short",
     day: "numeric",
   });
+}
+
+function getLaneTagProps(lane: AdmissionCycleLaneConfig): {
+  color: string;
+  label: string;
+} {
+  const shortLabel = entryModeShortLabelByValue[lane.entryMode] ?? lane.entryMode;
+  const identityShort = lane.identityMode === "JAMB" ? "JAMB" : "Open";
+
+  if (!lane.enabled) {
+    return {
+      color: "default",
+      label: `${shortLabel} (${identityShort} · Paused)`,
+    };
+  }
+
+  return {
+    color: lane.identityMode === "JAMB" ? "blue" : "purple",
+    label: `${shortLabel} (${identityShort})`,
+  };
 }
 
 export function AdmissionCycleTab() {
@@ -72,6 +93,7 @@ export function AdmissionCycleTab() {
     totalItems,
     isLoading,
     isError,
+    sectionError,
     search,
     statusFilter,
     sessionFilter,
@@ -142,11 +164,31 @@ export function AdmissionCycleTab() {
       ),
     },
     {
-      title: ADMISSION_CYCLE_UI_COPY.entryBatchColumn,
-      key: "entryBatch",
-      width: 160,
-      render: (_, record) => (
-        <Tag>{formatEntryBatchLabel(record.entryMode, record.batchNo)}</Tag>
+      title: ADMISSION_CYCLE_UI_COPY.batchColumn,
+      dataIndex: "batchNo",
+      key: "batchNo",
+      width: 100,
+      render: (batchNo: number) => <Tag>Batch {batchNo}</Tag>,
+    },
+    {
+      title: ADMISSION_CYCLE_UI_COPY.lanesColumn,
+      dataIndex: "entryModes",
+      key: "entryModes",
+      width: 260,
+      render: (lanes: AdmissionCycleLaneConfig[] | undefined) => (
+        <Flex gap={4} wrap="wrap">
+          <ConditionalRenderer when={!lanes || lanes.length === 0}>
+            <Typography.Text type="secondary">No lanes</Typography.Text>
+          </ConditionalRenderer>
+          {(lanes ?? []).map((lane) => {
+            const props = getLaneTagProps(lane);
+            return (
+              <Tag key={lane.entryMode} color={props.color}>
+                {props.label}
+              </Tag>
+            );
+          })}
+        </Flex>
       ),
     },
     {
@@ -157,17 +199,6 @@ export function AdmissionCycleTab() {
       render: (status: string) => (
         <Tag color={statusColorByValue[status] ?? "default"}>
           {statusLabelByValue[status] ?? status}
-        </Tag>
-      ),
-    },
-    {
-      title: "Identity mode",
-      dataIndex: "admissionIdentityMode",
-      key: "admissionIdentityMode",
-      width: 160,
-      render: (mode: AdmissionIdentityMode) => (
-        <Tag color={identityModeColorByValue[mode] ?? "default"}>
-          {identityModeLabelByValue[mode] ?? mode}
         </Tag>
       ),
     },
@@ -288,7 +319,7 @@ export function AdmissionCycleTab() {
         intent="info"
         collapsible
         title="Admission Cycles"
-        body="An admission cycle is the top-level container for one admission exercise. Each academic session can run separate cycles for UTME, Direct Entry, and Transfer, with multiple batches per entry mode when needed (e.g. a second UTME batch). During pre-processing, choose JAMB/CAPS or open admission — this drives the public candidate sign-up flow. Identity mode cannot be changed after applications open. Cycles advance one step at a time; rollbacks require a reason."
+        body="Each admission cycle represents one unified admission batch per session and can run UTME, Direct Entry, and Transfer lanes simultaneously. Choose JAMB/CAPS or Open admission per lane (Transfer always uses Open), pause or resume individual lanes without closing the cycle, and configure a GLOBAL scoring strategy for every active UTME or Direct Entry lane. Only one cycle per session may be open for applications at a time; a lane's identity mode locks once candidates exist in that lane."
       />
 
       <Row gutter={[16, 16]}>
@@ -377,7 +408,7 @@ export function AdmissionCycleTab() {
         <ConditionalRenderer when={isError}>
           <ErrorAlert
             variant="section"
-            error="Failed to load admission cycles."
+            error={sectionError ?? "Failed to load admission cycles."}
             onRetry={refetch}
           />
         </ConditionalRenderer>

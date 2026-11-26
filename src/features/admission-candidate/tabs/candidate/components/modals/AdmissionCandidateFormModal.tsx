@@ -1,8 +1,7 @@
-import { formatCycleOptionLabel } from "@/features/admission-config/tabs/admission-cycle/utils/admissionCycleDisplay";
+import { formatCycleOptionLabel } from "@/shared/utils/format/admissionCycleDisplay";
 import {
   ADMISSION_CANDIDATE_CREATE_UI_COPY,
   CANDIDATE_GENDER_FORM_OPTIONS,
-  CANDIDATE_INTAKE_MODE_OPTIONS,
 } from "@/shared/constants/admissionCandidateOptions";
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
@@ -25,6 +24,7 @@ import { useAdmissionCandidateFormModal } from "../../hooks/useAdmissionCandidat
 import type { CreateAdmissionCandidateResponse } from "../../types/admission-candidate";
 import {
   appliedProgramIdRules,
+  candidateEntryModeRules,
   cycleIdRules,
   emailRules,
   firstNameRules,
@@ -142,6 +142,7 @@ export function AdmissionCandidateFormModal({
             >
               <Select
                 placeholder="Select cycle"
+                onChange={actions.handleCycleSelectChange}
                 options={state.cycles.map((c) => ({
                   value: c.id,
                   label: formatCycleOptionLabel(c),
@@ -149,11 +150,23 @@ export function AdmissionCandidateFormModal({
               />
             </Form.Item>
 
+            <Form.Item
+              name="entryMode"
+              label="Entry mode"
+              rules={candidateEntryModeRules}
+            >
+              <Select
+                placeholder="Select entry mode"
+                onChange={actions.handleEntryModeChange}
+                options={state.entryModeOptions}
+              />
+            </Form.Item>
+
             <Form.Item label="Intake mode">
               <Radio.Group
                 value={state.intakeMode}
                 onChange={(e) => actions.handleIntakeModeChange(e.target.value)}
-                options={CANDIDATE_INTAKE_MODE_OPTIONS}
+                options={state.intakeModeOptions}
               />
               <Typography.Text
                 type="secondary"

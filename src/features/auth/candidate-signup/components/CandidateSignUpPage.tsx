@@ -1,21 +1,28 @@
 // Feature: auth/candidate-signup
 import { appPaths } from "@/app/routing/app-path";
 import { AuthPageLayout } from "@/components/auth/AuthPageLayout";
-import { formatEntryBatchLabel } from "@/features/admission-config/tabs/admission-cycle/utils/admissionCycleDisplay";
-import { CANDIDATE_GENDER_OPTIONS } from "@/shared/constants/admissionCandidateOptions";
+import {
+  CANDIDATE_GENDER_OPTIONS,
+  getCandidateEntryModeLabel,
+} from "@/shared/constants/admissionCandidateOptions";
 import { CANDIDATE_SIGNUP_UI_COPY } from "@/shared/constants/candidateSignupOptions";
 import { useToken } from "@/shared/hooks/useToken";
+import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
 import { ErrorAlert } from "@/shared/ui/ErrorAlert";
+import { formatEntryBatchLabel } from "@/shared/utils/format/admissionCycleDisplay";
 import { LockOutlined, UserOutlined } from "@ant-design/icons";
 import {
   Alert,
   Button,
+  Card,
   DatePicker,
   Descriptions,
+  Flex,
   Form,
   Input,
   Select,
   Spin,
+  Tag,
   Typography,
 } from "antd";
 import { Link } from "react-router-dom";
@@ -72,6 +79,7 @@ export function CandidateSignUpPage() {
     cycleDateLabel,
     step,
     blockedReason,
+    selectedEntryMode,
     formError,
     lookupResult,
     states,
@@ -84,13 +92,16 @@ export function CandidateSignUpPage() {
     openStateId,
   } = state;
   const {
+    handleSelectEntryMode,
+    handleChangeEntryMode,
     handleJambLookup,
     handleJambSignup,
     handleOpenSignup,
     handleOpenStateChange,
     backToJambLookup,
   } = actions;
-  const { isBlocked, isBootstrap } = flags;
+  const { canChangeEntryMode, hasMultipleJambLanes, isBlocked, isBootstrap } =
+    flags;
   const { jambLookupForm, jambSignupForm, openSignupForm } = forms;
 
   const inputStyle = {
@@ -99,9 +110,11 @@ export function CandidateSignUpPage() {
   };
 
   const entryBatchLabel =
-    config !== undefined && config !== null
-      ? formatEntryBatchLabel(config.entryMode, config.batchNo)
-      : null;
+    config && selectedEntryMode
+      ? formatEntryBatchLabel(selectedEntryMode, config.batchNo)
+      : config
+        ? `Batch ${config.batchNo}`
+        : null;
 
   return (
     <AuthPageLayout illustration="signup" fillViewport backTo={appPaths.login}>
@@ -117,34 +130,75 @@ export function CandidateSignUpPage() {
         >
           {config?.name ?? CANDIDATE_SIGNUP_UI_COPY.pageTitleFallback}
         </Title>
-        {entryBatchLabel !== null ? (
+        <ConditionalRenderer when={entryBatchLabel !== null}>
           <Text
             type="secondary"
             style={{ display: "block", fontSize: t.fontSizeSM }}
           >
             {entryBatchLabel}
           </Text>
-        ) : null}
-        {cycleDateLabel ? (
+        </ConditionalRenderer>
+        <ConditionalRenderer when={Boolean(cycleDateLabel)}>
           <Text type="secondary" style={{ fontSize: t.fontSizeSM }}>
             {cycleDateLabel}
           </Text>
-        ) : null}
+        </ConditionalRenderer>
       </div>
 
       <ErrorAlert error={formError} />
 
-      {(isBootstrap || isConfigLoading) && (
+      <ConditionalRenderer when={isBootstrap || isConfigLoading}>
         <div style={{ textAlign: "center", padding: t.sizeXL }}>
           <Spin />
         </div>
-      )}
+      </ConditionalRenderer>
 
-      {isBlocked && !isConfigLoading ? (
+      <ConditionalRenderer when={isBlocked && !isConfigLoading}>
         <BlockedMessage reason={blockedReason} />
-      ) : null}
+      </ConditionalRenderer>
 
-      {step === "jamb_lookup" && !isConfigLoading ? (
+      <ConditionalRenderer
+        when={step === "select_entry_mode" && !isConfigLoading && config !== undefined}
+      >
+        <Flex vertical gap={12}>
+          <Text
+            type="secondary"
+            style={{ display: "block", marginBottom: t.sizeXS }}
+          >
+            {CANDIDATE_SIGNUP_UI_COPY.selectEntryModeIntro}
+          </Text>
+          {(config?.entryModes ?? []).map((lane) => (
+            <Card
+              key={lane.entryMode}
+              hoverable
+              size="small"
+              onClick={() => handleSelectEntryMode(lane.entryMode)}
+              style={{
+                borderColor: t.colorBorderSecondary,
+                cursor: "pointer",
+              }}
+            >
+              <Flex align="center" justify="space-between" gap={8}>
+                <div>
+                  <Text strong style={{ display: "block" }}>
+                    {getCandidateEntryModeLabel(lane.entryMode)}
+                  </Text>
+                  <Text type="secondary" style={{ fontSize: t.fontSizeSM }}>
+                    {lane.identityMode === "JAMB"
+                      ? CANDIDATE_SIGNUP_UI_COPY.jambLaneDescription
+                      : CANDIDATE_SIGNUP_UI_COPY.openLaneDescription}
+                  </Text>
+                </div>
+                <Tag color={lane.identityMode === "JAMB" ? "blue" : "purple"}>
+                  {lane.identityMode === "JAMB" ? "JAMB" : "Direct"}
+                </Tag>
+              </Flex>
+            </Card>
+          ))}
+        </Flex>
+      </ConditionalRenderer>
+
+      <ConditionalRenderer when={step === "jamb_lookup" && !isConfigLoading}>
         <Form
           form={jambLookupForm}
           layout="vertical"
@@ -158,10 +212,18 @@ export function CandidateSignUpPage() {
           >
             {CANDIDATE_SIGNUP_UI_COPY.jambLookupIntro}
           </Text>
+          <ConditionalRenderer when={hasMultipleJambLanes}>
+            <Alert
+              type="info"
+              showIcon
+              message={CANDIDATE_SIGNUP_UI_COPY.multiJambLookupHint}
+              style={{ marginBottom: t.sizeMD }}
+            />
+          </ConditionalRenderer>
           <Form.Item name="jambRegNo" rules={jambRegNoRules}>
             <Input placeholder="JAMB registration number" style={inputStyle} />
           </Form.Item>
-          <Form.Item style={{ marginBottom: 0 }}>
+          <Form.Item style={{ marginBottom: canChangeEntryMode ? t.sizeSM : 0 }}>
             <Button
               type="primary"
               htmlType="submit"
@@ -175,94 +237,102 @@ export function CandidateSignUpPage() {
               Verify JAMB record
             </Button>
           </Form.Item>
-        </Form>
-      ) : null}
-
-      {step === "jamb_details" && lookupResult ? (
-        <>
-          <Descriptions
-            bordered
-            size="small"
-            column={1}
-            style={{ marginBottom: t.sizeLG }}
-          >
-            <Descriptions.Item label="Name">
-              {lookupResult.firstName} {lookupResult.lastName}
-            </Descriptions.Item>
-            <Descriptions.Item label="Gender">
-              {lookupResult.gender}
-            </Descriptions.Item>
-            <Descriptions.Item label="State">
-              {lookupResult.state}
-            </Descriptions.Item>
-            <Descriptions.Item label="LGA">
-              {lookupResult.lga}
-            </Descriptions.Item>
-            <Descriptions.Item label="Applied program">
-              {lookupResult.appliedProgram}
-            </Descriptions.Item>
-          </Descriptions>
-
-          <Form
-            form={jambSignupForm}
-            layout="vertical"
-            size="large"
-            requiredMark={false}
-            onFinish={handleJambSignup}
-          >
-            <Form.Item name="email" rules={emailRules}>
-              <Input
-                prefix={<UserOutlined style={{ color: t.colorTextTertiary }} />}
-                placeholder="Email address"
-                type="email"
-                style={inputStyle}
-              />
-            </Form.Item>
-            <Form.Item name="password" rules={passwordRules}>
-              <Input.Password
-                prefix={<LockOutlined style={{ color: t.colorTextTertiary }} />}
-                placeholder="Password"
-                style={inputStyle}
-              />
-            </Form.Item>
-            <Form.Item
-              name="confirmPassword"
-              dependencies={["password"]}
-              rules={confirmPasswordRules(() =>
-                jambSignupForm.getFieldValue("password"),
-              )}
-            >
-              <Input.Password
-                prefix={<LockOutlined style={{ color: t.colorTextTertiary }} />}
-                placeholder="Confirm password"
-                style={inputStyle}
-              />
-            </Form.Item>
-            <Form.Item name="phone">
-              <Input placeholder="Phone (optional)" style={inputStyle} />
-            </Form.Item>
-            <Form.Item style={{ marginBottom: t.sizeSM }}>
-              <Button
-                type="primary"
-                htmlType="submit"
-                block
-                loading={isSignupLoading}
-                style={{
-                  height: t.controlHeightLG,
-                  fontWeight: t.fontWeightStrong,
-                }}
-              >
-                Create account
-              </Button>
-            </Form.Item>
-            <Button type="link" block onClick={backToJambLookup}>
-              Use a different JAMB number
+          <ConditionalRenderer when={canChangeEntryMode}>
+            <Button type="link" block onClick={handleChangeEntryMode}>
+              {CANDIDATE_SIGNUP_UI_COPY.changeEntryModeLabel}
             </Button>
-          </Form>
-        </>
-      ) : null}
+          </ConditionalRenderer>
+        </Form>
+      </ConditionalRenderer>
 
-      {step === "open_form" && !isConfigLoading ? (
+      <ConditionalRenderer
+        when={step === "jamb_details" && lookupResult !== null}
+      >
+        <Descriptions
+          bordered
+          size="small"
+          column={1}
+          style={{ marginBottom: t.sizeLG }}
+        >
+          <Descriptions.Item label="Name">
+            {lookupResult?.firstName} {lookupResult?.lastName}
+          </Descriptions.Item>
+          <Descriptions.Item label="Entry mode">
+            {getCandidateEntryModeLabel(lookupResult?.entryMode)}
+          </Descriptions.Item>
+          <Descriptions.Item label="Gender">
+            {lookupResult?.gender}
+          </Descriptions.Item>
+          <Descriptions.Item label="State">
+            {lookupResult?.state}
+          </Descriptions.Item>
+          <Descriptions.Item label="LGA">
+            {lookupResult?.lga}
+          </Descriptions.Item>
+          <Descriptions.Item label="Applied program">
+            {lookupResult?.appliedProgram}
+          </Descriptions.Item>
+        </Descriptions>
+
+        <Form
+          form={jambSignupForm}
+          layout="vertical"
+          size="large"
+          requiredMark={false}
+          onFinish={handleJambSignup}
+        >
+          <Form.Item name="email" rules={emailRules}>
+            <Input
+              prefix={<UserOutlined style={{ color: t.colorTextTertiary }} />}
+              placeholder="Email address"
+              type="email"
+              style={inputStyle}
+            />
+          </Form.Item>
+          <Form.Item name="password" rules={passwordRules}>
+            <Input.Password
+              prefix={<LockOutlined style={{ color: t.colorTextTertiary }} />}
+              placeholder="Password"
+              style={inputStyle}
+            />
+          </Form.Item>
+          <Form.Item
+            name="confirmPassword"
+            dependencies={["password"]}
+            rules={confirmPasswordRules(() =>
+              jambSignupForm.getFieldValue("password"),
+            )}
+          >
+            <Input.Password
+              prefix={<LockOutlined style={{ color: t.colorTextTertiary }} />}
+              placeholder="Confirm password"
+              style={inputStyle}
+            />
+          </Form.Item>
+          <Form.Item name="phone">
+            <Input placeholder="Phone (optional)" style={inputStyle} />
+          </Form.Item>
+          <Form.Item style={{ marginBottom: t.sizeSM }}>
+            <Button
+              type="primary"
+              htmlType="submit"
+              block
+              loading={isSignupLoading}
+              style={{
+                height: t.controlHeightLG,
+                fontWeight: t.fontWeightStrong,
+              }}
+            >
+              Create account
+            </Button>
+          </Form.Item>
+          <Button type="link" block onClick={backToJambLookup}>
+            Use a different JAMB number
+          </Button>
+        </Form>
+      </ConditionalRenderer>
+
+      <ConditionalRenderer when={step === "open_form" && !isConfigLoading}>
         <Form
           form={openSignupForm}
           layout="vertical"
@@ -334,7 +404,7 @@ export function CandidateSignUpPage() {
           <Form.Item name="phone" label="Phone">
             <Input placeholder="Optional" style={inputStyle} />
           </Form.Item>
-          <Form.Item style={{ marginBottom: 0 }}>
+          <Form.Item style={{ marginBottom: canChangeEntryMode ? t.sizeSM : 0 }}>
             <Button
               type="primary"
               htmlType="submit"
@@ -348,8 +418,13 @@ export function CandidateSignUpPage() {
               Create account
             </Button>
           </Form.Item>
+          <ConditionalRenderer when={canChangeEntryMode}>
+            <Button type="link" block onClick={handleChangeEntryMode}>
+              {CANDIDATE_SIGNUP_UI_COPY.changeEntryModeLabel}
+            </Button>
+          </ConditionalRenderer>
         </Form>
-      ) : null}
+      </ConditionalRenderer>
 
       <div
         style={{

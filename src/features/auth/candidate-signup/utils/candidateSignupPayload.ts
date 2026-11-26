@@ -1,16 +1,26 @@
 import type {
+  AdmissionEntryMode,
   AdmissionLaneSelectors,
   AdmissionSignupConfig,
   AdmissionSignupConfigParams,
 } from "../types/candidate-signup";
 
-const ENTRY_MODES = new Set(["UTME", "DIRECT_ENTRY", "TRANSFER"]);
+const ENTRY_MODES = new Set<string>(["UTME", "DIRECT_ENTRY", "TRANSFER"]);
+
+export function readRawEntryModeFromSearch(
+  searchParams: URLSearchParams,
+): string | null {
+  const raw = searchParams.get("entryMode");
+  if (!raw) return null;
+  const trimmed = raw.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
 
 export function parseLaneParamsFromSearch(
   searchParams: URLSearchParams,
 ): AdmissionSignupConfigParams {
   const params: AdmissionSignupConfigParams = {};
-  const entryMode = searchParams.get("entryMode");
+  const entryMode = readRawEntryModeFromSearch(searchParams);
   if (entryMode && ENTRY_MODES.has(entryMode)) {
     params.entryMode = entryMode as AdmissionSignupConfigParams["entryMode"];
   }
@@ -27,10 +37,16 @@ export function parseLaneParamsFromSearch(
 export function buildLaneSelectors(
   config: AdmissionSignupConfig | undefined,
   urlOverrides?: AdmissionSignupConfigParams,
+  selectedEntryMode?: AdmissionEntryMode | null,
 ): AdmissionLaneSelectors {
   const selectors: AdmissionLaneSelectors = {};
 
-  const entryMode = urlOverrides?.entryMode ?? config?.entryMode;
+  const fallbackSingleMode =
+    config?.entryModes?.length === 1
+      ? config.entryModes[0].entryMode
+      : undefined;
+  const entryMode =
+    selectedEntryMode ?? urlOverrides?.entryMode ?? fallbackSingleMode;
   if (entryMode) {
     selectors.entryMode = entryMode;
   }

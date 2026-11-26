@@ -1,4 +1,5 @@
 import { useGetAdmissionCyclesQuery } from "@/features/admission-config/tabs/admission-cycle/api/admissionCycleApi";
+import type { AdmissionCycle } from "@/features/admission-config/tabs/admission-cycle/types/admission-cycle";
 import {
   useGetLgasByStateQuery,
   useGetStateWithLgasQuery,
@@ -9,6 +10,9 @@ import { useGetProgramsQuery } from "@/features/program/tabs/programs/api/progra
 import {
   ADMISSION_CANDIDATE_CREATE_UI_COPY,
   ADMISSION_CANDIDATE_DETAIL_INCLUDE,
+  CANDIDATE_ENTRY_MODE_OPTIONS,
+  CANDIDATE_INTAKE_MODE_OPTIONS,
+  getCandidateEntryModeLabel,
   getCycleStatusLabel,
   OFFER_DECISION_OPTIONS,
   SEAT_BUCKET_OPTIONS,
@@ -35,6 +39,7 @@ import {
 } from "../state/admissionCandidateFormState";
 import type {
   AdmissionCandidate,
+  CandidateEntryMode,
   CandidateIntakeMode,
   CreateAdmissionCandidateResponse,
   OfferCandidateRequest,
@@ -54,6 +59,26 @@ function isAntdFormValidationError(err: unknown): boolean {
     "errorFields" in err &&
     Array.isArray((err as { errorFields: unknown }).errorFields)
   );
+}
+
+function resolveDefaultEntryModeForCycle(
+  cycle: AdmissionCycle | undefined,
+): CandidateEntryMode | undefined {
+  const lanes = cycle?.entryModes ?? [];
+  if (lanes.length === 0) return undefined;
+  return lanes.some((l) => l.entryMode === "UTME")
+    ? "UTME"
+    : lanes[0].entryMode;
+}
+
+function resolveIntakeModeForLane(
+  cycle: AdmissionCycle | undefined,
+  entryMode: CandidateEntryMode | undefined,
+): CandidateIntakeMode {
+  if (!entryMode || entryMode === "TRANSFER") return "manual";
+  const lane = cycle?.entryModes?.find((l) => l.entryMode === entryMode);
+  if (!lane) return "manual";
+  return lane.identityMode === "JAMB" ? "jamb" : "manual";
 }
 
 // ─── Create Candidate ─────────────────────────────────────────────────────────
@@ -83,6 +108,7 @@ export function useAdmissionCandidateFormModal({
   const handleApiError = useApiError();
 
   const watchedCycleId = Form.useWatch("cycleId", form);
+  const watchedEntryMode = Form.useWatch("entryMode", form);
   const selectedStateId = modalState.selectedStateId;
 
   const { data: cyclesData } = useGetAdmissionCyclesQuery(
@@ -121,7 +147,7 @@ export function useAdmissionCandidateFormModal({
       },
     );
 
-  const cycles = cyclesData?.member ?? [];
+  const cycles = useMemo(() => cyclesData?.member ?? [], [cyclesData?.member]);
   const states = statesData?.member ?? [];
 
   const lgas = useMemo(() => {
@@ -158,6 +184,30 @@ export function useAdmissionCandidateFormModal({
     [cycles, watchedCycleId, defaultCycleId],
   );
 
+  const entryModeOptions = useMemo(() => {
+    const lanes = selectedCycle?.entryModes ?? [];
+    if (lanes.length === 0) {
+      return CANDIDATE_ENTRY_MODE_OPTIONS;
+    }
+    return lanes.map((lane) => ({
+      value: lane.entryMode,
+      label: lane.enabled
+        ? getCandidateEntryModeLabel(lane.entryMode)
+        : `${getCandidateEntryModeLabel(lane.entryMode)} (Paused)`,
+    }));
+  }, [selectedCycle?.entryModes]);
+
+  const isJambIntakeDisabled = watchedEntryMode === "TRANSFER";
+
+  const intakeModeOptions = useMemo(
+    () =>
+      CANDIDATE_INTAKE_MODE_OPTIONS.map((opt) => ({
+        ...opt,
+        disabled: opt.value === "jamb" && isJambIntakeDisabled,
+      })),
+    [isJambIntakeDisabled],
+  );
+
   const cycleStatusLabel = selectedCycle?.status
     ? getCycleStatusLabel(selectedCycle.status)
     : null;
@@ -168,20 +218,68 @@ export function useAdmissionCandidateFormModal({
   }, [form]);
 
   const initForm = useCallback(() => {
+    const initialCycle = cycles.find((c) => c.id === defaultCycleId);
+    const defaultEntryMode = resolveDefaultEntryModeForCycle(initialCycle);
+    const recommendedIntake = resolveIntakeModeForLane(
+      initialCycle,
+      defaultEntryMode,
+    );
+
     form.setFieldsValue({
       cycleId: defaultCycleId,
+      entryMode: defaultEntryMode,
       jambScores: [],
     });
     dispatch({ type: AdmissionCandidateFormActionType.Reset });
-  }, [defaultCycleId, form]);
+    dispatch({
+      type: AdmissionCandidateFormActionType.SetIntakeMode,
+      mode: recommendedIntake,
+    });
+  }, [cycles, defaultCycleId, form]);
 
   const handleCancel = useCallback(() => {
     reset();
     onClose();
   }, [reset, onClose]);
 
+  const handleCycleSelectChange = useCallback(
+    (nextCycleId: number) => {
+      const nextCycle = cycles.find((c) => c.id === nextCycleId);
+      const nextEntryMode = resolveDefaultEntryModeForCycle(nextCycle);
+      const recommendedIntake = resolveIntakeModeForLane(
+        nextCycle,
+        nextEntryMode,
+      );
+
+      form.setFieldValue("entryMode", nextEntryMode);
+      if (recommendedIntake === "manual") {
+        form.setFieldsValue({ jambRegNo: undefined, jambScores: [] });
+      }
+      dispatch({
+        type: AdmissionCandidateFormActionType.SetIntakeMode,
+        mode: recommendedIntake,
+      });
+    },
+    [cycles, form],
+  );
+
+  const handleEntryModeChange = useCallback(
+    (mode: CandidateEntryMode) => {
+      const recommendedIntake = resolveIntakeModeForLane(selectedCycle, mode);
+      dispatch({
+        type: AdmissionCandidateFormActionType.SetIntakeMode,
+        mode: recommendedIntake,
+      });
+      if (recommendedIntake === "manual") {
+        form.setFieldsValue({ jambRegNo: undefined, jambScores: [] });
+      }
+    },
+    [selectedCycle, form],
+  );
+
   const handleIntakeModeChange = useCallback(
     (mode: CandidateIntakeMode) => {
+      if (mode === "jamb" && watchedEntryMode === "TRANSFER") return;
       dispatch({
         type: AdmissionCandidateFormActionType.SetIntakeMode,
         mode,
@@ -190,7 +288,7 @@ export function useAdmissionCandidateFormModal({
         form.setFieldsValue({ jambRegNo: undefined, jambScores: [] });
       }
     },
-    [form],
+    [form, watchedEntryMode],
   );
 
   const submitCreate = useCallback(async () => {
@@ -294,6 +392,8 @@ export function useAdmissionCandidateFormModal({
     state: {
       step: modalState.step,
       intakeMode: modalState.intakeMode,
+      intakeModeOptions,
+      entryModeOptions,
       createResult: modalState.createResult,
       isLoading: isCreating,
       cycles,
@@ -312,6 +412,8 @@ export function useAdmissionCandidateFormModal({
       handleSubmit,
       handleCancel,
       initForm,
+      handleCycleSelectChange,
+      handleEntryModeChange,
       handleIntakeModeChange,
       handleViewCandidate,
       handleDone,
@@ -321,6 +423,7 @@ export function useAdmissionCandidateFormModal({
     flags: {
       isJambMode: modalState.intakeMode === "jamb",
       isManualMode: modalState.intakeMode === "manual",
+      isJambIntakeDisabled,
       hasWarnings: (modalState.createResult?.warnings?.length ?? 0) > 0,
       showBillingHint: modalState.createResult?.application != null,
       isResultStep: modalState.step === "result",

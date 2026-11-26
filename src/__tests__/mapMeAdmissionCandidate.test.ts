@@ -2,10 +2,11 @@ import { describe, expect, it } from "vitest";
 import { mapMeAdmissionCandidate } from "@/features/candidate-profile/utils/mapMeAdmissionCandidate";
 
 describe("mapMeAdmissionCandidate", () => {
-  it("maps snake_case me candidate with embeds", () => {
+  it("maps snake_case me candidate with cycle entryModes lanes", () => {
     const result = mapMeAdmissionCandidate({
       id: 42,
       cycle_id: 4,
+      entry_mode: "DIRECT_ENTRY",
       jamb_reg_no: "123456789AB",
       first_name: "Jane",
       last_name: "Doe",
@@ -21,10 +22,12 @@ describe("mapMeAdmissionCandidate", () => {
       cycle: {
         id: 4,
         session_id: 16,
-        name: "2025/2026 UTME",
+        name: "2025/2026 Unified",
         status: "APPLICATION_OPEN",
-        admission_identity_mode: "JAMB",
-        entry_mode: "UTME",
+        entry_modes: [
+          { entry_mode: "UTME", identity_mode: "JAMB", enabled: true },
+          { entry_mode: "DIRECT_ENTRY", identity_mode: "OPEN", enabled: true },
+        ],
         batch_no: 1,
         start_date: null,
         end_date: null,
@@ -45,15 +48,18 @@ describe("mapMeAdmissionCandidate", () => {
     expect(result).toMatchObject({
       id: 42,
       cycleId: 4,
+      entryMode: "DIRECT_ENTRY",
       jambRegNo: "123456789AB",
       firstName: "Jane",
       lastName: "Doe",
       email: "jane@school.edu",
       state: { id: 25, name: "Lagos" },
       cycle: {
-        entryMode: "UTME",
         batchNo: 1,
-        admissionIdentityMode: "JAMB",
+        entryModes: [
+          { entryMode: "UTME", identityMode: "JAMB", enabled: true },
+          { entryMode: "DIRECT_ENTRY", identityMode: "OPEN", enabled: true },
+        ],
       },
       application: {
         appliedProgram: { name: "Computer Science" },

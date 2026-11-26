@@ -1,13 +1,18 @@
 import { useAccessControl } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import { useGetAdmissionCyclesQuery } from "@/features/admission-config/tabs/admission-cycle/api/admissionCycleApi";
+import { useGetStatesQuery } from "@/features/admission-config/tabs/geography-rule/api/statesApi";
 import {
   ADMISSION_CANDIDATE_ITEMS_PER_PAGE,
   ADMISSION_CANDIDATE_LIST_INCLUDE,
   ADMISSION_CANDIDATE_SORT_DEFAULT,
+  CANDIDATE_ENTRY_MODE_OPTIONS,
   CANDIDATE_INGEST_ALLOWED_STATUSES,
+  getCandidateEntryModeLabel,
 } from "@/shared/constants/admissionCandidateOptions";
 import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
+import { RequestScreen } from "@/shared/types/error-ui";
+import { deriveSectionErrorMessage } from "@/shared/utils/error/deriveSectionErrorMessage";
 import { createTableChangeHandler } from "@/shared/utils/table/createTableChangeHandler";
 import { useCallback, useMemo, useReducer } from "react";
 import { useGetAdmissionCandidatesQuery } from "../api/admissionCandidateApi";
@@ -40,12 +45,24 @@ export function useAdmissionCandidateTab() {
     itemsPerPage: 100,
     sort: "createdAt:desc",
   });
-  const cycles = cyclesData?.member ?? [];
+  const cycles = useMemo(() => cyclesData?.member ?? [], [cyclesData?.member]);
+
+  const { data: statesData } = useGetStatesQuery({ itemsPerPage: 100 });
+  const states = statesData?.member ?? [];
 
   const selectedCycle = useMemo(
     () => cycles.find((c) => c.id === state.cycleId),
     [cycles, state.cycleId],
   );
+
+  const entryModeFilterOptions = useMemo(() => {
+    const lanes = selectedCycle?.entryModes ?? [];
+    if (lanes.length === 0) return CANDIDATE_ENTRY_MODE_OPTIONS;
+    return lanes.map((lane) => ({
+      value: lane.entryMode,
+      label: getCandidateEntryModeLabel(lane.entryMode),
+    }));
+  }, [selectedCycle?.entryModes]);
 
   const canIngest = useMemo(() => {
     if (!selectedCycle) return false;
@@ -82,12 +99,20 @@ export function useAdmissionCandidateTab() {
       : {}),
   };
 
-  const { data, isLoading, isError, refetch } = useGetAdmissionCandidatesQuery(
-    queryParams,
-    { skip: skipList },
-  );
+  const {
+    data,
+    isLoading,
+    isError,
+    error: candidatesError,
+    refetch,
+  } = useGetAdmissionCandidatesQuery(queryParams, { skip: skipList });
 
-  const candidates = data?.member ?? [];
+  const sectionError = deriveSectionErrorMessage(isError, candidatesError, {
+    screen: RequestScreen.List,
+    method: "GET",
+  });
+
+  const candidates = useMemo(() => data?.member ?? [], [data?.member]);
   const totalItems = data?.totalItems ?? 0;
 
   const handleCloseBulkUpload = useCallback(() => {
@@ -100,6 +125,7 @@ export function useAdmissionCandidateTab() {
 
   const bulkUpload = useAdmissionCandidateBulkUpload({
     cycleId: state.cycleId,
+    selectedCycle,
     canIngest,
     onClose: handleCloseBulkUpload,
   });
@@ -252,12 +278,15 @@ export function useAdmissionCandidateTab() {
     });
   }, []);
 
+  const { clearSelectedFile } = bulkUpload.actions;
+
   const handleCloseBulkUploadModal = useCallback(() => {
+    clearSelectedFile();
     dispatch({
       type: AdmissionCandidatePageActionType.SetBulkUploadModalOpen,
       open: false,
     });
-  }, []);
+  }, [clearSelectedFile]);
 
   const handleOpenOffer = useCallback((id: number) => {
     dispatch({
@@ -319,9 +348,12 @@ export function useAdmissionCandidateTab() {
       totalItems,
       isLoading: skipList ? false : isLoading,
       isError,
+      sectionError,
       skipList,
       cycles,
+      states,
       selectedCycle,
+      entryModeFilterOptions,
       cycleId: state.cycleId,
       firstNameSearch: state.firstNameSearch,
       lastNameSearch: state.lastNameSearch,

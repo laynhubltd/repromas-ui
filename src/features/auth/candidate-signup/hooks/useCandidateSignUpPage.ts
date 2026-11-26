@@ -12,7 +12,13 @@ import { parseApiError } from "@/shared/utils/error/parseApiError";
 import { Form } from "antd";
 import { formatAdmissionCycleDates } from "../utils/formatAdmissionCycleDates";
 import type { Dayjs } from "dayjs";
-import { useCallback, useLayoutEffect, useMemo, useReducer, useRef, useState } from "react";
+import {
+  useCallback,
+  useLayoutEffect,
+  useMemo,
+  useReducer,
+  useRef,
+} from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   useCandidateLookupMutation,
@@ -26,10 +32,15 @@ import {
   type CandidateSignupBlockedReason,
   type CandidateSignupStep,
 } from "../state/candidateSignupState";
-import type { AdmissionSignupConfig } from "../types/candidate-signup";
+import type {
+  AdmissionEntryMode,
+  AdmissionSignupConfig,
+  SignupConfigLane,
+} from "../types/candidate-signup";
 import {
   buildLaneSelectors,
   parseLaneParamsFromSearch,
+  readRawEntryModeFromSearch,
   withLaneSelectors,
 } from "../utils/candidateSignupPayload";
 
@@ -60,6 +71,7 @@ function deriveBlockedReason(
   isConfigError: boolean,
   configError: unknown,
   config: AdmissionSignupConfig | undefined,
+  rawUrlEntryMode: string | null,
 ): CandidateSignupBlockedReason | null {
   if (isConfigLoading) return null;
 
@@ -73,6 +85,18 @@ function deriveBlockedReason(
     return "wrong_status";
   }
 
+  if (config && config.entryModes.length === 0) {
+    return "not_open";
+  }
+
+  if (
+    config &&
+    rawUrlEntryMode !== null &&
+    !config.entryModes.some((lane) => lane.entryMode === rawUrlEntryMode)
+  ) {
+    return "not_open";
+  }
+
   return null;
 }
 
@@ -84,9 +108,7 @@ function resolveEffectiveStep(
 ): CandidateSignupStep {
   if (blockedReason) return "blocked";
   if (isConfigLoading || !config) return "bootstrap";
-  if (pageStep === "jamb_details") return "jamb_details";
-  if (config.admissionIdentityMode === "OPEN") return "open_form";
-  return "jamb_lookup";
+  return pageStep;
 }
 
 export function useCandidateSignUpPage() {
@@ -96,17 +118,30 @@ export function useCandidateSignUpPage() {
     () => parseLaneParamsFromSearch(searchParams),
     [searchParams],
   );
+  const rawUrlEntryMode = useMemo(
+    () => readRawEntryModeFromSearch(searchParams),
+    [searchParams],
+  );
 
   const [pageState, dispatch] = useReducer(
     candidateSignupReducer,
     initialCandidateSignupState,
   );
-  const [openStateId, setOpenStateId] = useState<number | undefined>();
-  const appliedCycleIdRef = useRef<number | null>(null);
+  const appliedBootstrapKeyRef = useRef<string | null>(null);
 
   const [jambLookupForm] = Form.useForm<JambLookupFormValues>();
   const [jambSignupForm] = Form.useForm<JambSignupFormValues>();
   const [openSignupForm] = Form.useForm<OpenSignupFormValues>();
+
+  // Always omit entryMode when fetching signup-config so config.entryModes retains
+  // every enabled lane on the open cycle; validate URL ?entryMode= client-side.
+  const configQueryArg = useMemo(
+    () =>
+      laneParams.sessionId !== undefined
+        ? { sessionId: laneParams.sessionId }
+        : undefined,
+    [laneParams.sessionId],
+  );
 
   const {
     data: config,
@@ -115,7 +150,7 @@ export function useCandidateSignUpPage() {
     isError: isConfigError,
     error: configError,
     refetch: refetchConfig,
-  } = useGetAdmissionSignupConfigQuery(laneParams);
+  } = useGetAdmissionSignupConfigQuery(configQueryArg);
 
   const blockedReason = useMemo(
     () =>
@@ -124,12 +159,35 @@ export function useCandidateSignUpPage() {
         isConfigError,
         configError,
         config,
+        rawUrlEntryMode,
       ),
-    [isConfigLoading, isConfigFetching, isConfigError, configError, config],
+    [
+      isConfigLoading,
+      isConfigFetching,
+      isConfigError,
+      configError,
+      config,
+      rawUrlEntryMode,
+    ],
   );
 
+  const activeLane: SignupConfigLane | undefined = useMemo(
+    () =>
+      config?.entryModes.find(
+        (lane) => lane.entryMode === pageState.selectedEntryMode,
+      ),
+    [config?.entryModes, pageState.selectedEntryMode],
+  );
+
+  const isJambMode = activeLane?.identityMode === "JAMB";
+  const isOpenMode = activeLane?.identityMode === "OPEN";
+  const canChangeEntryMode = (config?.entryModes.length ?? 0) > 1;
+  const hasMultipleJambLanes =
+    (config?.entryModes.filter((lane) => lane.identityMode === "JAMB")
+      .length ?? 0) > 1;
+
   const isOpenFormActive =
-    config?.admissionIdentityMode === "OPEN" &&
+    isOpenMode &&
     blockedReason === null &&
     !isConfigLoading &&
     !isConfigFetching;
@@ -140,18 +198,18 @@ export function useCandidateSignUpPage() {
   );
 
   const { data: stateWithLgas, isFetching: isStateLgasLoading } =
-    useGetStateWithLgasQuery(openStateId!, {
-      skip: !isOpenFormActive || openStateId == null,
+    useGetStateWithLgasQuery(pageState.openStateId!, {
+      skip: !isOpenFormActive || pageState.openStateId == null,
     });
 
   const embeddedLgaCount = stateWithLgas?.lgas?.length ?? 0;
   const { data: lgasListData, isFetching: isListLgasLoading } =
     useGetLgasByStateQuery(
-      { stateId: openStateId!, itemsPerPage: 100 },
+      { stateId: pageState.openStateId!, itemsPerPage: 100 },
       {
         skip:
           !isOpenFormActive ||
-          openStateId == null ||
+          pageState.openStateId == null ||
           isStateLgasLoading ||
           embeddedLgaCount > 0,
       },
@@ -165,7 +223,7 @@ export function useCandidateSignUpPage() {
   }, [stateWithLgas?.lgas, lgasListData?.member]);
 
   const isLgasLoading =
-    openStateId != null && (isStateLgasLoading || isListLgasLoading);
+    pageState.openStateId != null && (isStateLgasLoading || isListLgasLoading);
 
   const [candidateLookup, { isLoading: isLookupLoading }] =
     useCandidateLookupMutation();
@@ -173,31 +231,70 @@ export function useCandidateSignUpPage() {
     useCandidateSignupMutation();
 
   const laneSelectors = useMemo(
-    () => buildLaneSelectors(config, laneParams),
-    [config, laneParams],
+    () => buildLaneSelectors(config, laneParams, pageState.selectedEntryMode),
+    [config, laneParams, pageState.selectedEntryMode],
   );
 
   useLayoutEffect(() => {
     if (!config || blockedReason) {
-      appliedCycleIdRef.current = null;
+      appliedBootstrapKeyRef.current = null;
       return;
     }
-    if (appliedCycleIdRef.current === config.cycleId) return;
 
-    appliedCycleIdRef.current = config.cycleId;
+    const bootstrapKey = `${config.cycleId}:${rawUrlEntryMode ?? ""}`;
+    if (appliedBootstrapKeyRef.current === bootstrapKey) return;
+    appliedBootstrapKeyRef.current = bootstrapKey;
+
+    const matchedUrlLane = rawUrlEntryMode
+      ? config.entryModes.find((l) => l.entryMode === rawUrlEntryMode)
+      : undefined;
+
+    if (matchedUrlLane) {
+      dispatch({
+        type: CandidateSignupActionType.BootstrapMultiLane,
+        laneContext: {
+          entryMode: matchedUrlLane.entryMode,
+          batchNo: config.batchNo,
+          ...(config.sessionId !== undefined
+            ? { sessionId: config.sessionId }
+            : {}),
+        },
+        selectedEntryMode: matchedUrlLane.entryMode,
+        step: matchedUrlLane.identityMode === "OPEN" ? "open_form" : "jamb_lookup",
+      });
+      return;
+    }
+
+    if (config.entryModes.length === 1) {
+      const onlyLane = config.entryModes[0];
+      dispatch({
+        type: CandidateSignupActionType.BootstrapMultiLane,
+        laneContext: {
+          entryMode: onlyLane.entryMode,
+          batchNo: config.batchNo,
+          ...(config.sessionId !== undefined
+            ? { sessionId: config.sessionId }
+            : {}),
+        },
+        selectedEntryMode: onlyLane.entryMode,
+        step: onlyLane.identityMode === "OPEN" ? "open_form" : "jamb_lookup",
+      });
+      return;
+    }
+
     dispatch({
-      type: CandidateSignupActionType.SetLaneContext,
+      type: CandidateSignupActionType.BootstrapMultiLane,
       laneContext: {
-        entryMode: config.entryMode,
+        entryMode: null,
         batchNo: config.batchNo,
         ...(config.sessionId !== undefined
           ? { sessionId: config.sessionId }
           : {}),
       },
-      step:
-        config.admissionIdentityMode === "OPEN" ? "open_form" : "jamb_lookup",
+      selectedEntryMode: null,
+      step: "select_entry_mode",
     });
-  }, [config, blockedReason]);
+  }, [config, blockedReason, rawUrlEntryMode]);
 
   const effectiveStep = resolveEffectiveStep(
     pageState.step,
@@ -205,6 +302,35 @@ export function useCandidateSignUpPage() {
     isConfigLoading || isConfigFetching,
     config,
   );
+
+  const handleSelectEntryMode = useCallback(
+    (entryMode: AdmissionEntryMode) => {
+      const lane = config?.entryModes.find((l) => l.entryMode === entryMode);
+      if (!lane) return;
+      jambLookupForm.resetFields();
+      jambSignupForm.resetFields();
+      openSignupForm.resetFields();
+      dispatch({
+        type: CandidateSignupActionType.SetOpenStateId,
+        stateId: undefined,
+      });
+      dispatch({
+        type: CandidateSignupActionType.SelectEntryMode,
+        entryMode,
+        step: lane.identityMode === "OPEN" ? "open_form" : "jamb_lookup",
+      });
+    },
+    [config?.entryModes, jambLookupForm, jambSignupForm, openSignupForm],
+  );
+
+  const handleChangeEntryMode = useCallback(() => {
+    if (!canChangeEntryMode) return;
+    dispatch({
+      type: CandidateSignupActionType.SelectEntryMode,
+      entryMode: null,
+      step: "select_entry_mode",
+    });
+  }, [canChangeEntryMode]);
 
   const handleJambLookup = async () => {
     try {
@@ -219,6 +345,10 @@ export function useCandidateSignUpPage() {
           laneSelectors,
         ),
       ).unwrap();
+      dispatch({
+        type: CandidateSignupActionType.SelectEntryMode,
+        entryMode: result.entryMode,
+      });
       dispatch({
         type: CandidateSignupActionType.SetJambRegNo,
         value: values.jambRegNo.trim(),
@@ -245,6 +375,12 @@ export function useCandidateSignUpPage() {
         message: null,
       });
 
+      const resolvedSelectors = buildLaneSelectors(
+        config,
+        laneParams,
+        pageState.lookupResult.entryMode ?? pageState.selectedEntryMode,
+      );
+
       await candidateSignup(
         withLaneSelectors(
           {
@@ -254,7 +390,7 @@ export function useCandidateSignUpPage() {
             verificationToken: pageState.lookupResult.verificationToken,
             phone: values.phone?.trim() || undefined,
           },
-          laneSelectors,
+          resolvedSelectors,
         ),
       ).unwrap();
 
@@ -309,7 +445,10 @@ export function useCandidateSignUpPage() {
 
   const handleOpenStateChange = useCallback(
     (stateId: number) => {
-      setOpenStateId(stateId);
+      dispatch({
+        type: CandidateSignupActionType.SetOpenStateId,
+        stateId,
+      });
       openSignupForm.setFieldValue("lgaId", undefined);
     },
     [openSignupForm],
@@ -332,6 +471,8 @@ export function useCandidateSignUpPage() {
       cycleDateLabel: config ? formatAdmissionCycleDates(config) : null,
       step: effectiveStep,
       blockedReason,
+      selectedEntryMode: pageState.selectedEntryMode,
+      activeLane,
       formError: pageState.formError,
       lookupResult: pageState.lookupResult,
       jambRegNo: pageState.jambRegNo,
@@ -343,9 +484,11 @@ export function useCandidateSignUpPage() {
       isLgasLoading,
       isLookupLoading,
       isSignupLoading,
-      openStateId,
+      openStateId: pageState.openStateId,
     },
     actions: {
+      handleSelectEntryMode,
+      handleChangeEntryMode,
       handleJambLookup,
       handleJambSignup,
       handleOpenSignup,
@@ -354,8 +497,10 @@ export function useCandidateSignUpPage() {
       backToJambLookup,
     },
     flags: {
-      isJambMode: config?.admissionIdentityMode === "JAMB",
-      isOpenMode: config?.admissionIdentityMode === "OPEN",
+      isJambMode,
+      isOpenMode,
+      canChangeEntryMode,
+      hasMultipleJambLanes,
       isBlocked: effectiveStep === "blocked",
       isBootstrap: effectiveStep === "bootstrap",
     },

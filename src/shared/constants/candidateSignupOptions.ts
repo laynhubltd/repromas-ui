@@ -1,5 +1,13 @@
 export const CANDIDATE_SIGNUP_UI_COPY = {
   pageTitleFallback: "Candidate registration",
+  selectEntryModeIntro:
+    "Choose the admission entry mode you are applying through.",
+  jambLaneDescription:
+    "Verify your JAMB registration number to pre-fill your details.",
+  openLaneDescription: "Register directly with your personal details.",
+  changeEntryModeLabel: "Change admission entry mode",
+  multiJambLookupHint:
+    "If you registered with JAMB, we will automatically match your application lane when verifying your JAMB number.",
   jambLookupIntro:
     "Enter your JAMB registration number to verify your CAPS record.",
   openSignupIntro:

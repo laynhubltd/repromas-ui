@@ -8,7 +8,8 @@ export function useLogin() {
   const isCandidateSignupAvailable =
     !signupConfigQuery.isLoading &&
     !signupConfigQuery.isFetching &&
-    signupConfig?.status === "APPLICATION_OPEN";
+    signupConfig?.status === "APPLICATION_OPEN" &&
+    (signupConfig.entryModes?.length ?? 0) > 0;
 
   return {
     state: {

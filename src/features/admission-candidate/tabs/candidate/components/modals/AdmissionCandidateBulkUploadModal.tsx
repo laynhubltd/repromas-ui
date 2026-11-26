@@ -2,13 +2,17 @@ import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
 import { DataLoader } from "@/shared/ui/DataLoader";
 import { DownloadOutlined, InboxOutlined } from "@ant-design/icons";
-import { Alert, Button, Modal, Typography } from "antd";
+import { Alert, Button, Form, Modal, Select, Typography } from "antd";
 import { useRef } from "react";
+import type { CandidateEntryMode } from "../../types/admission-candidate";
 
 export type AdmissionCandidateBulkUploadModalProps = {
   open: boolean;
   onClose: () => void;
   selectedFile: File | null;
+  uploadEntryMode: CandidateEntryMode | undefined;
+  entryModeOptions: { value: CandidateEntryMode; label: string }[];
+  onUploadEntryModeChange: (value: CandidateEntryMode | undefined) => void;
   isUploading: boolean;
   hasFile: boolean;
   canUpload: boolean;
@@ -22,6 +26,9 @@ export function AdmissionCandidateBulkUploadModal({
   open,
   onClose,
   selectedFile,
+  uploadEntryMode,
+  entryModeOptions,
+  onUploadEntryModeChange,
   isUploading,
   hasFile,
   canUpload,
@@ -41,7 +48,7 @@ export function AdmissionCandidateBulkUploadModal({
 
   return (
     <Modal
-      title="Upload JAMB CAPS Candidates"
+      title="Upload CAPS Candidates"
       open={open}
       onCancel={onClose}
       footer={null}
@@ -71,7 +78,7 @@ export function AdmissionCandidateBulkUploadModal({
           <Alert
             type="warning"
             showIcon
-            message="CAPS upload is only available when the cycle is in Pre-processing or Application Open."
+            message="Bulk upload is only available when the cycle is in Pre-processing or Application Open."
             style={{ marginBottom: token.paddingMD }}
           />
         </ConditionalRenderer>
@@ -116,11 +123,32 @@ export function AdmissionCandidateBulkUploadModal({
             </li>
             <li>Fill rows from row 5 using program and subject dropdowns.</li>
             <li>
+              Optionally set Column <strong>W</strong> (<code>entry_mode</code>)
+              per row (<code>UTME</code>, <code>DIRECT_ENTRY</code>,{" "}
+              <code>TRANSFER</code>, or legacy <code>JAMB</code>); otherwise the
+              default entry mode selected below is used.
+            </li>
+            <li>
               Do <strong>not</strong> modify the <em>Reference</em> sheet.
             </li>
             <li>Save as .xlsx and upload below.</li>
           </ol>
         </div>
+
+        <Form layout="vertical" style={{ marginBottom: token.sizeSM }}>
+          <Form.Item
+            label="Default entry mode"
+            style={{ marginBottom: token.sizeSM }}
+          >
+            <Select
+              placeholder="Select default entry mode"
+              value={uploadEntryMode}
+              onChange={(val) => onUploadEntryModeChange(val)}
+              options={entryModeOptions}
+              disabled={!cycleSelected || isUploading}
+            />
+          </Form.Item>
+        </Form>
 
         <div
           style={{
@@ -143,7 +171,10 @@ export function AdmissionCandidateBulkUploadModal({
             }}
           />
           <Typography.Text
-            style={{ color: token.colorTextSecondary, fontSize: token.fontSizeSM }}
+            style={{
+              color: token.colorTextSecondary,
+              fontSize: token.fontSizeSM,
+            }}
           >
             Click to select an <strong>.xlsx</strong> file
           </Typography.Text>
@@ -170,7 +201,11 @@ export function AdmissionCandidateBulkUploadModal({
             }}
           >
             <Typography.Text
-              style={{ fontSize: token.fontSizeSM, color: token.colorText, flex: 1 }}
+              style={{
+                fontSize: token.fontSizeSM,
+                color: token.colorText,
+                flex: 1,
+              }}
               ellipsis
             >
               {selectedFile?.name}
@@ -185,7 +220,6 @@ export function AdmissionCandidateBulkUploadModal({
             </Button>
           </div>
         </ConditionalRenderer>
-
       </div>
 
       <div

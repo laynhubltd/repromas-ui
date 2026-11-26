@@ -1,9 +1,11 @@
+import type { CandidateEntryMode } from "@/shared/types/admission-lane";
 import type { QuotaCategory } from "../types/admission-recommended-candidate";
 
 export const RecommendationPageActionType = {
   SetCycleId: "SET_CYCLE_ID",
   SetProgramId: "SET_PROGRAM_ID",
   SetQuotaFilter: "SET_QUOTA_FILTER",
+  SetEntryModeFilter: "SET_ENTRY_MODE_FILTER",
   SetPage: "SET_PAGE",
   SetSort: "SET_SORT",
   SetDrawerCandidateId: "SET_DRAWER_CANDIDATE_ID",
@@ -15,6 +17,7 @@ export type RecommendationPageState = {
   cycleId: number | undefined;
   programId: number | undefined;
   quotaFilter: QuotaCategory | undefined;
+  entryModeFilter: CandidateEntryMode | undefined;
   page: number;
   sort: string;
   drawerCandidateId: number | null;
@@ -34,6 +37,10 @@ export type RecommendationPageAction =
       type: typeof RecommendationPageActionType.SetQuotaFilter;
       value: QuotaCategory | undefined;
     }
+  | {
+      type: typeof RecommendationPageActionType.SetEntryModeFilter;
+      value: CandidateEntryMode | undefined;
+    }
   | { type: typeof RecommendationPageActionType.SetPage; page: number }
   | { type: typeof RecommendationPageActionType.SetSort; sort: string }
   | {
@@ -50,6 +57,7 @@ export const initialRecommendationPageState: RecommendationPageState = {
   cycleId: undefined,
   programId: undefined,
   quotaFilter: undefined,
+  entryModeFilter: undefined,
   page: 1,
   sort: "aggregateScore:desc",
   drawerCandidateId: null,
@@ -62,11 +70,18 @@ export function recommendationPageReducer(
 ): RecommendationPageState {
   switch (action.type) {
     case RecommendationPageActionType.SetCycleId:
-      return { ...state, cycleId: action.cycleId, page: 1 };
+      return {
+        ...state,
+        cycleId: action.cycleId,
+        entryModeFilter: undefined,
+        page: 1,
+      };
     case RecommendationPageActionType.SetProgramId:
       return { ...state, programId: action.programId, page: 1 };
     case RecommendationPageActionType.SetQuotaFilter:
       return { ...state, quotaFilter: action.value, page: 1 };
+    case RecommendationPageActionType.SetEntryModeFilter:
+      return { ...state, entryModeFilter: action.value, page: 1 };
     case RecommendationPageActionType.SetPage:
       return { ...state, page: action.page };
     case RecommendationPageActionType.SetSort:
@@ -77,5 +92,9 @@ export function recommendationPageReducer(
       return { ...state, offerTargetId: action.id };
     case RecommendationPageActionType.Reset:
       return initialRecommendationPageState;
+    default: {
+      const _exhaustive: never = action;
+      return _exhaustive;
+    }
   }
 }

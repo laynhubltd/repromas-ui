@@ -1,4 +1,10 @@
 import type {
+  AdmissionCycleLaneConfig,
+  AdmissionEntryMode,
+  AdmissionIdentityMode,
+  CandidateEntryMode,
+} from "@/shared/types/admission-lane";
+import type {
   MeAdmissionCandidate,
   MeAdmissionCycleEmbed,
 } from "../types/me-admission-candidate";
@@ -46,9 +52,32 @@ function mapRef(
   };
 }
 
+function mapCycleLanes(
+  raw: RawRecord,
+): AdmissionCycleLaneConfig[] | undefined {
+  const rawList = raw.entry_modes ?? raw.entryModes;
+  if (!Array.isArray(rawList)) return undefined;
+
+  const lanes: AdmissionCycleLaneConfig[] = [];
+  for (const item of rawList) {
+    if (!item || typeof item !== "object") continue;
+    const rec = item as RawRecord;
+    const entryMode = readString(rec, "entry_mode", "entryMode");
+    const identityMode = readString(rec, "identity_mode", "identityMode");
+    if (!entryMode || !identityMode) continue;
+    lanes.push({
+      entryMode: entryMode as AdmissionEntryMode,
+      identityMode: identityMode as AdmissionIdentityMode,
+      enabled: Boolean(rec.enabled ?? true),
+    });
+  }
+  return lanes;
+}
+
 function mapCycleEmbed(raw: unknown): MeAdmissionCycleEmbed | null {
   if (!raw || typeof raw !== "object") return null;
   const data = raw as RawRecord;
+  const entryModes = mapCycleLanes(data);
   const entryMode = readNullableString(data, "entry_mode", "entryMode");
   const batchNo = readOptionalNumber(data, "batch_no", "batchNo");
   const identityMode = readNullableString(
@@ -62,10 +91,13 @@ function mapCycleEmbed(raw: unknown): MeAdmissionCycleEmbed | null {
     sessionId: readNumber(data, "session_id", "sessionId"),
     name: readString(data, "name", "name"),
     status: readString(data, "status", "status"),
+    ...(entryModes !== undefined ? { entryModes } : {}),
     ...(identityMode === "JAMB" || identityMode === "OPEN"
       ? { admissionIdentityMode: identityMode }
       : {}),
-    ...(entryMode ? { entryMode: entryMode as MeAdmissionCycleEmbed["entryMode"] } : {}),
+    ...(entryMode
+      ? { entryMode: entryMode as MeAdmissionCycleEmbed["entryMode"] }
+      : {}),
     ...(batchNo !== undefined ? { batchNo } : {}),
     startDate: readNullableString(data, "start_date", "startDate"),
     endDate: readNullableString(data, "end_date", "endDate"),
@@ -123,6 +155,8 @@ export function mapMeAdmissionCandidate(raw: unknown): MeAdmissionCandidate {
   return {
     id: readNumber(data, "id", "id"),
     cycleId: readNumber(data, "cycle_id", "cycleId"),
+    entryMode: (readString(data, "entry_mode", "entryMode") ||
+      "UTME") as CandidateEntryMode,
     jambRegNo: readNullableString(data, "jamb_reg_no", "jambRegNo"),
     firstName: readString(data, "first_name", "firstName"),
     lastName: readString(data, "last_name", "lastName"),

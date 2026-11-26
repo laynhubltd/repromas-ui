@@ -8,6 +8,7 @@ import {
 import {
   getCandidateEntryModeLabel,
   getCandidateGenderLabel,
+  isRealJambRegNo,
 } from "@/shared/constants/admissionCandidateOptions";
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
@@ -113,7 +114,9 @@ export function RecommendedCandidateDetailDrawer({
         <Flex vertical gap={24}>
           <Descriptions title="Candidate Info" bordered size="small" column={1}>
             <Descriptions.Item label="JAMB Reg. No.">
-              {target?.application?.candidate?.jambRegNo}
+              {isRealJambRegNo(target?.application?.candidate?.jambRegNo)
+                ? target?.application?.candidate?.jambRegNo
+                : "—"}
             </Descriptions.Item>
             <Descriptions.Item label="Admission Cycle">
               {resolveRelatedName(target?.application?.candidate?.cycle, target?.application?.candidate?.cycleId)}
@@ -134,7 +137,7 @@ export function RecommendedCandidateDetailDrawer({
             </Descriptions.Item>
             <Descriptions.Item label="Entry Mode">
               {getCandidateEntryModeLabel(
-                target?.application?.candidate?.entryMode,
+                target?.entryMode ?? target?.application?.candidate?.entryMode,
               )}
             </Descriptions.Item>
             <Descriptions.Item label="Email">
@@ -156,15 +159,19 @@ export function RecommendedCandidateDetailDrawer({
               {getQuotaCategoryLabel(target?.quotaCategory)}
             </Descriptions.Item>
             <Descriptions.Item label="Recommended Decision">
-              {target != null && (
+              <ConditionalRenderer when={target != null}>
                 <Tag
-                  color={recommendedDecisionTagColor(
-                    target.recommendedDecision,
-                  )}
+                  color={
+                    target
+                      ? recommendedDecisionTagColor(target.recommendedDecision)
+                      : undefined
+                  }
                 >
-                  {getRecommendedDecisionLabel(target.recommendedDecision)}
+                  {target
+                    ? getRecommendedDecisionLabel(target.recommendedDecision)
+                    : ""}
                 </Tag>
-              )}
+              </ConditionalRenderer>
             </Descriptions.Item>
             <Descriptions.Item label="Applied Program">
               {resolveProgramLabel(
@@ -172,14 +179,14 @@ export function RecommendedCandidateDetailDrawer({
                 target?.appliedProgramId,
               )}
             </Descriptions.Item>
-            {isChangeOfCourse && (
+            <ConditionalRenderer when={isChangeOfCourse}>
               <Descriptions.Item label="Proposed Program">
                 {resolveProgramLabel(
                   target?.recommendedOfferedProgram,
                   target?.recommendedOfferedProgramId,
                 )}
               </Descriptions.Item>
-            )}
+            </ConditionalRenderer>
             <Descriptions.Item label="Reason">
               {getRecommenderReasonLabel(target?.reasonCode)}
             </Descriptions.Item>

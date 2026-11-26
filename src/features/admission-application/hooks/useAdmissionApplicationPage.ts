@@ -17,6 +17,7 @@ import type { MeAdmissionApplication } from "../types/me-admission-application";
 import {
   deriveLifecycleState,
   isDraftApplication,
+  shouldShowJambCard,
   shouldShowJambSection,
   shouldShowOfferCard,
   shouldShowOlevelSection,
@@ -149,6 +150,7 @@ export function useAdmissionApplicationPage() {
       showScreeningPending: application
         ? shouldShowScreeningPending(application)
         : false,
+      showJambCard: application ? shouldShowJambCard(application) : false,
       showJambSection: application ? shouldShowJambSection(application) : false,
       showOlevelSection: application ? shouldShowOlevelSection(application) : false,
       showCandidateMetadata: Boolean(application?.candidate?.metadata),

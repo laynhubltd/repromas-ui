@@ -99,11 +99,25 @@ describe("buildCreateCandidatePayload", () => {
     ]);
   });
 
-  it("omits empty jambScores array in jamb mode", () => {
+  it("omits empty jambScores array in jamb mode and forwards entryMode", () => {
     const payload = buildCreateCandidatePayload(
-      { ...baseValues, jambRegNo: "202655999999AA", jambScores: [] },
+      {
+        ...baseValues,
+        entryMode: "DIRECT_ENTRY",
+        jambRegNo: "202655999999AA",
+        jambScores: [],
+      },
       "jamb",
     );
+    expect(payload.entryMode).toBe("DIRECT_ENTRY");
     expect(payload.jambScores).toBeUndefined();
+  });
+
+  it("forwards TRANSFER entryMode on manual payload", () => {
+    const payload = buildCreateCandidatePayload(
+      { ...baseValues, entryMode: "TRANSFER" },
+      "manual",
+    );
+    expect(payload.entryMode).toBe("TRANSFER");
   });
 });

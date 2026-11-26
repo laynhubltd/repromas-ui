@@ -7,6 +7,7 @@ import type {
   AdmissionApplication,
   AdmissionCandidate,
   AdmissionCandidateListParams,
+  CandidatePriorQualification,
   CapsBulkUploadSummary,
   CreateAdmissionCandidateRequest,
   CreateAdmissionCandidateResponse,
@@ -120,6 +121,20 @@ const admissionCandidateApi = baseApi.injectEndpoints({
         ApiTagTypes.AdmissionCycle,
       ],
     }),
+
+    getCandidatePriorQualifications: builder.query<
+      PaginatedResponse<CandidatePriorQualification>,
+      { candidateId: number }
+    >({
+      query: ({ candidateId }) => ({
+        url: `/admission-candidates/${candidateId}/prior-qualifications`,
+        method: "GET",
+        params: { include: "priorQualificationType" },
+      }),
+      providesTags: (_result, _err, { candidateId }) => [
+        { type: ApiTagTypes.AdmissionCandidate, id: candidateId },
+      ],
+    }),
   }),
 });
 
@@ -131,6 +146,7 @@ export const {
   useOfferAdmissionCandidateMutation,
   useMatriculateAdmissionCandidateMutation,
   useCapsBulkUploadMutation,
+  useGetCandidatePriorQualificationsQuery,
 } = admissionCandidateApi;
 
 export async function downloadCapsTemplate(

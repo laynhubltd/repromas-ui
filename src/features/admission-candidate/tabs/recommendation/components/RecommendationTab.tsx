@@ -1,7 +1,10 @@
 import { DashCard, ExplainerCallout, Table } from "@/components/ui-kit";
 import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
-import { formatCycleOptionLabel } from "@/features/admission-config/tabs/admission-cycle/utils/admissionCycleDisplay";
+import {
+  getCandidateEntryModeLabel,
+  isRealJambRegNo,
+} from "@/shared/constants/admissionCandidateOptions";
 import {
   getQuotaCategoryLabel,
   getRecommendedDecisionLabel,
@@ -9,6 +12,7 @@ import {
 } from "@/shared/constants/admissionRecommendedCandidateOptions";
 import { getRecommenderReasonLabel } from "@/shared/constants/admissionRecommenderOptions";
 import { useToken } from "@/shared/hooks/useToken";
+import type { CandidateEntryMode } from "@/shared/types/admission-lane";
 import {
   ConditionalRenderer,
   centeredBox,
@@ -16,27 +20,39 @@ import {
 import { DataLoader } from "@/shared/ui/DataLoader";
 import { ErrorAlert } from "@/shared/ui/ErrorAlert";
 import { SkeletonRows } from "@/shared/ui/SkeletonRows";
-import { EyeOutlined, GiftOutlined, DownloadOutlined, MoreOutlined } from "@ant-design/icons";
+import { formatCycleOptionLabel } from "@/shared/utils/format/admissionCycleDisplay";
+import {
+  DownloadOutlined,
+  EyeOutlined,
+  FilterOutlined,
+  GiftOutlined,
+  MoreOutlined,
+} from "@ant-design/icons";
 import {
   Alert,
+  Badge,
   Button,
   Col,
   Dropdown,
   Flex,
+  Form,
+  Popover,
   Row,
   Select,
+  Space,
   Tag,
   Typography,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
+import { useState } from "react";
 import { useRecommendationTab } from "../hooks/useRecommendationTab";
 import type {
   AdmissionRecommendedCandidate,
   QuotaCategory,
 } from "../types/admission-recommended-candidate";
 import { recommendedDecisionTagColor } from "../utiles/recommendationDisplay";
-import { RecommendedCandidateDetailDrawer } from "./RecommendedCandidateDetailDrawer";
 import { OfferRecommendedCandidateModal } from "./modals/OfferRecommendedCandidateModal";
+import { RecommendedCandidateDetailDrawer } from "./RecommendedCandidateDetailDrawer";
 
 const QUOTA_TAG_COLOR: Record<QuotaCategory, string> = {
   MERIT: "blue",
@@ -46,18 +62,22 @@ const QUOTA_TAG_COLOR: Record<QuotaCategory, string> = {
 
 export function RecommendationTab() {
   const token = useToken();
+  const [filterOpen, setFilterOpen] = useState(false);
   const { state, actions, flags } = useRecommendationTab();
   const {
     rows,
     totalItems,
     isLoading,
     isError,
+    sectionError,
     skipList,
     cycles,
     programs,
+    entryModeOptions,
     cycleId,
     programId,
     quotaFilter,
+    entryModeFilter,
     page,
     itemsPerPage,
     offerTarget,
@@ -70,6 +90,7 @@ export function RecommendationTab() {
     handleCycleChange,
     handleProgramChange,
     handleQuotaFilterChange,
+    handleEntryModeFilterChange,
     handlePageChange,
     handleTableChange,
     clearAllFilters,
@@ -81,17 +102,74 @@ export function RecommendationTab() {
     refetch,
   } = actions;
 
-  const { hasData, isFilterActive, isDownloading } = flags;
+  const { hasData, isFilterActive, activeFilterCount, isDownloading } = flags;
 
   const cardState = isLoading ? "loading" : "default";
+
+  const filterPopoverContent = (
+    <Flex vertical gap={16} style={{ width: 280 }}>
+      <Form layout="vertical" size="middle">
+        <Form.Item label="Program" style={{ marginBottom: 12 }}>
+          <Select
+            placeholder="All programs"
+            style={{ width: "100%" }}
+            value={programId}
+            onChange={handleProgramChange}
+            showSearch
+            optionFilterProp="label"
+            options={programs.map((p) => ({ value: p.id, label: p.name }))}
+            allowClear
+            onClear={() => handleProgramChange(undefined)}
+          />
+        </Form.Item>
+        <Form.Item label="Quota" style={{ marginBottom: 12 }}>
+          <Select
+            placeholder="Any quota"
+            style={{ width: "100%" }}
+            value={quotaFilter}
+            onChange={(val) =>
+              handleQuotaFilterChange(val as QuotaCategory | undefined)
+            }
+            options={QUOTA_CATEGORY_OPTIONS}
+            allowClear
+          />
+        </Form.Item>
+        <Form.Item label="Entry Mode" style={{ marginBottom: 0 }}>
+          <Select
+            placeholder="Any entry mode"
+            style={{ width: "100%" }}
+            value={entryModeFilter}
+            onChange={(val) =>
+              handleEntryModeFilterChange(val as CandidateEntryMode | undefined)
+            }
+            options={entryModeOptions}
+            allowClear
+          />
+        </Form.Item>
+      </Form>
+      <ConditionalRenderer when={activeFilterCount > 0}>
+        <Button
+          type="link"
+          size="small"
+          onClick={() => {
+            clearAllFilters();
+            setFilterOpen(false);
+          }}
+          style={{ padding: 0 }}
+        >
+          Clear all filters
+        </Button>
+      </ConditionalRenderer>
+    </Flex>
+  );
 
   const columns: ColumnsType<AdmissionRecommendedCandidate> = [
     {
       title: "JAMB Reg. No.",
       key: "jambRegNo",
       render: (_: unknown, r: AdmissionRecommendedCandidate) => {
-        const jambRegNo = r.application?.candidate?.jambRegNo ?? "—";
-        return jambRegNo ? (
+        const jambRegNo = r.application?.candidate?.jambRegNo;
+        return isRealJambRegNo(jambRegNo) ? (
           <Typography.Text copyable>{jambRegNo}</Typography.Text>
         ) : (
           <Typography.Text type="secondary">—</Typography.Text>
@@ -106,6 +184,14 @@ export function RecommendationTab() {
         <Typography.Text strong>
           {r.firstName} {r.lastName}
         </Typography.Text>
+      ),
+    },
+    {
+      title: "Entry Mode",
+      dataIndex: "entryMode",
+      key: "entryMode",
+      render: (v: string) => (
+        <Tag color="blue">{getCandidateEntryModeLabel(v)}</Tag>
       ),
     },
     {
@@ -226,12 +312,12 @@ export function RecommendationTab() {
       <ExplainerCallout
         intent="info"
         title="Recommended Candidates"
-        body="Advisory list of proposed admission outcomes computed from screening scores, program cut-offs, live slot usage, and quota category. Recommendations are snapshot-based and do not reserve seats the offer action re-evaluates and commits the final decision."
+        body="Advisory list of proposed admission outcomes computed from screening scores, program cut-offs, live slot usage, and quota category. Recommendations are snapshot-based and do not reserve seats — the offer action re-evaluates and commits the final decision."
         dismissible
         collapsible
       />
 
-      <Flex justify="space-between" gap={20} wrap={true}>
+      <Flex justify="space-between" align="flex-end" gap={16} wrap="wrap">
         <Flex gap={12} align="flex-end" wrap="wrap">
           <Flex vertical>
             <Typography.Title level={5}>Admission cycle</Typography.Title>
@@ -249,36 +335,30 @@ export function RecommendationTab() {
             />
           </Flex>
 
-          <Flex vertical>
-            <Typography.Title level={5}>Program</Typography.Title>
-            <Select
-              placeholder="All programs"
-              style={{ minWidth: 240 }}
-              value={programId}
-              onChange={handleProgramChange}
-              disabled={skipList}
-              showSearch
-              optionFilterProp="label"
-              options={programs.map((p) => ({ value: p.id, label: p.name }))}
-              allowClear
-              onClear={() => handleProgramChange(undefined)}
-            />
-          </Flex>
-
-          <Flex vertical>
-            <Typography.Title level={5}>Quota</Typography.Title>
-            <Select
-              placeholder="Any quota"
-              style={{ minWidth: 160 }}
-              value={quotaFilter}
-              onChange={(val) =>
-                handleQuotaFilterChange(val as QuotaCategory | undefined)
-              }
-              disabled={skipList}
-              options={QUOTA_CATEGORY_OPTIONS}
-              allowClear
-            />
-          </Flex>
+          <Popover
+            content={filterPopoverContent}
+            title={
+              <Space>
+                <FilterOutlined />
+                <span>Filters</span>
+              </Space>
+            }
+            trigger="click"
+            open={filterOpen}
+            onOpenChange={setFilterOpen}
+            placement="bottomLeft"
+            arrow={false}
+          >
+            <Badge count={activeFilterCount} size="small">
+              <Button
+                icon={<FilterOutlined />}
+                type={activeFilterCount > 0 ? "primary" : "default"}
+                disabled={skipList}
+              >
+                Filters
+              </Button>
+            </Badge>
+          </Popover>
         </Flex>
 
         <PermissionGuard permission={Permission.AdmissionRecommendedCandidatesList}>
@@ -288,12 +368,10 @@ export function RecommendationTab() {
             onClick={handleDownload}
             loading={isDownloading}
             disabled={skipList || isDownloading}
-            style={{ alignSelf: "end" }}
           >
             Download
           </Button>
         </PermissionGuard>
-
       </Flex>
 
       <Row gutter={[16, 16]}>
@@ -333,7 +411,7 @@ export function RecommendationTab() {
           <ConditionalRenderer when={isError}>
             <ErrorAlert
               variant="section"
-              error="Failed to load recommended candidates"
+              error={sectionError ?? "Failed to load recommended candidates"}
               onRetry={refetch}
             />
           </ConditionalRenderer>

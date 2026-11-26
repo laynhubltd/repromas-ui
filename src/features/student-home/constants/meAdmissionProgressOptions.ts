@@ -95,7 +95,7 @@ export const ME_PROGRESS_UI_COPY = {
   blockerApplicationFeeUnpaid:
     "Application fee must be paid before you can submit.",
   blockerCycleNotOpen:
-    "The admission cycle is closed. Submission is not available.",
+    "Applications are currently closed for your admission cycle or entry mode. Submission is unavailable.",
 } as const;
 
 export const ADMISSION_PROGRESS_PHASES: {

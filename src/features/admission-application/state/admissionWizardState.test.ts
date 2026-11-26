@@ -65,12 +65,18 @@ describe("admissionWizardReducer dirty tracking", () => {
     expect(isSectionDirty(clean, 10)).toBe(false);
   });
 
-  it("clears dirty flags on Reset", () => {
-    const dirty = admissionWizardReducer(initialAdmissionWizardState, {
-      type: AdmissionWizardActionType.SetSectionValues,
-      sectionId: 10,
-      values: { email: "a@b.com" },
-    });
+  it("clears dirty flags and laneClosedMessage on Reset", () => {
+    const dirty = admissionWizardReducer(
+      admissionWizardReducer(initialAdmissionWizardState, {
+        type: AdmissionWizardActionType.SetLaneClosedMessage,
+        message: "Paused",
+      }),
+      {
+        type: AdmissionWizardActionType.SetSectionValues,
+        sectionId: 10,
+        values: { email: "a@b.com" },
+      },
+    );
 
     const reset = admissionWizardReducer(dirty, {
       type: AdmissionWizardActionType.Reset,
@@ -80,6 +86,7 @@ describe("admissionWizardReducer dirty tracking", () => {
     });
 
     expect(reset.dirtySectionIds).toEqual({});
+    expect(reset.laneClosedMessage).toBeNull();
   });
 });
 
@@ -140,6 +147,97 @@ describe("admissionWizardReducer SyncRenderPackage", () => {
     });
 
     expect(synced.currentStep).toBe(0);
+  });
+
+  it("is referentially idempotent after SetSectionValues (selecting a program)", () => {
+    const initial = admissionWizardReducer(initialAdmissionWizardState, {
+      type: AdmissionWizardActionType.Reset,
+      sections,
+      payload: {},
+      prefill: {},
+    });
+
+    const edited = admissionWizardReducer(initial, {
+      type: AdmissionWizardActionType.SetSectionValues,
+      sectionId: 20,
+      values: { apply_program: { first_choice: 5 } },
+    });
+
+    const synced = admissionWizardReducer(edited, {
+      type: AdmissionWizardActionType.SyncRenderPackage,
+      sections,
+      payload: {},
+      prefill: {},
+    });
+
+    expect(synced).toBe(edited);
+    expect(synced.sectionValues).toBe(edited.sectionValues);
+    expect(synced.dirtySectionIds).toBe(edited.dirtySectionIds);
+  });
+
+  it("hydrates clean sections on async draft arrival without overwriting dirty sections or step", () => {
+    const initial = admissionWizardReducer(initialAdmissionWizardState, {
+      type: AdmissionWizardActionType.Reset,
+      sections,
+      payload: {},
+      prefill: {},
+    });
+
+    const edited = admissionWizardReducer(
+      admissionWizardReducer(initial, {
+        type: AdmissionWizardActionType.SetCurrentStep,
+        step: 1,
+      }),
+      {
+        type: AdmissionWizardActionType.SetSectionValues,
+        sectionId: 20,
+        values: { apply_program: { first_choice: 5 } },
+      },
+    );
+
+    const synced = admissionWizardReducer(edited, {
+      type: AdmissionWizardActionType.SyncRenderPackage,
+      sections,
+      payload: {
+        10: { email: "draft@example.com" },
+        20: { apply_program: { first_choice: 99 } },
+      },
+      prefill: {},
+      refreshCleanFromServer: true,
+    });
+
+    expect(synced.currentStep).toBe(1);
+    expect(synced.sectionValues[10]).toEqual({ email: "draft@example.com" });
+    expect(synced.sectionValues[20]).toEqual({
+      apply_program: { first_choice: 5 },
+    });
+    expect(isSectionDirty(synced, 20)).toBe(true);
+    expect(isSectionDirty(synced, 10)).toBe(false);
+  });
+
+  it("does not overwrite clean sections after an in-session save", () => {
+    const initial = admissionWizardReducer(initialAdmissionWizardState, {
+      type: AdmissionWizardActionType.Reset,
+      sections,
+      payload: { 10: { email: "saved@example.com" } },
+      prefill: {},
+    });
+
+    const afterSave = admissionWizardReducer(initial, {
+      type: AdmissionWizardActionType.SetLastSavedAt,
+      at: "2026-11-25T16:50:00.000Z",
+    });
+
+    const synced = admissionWizardReducer(afterSave, {
+      type: AdmissionWizardActionType.SyncRenderPackage,
+      sections,
+      payload: { 10: { email: "stale@example.com" } },
+      prefill: {},
+      refreshCleanFromServer: true,
+    });
+
+    expect(synced).toBe(afterSave);
+    expect(synced.sectionValues[10]).toEqual({ email: "saved@example.com" });
   });
 });
 

@@ -1,3 +1,7 @@
+import {
+  getCandidateEntryModeLabel,
+  isRealJambRegNo,
+} from "@/shared/constants/admissionCandidateOptions";
 import type { MeAdmissionApplication } from "../types/me-admission-application";
 import type { AcknowledgementSlipModel } from "../types/acknowledgement-slip";
 import { buildAcknowledgementReference } from "./buildAcknowledgementReference";
@@ -34,6 +38,7 @@ export function buildAcknowledgementSlipModel({
 
   const cycleId = candidate.cycleId ?? candidate.cycle?.id ?? 0;
   const applicantName = `${candidate.firstName} ${candidate.lastName}`.trim();
+  const rawEntryMode = application.entryMode ?? candidate.entryMode;
 
   return {
     acknowledgementNumber: buildAcknowledgementReference({
@@ -44,10 +49,12 @@ export function buildAcknowledgementSlipModel({
     verifyUrl: buildAcknowledgementVerifyUrl(application.id),
     applicantName,
     profilePictureUrl: profilePictureUrl?.trim() || null,
-    jambRegNo: candidate.jambRegNo,
+    jambRegNo: isRealJambRegNo(candidate.jambRegNo)
+      ? candidate.jambRegNo
+      : null,
     programmeName: application.appliedProgram?.name ?? null,
     cycleName: candidate.cycle?.name ?? null,
-    entryMode: candidate.entryMode,
+    entryMode: rawEntryMode ? getCandidateEntryModeLabel(rawEntryMode) : null,
     candidateId: candidate.id,
     applicationId: application.id,
     submittedAt: resolveSubmittedAt(application),

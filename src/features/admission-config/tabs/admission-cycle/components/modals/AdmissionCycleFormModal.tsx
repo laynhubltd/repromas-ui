@@ -2,28 +2,33 @@ import { PermissionGuard } from "@/features/access-control";
 import { Permission } from "@/features/access-control/permissions";
 import { useToken } from "@/shared/hooks/useToken";
 import { ConditionalRenderer } from "@/shared/ui/ConditionalRenderer";
+import { ADMISSION_CYCLE_UI_COPY } from "@/shared/constants/admissionCycleOptions";
 import {
-  ADMISSION_CYCLE_ENTRY_MODE_OPTIONS,
-  ADMISSION_CYCLE_IDENTITY_MODE_OPTIONS,
-  ADMISSION_CYCLE_UI_COPY,
-  identityModeColorByValue,
-  identityModeLabelByValue,
-} from "@/shared/constants/admissionCycleOptions";
-import { Alert, Button, DatePicker, Form, Input, InputNumber, Modal, Radio, Select, Tag, Typography } from "antd";
+  Alert,
+  Button,
+  DatePicker,
+  Form,
+  Input,
+  InputNumber,
+  Modal,
+  Select,
+  Tag,
+  Typography,
+} from "antd";
 import dayjs from "dayjs";
 import { useAdmissionCycleFormModal } from "../../hooks/useAdmissionCycleModal";
 import type {
   AcademicSessionOption,
   AdmissionCycle,
 } from "../../types/admission-cycle";
-import { formatEntryBatchLabel } from "../../utils/admissionCycleDisplay";
 import {
   batchNoRules,
   endDateAfterStartDateRule,
-  entryModeRules,
+  entryModesRules,
   nameRules,
   sessionIdRules,
 } from "../../utils/validators";
+import { EntryModesMatrixInput } from "./EntryModesMatrixInput";
 
 type AdmissionCycleFormModalProps = {
   open: boolean;
@@ -61,13 +66,13 @@ function AdmissionCycleEditFields({
         </Typography.Text>
       </Form.Item>
 
-      <Form.Item label={ADMISSION_CYCLE_UI_COPY.entryBatchFieldLabel}>
-        <Tag>{formatEntryBatchLabel(target.entryMode, target.batchNo)}</Tag>
+      <Form.Item label={ADMISSION_CYCLE_UI_COPY.batchFieldLabel}>
+        <Tag>Batch {target.batchNo}</Tag>
         <Typography.Text
           type="secondary"
           style={{ display: "block", fontSize: token.fontSizeSM, marginTop: 8 }}
         >
-          {ADMISSION_CYCLE_UI_COPY.entryBatchImmutableHint}
+          {ADMISSION_CYCLE_UI_COPY.batchImmutableHint}
         </Typography.Text>
       </Form.Item>
 
@@ -106,8 +111,7 @@ export function AdmissionCycleFormModal({
       isSubmitting,
       sessionOptions,
       supersedesOptions,
-      canEditIdentityMode,
-      identityMode,
+      laneLocks,
       isSlotOccupied,
       initialValues,
       supersededCycleName,
@@ -116,11 +120,16 @@ export function AdmissionCycleFormModal({
       handleSubmit,
       handleCancel,
       handleSessionChange,
-      handleEntryModeChange,
       handleBatchNoChange,
     },
     form,
-  } = useAdmissionCycleFormModal(target, onClose, sessions, existingCycles);
+  } = useAdmissionCycleFormModal(
+    target,
+    open,
+    onClose,
+    sessions,
+    existingCycles,
+  );
 
   const startDate = Form.useWatch("startDate", form);
 
@@ -131,7 +140,7 @@ export function AdmissionCycleFormModal({
       open={open}
       onCancel={handleCancel}
       footer={null}
-      width={520}
+      width={600}
       destroyOnHidden
       closable
       styles={{
@@ -172,29 +181,6 @@ export function AdmissionCycleFormModal({
                 style={{ height: 40 }}
                 showSearch
                 optionFilterProp="label"
-              />
-            </Form.Item>
-
-            <Form.Item
-              name="entryMode"
-              label={
-                <span>
-                  Entry mode{" "}
-                  <span style={{ color: token.colorError, fontWeight: 700 }}>
-                    *
-                  </span>
-                </span>
-              }
-              rules={entryModeRules}
-            >
-              <Select
-                placeholder="Select entry mode"
-                options={ADMISSION_CYCLE_ENTRY_MODE_OPTIONS.map((opt) => ({
-                  value: opt.value,
-                  label: opt.label,
-                }))}
-                onChange={handleEntryModeChange}
-                style={{ height: 40 }}
               />
             </Form.Item>
 
@@ -243,14 +229,16 @@ export function AdmissionCycleFormModal({
             </ConditionalRenderer>
           </ConditionalRenderer>
 
-          {target !== null && isEditMode ? (
-            <AdmissionCycleEditFields
-              target={target}
-              sessions={sessions}
-              supersededCycleName={supersededCycleName}
-              token={token}
-            />
-          ) : null}
+          <ConditionalRenderer when={target !== null && isEditMode}>
+            {target ? (
+              <AdmissionCycleEditFields
+                target={target}
+                sessions={sessions}
+                supersededCycleName={supersededCycleName}
+                token={token}
+              />
+            ) : null}
+          </ConditionalRenderer>
 
           <Form.Item
             name="name"
@@ -265,57 +253,26 @@ export function AdmissionCycleFormModal({
             rules={nameRules}
           >
             <Input
-              placeholder="e.g. 2025/2026 UTME Admission"
+              placeholder="e.g. 2025/2026 Admission"
               maxLength={255}
               style={{ height: 40 }}
             />
           </Form.Item>
 
-          <ConditionalRenderer when={canEditIdentityMode}>
-            <Form.Item
-              name="admissionIdentityMode"
-              label={
-                <span>
-                  Identity mode{" "}
-                  <span style={{ color: token.colorError, fontWeight: 700 }}>
-                    *
-                  </span>
+          <Form.Item
+            name="entryModes"
+            label={
+              <span>
+                Entry mode lanes{" "}
+                <span style={{ color: token.colorError, fontWeight: 700 }}>
+                  *
                 </span>
-              }
-              rules={[{ required: true, message: "Select an identity mode." }]}
-            >
-              <Radio.Group style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                {ADMISSION_CYCLE_IDENTITY_MODE_OPTIONS.map((opt) => (
-                  <Radio key={opt.value} value={opt.value}>
-                    <Typography.Text strong>{opt.label}</Typography.Text>
-                    <Typography.Text
-                      type="secondary"
-                      style={{ display: "block", fontSize: token.fontSizeSM }}
-                    >
-                      {opt.helper}
-                    </Typography.Text>
-                  </Radio>
-                ))}
-              </Radio.Group>
-            </Form.Item>
-          </ConditionalRenderer>
-
-          <ConditionalRenderer when={!canEditIdentityMode}>
-            <Form.Item name="admissionIdentityMode" hidden>
-              <Input />
-            </Form.Item>
-            <Form.Item label="Identity mode">
-              <Tag color={identityModeColorByValue[identityMode] ?? "default"}>
-                {identityModeLabelByValue[identityMode] ?? identityMode}
-              </Tag>
-              <Typography.Text
-                type="secondary"
-                style={{ display: "block", fontSize: token.fontSizeSM, marginTop: 8 }}
-              >
-                Identity mode is locked after applications open.
-              </Typography.Text>
-            </Form.Item>
-          </ConditionalRenderer>
+              </span>
+            }
+            rules={entryModesRules}
+          >
+            <EntryModesMatrixInput laneLocks={laneLocks} />
+          </Form.Item>
 
           <Form.Item
             name="startDate"
@@ -343,7 +300,6 @@ export function AdmissionCycleFormModal({
           >
             <DatePicker style={{ width: "100%", height: 40 }} />
           </Form.Item>
-
         </Form>
       </div>
 

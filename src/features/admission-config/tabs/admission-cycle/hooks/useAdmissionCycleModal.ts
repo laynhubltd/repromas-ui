@@ -21,6 +21,7 @@ import {
   useTransitionAdmissionCycleMutation,
   useUpdateAdmissionCycleMutation,
 } from "../api/admissionCycleApi";
+import type { LaneLockInfo } from "../components/modals/EntryModesMatrixInput";
 import {
   admissionCycleFormReducer,
   AdmissionCycleFormActionType,
@@ -29,28 +30,31 @@ import {
 import type {
   AcademicSessionOption,
   AdmissionCycle,
+  AdmissionCycleLaneConfig,
   AdmissionCycleStatus,
   AdmissionEntryMode,
-  AdmissionIdentityMode,
   TransitionDirection,
 } from "../types/admission-cycle";
 import {
   buildDefaultCycleName,
-  getCyclesInLane,
-  isLaneSlotOccupied,
+  getCyclesInSession,
+  isBatchSlotOccupied,
   suggestNextBatchNo,
 } from "../utils/admissionCycleDisplay";
 
 type AdmissionCycleFormValues = {
   sessionId?: number;
-  entryMode: AdmissionEntryMode;
   batchNo: number;
   supersedesCycleId?: number | null;
   name: string;
-  admissionIdentityMode: AdmissionIdentityMode;
+  entryModes: AdmissionCycleLaneConfig[];
   startDate?: Dayjs | null;
   endDate?: Dayjs | null;
 };
+
+const DEFAULT_CREATE_LANES: AdmissionCycleLaneConfig[] = [
+  { entryMode: "UTME", identityMode: "JAMB", enabled: true },
+];
 
 function toIsoDateTime(value: Dayjs | null | undefined): string | null {
   if (!value) return null;
@@ -65,11 +69,13 @@ export function buildAdmissionCycleFormInitialValues(
   if (target) {
     return {
       sessionId: target.sessionId,
-      entryMode: target.entryMode,
       batchNo: target.batchNo,
       supersedesCycleId: target.supersedesCycleId,
       name: target.name,
-      admissionIdentityMode: target.admissionIdentityMode ?? "JAMB",
+      entryModes:
+        target.entryModes && target.entryModes.length > 0
+          ? target.entryModes
+          : DEFAULT_CREATE_LANES,
       startDate: target.startDate ? dayjs(target.startDate) : null,
       endDate: target.endDate ? dayjs(target.endDate) : null,
     };
@@ -77,22 +83,20 @@ export function buildAdmissionCycleFormInitialValues(
 
   const currentSession = sessions.find((s) => s.isCurrent) ?? sessions[0];
   const sessionId = currentSession?.id;
-  const entryMode: AdmissionEntryMode = "UTME";
   const batchNo =
     sessionId !== undefined
-      ? suggestNextBatchNo(existingCycles, sessionId, entryMode)
+      ? suggestNextBatchNo(existingCycles, sessionId)
       : 1;
 
   return {
     sessionId,
-    entryMode,
     batchNo,
     supersedesCycleId: undefined,
     name:
       currentSession !== undefined
-        ? buildDefaultCycleName(currentSession.name, entryMode, batchNo)
+        ? buildDefaultCycleName(currentSession.name, batchNo)
         : "",
-    admissionIdentityMode: "JAMB",
+    entryModes: DEFAULT_CREATE_LANES,
     startDate: null,
     endDate: null,
   };
@@ -102,6 +106,7 @@ export function buildAdmissionCycleFormInitialValues(
 
 export function useAdmissionCycleFormModal(
   target: AdmissionCycle | null,
+  open: boolean,
   onClose: () => void,
   sessions: AcademicSessionOption[],
   existingCycles: AdmissionCycle[],
@@ -112,7 +117,7 @@ export function useAdmissionCycleFormModal(
     [target, sessions, existingCycles],
   );
   const [form] = Form.useForm<AdmissionCycleFormValues>();
-  const [_, dispatch] = useReducer(
+  const [, dispatch] = useReducer(
     admissionCycleFormReducer,
     initialAdmissionCycleFormState,
   );
@@ -125,51 +130,84 @@ export function useAdmissionCycleFormModal(
 
   const isSubmitting = isCreating || isUpdating;
 
+  const hasTargetLane = useCallback(
+    (entryMode: AdmissionEntryMode) =>
+      Boolean(target?.entryModes?.some((l) => l.entryMode === entryMode)),
+    [target?.entryModes],
+  );
+
+  const utmeCountQuery = useGetAdmissionCandidateCountQuery(
+    { cycleId: target?.id ?? 0, entryMode: "UTME" },
+    { skip: !open || !isEditMode || !hasTargetLane("UTME") },
+  );
+  const deCountQuery = useGetAdmissionCandidateCountQuery(
+    { cycleId: target?.id ?? 0, entryMode: "DIRECT_ENTRY" },
+    { skip: !open || !isEditMode || !hasTargetLane("DIRECT_ENTRY") },
+  );
+  const transferCountQuery = useGetAdmissionCandidateCountQuery(
+    { cycleId: target?.id ?? 0, entryMode: "TRANSFER" },
+    { skip: !open || !isEditMode || !hasTargetLane("TRANSFER") },
+  );
+
+  const laneLocks = useMemo<Record<AdmissionEntryMode, LaneLockInfo>>(() => {
+    const buildLock = (
+      entryMode: AdmissionEntryMode,
+      query: typeof utmeCountQuery,
+    ): LaneLockInfo => {
+      if (!isEditMode || !hasTargetLane(entryMode)) {
+        return { locked: false, count: 0, isChecking: false };
+      }
+      const count = query.data?.totalItems ?? 0;
+      const isChecking = query.isLoading || query.isFetching;
+      return {
+        locked: count > 0,
+        count,
+        isChecking,
+      };
+    };
+
+    return {
+      UTME: buildLock("UTME", utmeCountQuery),
+      DIRECT_ENTRY: buildLock("DIRECT_ENTRY", deCountQuery),
+      TRANSFER: buildLock("TRANSFER", transferCountQuery),
+    };
+  }, [
+    isEditMode,
+    hasTargetLane,
+    utmeCountQuery,
+    deCountQuery,
+    transferCountQuery,
+  ]);
+
   const sessionOptions = sessions.map((session) => ({
     value: session.id,
     label: session.isCurrent ? `${session.name} (Current)` : session.name,
   }));
 
   const watchedSessionId = Form.useWatch("sessionId", form);
-  const watchedEntryMode = Form.useWatch("entryMode", form);
   const watchedBatchNo = Form.useWatch("batchNo", form);
 
   const isSlotOccupied = useMemo(() => {
     if (isEditMode) return false;
-    if (
-      watchedSessionId === undefined ||
-      watchedEntryMode === undefined ||
-      watchedBatchNo === undefined
-    ) {
+    if (watchedSessionId === undefined || watchedBatchNo === undefined) {
       return false;
     }
-    return isLaneSlotOccupied(
+    return isBatchSlotOccupied(
       existingCycles,
       watchedSessionId,
-      watchedEntryMode,
       watchedBatchNo,
     );
-  }, [
-    isEditMode,
-    existingCycles,
-    watchedSessionId,
-    watchedEntryMode,
-    watchedBatchNo,
-  ]);
+  }, [isEditMode, existingCycles, watchedSessionId, watchedBatchNo]);
 
   const supersedesOptions = useMemo(() => {
-    if (isEditMode || watchedSessionId === undefined || !watchedEntryMode) {
+    if (isEditMode || watchedSessionId === undefined) {
       return [];
     }
-    return getCyclesInLane(
-      existingCycles,
-      watchedSessionId,
-      watchedEntryMode,
-    ).map((cycle) => ({
+    return getCyclesInSession(existingCycles, watchedSessionId).map((cycle) => ({
       value: cycle.id,
       label: `Batch ${cycle.batchNo} — ${cycle.name}`,
     }));
-  }, [isEditMode, existingCycles, watchedSessionId, watchedEntryMode]);
+  }, [isEditMode, existingCycles, watchedSessionId]);
 
   const reset = useCallback(() => {
     form.resetFields();
@@ -177,15 +215,12 @@ export function useAdmissionCycleFormModal(
   }, [form]);
 
   const prefillNameIfEmpty = useCallback(
-    (sessionId: number, entryMode: AdmissionEntryMode, batchNo: number) => {
+    (sessionId: number, batchNo: number) => {
       const session = sessions.find((s) => s.id === sessionId);
       if (!session) return;
       const currentName = form.getFieldValue("name");
       if (!currentName || String(currentName).trim() === "") {
-        form.setFieldValue(
-          "name",
-          buildDefaultCycleName(session.name, entryMode, batchNo),
-        );
+        form.setFieldValue("name", buildDefaultCycleName(session.name, batchNo));
       }
     },
     [form, sessions],
@@ -193,24 +228,10 @@ export function useAdmissionCycleFormModal(
 
   const handleSessionChange = useCallback(
     (sessionId: number) => {
-      const entryMode =
-        (form.getFieldValue("entryMode") as AdmissionEntryMode) ?? "UTME";
-      const batchNo = suggestNextBatchNo(existingCycles, sessionId, entryMode);
+      const batchNo = suggestNextBatchNo(existingCycles, sessionId);
       form.setFieldValue("batchNo", batchNo);
       form.setFieldValue("supersedesCycleId", undefined);
-      prefillNameIfEmpty(sessionId, entryMode, batchNo);
-    },
-    [form, existingCycles, prefillNameIfEmpty],
-  );
-
-  const handleEntryModeChange = useCallback(
-    (entryMode: AdmissionEntryMode) => {
-      const sessionId = form.getFieldValue("sessionId") as number | undefined;
-      if (sessionId === undefined) return;
-      const batchNo = suggestNextBatchNo(existingCycles, sessionId, entryMode);
-      form.setFieldValue("batchNo", batchNo);
-      form.setFieldValue("supersedesCycleId", undefined);
-      prefillNameIfEmpty(sessionId, entryMode, batchNo);
+      prefillNameIfEmpty(sessionId, batchNo);
     },
     [form, existingCycles, prefillNameIfEmpty],
   );
@@ -218,11 +239,8 @@ export function useAdmissionCycleFormModal(
   const handleBatchNoChange = useCallback(
     (batchNo: number | null) => {
       const sessionId = form.getFieldValue("sessionId") as number | undefined;
-      const entryMode = form.getFieldValue("entryMode") as
-        | AdmissionEntryMode
-        | undefined;
-      if (sessionId === undefined || !entryMode || batchNo === null) return;
-      prefillNameIfEmpty(sessionId, entryMode, batchNo);
+      if (sessionId === undefined || batchNo === null) return;
+      prefillNameIfEmpty(sessionId, batchNo);
     },
     [form, prefillNameIfEmpty],
   );
@@ -238,14 +256,20 @@ export function useAdmissionCycleFormModal(
       const name = values.name.trim();
       const startDate = toIsoDateTime(values.startDate);
       const endDate = toIsoDateTime(values.endDate);
-      const admissionIdentityMode =
-        values.admissionIdentityMode ?? target?.admissionIdentityMode ?? "JAMB";
+      const entryModes = (values.entryModes ?? []).map((lane) => ({
+        entryMode: lane.entryMode,
+        identityMode:
+          lane.entryMode === "TRANSFER"
+            ? ("OPEN" as const)
+            : lane.identityMode,
+        enabled: lane.enabled,
+      }));
 
       if (isEditMode && target) {
         await updateAdmissionCycle({
           id: target.id,
           name,
-          admissionIdentityMode,
+          entryModes,
           startDate,
           endDate,
         }).unwrap();
@@ -256,8 +280,7 @@ export function useAdmissionCycleFormModal(
         await createAdmissionCycle({
           sessionId: values.sessionId!,
           name,
-          admissionIdentityMode,
-          entryMode: values.entryMode,
+          entryModes,
           batchNo: values.batchNo,
           supersedesCycleId: values.supersedesCycleId ?? undefined,
           startDate,
@@ -274,7 +297,7 @@ export function useAdmissionCycleFormModal(
       handleApiError(err, {
         context: {
           screen: RequestScreen.Modal,
-          method: isEditMode ? "PATCH" : "POST",
+          method: isEditMode ? "PUT" : "POST",
         },
         form,
       });
@@ -285,9 +308,6 @@ export function useAdmissionCycleFormModal(
     reset();
     onClose();
   };
-
-  const canEditIdentityMode =
-    !isEditMode || target?.status === "PRE_PROCESSING";
 
   const supersededCycleName = useMemo(() => {
     if (!target?.supersedesCycleId) return null;
@@ -305,8 +325,7 @@ export function useAdmissionCycleFormModal(
       isSubmitting,
       sessionOptions,
       supersedesOptions,
-      canEditIdentityMode,
-      identityMode: target?.admissionIdentityMode ?? "JAMB",
+      laneLocks,
       isSlotOccupied,
       initialValues,
       supersededCycleName,
@@ -315,7 +334,6 @@ export function useAdmissionCycleFormModal(
       handleSubmit,
       handleCancel,
       handleSessionChange,
-      handleEntryModeChange,
       handleBatchNoChange,
     },
     form,

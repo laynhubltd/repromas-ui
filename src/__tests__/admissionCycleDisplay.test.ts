@@ -1,8 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
-  buildLaneSlotKey,
+  buildBatchSlotKey,
+  formatCycleBatchLabel,
+  formatCycleLanesSummary,
   formatCycleOptionLabel,
-  getOccupiedLaneSlots,
+  formatEntryBatchLabel,
+  getAllowedIdentityModes,
+  getOccupiedBatchSlots,
+  isBatchSlotOccupied,
   isRollbackTransition,
   suggestNextBatchNo,
 } from "@/features/admission-config/tabs/admission-cycle/utils/admissionCycleDisplay";
@@ -14,8 +19,7 @@ function makeCycle(
   return {
     name: "Test Cycle",
     status: "PRE_PROCESSING",
-    admissionIdentityMode: "JAMB",
-    entryMode: "UTME",
+    entryModes: [{ entryMode: "UTME", identityMode: "JAMB", enabled: true }],
     batchNo: 1,
     supersedesCycleId: null,
     startDate: null,
@@ -26,51 +30,77 @@ function makeCycle(
 }
 
 describe("admissionCycleDisplay", () => {
-  it("buildLaneSlotKey isolates lanes by entry mode", () => {
-    const utme = buildLaneSlotKey(16, "UTME", 1);
-    const de = buildLaneSlotKey(16, "DIRECT_ENTRY", 1);
-    expect(utme).not.toBe(de);
-    expect(utme).toBe("16:UTME:1");
+  it("getAllowedIdentityModes restricts TRANSFER to OPEN only", () => {
+    expect(getAllowedIdentityModes("UTME")).toEqual(["JAMB", "OPEN"]);
+    expect(getAllowedIdentityModes("DIRECT_ENTRY")).toEqual(["JAMB", "OPEN"]);
+    expect(getAllowedIdentityModes("TRANSFER")).toEqual(["OPEN"]);
   });
 
-  it("getOccupiedLaneSlots does not collide across entry modes in same session", () => {
+  it("buildBatchSlotKey keys uniquely by sessionId and batchNo", () => {
+    expect(buildBatchSlotKey(16, 1)).toBe("16:1");
+    expect(buildBatchSlotKey(16, 2)).not.toBe(buildBatchSlotKey(16, 1));
+  });
+
+  it("getOccupiedBatchSlots and isBatchSlotOccupied track session-batch pairs", () => {
     const cycles = [
-      makeCycle({ id: 1, sessionId: 16, entryMode: "UTME", batchNo: 1 }),
-      makeCycle({ id: 2, sessionId: 16, entryMode: "DIRECT_ENTRY", batchNo: 1 }),
+      makeCycle({ id: 1, sessionId: 16, batchNo: 1 }),
+      makeCycle({ id: 2, sessionId: 16, batchNo: 2 }),
     ];
-    const slots = getOccupiedLaneSlots(cycles);
+    const slots = getOccupiedBatchSlots(cycles);
     expect(slots.size).toBe(2);
-    expect(slots.has("16:UTME:1")).toBe(true);
-    expect(slots.has("16:DIRECT_ENTRY:1")).toBe(true);
+    expect(isBatchSlotOccupied(cycles, 16, 1)).toBe(true);
+    expect(isBatchSlotOccupied(cycles, 16, 3)).toBe(false);
   });
 
-  it("suggestNextBatchNo returns 3 when batches 1 and 2 exist in lane", () => {
+  it("suggestNextBatchNo increments max batchNo in the target session", () => {
     const cycles = [
-      makeCycle({ id: 1, sessionId: 16, entryMode: "UTME", batchNo: 1 }),
-      makeCycle({ id: 2, sessionId: 16, entryMode: "UTME", batchNo: 2 }),
-      makeCycle({ id: 3, sessionId: 16, entryMode: "DIRECT_ENTRY", batchNo: 1 }),
+      makeCycle({ id: 1, sessionId: 16, batchNo: 1 }),
+      makeCycle({ id: 2, sessionId: 16, batchNo: 2 }),
+      makeCycle({ id: 3, sessionId: 17, batchNo: 1 }),
     ];
-    expect(suggestNextBatchNo(cycles, 16, "UTME")).toBe(3);
-    expect(suggestNextBatchNo(cycles, 16, "DIRECT_ENTRY")).toBe(2);
+    expect(suggestNextBatchNo(cycles, 16)).toBe(3);
+    expect(suggestNextBatchNo(cycles, 17)).toBe(2);
+    expect(suggestNextBatchNo(cycles, 99)).toBe(1);
+  });
+
+  it("formatCycleLanesSummary and formatCycleBatchLabel format active and paused lanes", () => {
+    const lanes = [
+      { entryMode: "UTME" as const, identityMode: "JAMB" as const, enabled: true },
+      {
+        entryMode: "DIRECT_ENTRY" as const,
+        identityMode: "OPEN" as const,
+        enabled: false,
+      },
+    ];
+    expect(formatCycleLanesSummary(lanes)).toBe("UTME · DE (paused)");
+    expect(formatCycleBatchLabel(lanes, 2)).toBe("UTME · DE (paused), Batch 2");
+    expect(formatEntryBatchLabel("DIRECT_ENTRY", 1)).toBe(
+      "Direct Entry, Batch 1",
+    );
   });
 
   it("isRollbackTransition detects one-step rollback", () => {
     expect(isRollbackTransition("SCREENING", "APPLICATION_OPEN")).toBe(true);
     expect(isRollbackTransition("SCREENING", "LIST_RELEASED")).toBe(false);
-    expect(isRollbackTransition("PRE_PROCESSING", "APPLICATION_OPEN")).toBe(false);
+    expect(isRollbackTransition("PRE_PROCESSING", "APPLICATION_OPEN")).toBe(
+      false,
+    );
   });
 
-  it("formatCycleOptionLabel includes lane and human status", () => {
+  it("formatCycleOptionLabel includes multi-lane batch and human status", () => {
     const cycle = makeCycle({
       id: 4,
       sessionId: 16,
       name: "2025/2026 UTME Admission",
-      entryMode: "UTME",
+      entryModes: [
+        { entryMode: "UTME", identityMode: "JAMB", enabled: true },
+        { entryMode: "TRANSFER", identityMode: "OPEN", enabled: true },
+      ],
       batchNo: 2,
       status: "APPLICATION_OPEN",
     });
     expect(formatCycleOptionLabel(cycle)).toBe(
-      "2025/2026 UTME Admission (UTME, Batch 2 · Application Open)",
+      "2025/2026 UTME Admission (UTME · Transfer, Batch 2 · Application Open)",
     );
   });
 });

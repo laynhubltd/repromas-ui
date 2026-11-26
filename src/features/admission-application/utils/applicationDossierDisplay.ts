@@ -62,6 +62,19 @@ export function shouldShowJambSection(
   return scores.length > 0;
 }
 
+export function shouldShowJambCard(
+  application: MeAdmissionApplication,
+): boolean {
+  if (shouldShowJambSection(application)) return true;
+  const resolvedEntryMode =
+    application.entryMode ?? application.candidate?.entryMode ?? null;
+  if (resolvedEntryMode !== "UTME") return false;
+  const candidateLane = application.candidate?.cycle?.entryModes?.find(
+    (lane) => lane.entryMode === resolvedEntryMode,
+  );
+  return candidateLane?.identityMode !== "OPEN";
+}
+
 export function shouldShowOlevelSection(
   application: MeAdmissionApplication,
 ): boolean {
